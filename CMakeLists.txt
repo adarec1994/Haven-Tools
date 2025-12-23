@@ -59,12 +59,17 @@ target_include_directories(imguifiledialog_lib PUBLIC ${imguifiledialog_SOURCE_D
 target_link_libraries(imguifiledialog_lib PUBLIC imgui_lib)
 
 add_executable(ERFBrowser
-        src/main.cpp
-        src/erf.cpp
-        src/fnv.cpp
+        main.cpp
+        erf.cpp
+        fnv.cpp
+        Gff.cpp
+        Gff.h
+        Mesh.h
+        model_loader.cpp
+        model_loader.h
 )
 
-target_include_directories(ERFBrowser PRIVATE src)
+target_include_directories(ERFBrowser PRIVATE ${CMAKE_SOURCE_DIR})
 target_link_libraries(ERFBrowser PRIVATE imgui_lib imguifiledialog_lib)
 
 if(WIN32)

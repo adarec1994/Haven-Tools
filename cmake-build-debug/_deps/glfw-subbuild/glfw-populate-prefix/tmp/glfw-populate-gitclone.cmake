@@ -1,20 +1,30 @@
 # Distributed under the OSI-approved BSD 3-Clause License.  See accompanying
-# file Copyright.txt or https://cmake.org/licensing for details.
+# file LICENSE.rst or https://cmake.org/licensing for details.
 
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION ${CMAKE_VERSION}) # this file comes with cmake
 
 if(EXISTS "/home/matthew/Documents/GitHub/Haven-Tools/cmake-build-debug/_deps/glfw-subbuild/glfw-populate-prefix/src/glfw-populate-stamp/glfw-populate-gitclone-lastrun.txt" AND EXISTS "/home/matthew/Documents/GitHub/Haven-Tools/cmake-build-debug/_deps/glfw-subbuild/glfw-populate-prefix/src/glfw-populate-stamp/glfw-populate-gitinfo.txt" AND
   "/home/matthew/Documents/GitHub/Haven-Tools/cmake-build-debug/_deps/glfw-subbuild/glfw-populate-prefix/src/glfw-populate-stamp/glfw-populate-gitclone-lastrun.txt" IS_NEWER_THAN "/home/matthew/Documents/GitHub/Haven-Tools/cmake-build-debug/_deps/glfw-subbuild/glfw-populate-prefix/src/glfw-populate-stamp/glfw-populate-gitinfo.txt")
-  message(STATUS
+  message(VERBOSE
     "Avoiding repeated git clone, stamp file is up to date: "
     "'/home/matthew/Documents/GitHub/Haven-Tools/cmake-build-debug/_deps/glfw-subbuild/glfw-populate-prefix/src/glfw-populate-stamp/glfw-populate-gitclone-lastrun.txt'"
   )
   return()
 endif()
 
+# Even at VERBOSE level, we don't want to see the commands executed, but
+# enabling them to be shown for DEBUG may be useful to help diagnose problems.
+cmake_language(GET_MESSAGE_LOG_LEVEL active_log_level)
+if(active_log_level MATCHES "DEBUG|TRACE")
+  set(maybe_show_command COMMAND_ECHO STDOUT)
+else()
+  set(maybe_show_command "")
+endif()
+
 execute_process(
   COMMAND ${CMAKE_COMMAND} -E rm -rf "/home/matthew/Documents/GitHub/Haven-Tools/cmake-build-debug/_deps/glfw-src"
   RESULT_VARIABLE error_code
+  ${maybe_show_command}
 )
 if(error_code)
   message(FATAL_ERROR "Failed to remove directory: '/home/matthew/Documents/GitHub/Haven-Tools/cmake-build-debug/_deps/glfw-src'")
@@ -29,11 +39,12 @@ while(error_code AND number_of_tries LESS 3)
             clone --no-checkout --config "advice.detachedHead=false" "https://github.com/glfw/glfw.git" "glfw-src"
     WORKING_DIRECTORY "/home/matthew/Documents/GitHub/Haven-Tools/cmake-build-debug/_deps"
     RESULT_VARIABLE error_code
+    ${maybe_show_command}
   )
   math(EXPR number_of_tries "${number_of_tries} + 1")
 endwhile()
 if(number_of_tries GREATER 1)
-  message(STATUS "Had to git clone more than once: ${number_of_tries} times.")
+  message(NOTICE "Had to git clone more than once: ${number_of_tries} times.")
 endif()
 if(error_code)
   message(FATAL_ERROR "Failed to clone repository: 'https://github.com/glfw/glfw.git'")
@@ -44,6 +55,7 @@ execute_process(
           checkout "3.3.8" --
   WORKING_DIRECTORY "/home/matthew/Documents/GitHub/Haven-Tools/cmake-build-debug/_deps/glfw-src"
   RESULT_VARIABLE error_code
+  ${maybe_show_command}
 )
 if(error_code)
   message(FATAL_ERROR "Failed to checkout tag: '3.3.8'")
@@ -56,6 +68,7 @@ if(init_submodules)
             submodule update --recursive --init 
     WORKING_DIRECTORY "/home/matthew/Documents/GitHub/Haven-Tools/cmake-build-debug/_deps/glfw-src"
     RESULT_VARIABLE error_code
+    ${maybe_show_command}
   )
 endif()
 if(error_code)
@@ -67,6 +80,7 @@ endif()
 execute_process(
   COMMAND ${CMAKE_COMMAND} -E copy "/home/matthew/Documents/GitHub/Haven-Tools/cmake-build-debug/_deps/glfw-subbuild/glfw-populate-prefix/src/glfw-populate-stamp/glfw-populate-gitinfo.txt" "/home/matthew/Documents/GitHub/Haven-Tools/cmake-build-debug/_deps/glfw-subbuild/glfw-populate-prefix/src/glfw-populate-stamp/glfw-populate-gitclone-lastrun.txt"
   RESULT_VARIABLE error_code
+  ${maybe_show_command}
 )
 if(error_code)
   message(FATAL_ERROR "Failed to copy script-last-run stamp file: '/home/matthew/Documents/GitHub/Haven-Tools/cmake-build-debug/_deps/glfw-subbuild/glfw-populate-prefix/src/glfw-populate-stamp/glfw-populate-gitclone-lastrun.txt'")
