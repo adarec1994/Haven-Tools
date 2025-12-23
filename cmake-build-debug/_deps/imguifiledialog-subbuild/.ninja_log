@@ -1,0 +1,21 @@
+# ninja log v6
+1	14	1766472229326901772	imguifiledialog-populate-prefix/src/imguifiledialog-populate-stamp/imguifiledialog-populate-mkdir	c916abc9a3b665b0
+1	14	1766472229326901772	/home/matthew/Documents/GitHub/datools/cmake-build-debug/_deps/imguifiledialog-subbuild/imguifiledialog-populate-prefix/src/imguifiledialog-populate-stamp/imguifiledialog-populate-mkdir	c916abc9a3b665b0
+14	3263	1766472232576364604	imguifiledialog-populate-prefix/src/imguifiledialog-populate-stamp/imguifiledialog-populate-download	d3d49b31d5fc3784
+14	3263	1766472232576364604	/home/matthew/Documents/GitHub/datools/cmake-build-debug/_deps/imguifiledialog-subbuild/imguifiledialog-populate-prefix/src/imguifiledialog-populate-stamp/imguifiledialog-populate-download	d3d49b31d5fc3784
+3263	3283	1766472232577364743	imguifiledialog-populate-prefix/src/imguifiledialog-populate-stamp/imguifiledialog-populate-update	15de94612719e193
+3263	3283	1766472232577364743	/home/matthew/Documents/GitHub/datools/cmake-build-debug/_deps/imguifiledialog-subbuild/imguifiledialog-populate-prefix/src/imguifiledialog-populate-stamp/imguifiledialog-populate-update	15de94612719e193
+3283	3292	1766472232606368782	imguifiledialog-populate-prefix/src/imguifiledialog-populate-stamp/imguifiledialog-populate-patch	32513392299e5473
+3283	3292	1766472232606368782	/home/matthew/Documents/GitHub/datools/cmake-build-debug/_deps/imguifiledialog-subbuild/imguifiledialog-populate-prefix/src/imguifiledialog-populate-stamp/imguifiledialog-populate-patch	32513392299e5473
+3292	3302	1766472232615370035	imguifiledialog-populate-prefix/src/imguifiledialog-populate-stamp/imguifiledialog-populate-configure	91c49478fc95babc
+3292	3302	1766472232615370035	/home/matthew/Documents/GitHub/datools/cmake-build-debug/_deps/imguifiledialog-subbuild/imguifiledialog-populate-prefix/src/imguifiledialog-populate-stamp/imguifiledialog-populate-configure	91c49478fc95babc
+3302	3313	1766472232626371567	imguifiledialog-populate-prefix/src/imguifiledialog-populate-stamp/imguifiledialog-populate-build	978cb3657b60c1c1
+3302	3313	1766472232626371567	/home/matthew/Documents/GitHub/datools/cmake-build-debug/_deps/imguifiledialog-subbuild/imguifiledialog-populate-prefix/src/imguifiledialog-populate-stamp/imguifiledialog-populate-build	978cb3657b60c1c1
+3313	3324	1766472232637373099	imguifiledialog-populate-prefix/src/imguifiledialog-populate-stamp/imguifiledialog-populate-install	5729dcd8a45630e3
+3313	3324	1766472232637373099	/home/matthew/Documents/GitHub/datools/cmake-build-debug/_deps/imguifiledialog-subbuild/imguifiledialog-populate-prefix/src/imguifiledialog-populate-stamp/imguifiledialog-populate-install	5729dcd8a45630e3
+3324	3333	1766472232646374353	imguifiledialog-populate-prefix/src/imguifiledialog-populate-stamp/imguifiledialog-populate-test	df8580338f4a6f2b
+3324	3333	1766472232646374353	/home/matthew/Documents/GitHub/datools/cmake-build-debug/_deps/imguifiledialog-subbuild/imguifiledialog-populate-prefix/src/imguifiledialog-populate-stamp/imguifiledialog-populate-test	df8580338f4a6f2b
+3333	3347	1766472232660376303	CMakeFiles/imguifiledialog-populate-complete	6b87c8abe09c5a48
+3333	3347	1766472232660376303	imguifiledialog-populate-prefix/src/imguifiledialog-populate-stamp/imguifiledialog-populate-done	6b87c8abe09c5a48
+3333	3347	1766472232660376303	/home/matthew/Documents/GitHub/datools/cmake-build-debug/_deps/imguifiledialog-subbuild/CMakeFiles/imguifiledialog-populate-complete	6b87c8abe09c5a48
+3333	3347	1766472232660376303	/home/matthew/Documents/GitHub/datools/cmake-build-debug/_deps/imguifiledialog-subbuild/imguifiledialog-populate-prefix/src/imguifiledialog-populate-stamp/imguifiledialog-populate-done	6b87c8abe09c5a48

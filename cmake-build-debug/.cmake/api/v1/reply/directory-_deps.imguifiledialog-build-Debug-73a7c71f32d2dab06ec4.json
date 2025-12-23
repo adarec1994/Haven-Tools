@@ -1,0 +1,14 @@
+{
+	"backtraceGraph" : 
+	{
+		"commands" : [],
+		"files" : [],
+		"nodes" : []
+	},
+	"installers" : [],
+	"paths" : 
+	{
+		"build" : "_deps/imguifiledialog-build",
+		"source" : "cmake-build-debug/_deps/imguifiledialog-src"
+	}
+}

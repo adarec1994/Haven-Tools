@@ -1,0 +1,21 @@
+# ninja log v6
+6	45	1766472163944076243	glfw-populate-prefix/src/glfw-populate-stamp/glfw-populate-mkdir	8b2912ad8fbb163b
+6	45	1766472163944076243	/home/matthew/Documents/GitHub/datools/cmake-build-debug/_deps/glfw-subbuild/glfw-populate-prefix/src/glfw-populate-stamp/glfw-populate-mkdir	8b2912ad8fbb163b
+46	9931	1766472173838796528	glfw-populate-prefix/src/glfw-populate-stamp/glfw-populate-download	988e3de4fd2b4f12
+46	9931	1766472173838796528	/home/matthew/Documents/GitHub/datools/cmake-build-debug/_deps/glfw-subbuild/glfw-populate-prefix/src/glfw-populate-stamp/glfw-populate-download	988e3de4fd2b4f12
+9931	9949	1766472173839796501	glfw-populate-prefix/src/glfw-populate-stamp/glfw-populate-update	b134decabf0b375b
+9931	9949	1766472173839796501	/home/matthew/Documents/GitHub/datools/cmake-build-debug/_deps/glfw-subbuild/glfw-populate-prefix/src/glfw-populate-stamp/glfw-populate-update	b134decabf0b375b
+9949	9958	1766472173865795797	glfw-populate-prefix/src/glfw-populate-stamp/glfw-populate-patch	32a9dc382783bdc8
+9949	9958	1766472173865795797	/home/matthew/Documents/GitHub/datools/cmake-build-debug/_deps/glfw-subbuild/glfw-populate-prefix/src/glfw-populate-stamp/glfw-populate-patch	32a9dc382783bdc8
+9958	9968	1766472173875795526	glfw-populate-prefix/src/glfw-populate-stamp/glfw-populate-configure	35ec8f7adac22e43
+9958	9968	1766472173875795526	/home/matthew/Documents/GitHub/datools/cmake-build-debug/_deps/glfw-subbuild/glfw-populate-prefix/src/glfw-populate-stamp/glfw-populate-configure	35ec8f7adac22e43
+9968	9977	1766472173884795282	glfw-populate-prefix/src/glfw-populate-stamp/glfw-populate-build	fe19f0fa924c9d7
+9968	9977	1766472173884795282	/home/matthew/Documents/GitHub/datools/cmake-build-debug/_deps/glfw-subbuild/glfw-populate-prefix/src/glfw-populate-stamp/glfw-populate-build	fe19f0fa924c9d7
+9977	9986	1766472173893795039	glfw-populate-prefix/src/glfw-populate-stamp/glfw-populate-install	58ce347a3e368541
+9977	9986	1766472173893795039	/home/matthew/Documents/GitHub/datools/cmake-build-debug/_deps/glfw-subbuild/glfw-populate-prefix/src/glfw-populate-stamp/glfw-populate-install	58ce347a3e368541
+9986	9995	1766472173902794795	glfw-populate-prefix/src/glfw-populate-stamp/glfw-populate-test	26ce9cd38f9805dc
+9986	9995	1766472173902794795	/home/matthew/Documents/GitHub/datools/cmake-build-debug/_deps/glfw-subbuild/glfw-populate-prefix/src/glfw-populate-stamp/glfw-populate-test	26ce9cd38f9805dc
+9995	10008	1766472173915794443	CMakeFiles/glfw-populate-complete	583007d39652de23
+9995	10008	1766472173915794443	glfw-populate-prefix/src/glfw-populate-stamp/glfw-populate-done	583007d39652de23
+9995	10008	1766472173915794443	/home/matthew/Documents/GitHub/datools/cmake-build-debug/_deps/glfw-subbuild/CMakeFiles/glfw-populate-complete	583007d39652de23
+9995	10008	1766472173915794443	/home/matthew/Documents/GitHub/datools/cmake-build-debug/_deps/glfw-subbuild/glfw-populate-prefix/src/glfw-populate-stamp/glfw-populate-done	583007d39652de23

@@ -1,0 +1,46 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/matthew/Documents/GitHub/datools/cmake-build-debug/_deps/imguifiledialog-subbuild/CMakeFiles/imguifiledialog-populate"
+		},
+		{
+			"file" : "/home/matthew/Documents/GitHub/datools/cmake-build-debug/_deps/imguifiledialog-subbuild/CMakeFiles/imguifiledialog-populate.rule"
+		},
+		{
+			"file" : "/home/matthew/Documents/GitHub/datools/cmake-build-debug/_deps/imguifiledialog-subbuild/CMakeFiles/imguifiledialog-populate-complete.rule"
+		},
+		{
+			"file" : "/home/matthew/Documents/GitHub/datools/cmake-build-debug/_deps/imguifiledialog-subbuild/imguifiledialog-populate-prefix/src/imguifiledialog-populate-stamp/imguifiledialog-populate-build.rule"
+		},
+		{
+			"file" : "/home/matthew/Documents/GitHub/datools/cmake-build-debug/_deps/imguifiledialog-subbuild/imguifiledialog-populate-prefix/src/imguifiledialog-populate-stamp/imguifiledialog-populate-configure.rule"
+		},
+		{
+			"file" : "/home/matthew/Documents/GitHub/datools/cmake-build-debug/_deps/imguifiledialog-subbuild/imguifiledialog-populate-prefix/src/imguifiledialog-populate-stamp/imguifiledialog-populate-download.rule"
+		},
+		{
+			"file" : "/home/matthew/Documents/GitHub/datools/cmake-build-debug/_deps/imguifiledialog-subbuild/imguifiledialog-populate-prefix/src/imguifiledialog-populate-stamp/imguifiledialog-populate-install.rule"
+		},
+		{
+			"file" : "/home/matthew/Documents/GitHub/datools/cmake-build-debug/_deps/imguifiledialog-subbuild/imguifiledialog-populate-prefix/src/imguifiledialog-populate-stamp/imguifiledialog-populate-mkdir.rule"
+		},
+		{
+			"file" : "/home/matthew/Documents/GitHub/datools/cmake-build-debug/_deps/imguifiledialog-subbuild/imguifiledialog-populate-prefix/src/imguifiledialog-populate-stamp/imguifiledialog-populate-patch.rule"
+		},
+		{
+			"file" : "/home/matthew/Documents/GitHub/datools/cmake-build-debug/_deps/imguifiledialog-subbuild/imguifiledialog-populate-prefix/src/imguifiledialog-populate-stamp/imguifiledialog-populate-test.rule"
+		},
+		{
+			"file" : "/home/matthew/Documents/GitHub/datools/cmake-build-debug/_deps/imguifiledialog-subbuild/imguifiledialog-populate-prefix/src/imguifiledialog-populate-stamp/imguifiledialog-populate-update.rule"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"imguifiledialog-populate"
+		],
+		"name" : "imguifiledialog-populate"
+	}
+}
