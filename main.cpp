@@ -16,8 +16,8 @@
 #include "imgui_impl_opengl3.h"
 #include "ImGuiFileDialog.h"
 #include "erf.h"
-#include "gff.h"
-#include "mesh.h"
+#include "Gff.h"
+#include "Mesh.h"
 #include "model_loader.h"
 
 namespace fs = std::filesystem;
@@ -25,7 +25,7 @@ namespace fs = std::filesystem;
 // Fly camera (game-style)
 struct Camera {
     float x = 0.0f, y = 0.0f, z = 5.0f;  // Position
-    float yaw = 3.14159f;    // Looking along -Z initially
+    float yaw = 0.0f;
     float pitch = 0.0f;
     float moveSpeed = 5.0f;
     float lookSensitivity = 0.003f;
@@ -37,28 +37,34 @@ struct Camera {
     }
 
     void lookAt(float tx, float ty, float tz, float dist) {
-        // Position camera at distance from target
+        // Position camera to look at target (remembering Z is up after rotation)
+        // Camera is in Y-up space, model is rotated to Z-up
+        // So we position in Y-up space: target's Z becomes our Y
         x = tx;
-        y = ty;
-        z = tz + dist;
-        yaw = 3.14159f; // Look toward -Z
-        pitch = 0.0f;
+        y = tz + dist * 0.5f;  // tz is the model's "up", position camera above
+        z = ty + dist;          // ty is the model's "forward", position camera back
+        yaw = 0.0f;
+        pitch = -0.2f;  // Look slightly down
         moveSpeed = dist * 0.5f;
+        if (moveSpeed < 1.0f) moveSpeed = 1.0f;
     }
 
     void getForward(float& fx, float& fy, float& fz) const {
-        fx = std::cos(pitch) * std::sin(yaw);
+        // Forward direction based on yaw and pitch
+        fx = -std::sin(yaw) * std::cos(pitch);
         fy = std::sin(pitch);
-        fz = -std::cos(pitch) * std::cos(yaw);
+        fz = -std::cos(yaw) * std::cos(pitch);
     }
 
     void getRight(float& rx, float& ry, float& rz) const {
+        // Right is perpendicular to forward on XZ plane
         rx = std::cos(yaw);
         ry = 0.0f;
-        rz = std::sin(yaw);
+        rz = -std::sin(yaw);
     }
 
     void moveForward(float amount) {
+        // Move in the direction we're looking
         float fx, fy, fz;
         getForward(fx, fy, fz);
         x += fx * amount;
@@ -67,6 +73,7 @@ struct Camera {
     }
 
     void moveRight(float amount) {
+        // Strafe left/right
         float rx, ry, rz;
         getRight(rx, ry, rz);
         x += rx * amount;
@@ -74,6 +81,7 @@ struct Camera {
     }
 
     void moveUp(float amount) {
+        // Move along world Y axis
         y += amount;
     }
 
@@ -91,12 +99,22 @@ struct RenderSettings {
     bool wireframe = false;
     bool showAxes = true;
     bool showGrid = true;
+    bool showCollision = false;
+    bool collisionWireframe = true;  // Draw collision as wireframe or solid
+    std::vector<uint8_t> meshVisible;  // Per-mesh visibility (using uint8_t because vector<bool> is special)
+
+    void initMeshVisibility(size_t count) {
+        meshVisible.resize(count, 1);
+    }
 };
 
 struct AppState {
     // Browser state
     bool showBrowser = true;
     bool showRenderSettings = false;
+    bool showMaoViewer = false;
+    std::string maoContent;
+    std::string maoFileName;
     std::string selectedFolder;
     std::vector<std::string> erfFiles;
     int selectedErfIndex = -1;
@@ -155,6 +173,19 @@ bool isModelFile(const std::string& name) {
     if (dotPos != std::string::npos) {
         std::string ext = lower.substr(dotPos);
         return ext == ".mmh" || ext == ".msh";
+    }
+    return false;
+}
+
+// Check if entry is a MAO (material) file
+bool isMaoFile(const std::string& name) {
+    std::string lower = name;
+    std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
+
+    size_t dotPos = lower.rfind('.');
+    if (dotPos != std::string::npos) {
+        std::string ext = lower.substr(dotPos);
+        return ext == ".mao";
     }
     return false;
 }
@@ -229,6 +260,9 @@ bool loadModelFromEntry(AppState& state, const ERFEntry& entry) {
     state.currentModel.name = entry.name;
     state.hasModel = true;
 
+    // Init per-mesh visibility
+    state.renderSettings.initMeshVisibility(model.meshes.size());
+
     // Calculate bounds and position camera
     if (!model.meshes.empty()) {
         // Find overall bounds
@@ -278,13 +312,18 @@ void renderModel(const Model& model, const Camera& camera, const RenderSettings&
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
-    // Rotate first (pitch then yaw)
+    // Apply camera rotation (pitch then yaw)
     glRotatef(-camera.pitch * 180.0f / 3.14159f, 1, 0, 0);
     glRotatef(-camera.yaw * 180.0f / 3.14159f, 0, 1, 0);
     // Then translate
     glTranslatef(-camera.x, -camera.y, -camera.z);
 
-    // Draw grid if enabled
+    // Rotate world so Z is up (Dragon Age uses Z-up, OpenGL uses Y-up)
+    glRotatef(-90.0f, 1, 0, 0);
+    // Flip model to face correct direction (rotate 180 around Z)
+    glRotatef(180.0f, 0, 0, 1);
+
+    // Draw grid if enabled (on XY plane since Z is up)
     if (settings.showGrid) {
         glLineWidth(1.0f);
         glBegin(GL_LINES);
@@ -292,15 +331,17 @@ void renderModel(const Model& model, const Camera& camera, const RenderSettings&
         float gridSize = 10.0f;
         float gridStep = 1.0f;
         for (float i = -gridSize; i <= gridSize; i += gridStep) {
-            glVertex3f(i, 0, -gridSize);
-            glVertex3f(i, 0, gridSize);
-            glVertex3f(-gridSize, 0, i);
-            glVertex3f(gridSize, 0, i);
+            // Lines along X
+            glVertex3f(-gridSize, i, 0);
+            glVertex3f(gridSize, i, 0);
+            // Lines along Y
+            glVertex3f(i, -gridSize, 0);
+            glVertex3f(i, gridSize, 0);
         }
         glEnd();
     }
 
-    // Draw axes if enabled
+    // Draw axes if enabled (X=red, Y=green, Z=blue pointing up)
     if (settings.showAxes) {
         glLineWidth(2.0f);
         glBegin(GL_LINES);
@@ -310,7 +351,7 @@ void renderModel(const Model& model, const Camera& camera, const RenderSettings&
         // Y axis - green
         glColor3f(0, 1, 0);
         glVertex3f(0, 0, 0); glVertex3f(0, 2, 0);
-        // Z axis - blue
+        // Z axis - blue (pointing UP)
         glColor3f(0, 0, 1);
         glVertex3f(0, 0, 0); glVertex3f(0, 0, 2);
         glEnd();
@@ -339,7 +380,13 @@ void renderModel(const Model& model, const Camera& camera, const RenderSettings&
             glColor3f(0.7f, 0.7f, 0.7f);
         }
 
-        for (const auto& mesh : model.meshes) {
+        for (size_t meshIdx = 0; meshIdx < model.meshes.size(); meshIdx++) {
+            // Check per-mesh visibility
+            if (meshIdx < settings.meshVisible.size() && settings.meshVisible[meshIdx] == 0) {
+                continue;
+            }
+
+            const auto& mesh = model.meshes[meshIdx];
             glBegin(GL_TRIANGLES);
             for (size_t i = 0; i < mesh.indices.size(); i += 3) {
                 for (int j = 0; j < 3; j++) {
@@ -358,6 +405,148 @@ void renderModel(const Model& model, const Camera& camera, const RenderSettings&
         }
 
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    }
+
+    // Render collision shapes (cyan color)
+    if (settings.showCollision && !model.collisionShapes.empty()) {
+        if (settings.collisionWireframe) {
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        } else {
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        }
+
+        if (settings.collisionWireframe) {
+            glColor3f(0.0f, 1.0f, 1.0f);  // Cyan solid for wireframe
+        } else {
+            glColor4f(0.0f, 1.0f, 1.0f, 0.3f);  // Cyan transparent for solid
+        }
+        glLineWidth(1.5f);
+        glDisable(GL_LIGHTING);
+
+        for (const auto& shape : model.collisionShapes) {
+            glPushMatrix();
+
+            // Apply position
+            glTranslatef(shape.posX, shape.posY, shape.posZ);
+
+            // Apply rotation (quaternion to axis-angle)
+            float angle = 2.0f * std::acos(shape.rotW) * 180.0f / 3.14159f;
+            float s = std::sqrt(1.0f - shape.rotW * shape.rotW);
+            if (s > 0.001f) {
+                glRotatef(angle, shape.rotX / s, shape.rotY / s, shape.rotZ / s);
+            }
+
+            switch (shape.type) {
+                case CollisionShapeType::Box: {
+                    // Draw wireframe box
+                    float x = shape.dimX, y = shape.dimY, z = shape.dimZ;
+                    glBegin(GL_LINE_LOOP); // Bottom
+                    glVertex3f(-x, -y, -z); glVertex3f(x, -y, -z);
+                    glVertex3f(x, y, -z); glVertex3f(-x, y, -z);
+                    glEnd();
+                    glBegin(GL_LINE_LOOP); // Top
+                    glVertex3f(-x, -y, z); glVertex3f(x, -y, z);
+                    glVertex3f(x, y, z); glVertex3f(-x, y, z);
+                    glEnd();
+                    glBegin(GL_LINES); // Verticals
+                    glVertex3f(-x, -y, -z); glVertex3f(-x, -y, z);
+                    glVertex3f(x, -y, -z); glVertex3f(x, -y, z);
+                    glVertex3f(x, y, -z); glVertex3f(x, y, z);
+                    glVertex3f(-x, y, -z); glVertex3f(-x, y, z);
+                    glEnd();
+                    break;
+                }
+                case CollisionShapeType::Sphere: {
+                    // Draw wireframe sphere (latitude/longitude lines)
+                    int segments = 16;
+                    float r = shape.radius;
+                    // Latitude circles
+                    for (int i = 0; i <= segments / 2; i++) {
+                        float lat = 3.14159f * (-0.5f + float(i) / (segments / 2));
+                        float z1 = r * std::sin(lat);
+                        float r1 = r * std::cos(lat);
+                        glBegin(GL_LINE_LOOP);
+                        for (int j = 0; j < segments; j++) {
+                            float lng = 2.0f * 3.14159f * float(j) / segments;
+                            glVertex3f(r1 * std::cos(lng), r1 * std::sin(lng), z1);
+                        }
+                        glEnd();
+                    }
+                    // Longitude circles
+                    for (int j = 0; j < segments / 2; j++) {
+                        float lng = 3.14159f * float(j) / (segments / 2);
+                        glBegin(GL_LINE_LOOP);
+                        for (int i = 0; i < segments; i++) {
+                            float lat = 2.0f * 3.14159f * float(i) / segments;
+                            glVertex3f(r * std::cos(lat) * std::cos(lng), r * std::cos(lat) * std::sin(lng), r * std::sin(lat));
+                        }
+                        glEnd();
+                    }
+                    break;
+                }
+                case CollisionShapeType::Capsule:
+                case CollisionShapeType::Cylinder: {
+                    // Draw wireframe cylinder/capsule
+                    int segments = 16;
+                    float r = shape.radius;
+                    float h = shape.height / 2.0f;
+                    // Top and bottom circles
+                    for (float zOff : {-h, h}) {
+                        glBegin(GL_LINE_LOOP);
+                        for (int i = 0; i < segments; i++) {
+                            float a = 2.0f * 3.14159f * float(i) / segments;
+                            glVertex3f(r * std::cos(a), r * std::sin(a), zOff);
+                        }
+                        glEnd();
+                    }
+                    // Vertical lines
+                    glBegin(GL_LINES);
+                    for (int i = 0; i < segments; i += segments / 4) {
+                        float a = 2.0f * 3.14159f * float(i) / segments;
+                        glVertex3f(r * std::cos(a), r * std::sin(a), -h);
+                        glVertex3f(r * std::cos(a), r * std::sin(a), h);
+                    }
+                    glEnd();
+                    // For capsule, add hemisphere caps
+                    if (shape.type == CollisionShapeType::Capsule) {
+                        for (float zSign : {-1.0f, 1.0f}) {
+                            for (int i = 1; i <= 4; i++) {
+                                float lat = (3.14159f / 2.0f) * float(i) / 4;
+                                float z1 = r * std::sin(lat) * zSign + h * zSign;
+                                float r1 = r * std::cos(lat);
+                                glBegin(GL_LINE_LOOP);
+                                for (int j = 0; j < segments; j++) {
+                                    float lng = 2.0f * 3.14159f * float(j) / segments;
+                                    glVertex3f(r1 * std::cos(lng), r1 * std::sin(lng), z1);
+                                }
+                                glEnd();
+                            }
+                        }
+                    }
+                    break;
+                }
+                case CollisionShapeType::Mesh: {
+                    // Draw collision mesh
+                    glBegin(GL_TRIANGLES);
+                    for (size_t i = 0; i < shape.mesh.indices.size(); i += 3) {
+                        for (int j = 0; j < 3; j++) {
+                            const auto& v = shape.mesh.vertices[shape.mesh.indices[i + j]];
+                            glVertex3f(v.x, v.y, v.z);
+                        }
+                    }
+                    glEnd();
+                    break;
+                }
+            }
+
+            glPopMatrix();
+        }
+
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        glLineWidth(1.0f);
+        glDisable(GL_BLEND);
     }
 
     glDisable(GL_DEPTH_TEST);
@@ -402,13 +591,24 @@ int main() {
 
             // Right mouse - look around (fly cam style)
             if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS) {
+                // Clear ImGui focus so WASD works immediately
+                ImGui::SetWindowFocus(nullptr);
+
                 if (state.isPanning) {
                     float dx = static_cast<float>(mx - state.lastMouseX);
                     float dy = static_cast<float>(my - state.lastMouseY);
-                    state.camera.rotate(dx * state.camera.lookSensitivity, -dy * state.camera.lookSensitivity);
+                    state.camera.rotate(-dx * state.camera.lookSensitivity, -dy * state.camera.lookSensitivity);
                 }
                 state.isPanning = true;
                 glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+                // RMB + scroll to adjust speed
+                float scroll = io.MouseWheel;
+                if (scroll != 0.0f) {
+                    state.camera.moveSpeed *= (scroll > 0) ? 1.2f : 0.8f;
+                    if (state.camera.moveSpeed < 0.1f) state.camera.moveSpeed = 0.1f;
+                    if (state.camera.moveSpeed > 100.0f) state.camera.moveSpeed = 100.0f;
+                }
             } else {
                 if (state.isPanning) {
                     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
@@ -523,10 +723,14 @@ int main() {
                     const auto& entry = state.currentErf->entries()[i];
                     bool selected = (i == state.selectedEntryIndex);
 
-                    // Highlight model files
+                    // Highlight model and material files
                     bool isModel = isModelFile(entry.name);
+                    bool isMao = isMaoFile(entry.name);
+
                     if (isModel) {
-                        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.4f, 1.0f, 0.4f, 1.0f));
+                        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.4f, 1.0f, 0.4f, 1.0f));  // Green
+                    } else if (isMao) {
+                        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.8f, 0.4f, 1.0f));  // Orange
                     }
 
                     char label[256];
@@ -536,19 +740,30 @@ int main() {
                         state.selectedEntryIndex = i;
 
                         // Double-click to load model
-                        if (ImGui::IsMouseDoubleClicked(0) && isModel) {
-                            if (loadModelFromEntry(state, entry)) {
-                                state.statusMessage = "Loaded: " + entry.name + " (" +
-                                    std::to_string(state.currentModel.meshes.size()) + " meshes)";
-                                state.showRenderSettings = true;  // Auto-open render settings
-                            } else {
-                                state.statusMessage = "Failed to parse: " + entry.name;
-                                state.showRenderSettings = true;  // Still open to show placeholder info
+                        if (ImGui::IsMouseDoubleClicked(0)) {
+                            if (isModel) {
+                                if (loadModelFromEntry(state, entry)) {
+                                    state.statusMessage = "Loaded: " + entry.name + " (" +
+                                        std::to_string(state.currentModel.meshes.size()) + " meshes)";
+                                    state.showRenderSettings = true;
+                                } else {
+                                    state.statusMessage = "Failed to parse: " + entry.name;
+                                    state.showRenderSettings = true;
+                                }
+                            } else if (isMao) {
+                                // Load MAO as plaintext
+                                std::vector<uint8_t> data = state.currentErf->readEntry(entry);
+                                if (!data.empty()) {
+                                    state.maoContent = std::string(data.begin(), data.end());
+                                    state.maoFileName = entry.name;
+                                    state.showMaoViewer = true;
+                                    state.statusMessage = "Opened: " + entry.name;
+                                }
                             }
                         }
                     }
 
-                    if (isModel) {
+                    if (isModel || isMao) {
                         ImGui::PopStyleColor();
                     }
 
@@ -560,7 +775,9 @@ int main() {
                             ImGui::Text("Packed: %u bytes", entry.packed_length);
                         }
                         if (isModel) {
-                            ImGui::Text("Double-click to load");
+                            ImGui::Text("Double-click to load model");
+                        } else if (isMao) {
+                            ImGui::Text("Double-click to view material");
                         }
                         ImGui::EndTooltip();
                     }
@@ -605,28 +822,123 @@ int main() {
 
         // Render Settings window
         if (state.showRenderSettings) {
-            ImGui::SetNextWindowSize(ImVec2(250, 150), ImGuiCond_FirstUseEver);
+            ImGui::SetNextWindowSize(ImVec2(350, 500), ImGuiCond_FirstUseEver);
             ImGui::Begin("Render Settings", &state.showRenderSettings);
 
             ImGui::Checkbox("Wireframe", &state.renderSettings.wireframe);
             ImGui::Checkbox("Show Axes", &state.renderSettings.showAxes);
             ImGui::Checkbox("Show Grid", &state.renderSettings.showGrid);
+            ImGui::Checkbox("Show Collision", &state.renderSettings.showCollision);
+            if (state.renderSettings.showCollision) {
+                ImGui::SameLine();
+                ImGui::Checkbox("Wireframe##coll", &state.renderSettings.collisionWireframe);
+            }
 
             ImGui::Separator();
-            ImGui::Text("Camera Speed:");
-            ImGui::SliderFloat("##speed", &state.camera.moveSpeed, 0.1f, 50.0f, "%.1f");
+            ImGui::Text("Camera Speed: %.1f", state.camera.moveSpeed);
+            ImGui::SliderFloat("##speed", &state.camera.moveSpeed, 0.1f, 100.0f, "%.1f");
+            ImGui::TextDisabled("(RMB + Scroll to adjust)");
 
             if (state.hasModel) {
                 ImGui::Separator();
-                ImGui::Text("Meshes: %zu", state.currentModel.meshes.size());
                 size_t totalVerts = 0, totalTris = 0;
                 for (const auto& m : state.currentModel.meshes) {
                     totalVerts += m.vertices.size();
                     totalTris += m.indices.size() / 3;
                 }
-                ImGui::Text("Vertices: %zu", totalVerts);
-                ImGui::Text("Triangles: %zu", totalTris);
+                ImGui::Text("Total: %zu meshes, %zu verts, %zu tris",
+                    state.currentModel.meshes.size(), totalVerts, totalTris);
+
+                // Mesh list with visibility and material names
+                if (state.currentModel.meshes.size() >= 1) {
+                    ImGui::Separator();
+                    if (state.currentModel.meshes.size() > 1) {
+                        ImGui::Text("Mesh Visibility:");
+                    } else {
+                        ImGui::Text("Mesh Info:");
+                    }
+
+                    // Ensure visibility array is correct size
+                    if (state.renderSettings.meshVisible.size() != state.currentModel.meshes.size()) {
+                        state.renderSettings.initMeshVisibility(state.currentModel.meshes.size());
+                    }
+
+                    ImGui::BeginChild("MeshList", ImVec2(0, 200), true);
+                    for (size_t i = 0; i < state.currentModel.meshes.size(); i++) {
+                        const auto& mesh = state.currentModel.meshes[i];
+
+                        // Visibility checkbox (only if multiple meshes)
+                        if (state.currentModel.meshes.size() > 1) {
+                            bool visible = state.renderSettings.meshVisible[i] != 0;
+                            if (ImGui::Checkbox(("##mesh" + std::to_string(i)).c_str(), &visible)) {
+                                state.renderSettings.meshVisible[i] = visible ? 1 : 0;
+                            }
+                            ImGui::SameLine();
+                        }
+
+                        // Mesh name
+                        std::string meshLabel = mesh.name.empty() ?
+                            ("Mesh " + std::to_string(i)) : mesh.name;
+                        ImGui::Text("%s", meshLabel.c_str());
+
+                        // Mesh details indented
+                        ImGui::Indent();
+                        ImGui::TextDisabled("%zu verts, %zu tris",
+                            mesh.vertices.size(), mesh.indices.size() / 3);
+                        if (!mesh.materialName.empty()) {
+                            ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.4f, 1.0f),
+                                "Material: %s", mesh.materialName.c_str());
+                        }
+                        ImGui::Unindent();
+
+                        if (i < state.currentModel.meshes.size() - 1) {
+                            ImGui::Spacing();
+                        }
+                    }
+                    ImGui::EndChild();
+
+                    // Show all / Hide all buttons (only if multiple meshes)
+                    if (state.currentModel.meshes.size() > 1) {
+                        if (ImGui::Button("Show All")) {
+                            for (size_t i = 0; i < state.renderSettings.meshVisible.size(); i++) {
+                                state.renderSettings.meshVisible[i] = 1;
+                            }
+                        }
+                        ImGui::SameLine();
+                        if (ImGui::Button("Hide All")) {
+                            for (size_t i = 0; i < state.renderSettings.meshVisible.size(); i++) {
+                                state.renderSettings.meshVisible[i] = 0;
+                            }
+                        }
+                    }
+                }
+
+                // Collision mesh info
+                if (!state.currentModel.collisionShapes.empty()) {
+                    ImGui::Separator();
+                    ImGui::Text("Collision shapes: %zu", state.currentModel.collisionShapes.size());
+                }
             }
+
+            ImGui::End();
+        }
+
+        // MAO Viewer window
+        if (state.showMaoViewer) {
+            ImGui::SetNextWindowSize(ImVec2(500, 400), ImGuiCond_FirstUseEver);
+            ImGui::Begin(("MAO Viewer - " + state.maoFileName).c_str(), &state.showMaoViewer);
+
+            // Copy button
+            if (ImGui::Button("Copy to Clipboard")) {
+                ImGui::SetClipboardText(state.maoContent.c_str());
+            }
+
+            ImGui::Separator();
+
+            // Scrollable text area
+            ImGui::BeginChild("MaoContent", ImVec2(0, 0), true, ImGuiWindowFlags_HorizontalScrollbar);
+            ImGui::TextUnformatted(state.maoContent.c_str());
+            ImGui::EndChild();
 
             ImGui::End();
         }

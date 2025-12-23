@@ -13,12 +13,13 @@ struct Vertex {
 
 struct Mesh {
     std::string name;
+    std::string materialName;  // Material reference
     std::vector<Vertex> vertices;
     std::vector<uint32_t> indices;
 
     // Bounding box for camera positioning
-    float minX, minY, minZ;
-    float maxX, maxY, maxZ;
+    float minX = 0, minY = 0, minZ = 0;
+    float maxX = 0, maxY = 0, maxZ = 0;
 
     void calculateBounds() {
         if (vertices.empty()) return;
@@ -49,9 +50,36 @@ struct Mesh {
     }
 };
 
+// Collision shape types
+enum class CollisionShapeType {
+    Box,
+    Sphere,
+    Capsule,
+    Cylinder,
+    Mesh
+};
+
+struct CollisionShape {
+    std::string name;
+    CollisionShapeType type = CollisionShapeType::Box;
+
+    // Position and rotation
+    float posX = 0, posY = 0, posZ = 0;
+    float rotX = 0, rotY = 0, rotZ = 0, rotW = 1;  // Quaternion
+
+    // Dimensions (usage depends on type)
+    float dimX = 1, dimY = 1, dimZ = 1;  // Box half-extents
+    float radius = 1;                      // Sphere/Capsule/Cylinder radius
+    float height = 1;                      // Capsule/Cylinder height
+
+    // For mesh collision
+    Mesh mesh;
+};
+
 struct Model {
     std::string name;
     std::vector<Mesh> meshes;
+    std::vector<CollisionShape> collisionShapes;
 
     void calculateBounds() {
         for (auto& mesh : meshes) {
