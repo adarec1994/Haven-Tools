@@ -5,44 +5,98 @@
 #include <memory>
 #include <cmath>
 
+#ifdef _WIN32
+#define NOMINMAX
+#include <windows.h>
+#endif
+
 #include <GLFW/glfw3.h>
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 #include "ImGuiFileDialog.h"
 #include "erf.h"
-#include "Gff.h"
-#include "Mesh.h"
+#include "gff.h"
+#include "mesh.h"
 #include "model_loader.h"
 
 namespace fs = std::filesystem;
 
-// Simple orbit camera
+// Fly camera (game-style)
 struct Camera {
-    float distance = 5.0f;
-    float yaw = 0.0f;
-    float pitch = 0.3f;
-    float targetX = 0.0f;
-    float targetY = 0.0f;
-    float targetZ = 0.0f;
+    float x = 0.0f, y = 0.0f, z = 5.0f;  // Position
+    float yaw = 3.14159f;    // Looking along -Z initially
+    float pitch = 0.0f;
+    float moveSpeed = 5.0f;
+    float lookSensitivity = 0.003f;
 
-    void lookAt(float x, float y, float z, float dist) {
-        targetX = x;
-        targetY = y;
-        targetZ = z;
-        distance = dist;
+    void setPosition(float px, float py, float pz) {
+        x = px;
+        y = py;
+        z = pz;
     }
 
-    void getPosition(float& x, float& y, float& z) const {
-        x = targetX + distance * std::cos(pitch) * std::sin(yaw);
-        y = targetY + distance * std::sin(pitch);
-        z = targetZ + distance * std::cos(pitch) * std::cos(yaw);
+    void lookAt(float tx, float ty, float tz, float dist) {
+        // Position camera at distance from target
+        x = tx;
+        y = ty;
+        z = tz + dist;
+        yaw = 3.14159f; // Look toward -Z
+        pitch = 0.0f;
+        moveSpeed = dist * 0.5f;
     }
+
+    void getForward(float& fx, float& fy, float& fz) const {
+        fx = std::cos(pitch) * std::sin(yaw);
+        fy = std::sin(pitch);
+        fz = -std::cos(pitch) * std::cos(yaw);
+    }
+
+    void getRight(float& rx, float& ry, float& rz) const {
+        rx = std::cos(yaw);
+        ry = 0.0f;
+        rz = std::sin(yaw);
+    }
+
+    void moveForward(float amount) {
+        float fx, fy, fz;
+        getForward(fx, fy, fz);
+        x += fx * amount;
+        y += fy * amount;
+        z += fz * amount;
+    }
+
+    void moveRight(float amount) {
+        float rx, ry, rz;
+        getRight(rx, ry, rz);
+        x += rx * amount;
+        z += rz * amount;
+    }
+
+    void moveUp(float amount) {
+        y += amount;
+    }
+
+    void rotate(float deltaYaw, float deltaPitch) {
+        yaw += deltaYaw;
+        pitch += deltaPitch;
+        // Clamp pitch
+        if (pitch > 1.5f) pitch = 1.5f;
+        if (pitch < -1.5f) pitch = -1.5f;
+    }
+};
+
+// Render settings
+struct RenderSettings {
+    bool wireframe = false;
+    bool showAxes = true;
+    bool showGrid = true;
 };
 
 struct AppState {
     // Browser state
     bool showBrowser = true;
+    bool showRenderSettings = false;
     std::string selectedFolder;
     std::vector<std::string> erfFiles;
     int selectedErfIndex = -1;
@@ -55,9 +109,10 @@ struct AppState {
     Model currentModel;
     bool hasModel = false;
     Camera camera;
+    RenderSettings renderSettings;
 
     // Mouse state for camera control
-    bool isDragging = false;
+    bool isPanning = false;       // Right mouse - look around
     double lastMouseX = 0;
     double lastMouseY = 0;
 };
@@ -205,9 +260,7 @@ bool loadModelFromEntry(AppState& state, const ERFEntry& entry) {
 }
 
 // Render model using immediate mode OpenGL
-void renderModel(const Model& model, const Camera& camera, int width, int height) {
-    if (model.meshes.empty()) return;
-
+void renderModel(const Model& model, const Camera& camera, const RenderSettings& settings, int width, int height) {
     glEnable(GL_DEPTH_TEST);
 
     // Set up projection matrix
@@ -221,51 +274,92 @@ void renderModel(const Model& model, const Camera& camera, int width, int height
     float right = top * aspect;
     glFrustum(-right, right, -top, top, nearPlane, farPlane);
 
-    // Set up modelview matrix
+    // Set up modelview matrix for fly camera
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
-    float camX, camY, camZ;
-    camera.getPosition(camX, camY, camZ);
+    // Rotate first (pitch then yaw)
+    glRotatef(-camera.pitch * 180.0f / 3.14159f, 1, 0, 0);
+    glRotatef(-camera.yaw * 180.0f / 3.14159f, 0, 1, 0);
+    // Then translate
+    glTranslatef(-camera.x, -camera.y, -camera.z);
 
-    // Translate to camera position
-    glTranslatef(0, 0, -camera.distance);
-    glRotatef(camera.pitch * 180.0f / 3.14159f, 1, 0, 0);
-    glRotatef(camera.yaw * 180.0f / 3.14159f, 0, 1, 0);
-    glTranslatef(-camera.targetX, -camera.targetY, -camera.targetZ);
-
-    // Render meshes as wireframe
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    glColor3f(0.8f, 0.8f, 0.8f);
-
-    for (const auto& mesh : model.meshes) {
-        glBegin(GL_TRIANGLES);
-        for (size_t i = 0; i < mesh.indices.size(); i += 3) {
-            for (int j = 0; j < 3; j++) {
-                const auto& v = mesh.vertices[mesh.indices[i + j]];
-                glNormal3f(v.nx, v.ny, v.nz);
-                glVertex3f(v.x, v.y, v.z);
-            }
+    // Draw grid if enabled
+    if (settings.showGrid) {
+        glLineWidth(1.0f);
+        glBegin(GL_LINES);
+        glColor3f(0.3f, 0.3f, 0.3f);
+        float gridSize = 10.0f;
+        float gridStep = 1.0f;
+        for (float i = -gridSize; i <= gridSize; i += gridStep) {
+            glVertex3f(i, 0, -gridSize);
+            glVertex3f(i, 0, gridSize);
+            glVertex3f(-gridSize, 0, i);
+            glVertex3f(gridSize, 0, i);
         }
         glEnd();
     }
 
-    // Draw axes
-    glLineWidth(2.0f);
-    glBegin(GL_LINES);
-    // X axis - red
-    glColor3f(1, 0, 0);
-    glVertex3f(0, 0, 0); glVertex3f(2, 0, 0);
-    // Y axis - green
-    glColor3f(0, 1, 0);
-    glVertex3f(0, 0, 0); glVertex3f(0, 2, 0);
-    // Z axis - blue
-    glColor3f(0, 0, 1);
-    glVertex3f(0, 0, 0); glVertex3f(0, 0, 2);
-    glEnd();
-    glLineWidth(1.0f);
+    // Draw axes if enabled
+    if (settings.showAxes) {
+        glLineWidth(2.0f);
+        glBegin(GL_LINES);
+        // X axis - red
+        glColor3f(1, 0, 0);
+        glVertex3f(0, 0, 0); glVertex3f(2, 0, 0);
+        // Y axis - green
+        glColor3f(0, 1, 0);
+        glVertex3f(0, 0, 0); glVertex3f(0, 2, 0);
+        // Z axis - blue
+        glColor3f(0, 0, 1);
+        glVertex3f(0, 0, 0); glVertex3f(0, 0, 2);
+        glEnd();
+        glLineWidth(1.0f);
+    }
 
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    // Render meshes
+    if (!model.meshes.empty()) {
+        if (settings.wireframe) {
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+            glColor3f(0.8f, 0.8f, 0.8f);
+        } else {
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+            glEnable(GL_LIGHTING);
+            glEnable(GL_LIGHT0);
+            glEnable(GL_COLOR_MATERIAL);
+
+            // Set up light
+            float lightPos[] = {1.0f, 1.0f, 1.0f, 0.0f};
+            float lightAmbient[] = {0.3f, 0.3f, 0.3f, 1.0f};
+            float lightDiffuse[] = {0.7f, 0.7f, 0.7f, 1.0f};
+            glLightfv(GL_LIGHT0, GL_POSITION, lightPos);
+            glLightfv(GL_LIGHT0, GL_AMBIENT, lightAmbient);
+            glLightfv(GL_LIGHT0, GL_DIFFUSE, lightDiffuse);
+
+            glColor3f(0.7f, 0.7f, 0.7f);
+        }
+
+        for (const auto& mesh : model.meshes) {
+            glBegin(GL_TRIANGLES);
+            for (size_t i = 0; i < mesh.indices.size(); i += 3) {
+                for (int j = 0; j < 3; j++) {
+                    const auto& v = mesh.vertices[mesh.indices[i + j]];
+                    glNormal3f(v.nx, v.ny, v.nz);
+                    glVertex3f(v.x, v.y, v.z);
+                }
+            }
+            glEnd();
+        }
+
+        if (!settings.wireframe) {
+            glDisable(GL_LIGHTING);
+            glDisable(GL_LIGHT0);
+            glDisable(GL_COLOR_MATERIAL);
+        }
+
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    }
+
     glDisable(GL_DEPTH_TEST);
 }
 
@@ -301,25 +395,58 @@ int main() {
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
 
-        // Handle mouse input for camera
+        // Handle mouse input for camera - RIGHT CLICK to look around
         if (!io.WantCaptureMouse) {
-            if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
-                double mx, my;
-                glfwGetCursorPos(window, &mx, &my);
+            double mx, my;
+            glfwGetCursorPos(window, &mx, &my);
 
-                if (state.isDragging) {
+            // Right mouse - look around (fly cam style)
+            if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS) {
+                if (state.isPanning) {
                     float dx = static_cast<float>(mx - state.lastMouseX);
                     float dy = static_cast<float>(my - state.lastMouseY);
-                    state.camera.yaw += dx * 0.01f;
-                    state.camera.pitch += dy * 0.01f;
-                    state.camera.pitch = std::max(-1.5f, std::min(1.5f, state.camera.pitch));
+                    state.camera.rotate(dx * state.camera.lookSensitivity, -dy * state.camera.lookSensitivity);
                 }
-
-                state.isDragging = true;
-                state.lastMouseX = mx;
-                state.lastMouseY = my;
+                state.isPanning = true;
+                glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
             } else {
-                state.isDragging = false;
+                if (state.isPanning) {
+                    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+                }
+                state.isPanning = false;
+            }
+
+            state.lastMouseX = mx;
+            state.lastMouseY = my;
+        }
+
+        // WASD movement (fly cam style)
+        if (!io.WantCaptureKeyboard) {
+            float deltaTime = io.DeltaTime;
+            float speed = state.camera.moveSpeed * deltaTime;
+
+            // Move faster with shift
+            if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) {
+                speed *= 3.0f;
+            }
+
+            if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+                state.camera.moveForward(speed);
+            }
+            if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+                state.camera.moveForward(-speed);
+            }
+            if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+                state.camera.moveRight(-speed);
+            }
+            if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+                state.camera.moveRight(speed);
+            }
+            if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
+                state.camera.moveUp(speed);
+            }
+            if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS) {
+                state.camera.moveUp(-speed);
             }
         }
 
@@ -413,8 +540,10 @@ int main() {
                             if (loadModelFromEntry(state, entry)) {
                                 state.statusMessage = "Loaded: " + entry.name + " (" +
                                     std::to_string(state.currentModel.meshes.size()) + " meshes)";
+                                state.showRenderSettings = true;  // Auto-open render settings
                             } else {
                                 state.statusMessage = "Failed to parse: " + entry.name;
+                                state.showRenderSettings = true;  // Still open to show placeholder info
                             }
                         }
                     }
@@ -462,15 +591,44 @@ int main() {
         if (ImGui::BeginMainMenuBar()) {
             if (ImGui::BeginMenu("View")) {
                 ImGui::MenuItem("Browser", nullptr, &state.showBrowser);
+                ImGui::MenuItem("Render Settings", nullptr, &state.showRenderSettings);
                 ImGui::EndMenu();
             }
 
             if (state.hasModel) {
-                ImGui::SameLine(ImGui::GetWindowWidth() - 300);
-                ImGui::Text("Model: %s | Drag to rotate", state.currentModel.name.c_str());
+                ImGui::SameLine(ImGui::GetWindowWidth() - 500);
+                ImGui::Text("Model: %s | RMB+Mouse: Look | WASD: Move | Space/Ctrl: Up/Down | Shift: Fast", state.currentModel.name.c_str());
             }
 
             ImGui::EndMainMenuBar();
+        }
+
+        // Render Settings window
+        if (state.showRenderSettings) {
+            ImGui::SetNextWindowSize(ImVec2(250, 150), ImGuiCond_FirstUseEver);
+            ImGui::Begin("Render Settings", &state.showRenderSettings);
+
+            ImGui::Checkbox("Wireframe", &state.renderSettings.wireframe);
+            ImGui::Checkbox("Show Axes", &state.renderSettings.showAxes);
+            ImGui::Checkbox("Show Grid", &state.renderSettings.showGrid);
+
+            ImGui::Separator();
+            ImGui::Text("Camera Speed:");
+            ImGui::SliderFloat("##speed", &state.camera.moveSpeed, 0.1f, 50.0f, "%.1f");
+
+            if (state.hasModel) {
+                ImGui::Separator();
+                ImGui::Text("Meshes: %zu", state.currentModel.meshes.size());
+                size_t totalVerts = 0, totalTris = 0;
+                for (const auto& m : state.currentModel.meshes) {
+                    totalVerts += m.vertices.size();
+                    totalTris += m.indices.size() / 3;
+                }
+                ImGui::Text("Vertices: %zu", totalVerts);
+                ImGui::Text("Triangles: %zu", totalTris);
+            }
+
+            ImGui::End();
         }
 
         // Render
@@ -483,7 +641,11 @@ int main() {
 
         // Render model in main area
         if (state.hasModel) {
-            renderModel(state.currentModel, state.camera, display_w, display_h);
+            renderModel(state.currentModel, state.camera, state.renderSettings, display_w, display_h);
+        } else {
+            // Render empty scene with just grid/axes
+            Model empty;
+            renderModel(empty, state.camera, state.renderSettings, display_w, display_h);
         }
 
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
