@@ -496,20 +496,30 @@ void quatRotateWorld(float qx, float qy, float qz, float qw,
     rz = pz + qw * tz + (qx * ty - qy * tx);
 }
 
-// Load skeleton and material names from MMH file
+// Load skeleton and material names from MMH file with FIXED transform lookup
 void loadMMH(const std::vector<uint8_t>& data, Model& model) {
+    std::cout << "--- [DEBUG] Loading MMH ---" << std::endl;
     GFFFile gff;
     if (!gff.load(data)) {
+        std::cout << "ERROR: Failed to parse GFF data for MMH." << std::endl;
         return;
     }
 
-    // Build a map of mesh name -> material name
-    std::map<std::string, std::string> meshMaterials;
+    std::cout << "MMH GFF loaded. Total Structs: " << gff.structs().size() << std::endl;
 
-    // Temporary bone storage with parent names
+    auto normalizeQuat = [](float& x, float& y, float& z, float& w) {
+        float len = std::sqrt(x*x + y*y + z*z + w*w);
+        if (len > 0.00001f) {
+            float invLen = 1.0f / len;
+            x *= invLen; y *= invLen; z *= invLen; w *= invLen;
+        } else {
+            x = 0; y = 0; z = 0; w = 1;
+        }
+    };
+
+    std::map<std::string, std::string> meshMaterials;
     std::vector<Bone> tempBones;
 
-    // Recursive function to find nodes in MMH
     std::function<void(size_t, uint32_t, const std::string&)> findNodes =
         [&](size_t structIdx, uint32_t offset, const std::string& parentName) {
 
@@ -518,64 +528,80 @@ void loadMMH(const std::vector<uint8_t>& data, Model& model) {
         const auto& s = gff.structs()[structIdx];
         std::string structType(s.structType);
 
-        // "mesh" struct type contains mesh name (6006) and material (6001)
         if (structType == "mesh") {
             std::string meshName = gff.readStringByLabel(structIdx, 6006, offset);
             std::string materialName = gff.readStringByLabel(structIdx, 6001, offset);
-
             if (!meshName.empty() && !materialName.empty()) {
                 meshMaterials[meshName] = materialName;
             }
         }
 
-        // "node" struct type contains bone data
         if (structType == "node") {
             Bone bone;
             bone.name = gff.readStringByLabel(structIdx, 6000, offset);
             bone.parentName = parentName;
 
-            // Read position (field 6047) - Vector3f
-            const GFFField* posField = gff.findField(structIdx, 6047);
-            if (posField) {
-                uint32_t posOffset = gff.dataOffset() + posField->dataOffset + offset;
-                bone.posX = gff.readFloatAt(posOffset);
-                bone.posY = gff.readFloatAt(posOffset + 4);
-                bone.posZ = gff.readFloatAt(posOffset + 8);
+            // Get children to scan for transform data AND to recurse
+            std::vector<GFFStructRef> children = gff.readStructList(structIdx, 6999, offset);
+
+            bool foundPos = false;
+            bool foundRot = false;
+
+            // FIX: Scan children for transformation data (trsl/rota structs)
+            for (const auto& child : children) {
+                // Check for Position (6047) in child
+                const GFFField* posField = gff.findField(child.structIndex, 6047);
+                if (posField) {
+                     uint32_t posOffset = gff.dataOffset() + posField->dataOffset + child.offset;
+                     bone.posX = gff.readFloatAt(posOffset);
+                     bone.posY = gff.readFloatAt(posOffset + 4);
+                     bone.posZ = gff.readFloatAt(posOffset + 8);
+                     foundPos = true;
+                }
+
+                // Check for Rotation (6048) in child
+                const GFFField* rotField = gff.findField(child.structIndex, 6048);
+                if (rotField) {
+                     uint32_t rotOffset = gff.dataOffset() + rotField->dataOffset + child.offset;
+                     bone.rotX = gff.readFloatAt(rotOffset);
+                     bone.rotY = gff.readFloatAt(rotOffset + 4);
+                     bone.rotZ = gff.readFloatAt(rotOffset + 8);
+                     bone.rotW = gff.readFloatAt(rotOffset + 12);
+                     normalizeQuat(bone.rotX, bone.rotY, bone.rotZ, bone.rotW);
+                     foundRot = true;
+                }
             }
 
-            // Read rotation (field 6048) - Quaternion
-            const GFFField* rotField = gff.findField(structIdx, 6048);
-            if (rotField) {
-                uint32_t rotOffset = gff.dataOffset() + rotField->dataOffset + offset;
-                bone.rotX = gff.readFloatAt(rotOffset);
-                bone.rotY = gff.readFloatAt(rotOffset + 4);
-                bone.rotZ = gff.readFloatAt(rotOffset + 8);
-                bone.rotW = gff.readFloatAt(rotOffset + 12);
+            // Debug output to confirm we found data
+            if (foundPos || foundRot) {
+                // std::cout << "  Bone '" << bone.name << "': Pos[" << (foundPos?"X":" ") << "] Rot[" << (foundRot?"X":" ") << "]" << std::endl;
+            } else {
+                std::cout << "  WARNING: No transform data found for bone '" << bone.name << "' in children." << std::endl;
             }
 
             if (!bone.name.empty()) {
                 tempBones.push_back(bone);
             }
 
-            // Recurse into children with this bone as parent
-            std::vector<GFFStructRef> children = gff.readStructList(structIdx, 6999, offset);
+            // Recurse into children nodes
             for (const auto& child : children) {
                 findNodes(child.structIndex, child.offset, bone.name);
             }
-            return; // Don't recurse again below
+            return;
         }
 
-        // Recurse into children (field 6999) for non-node structs
+        // Generic recursion for non-node structs
         std::vector<GFFStructRef> children = gff.readStructList(structIdx, 6999, offset);
         for (const auto& child : children) {
             findNodes(child.structIndex, child.offset, parentName);
         }
     };
 
-    // Start from root struct
     findNodes(0, 0, "");
 
-    // Apply materials to model meshes
+    std::cout << "Recursive search done. Found " << tempBones.size() << " bones." << std::endl;
+
+    // Apply materials
     for (auto& mesh : model.meshes) {
         auto it = meshMaterials.find(mesh.name);
         if (it != meshMaterials.end()) {
@@ -583,21 +609,25 @@ void loadMMH(const std::vector<uint8_t>& data, Model& model) {
         }
     }
 
-    // Build skeleton with parent indices
+    // Link parents
     model.skeleton.bones = tempBones;
+    int links = 0;
     for (size_t i = 0; i < model.skeleton.bones.size(); i++) {
         Bone& bone = model.skeleton.bones[i];
         if (!bone.parentName.empty()) {
             bone.parentIndex = model.skeleton.findBone(bone.parentName);
+            if (bone.parentIndex >= 0) {
+                links++;
+            }
         }
     }
+    std::cout << "Skeleton linking complete. Valid parent links: " << links << std::endl;
 
-    // Compute world transforms by walking hierarchy
-    // First pass: bones with no parent (roots)
+    // Compute transforms
     for (size_t i = 0; i < model.skeleton.bones.size(); i++) {
         Bone& bone = model.skeleton.bones[i];
+
         if (bone.parentIndex < 0) {
-            // Root bone - world = local
             bone.worldPosX = bone.posX;
             bone.worldPosY = bone.posY;
             bone.worldPosZ = bone.posZ;
@@ -605,44 +635,34 @@ void loadMMH(const std::vector<uint8_t>& data, Model& model) {
             bone.worldRotY = bone.rotY;
             bone.worldRotZ = bone.rotZ;
             bone.worldRotW = bone.rotW;
+        } else {
+            const Bone& parent = model.skeleton.bones[bone.parentIndex];
+
+            float rotatedX, rotatedY, rotatedZ;
+            quatRotateWorld(parent.worldRotX, parent.worldRotY, parent.worldRotZ, parent.worldRotW,
+                           bone.posX, bone.posY, bone.posZ,
+                           rotatedX, rotatedY, rotatedZ);
+
+            bone.worldPosX = parent.worldPosX + rotatedX;
+            bone.worldPosY = parent.worldPosY + rotatedY;
+            bone.worldPosZ = parent.worldPosZ + rotatedZ;
+
+            quatMulWorld(parent.worldRotX, parent.worldRotY, parent.worldRotZ, parent.worldRotW,
+                        bone.rotX, bone.rotY, bone.rotZ, bone.rotW,
+                        bone.worldRotX, bone.worldRotY, bone.worldRotZ, bone.worldRotW);
+
+            normalizeQuat(bone.worldRotX, bone.worldRotY, bone.worldRotZ, bone.worldRotW);
         }
     }
 
-    // Multiple passes to propagate transforms down hierarchy
-    // (simple approach - could optimize with topological sort)
-    for (int pass = 0; pass < 20; pass++) {
-        for (size_t i = 0; i < model.skeleton.bones.size(); i++) {
-            Bone& bone = model.skeleton.bones[i];
-            if (bone.parentIndex >= 0) {
-                const Bone& parent = model.skeleton.bones[bone.parentIndex];
-
-                // Rotate local position by parent world rotation
-                float rotatedX, rotatedY, rotatedZ;
-                quatRotateWorld(parent.worldRotX, parent.worldRotY, parent.worldRotZ, parent.worldRotW,
-                               bone.posX, bone.posY, bone.posZ,
-                               rotatedX, rotatedY, rotatedZ);
-
-                // World pos = parent world pos + rotated local pos
-                bone.worldPosX = parent.worldPosX + rotatedX;
-                bone.worldPosY = parent.worldPosY + rotatedY;
-                bone.worldPosZ = parent.worldPosZ + rotatedZ;
-
-                // World rot = parent world rot * local rot
-                quatMulWorld(parent.worldRotX, parent.worldRotY, parent.worldRotZ, parent.worldRotW,
-                            bone.rotX, bone.rotY, bone.rotZ, bone.rotW,
-                            bone.worldRotX, bone.worldRotY, bone.worldRotZ, bone.worldRotW);
-            }
-        }
-    }
-
-    if (!model.skeleton.bones.empty()) {
-        std::cout << "Loaded skeleton with " << model.skeleton.bones.size() << " bones from MMH" << std::endl;
-    }
+    std::cout << "--- [DEBUG] MMH Load Finished ---" << std::endl;
 }
 
 // Try to load model from ERF entry
 bool loadModelFromEntry(AppState& state, const ERFEntry& entry) {
     if (!state.currentErf) return false;
+
+    std::cout << "Loading Model: " << entry.name << std::endl;
 
     std::vector<uint8_t> data = state.currentErf->readEntry(entry);
     if (data.empty()) return false;
@@ -713,42 +733,102 @@ bool loadModelFromEntry(AppState& state, const ERFEntry& entry) {
     // Init per-mesh visibility
     state.renderSettings.initMeshVisibility(model.meshes.size());
 
-    // Try to find and load corresponding PHY file for collision and MMH for materials
+    // Get base name (remove extension)
     std::string baseName = entry.name;
     size_t dotPos = baseName.rfind('.');
     if (dotPos != std::string::npos) {
         baseName = baseName.substr(0, dotPos);
     }
-    std::string phyName = baseName + ".phy";
-    std::string mmhName = baseName + ".mmh";
 
-    // Search for MMH file in current ERF
-    for (const auto& e : state.currentErf->entries()) {
-        std::string eName = e.name;
-        std::transform(eName.begin(), eName.end(), eName.begin(), ::tolower);
+    // ---------------------------------------------------------
+    // GENERATE MMH CANDIDATES
+    // ---------------------------------------------------------
+    std::vector<std::string> mmhCandidates;
 
-        std::string mmhLower = mmhName;
-        std::transform(mmhLower.begin(), mmhLower.end(), mmhLower.begin(), ::tolower);
+    // 1. Exact match (c_ashwraith_0.mmh)
+    mmhCandidates.push_back(baseName + ".mmh");
 
-        if (eName == mmhLower) {
-            std::vector<uint8_t> mmhData = state.currentErf->readEntry(e);
-            if (!mmhData.empty()) {
-                loadMMH(mmhData, state.currentModel);
-            }
-        }
+    // 2. Insert 'a' before last underscore (c_ashwraith_0 -> c_ashwraitha_0.mmh)
+    size_t lastUnderscore = baseName.find_last_of('_');
+    if (lastUnderscore != std::string::npos) {
+        std::string variantA = baseName;
+        variantA.insert(lastUnderscore, "a");
+        mmhCandidates.push_back(variantA + ".mmh");
     }
 
-    // Define potential PHY names (different naming patterns exist)
+    // 3. Append 'a' (just in case)
+    mmhCandidates.push_back(baseName + "a.mmh");
+
+    std::cout << "Searching for MMH candidates:" << std::endl;
+    for(const auto& c : mmhCandidates) std::cout << " - " << c << std::endl;
+
+    // Search ALL loaded ERFs for any of the MMH candidates
+    bool foundMMH = false;
+    for (const auto& erfPath : state.erfFiles) {
+        // Use current ERF pointer if it matches to save opening it again
+        if (state.currentErf && state.currentErf->filename() == erfPath) {
+            for (const auto& e : state.currentErf->entries()) {
+                std::string eName = e.name;
+                std::transform(eName.begin(), eName.end(), eName.begin(), ::tolower);
+
+                // Check against all candidates
+                for(const auto& candidate : mmhCandidates) {
+                    std::string candLower = candidate;
+                    std::transform(candLower.begin(), candLower.end(), candLower.begin(), ::tolower);
+
+                    if (eName == candLower) {
+                        std::cout << "  Found MMH (" << e.name << ") in current ERF!" << std::endl;
+                        std::vector<uint8_t> mmhData = state.currentErf->readEntry(e);
+                        if (!mmhData.empty()) {
+                            loadMMH(mmhData, state.currentModel);
+                            foundMMH = true;
+                        }
+                        break;
+                    }
+                }
+                if (foundMMH) break;
+            }
+        } else {
+            // Check other ERFs
+            ERFFile searchErf;
+            if (searchErf.open(erfPath)) {
+                for (const auto& e : searchErf.entries()) {
+                    std::string eName = e.name;
+                    std::transform(eName.begin(), eName.end(), eName.begin(), ::tolower);
+
+                    // Check against all candidates
+                    for(const auto& candidate : mmhCandidates) {
+                        std::string candLower = candidate;
+                        std::transform(candLower.begin(), candLower.end(), candLower.begin(), ::tolower);
+
+                        if (eName == candLower) {
+                            std::cout << "  Found MMH (" << e.name << ") in: " << erfPath << std::endl;
+                            std::vector<uint8_t> mmhData = searchErf.readEntry(e);
+                            if (!mmhData.empty()) {
+                                loadMMH(mmhData, state.currentModel);
+                                foundMMH = true;
+                            }
+                            break;
+                        }
+                    }
+                    if (foundMMH) break;
+                }
+            }
+        }
+        if (foundMMH) break;
+    }
+
+    if (!foundMMH) {
+        std::cout << "WARNING: Could not find MMH for " << baseName << " in any loaded ERF." << std::endl;
+    }
+
+    // ---------------------------------------------------------
+    // GENERATE PHY CANDIDATES (Logic reused for completeness)
+    // ---------------------------------------------------------
     std::vector<std::string> phyCandidates;
-
-    // Candidate A: Exact match (e.g. c_berkbear_0.phy)
     phyCandidates.push_back(baseName + ".phy");
-
-    // Candidate B: Append 'a' at end (e.g. c_berkbear_0a.phy)
     phyCandidates.push_back(baseName + "a.phy");
 
-    // Candidate C: Insert 'a' before the last underscore (e.g. c_berkbear_0 -> c_berkbeara_0.phy)
-    size_t lastUnderscore = baseName.find_last_of('_');
     if (lastUnderscore != std::string::npos) {
         std::string variantA = baseName;
         variantA.insert(lastUnderscore, "a");
@@ -770,6 +850,7 @@ bool loadModelFromEntry(AppState& state, const ERFEntry& entry) {
                     std::transform(candLower.begin(), candLower.end(), candLower.begin(), ::tolower);
 
                     if (eName == candLower) {
+                        std::cout << "  Found PHY (" << e.name << ")" << std::endl;
                         std::vector<uint8_t> phyData = phyErf.readEntry(e);
                         if (!phyData.empty()) {
                             loadPHY(phyData, state.currentModel);
@@ -786,7 +867,6 @@ bool loadModelFromEntry(AppState& state, const ERFEntry& entry) {
 
     // Calculate bounds and position camera
     if (!model.meshes.empty()) {
-        // Find overall bounds
         float minX = model.meshes[0].minX, maxX = model.meshes[0].maxX;
         float minY = model.meshes[0].minY, maxY = model.meshes[0].maxY;
         float minZ = model.meshes[0].minZ, maxZ = model.meshes[0].maxZ;
@@ -813,7 +893,6 @@ bool loadModelFromEntry(AppState& state, const ERFEntry& entry) {
 
     return true;
 }
-
 // Helper function to draw a solid box (for non-wireframe collision mode)
 void drawSolidBox(float x, float y, float z) {
     glBegin(GL_QUADS);
