@@ -39,6 +39,32 @@ struct CollisionShape {
     std::vector<uint32_t> meshIndices;
 };
 
+struct Bone {
+    std::string name;
+    std::string parentName;
+    int parentIndex = -1;  // Index into skeleton's bones array, -1 = root
+
+    // Local transform (relative to parent)
+    float posX = 0, posY = 0, posZ = 0;
+    float rotX = 0, rotY = 0, rotZ = 0, rotW = 1;
+
+    // World transform (computed from hierarchy)
+    float worldPosX = 0, worldPosY = 0, worldPosZ = 0;
+    float worldRotX = 0, worldRotY = 0, worldRotZ = 0, worldRotW = 1;
+};
+
+struct Skeleton {
+    std::vector<Bone> bones;
+
+    // Find bone index by name, returns -1 if not found
+    int findBone(const std::string& name) const {
+        for (size_t i = 0; i < bones.size(); i++) {
+            if (bones[i].name == name) return (int)i;
+        }
+        return -1;
+    }
+};
+
 struct Mesh {
     std::string name;
     std::string materialName;  // Material reference (.mao file) - from MMH, not MSH
@@ -82,6 +108,7 @@ struct Model {
     std::string name;
     std::vector<Mesh> meshes;
     std::vector<CollisionShape> collisionShapes;  // From PHY file
+    Skeleton skeleton;  // From MMH file
 
     void calculateBounds() {
         for (auto& mesh : meshes) {

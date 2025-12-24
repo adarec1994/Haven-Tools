@@ -19,8 +19,8 @@
 #include "imgui_impl_opengl3.h"
 #include "ImGuiFileDialog.h"
 #include "erf.h"
-#include "gff.h"
-#include "mesh.h"
+#include "Gff.h"
+#include "Mesh.h"
 #include "model_loader.h"
 
 namespace fs = std::filesystem;
@@ -104,6 +104,8 @@ struct RenderSettings {
     bool showGrid = true;
     bool showCollision = true;
     bool collisionWireframe = true;  // Draw collision as wireframe or solid
+    bool showSkeleton = true;
+    bool showBoneNames = false;
     std::vector<uint8_t> meshVisible;  // Per-mesh visibility (using uint8_t because vector<bool> is special)
 
     void initMeshVisibility(size_t count) {
@@ -210,32 +212,63 @@ bool isPhyFile(const std::string& name) {
 
 // Load collision shapes from PHY file
 bool loadPHY(const std::vector<uint8_t>& data, Model& model) {
-    std::cout << "=== loadPHY called, data size: " << data.size() << " ===" << std::endl;
-
     GFFFile gff;
     if (!gff.load(data)) {
-        std::cout << "ERROR: GFF failed to load PHY data" << std::endl;
         return false;
     }
 
-    std::cout << "PHY GFF loaded, structs: " << gff.structs().size() << std::endl;
-    for (size_t i = 0; i < gff.structs().size() && i < 10; i++) {
-        std::cout << "  Struct " << i << ": type='" << gff.structs()[i].structType
-                  << "', fields=" << gff.structs()[i].fieldCount << std::endl;
-    }
+    // Helper to multiply quaternions: result = q1 * q2
+    auto quatMul = [](float q1x, float q1y, float q1z, float q1w,
+                      float q2x, float q2y, float q2z, float q2w,
+                      float& rx, float& ry, float& rz, float& rw) {
+        rw = q1w*q2w - q1x*q2x - q1y*q2y - q1z*q2z;
+        rx = q1w*q2x + q1x*q2w + q1y*q2z - q1z*q2y;
+        ry = q1w*q2y - q1x*q2z + q1y*q2w + q1z*q2x;
+        rz = q1w*q2z + q1x*q2y - q1y*q2x + q1z*q2w;
+    };
 
-    // Recursive function to find collision shapes
-    std::function<void(size_t, uint32_t)> processStruct = [&](size_t structIdx, uint32_t offset) {
+    // Helper to rotate a vector by quaternion
+    auto quatRotate = [](float qx, float qy, float qz, float qw,
+                         float vx, float vy, float vz,
+                         float& rx, float& ry, float& rz) {
+        // v' = q * v * q^-1, but for unit quaternion: q^-1 = conjugate
+        // Optimized formula: v' = v + 2*w*(q x v) + 2*(q x (q x v))
+        float cx = qy*vz - qz*vy;
+        float cy = qz*vx - qx*vz;
+        float cz = qx*vy - qy*vx;
+        float cx2 = qy*cz - qz*cy;
+        float cy2 = qz*cx - qx*cz;
+        float cz2 = qx*cy - qy*cx;
+        rx = vx + 2.0f*(qw*cx + cx2);
+        ry = vy + 2.0f*(qw*cy + cy2);
+        rz = vz + 2.0f*(qw*cz + cz2);
+    };
+
+    // Transform struct to accumulate through hierarchy
+    struct Transform {
+        float posX = 0, posY = 0, posZ = 0;
+        float rotX = 0, rotY = 0, rotZ = 0, rotW = 1;
+    };
+
+    // Recursive function to find collision shapes, accumulating transforms
+    std::function<void(size_t, uint32_t, Transform)> processStruct = [&](size_t structIdx, uint32_t offset, Transform parentTransform) {
         if (structIdx >= gff.structs().size()) return;
 
         const auto& st = gff.structs()[structIdx];
         std::string structType(st.structType);
 
-        std::cout << "Processing struct " << structIdx << " type='" << structType << "' offset=" << offset << std::endl;
+        Transform currentTransform = parentTransform;
+
+        // If this is a "node" struct, read and accumulate its transform
+        // Note: PHY files don't have position/rotation in nodes - those are in MMH
+        if (structType == "node") {
+            // PHY nodes only have name (6000) and children (6999)
+            // Position/rotation (6047/6048) are in MMH files, not PHY
+            // For now, we skip transform accumulation since PHY doesn't have the data
+        } // <--- FIXED: Added missing brace here
 
         // If this is a "shap" struct, extract the collision shape
         if (structType == "shap") {
-            std::cout << "  FOUND SHAPE STRUCT!" << std::endl;
             CollisionShape shape;
 
             // Read shape name (field 6241)
@@ -243,117 +276,174 @@ bool loadPHY(const std::vector<uint8_t>& data, Model& model) {
             if (shape.name.empty()) {
                 shape.name = "collision_" + std::to_string(model.collisionShapes.size());
             }
-            std::cout << "  Shape name: " << shape.name << std::endl;
 
-            // Read position (field 6061) - Vector3f
+            // Read local position (field 6061) - Vector3f
+            float localPosX = 0, localPosY = 0, localPosZ = 0;
             const GFFField* posField = gff.findField(structIdx, 6061);
             if (posField) {
                 uint32_t posOffset = gff.dataOffset() + posField->dataOffset + offset;
-                shape.posX = gff.readFloatAt(posOffset);
-                shape.posY = gff.readFloatAt(posOffset + 4);
-                shape.posZ = gff.readFloatAt(posOffset + 8);
-                std::cout << "  Position: " << shape.posX << ", " << shape.posY << ", " << shape.posZ << std::endl;
+                localPosX = gff.readFloatAt(posOffset);
+                localPosY = gff.readFloatAt(posOffset + 4);
+                localPosZ = gff.readFloatAt(posOffset + 8);
             }
 
-            // Read rotation (field 6060) - Quaternion
+            // Read local rotation (field 6060) - Quaternion
+            float localRotX = 0, localRotY = 0, localRotZ = 0, localRotW = 1;
             const GFFField* rotField = gff.findField(structIdx, 6060);
             if (rotField) {
                 uint32_t rotOffset = gff.dataOffset() + rotField->dataOffset + offset;
-                shape.rotX = gff.readFloatAt(rotOffset);
-                shape.rotY = gff.readFloatAt(rotOffset + 4);
-                shape.rotZ = gff.readFloatAt(rotOffset + 8);
-                shape.rotW = gff.readFloatAt(rotOffset + 12);
+                localRotX = gff.readFloatAt(rotOffset);
+                localRotY = gff.readFloatAt(rotOffset + 4);
+                localRotZ = gff.readFloatAt(rotOffset + 8);
+                localRotW = gff.readFloatAt(rotOffset + 12);
             }
 
+            // Use local position directly (PHY doesn't have parent bone transforms)
+            shape.posX = localPosX;
+            shape.posY = localPosY;
+            shape.posZ = localPosZ;
+            shape.rotX = localRotX;
+            shape.rotY = localRotY;
+            shape.rotZ = localRotZ;
+            shape.rotW = localRotW;
+
             // Read shape type struct (field 6998) - this points to boxs/sphs/caps/mshs
-            std::vector<GFFStructRef> shapeData = gff.readStructList(structIdx, 6998, offset);
-            std::cout << "  Shape data structs: " << shapeData.size() << std::endl;
+            // Field 6998 is a generic reference (ref=1, struct=0, list=0)
+            // Format: [structIndex (2 bytes), flags (2 bytes), offset (4 bytes)]
+            const GFFField* shapeTypeField = gff.findField(structIdx, 6998);
+            GFFStructRef dataRef;
+            bool hasShapeData = false;
 
-            if (!shapeData.empty()) {
-                const auto& dataRef = shapeData[0];
-                if (dataRef.structIndex < gff.structs().size()) {
-                    std::string dataType(gff.structs()[dataRef.structIndex].structType);
-                    std::cout << "  Shape data type: " << dataType << std::endl;
+            if (shapeTypeField) {
+                bool isList = (shapeTypeField->flags & 0x8000) != 0;
+                bool isStruct = (shapeTypeField->flags & 0x4000) != 0;
+                bool isRef = (shapeTypeField->flags & 0x2000) != 0;
 
-                    if (dataType == "boxs") {
-                        shape.type = CollisionShapeType::Box;
-                        const GFFField* dimField = gff.findField(dataRef.structIndex, 6071);
-                        if (dimField) {
-                            uint32_t dimOffset = gff.dataOffset() + dimField->dataOffset + dataRef.offset;
-                            shape.boxX = gff.readFloatAt(dimOffset);
-                            shape.boxY = gff.readFloatAt(dimOffset + 4);
-                            shape.boxZ = gff.readFloatAt(dimOffset + 8);
-                            std::cout << "  Box dims: " << shape.boxX << ", " << shape.boxY << ", " << shape.boxZ << std::endl;
-                        }
+                uint32_t dataPos = gff.dataOffset() + shapeTypeField->dataOffset + offset;
+
+                if (isRef && !isList && !isStruct) {
+                    // Generic reference: read structIndex (uint16), flags (uint16), offset (uint32)
+                    uint16_t refStructIdx = gff.readUInt16At(dataPos);
+                    uint32_t refOffset = gff.readUInt32At(dataPos + 4);
+
+                    if (refStructIdx < gff.structs().size()) {
+                        dataRef.structIndex = refStructIdx;
+                        dataRef.offset = refOffset;
+                        hasShapeData = true;
                     }
-                    else if (dataType == "sphs") {
-                        shape.type = CollisionShapeType::Sphere;
-                        shape.radius = gff.readFloatByLabel(dataRef.structIndex, 6072, dataRef.offset);
-                        std::cout << "  Sphere radius: " << shape.radius << std::endl;
+                }
+                else if (isStruct && !isList) {
+                    // Single struct reference
+                    int32_t ref = gff.readInt32At(dataPos);
+                    if (ref >= 0) {
+                        dataRef.structIndex = shapeTypeField->typeId;
+                        dataRef.offset = ref;
+                        hasShapeData = true;
                     }
-                    else if (dataType == "caps") {
-                        shape.type = CollisionShapeType::Capsule;
-                        shape.radius = gff.readFloatByLabel(dataRef.structIndex, 6072, dataRef.offset);
-                        shape.height = gff.readFloatByLabel(dataRef.structIndex, 6073, dataRef.offset);
-                        std::cout << "  Capsule radius: " << shape.radius << ", height: " << shape.height << std::endl;
+                }
+                else {
+                    // List - use normal readStructList
+                    std::vector<GFFStructRef> shapeData = gff.readStructList(structIdx, 6998, offset);
+                    if (!shapeData.empty()) {
+                        dataRef = shapeData[0];
+                        hasShapeData = true;
                     }
-                    else if (dataType == "mshs") {
-                        shape.type = CollisionShapeType::Mesh;
-                        std::cout << "  Mesh collision shape" << std::endl;
+                }
+            }
 
-                        // Field 6077 = BinaryCookedData (NXS format mesh data)
-                        const GFFField* meshDataField = gff.findField(dataRef.structIndex, 6077);
-                        if (meshDataField) {
-                            uint32_t dataPos = gff.dataOffset() + meshDataField->dataOffset + dataRef.offset;
-                            int32_t listRef = gff.readInt32At(dataPos);
+            bool shapeValid = false;
 
-                            if (listRef >= 0) {
-                                // Get the list position (skip 4 bytes for list count)
-                                uint32_t nxsPos = gff.dataOffset() + listRef + 4;
+            if (hasShapeData && dataRef.structIndex < gff.structs().size()) {
+                std::string dataType(gff.structs()[dataRef.structIndex].structType);
 
-                                // Parse NXS format:
-                                // - 8 bytes: header string
-                                // - 5 x uint32: unknown values (20 bytes)
-                                // - uint32: vertex count
-                                // - uint32: face count
-                                // - vertCount * 3 floats: vertices (x,y,z)
-                                // - faceCount * 3 bytes: face indices
+                if (dataType == "boxs") {
+                    shape.type = CollisionShapeType::Box;
+                    const GFFField* dimField = gff.findField(dataRef.structIndex, 6071);
+                    if (dimField) {
+                        uint32_t dimOffset = gff.dataOffset() + dimField->dataOffset + dataRef.offset;
+                        shape.boxX = gff.readFloatAt(dimOffset);
+                        shape.boxY = gff.readFloatAt(dimOffset + 4);
+                        shape.boxZ = gff.readFloatAt(dimOffset + 8);
+                        shapeValid = (shape.boxX != 0 || shape.boxY != 0 || shape.boxZ != 0);
+                    }
+                }
+                else if (dataType == "sphs") {
+                    shape.type = CollisionShapeType::Sphere;
+                    const GFFField* radField = gff.findField(dataRef.structIndex, 6072);
+                    if (radField) {
+                        uint32_t radOffset = gff.dataOffset() + radField->dataOffset + dataRef.offset;
+                        shape.radius = gff.readFloatAt(radOffset);
+                    }
+                    shapeValid = (shape.radius > 0.0f);
+                }
+                else if (dataType == "caps") {
+                    shape.type = CollisionShapeType::Capsule;
+                    const GFFField* radField = gff.findField(dataRef.structIndex, 6072);
+                    const GFFField* htField = gff.findField(dataRef.structIndex, 6073);
+                    if (radField) {
+                        uint32_t radOffset = gff.dataOffset() + radField->dataOffset + dataRef.offset;
+                        shape.radius = gff.readFloatAt(radOffset);
+                    }
+                    if (htField) {
+                        uint32_t htOffset = gff.dataOffset() + htField->dataOffset + dataRef.offset;
+                        shape.height = gff.readFloatAt(htOffset);
+                    }
+                    shapeValid = (shape.radius > 0.0f && shape.height > 0.0f);
+                }
+                else if (dataType == "mshs") {
+                    shape.type = CollisionShapeType::Mesh;
 
-                                const auto& rawData = gff.rawData();
+                    // Field 6077 = BinaryCookedData (NXS format mesh data)
+                    const GFFField* meshDataField = gff.findField(dataRef.structIndex, 6077);
+                    if (meshDataField) {
+                        uint32_t meshDataPos = gff.dataOffset() + meshDataField->dataOffset + dataRef.offset;
+                        int32_t listRef = gff.readInt32At(meshDataPos);
 
-                                if (nxsPos + 36 < rawData.size()) {
-                                    // Skip 8-byte header + 20 bytes unknown
-                                    nxsPos += 28;
+                        if (listRef >= 0) {
+                            // Get the list position (skip 4 bytes for list count)
+                            uint32_t nxsPos = gff.dataOffset() + listRef + 4;
 
-                                    uint32_t vertCount = gff.readUInt32At(nxsPos);
-                                    nxsPos += 4;
-                                    uint32_t faceCount = gff.readUInt32At(nxsPos);
-                                    nxsPos += 4;
+                            // Parse NXS format:
+                            // - 8 bytes: header string
+                            // - 5 x uint32: unknown values (20 bytes)
+                            // - uint32: vertex count
+                            // - uint32: face count
+                            // - vertCount * 3 floats: vertices (x,y,z)
+                            // - faceCount * 3 bytes: face indices
 
-                                    std::cout << "  Mesh collision: " << vertCount << " verts, " << faceCount << " faces" << std::endl;
+                            const auto& rawData = gff.rawData();
 
-                                    // Read vertices
-                                    size_t vertsDataSize = vertCount * 3 * sizeof(float);
-                                    if (nxsPos + vertsDataSize <= rawData.size()) {
-                                        shape.meshVerts.reserve(vertCount * 3);
-                                        for (uint32_t v = 0; v < vertCount; v++) {
-                                            shape.meshVerts.push_back(gff.readFloatAt(nxsPos));
-                                            shape.meshVerts.push_back(gff.readFloatAt(nxsPos + 4));
-                                            shape.meshVerts.push_back(gff.readFloatAt(nxsPos + 8));
-                                            nxsPos += 12;
+                            if (nxsPos + 36 < rawData.size()) {
+                                // Skip 8-byte header + 20 bytes unknown
+                                nxsPos += 28;
+
+                                uint32_t vertCount = gff.readUInt32At(nxsPos);
+                                nxsPos += 4;
+                                uint32_t faceCount = gff.readUInt32At(nxsPos);
+                                nxsPos += 4;
+
+                                // Read vertices
+                                size_t vertsDataSize = vertCount * 3 * sizeof(float);
+                                if (nxsPos + vertsDataSize <= rawData.size()) {
+                                    shape.meshVerts.reserve(vertCount * 3);
+                                    for (uint32_t v = 0; v < vertCount; v++) {
+                                        shape.meshVerts.push_back(gff.readFloatAt(nxsPos));
+                                        shape.meshVerts.push_back(gff.readFloatAt(nxsPos + 4));
+                                        shape.meshVerts.push_back(gff.readFloatAt(nxsPos + 8));
+                                        nxsPos += 12;
+                                    }
+
+                                    // Read face indices (unsigned bytes)
+                                    size_t facesDataSize = faceCount * 3;
+                                    if (nxsPos + facesDataSize <= rawData.size()) {
+                                        shape.meshIndices.reserve(faceCount * 3);
+                                        for (uint32_t f = 0; f < faceCount; f++) {
+                                            shape.meshIndices.push_back(gff.readUInt8At(nxsPos));
+                                            shape.meshIndices.push_back(gff.readUInt8At(nxsPos + 1));
+                                            shape.meshIndices.push_back(gff.readUInt8At(nxsPos + 2));
+                                            nxsPos += 3;
                                         }
-
-                                        // Read face indices (unsigned bytes)
-                                        size_t facesDataSize = faceCount * 3;
-                                        if (nxsPos + facesDataSize <= rawData.size()) {
-                                            shape.meshIndices.reserve(faceCount * 3);
-                                            for (uint32_t f = 0; f < faceCount; f++) {
-                                                shape.meshIndices.push_back(gff.readUInt8At(nxsPos));
-                                                shape.meshIndices.push_back(gff.readUInt8At(nxsPos + 1));
-                                                shape.meshIndices.push_back(gff.readUInt8At(nxsPos + 2));
-                                                nxsPos += 3;
-                                            }
-                                        }
+                                        shapeValid = !shape.meshVerts.empty();
                                     }
                                 }
                             }
@@ -362,37 +452,67 @@ bool loadPHY(const std::vector<uint8_t>& data, Model& model) {
                 }
             }
 
-            model.collisionShapes.push_back(shape);
-            std::cout << "  ADDED collision shape! Total now: " << model.collisionShapes.size() << std::endl;
+            if (shapeValid) {
+                model.collisionShapes.push_back(shape);
+            }
         }
 
-        // Recurse into children (field 6999)
+        // Recurse into children (field 6999), passing current transform
         std::vector<GFFStructRef> children = gff.readStructList(structIdx, 6999, offset);
-        std::cout << "  Children count: " << children.size() << std::endl;
         for (const auto& child : children) {
-            processStruct(child.structIndex, child.offset);
+            processStruct(child.structIndex, child.offset, currentTransform);
         }
     };
 
-    // Start from root struct (index 0)
-    processStruct(0, 0);
+    // Start from root struct (index 0) with identity transform
+    Transform identityTransform;
+    processStruct(0, 0, identityTransform);
 
-    std::cout << "=== loadPHY complete, total collision shapes: " << model.collisionShapes.size() << " ===" << std::endl;
+    std::cout << "Loaded " << model.collisionShapes.size() << " collision shapes from PHY" << std::endl;
     return !model.collisionShapes.empty();
 }
 
-// Load material names from MMH file and apply to model meshes
-void loadMaterialsFromMMH(const std::vector<uint8_t>& data, Model& model) {
+// Quaternion multiply helper for world transform calculation
+void quatMulWorld(float ax, float ay, float az, float aw,
+                  float bx, float by, float bz, float bw,
+                  float& rx, float& ry, float& rz, float& rw) {
+    rw = aw*bw - ax*bx - ay*by - az*bz;
+    rx = aw*bx + ax*bw + ay*bz - az*by;
+    ry = aw*by - ax*bz + ay*bw + az*bx;
+    rz = aw*bz + ax*by - ay*bx + az*bw;
+}
+
+// Rotate point by quaternion for world transform
+void quatRotateWorld(float qx, float qy, float qz, float qw,
+                     float px, float py, float pz,
+                     float& rx, float& ry, float& rz) {
+    // v' = q * v * q^-1  (for unit quaternion, q^-1 = conjugate)
+    float tx = 2.0f * (qy * pz - qz * py);
+    float ty = 2.0f * (qz * px - qx * pz);
+    float tz = 2.0f * (qx * py - qy * px);
+
+    rx = px + qw * tx + (qy * tz - qz * ty);
+    ry = py + qw * ty + (qz * tx - qx * tz);
+    rz = pz + qw * tz + (qx * ty - qy * tx);
+}
+
+// Load skeleton and material names from MMH file
+void loadMMH(const std::vector<uint8_t>& data, Model& model) {
     GFFFile gff;
     if (!gff.load(data)) {
         return;
     }
 
-    // Build a map of mesh name -> material name by traversing MMH hierarchy
+    // Build a map of mesh name -> material name
     std::map<std::string, std::string> meshMaterials;
 
-    // Recursive function to find mesh nodes in MMH
-    std::function<void(size_t, uint32_t)> findMeshNodes = [&](size_t structIdx, uint32_t offset) {
+    // Temporary bone storage with parent names
+    std::vector<Bone> tempBones;
+
+    // Recursive function to find nodes in MMH
+    std::function<void(size_t, uint32_t, const std::string&)> findNodes =
+        [&](size_t structIdx, uint32_t offset, const std::string& parentName) {
+
         if (structIdx >= gff.structs().size()) return;
 
         const auto& s = gff.structs()[structIdx];
@@ -400,26 +520,60 @@ void loadMaterialsFromMMH(const std::vector<uint8_t>& data, Model& model) {
 
         // "mesh" struct type contains mesh name (6006) and material (6001)
         if (structType == "mesh") {
-            std::string meshName = gff.readStringByLabel(structIdx, 6006, offset);  // MESH_NAME
-            std::string materialName = gff.readStringByLabel(structIdx, 6001, offset);  // MATERIAL_OBJ
+            std::string meshName = gff.readStringByLabel(structIdx, 6006, offset);
+            std::string materialName = gff.readStringByLabel(structIdx, 6001, offset);
 
             if (!meshName.empty() && !materialName.empty()) {
                 meshMaterials[meshName] = materialName;
             }
         }
 
-        // Recurse into children (field 6999)
+        // "node" struct type contains bone data
+        if (structType == "node") {
+            Bone bone;
+            bone.name = gff.readStringByLabel(structIdx, 6000, offset);
+            bone.parentName = parentName;
+
+            // Read position (field 6047) - Vector3f
+            const GFFField* posField = gff.findField(structIdx, 6047);
+            if (posField) {
+                uint32_t posOffset = gff.dataOffset() + posField->dataOffset + offset;
+                bone.posX = gff.readFloatAt(posOffset);
+                bone.posY = gff.readFloatAt(posOffset + 4);
+                bone.posZ = gff.readFloatAt(posOffset + 8);
+            }
+
+            // Read rotation (field 6048) - Quaternion
+            const GFFField* rotField = gff.findField(structIdx, 6048);
+            if (rotField) {
+                uint32_t rotOffset = gff.dataOffset() + rotField->dataOffset + offset;
+                bone.rotX = gff.readFloatAt(rotOffset);
+                bone.rotY = gff.readFloatAt(rotOffset + 4);
+                bone.rotZ = gff.readFloatAt(rotOffset + 8);
+                bone.rotW = gff.readFloatAt(rotOffset + 12);
+            }
+
+            if (!bone.name.empty()) {
+                tempBones.push_back(bone);
+            }
+
+            // Recurse into children with this bone as parent
+            std::vector<GFFStructRef> children = gff.readStructList(structIdx, 6999, offset);
+            for (const auto& child : children) {
+                findNodes(child.structIndex, child.offset, bone.name);
+            }
+            return; // Don't recurse again below
+        }
+
+        // Recurse into children (field 6999) for non-node structs
         std::vector<GFFStructRef> children = gff.readStructList(structIdx, 6999, offset);
         for (const auto& child : children) {
-            findMeshNodes(child.structIndex, child.offset);
+            findNodes(child.structIndex, child.offset, parentName);
         }
     };
 
-    // Start from root struct's children
-    std::vector<GFFStructRef> rootChildren = gff.readStructList(0, 6999, 0);
-    for (const auto& child : rootChildren) {
-        findMeshNodes(child.structIndex, child.offset);
-    }
+    // Start from root struct
+    findNodes(0, 0, "");
 
     // Apply materials to model meshes
     for (auto& mesh : model.meshes) {
@@ -427,6 +581,62 @@ void loadMaterialsFromMMH(const std::vector<uint8_t>& data, Model& model) {
         if (it != meshMaterials.end()) {
             mesh.materialName = it->second;
         }
+    }
+
+    // Build skeleton with parent indices
+    model.skeleton.bones = tempBones;
+    for (size_t i = 0; i < model.skeleton.bones.size(); i++) {
+        Bone& bone = model.skeleton.bones[i];
+        if (!bone.parentName.empty()) {
+            bone.parentIndex = model.skeleton.findBone(bone.parentName);
+        }
+    }
+
+    // Compute world transforms by walking hierarchy
+    // First pass: bones with no parent (roots)
+    for (size_t i = 0; i < model.skeleton.bones.size(); i++) {
+        Bone& bone = model.skeleton.bones[i];
+        if (bone.parentIndex < 0) {
+            // Root bone - world = local
+            bone.worldPosX = bone.posX;
+            bone.worldPosY = bone.posY;
+            bone.worldPosZ = bone.posZ;
+            bone.worldRotX = bone.rotX;
+            bone.worldRotY = bone.rotY;
+            bone.worldRotZ = bone.rotZ;
+            bone.worldRotW = bone.rotW;
+        }
+    }
+
+    // Multiple passes to propagate transforms down hierarchy
+    // (simple approach - could optimize with topological sort)
+    for (int pass = 0; pass < 20; pass++) {
+        for (size_t i = 0; i < model.skeleton.bones.size(); i++) {
+            Bone& bone = model.skeleton.bones[i];
+            if (bone.parentIndex >= 0) {
+                const Bone& parent = model.skeleton.bones[bone.parentIndex];
+
+                // Rotate local position by parent world rotation
+                float rotatedX, rotatedY, rotatedZ;
+                quatRotateWorld(parent.worldRotX, parent.worldRotY, parent.worldRotZ, parent.worldRotW,
+                               bone.posX, bone.posY, bone.posZ,
+                               rotatedX, rotatedY, rotatedZ);
+
+                // World pos = parent world pos + rotated local pos
+                bone.worldPosX = parent.worldPosX + rotatedX;
+                bone.worldPosY = parent.worldPosY + rotatedY;
+                bone.worldPosZ = parent.worldPosZ + rotatedZ;
+
+                // World rot = parent world rot * local rot
+                quatMulWorld(parent.worldRotX, parent.worldRotY, parent.worldRotZ, parent.worldRotW,
+                            bone.rotX, bone.rotY, bone.rotZ, bone.rotW,
+                            bone.worldRotX, bone.worldRotY, bone.worldRotZ, bone.worldRotW);
+            }
+        }
+    }
+
+    if (!model.skeleton.bones.empty()) {
+        std::cout << "Loaded skeleton with " << model.skeleton.bones.size() << " bones from MMH" << std::endl;
     }
 }
 
@@ -512,11 +722,6 @@ bool loadModelFromEntry(AppState& state, const ERFEntry& entry) {
     std::string phyName = baseName + ".phy";
     std::string mmhName = baseName + ".mmh";
 
-    std::cout << "=== Looking for PHY file ===" << std::endl;
-    std::cout << "Base name: " << baseName << std::endl;
-    std::cout << "PHY name: " << phyName << std::endl;
-    std::cout << "Selected folder: " << state.selectedFolder << std::endl;
-
     // Search for MMH file in current ERF
     for (const auto& e : state.currentErf->entries()) {
         std::string eName = e.name;
@@ -528,32 +733,12 @@ bool loadModelFromEntry(AppState& state, const ERFEntry& entry) {
         if (eName == mmhLower) {
             std::vector<uint8_t> mmhData = state.currentErf->readEntry(e);
             if (!mmhData.empty()) {
-                loadMaterialsFromMMH(mmhData, state.currentModel);
+                loadMMH(mmhData, state.currentModel);
             }
         }
     }
 
-// (We use the mmhName defined above)
-
-    std::cout << "=== Looking for PHY file ===" << std::endl;
-    std::cout << "Base name: " << baseName << std::endl;
-
-    // 1. Search for MMH file in current ERF
-    for (const auto& e : state.currentErf->entries()) {
-        std::string eName = e.name;
-        std::transform(eName.begin(), eName.end(), eName.begin(), ::tolower);
-        std::string mmhLower = mmhName;
-        std::transform(mmhLower.begin(), mmhLower.end(), mmhLower.begin(), ::tolower);
-
-        if (eName == mmhLower) {
-            std::vector<uint8_t> mmhData = state.currentErf->readEntry(e);
-            if (!mmhData.empty()) {
-                loadMaterialsFromMMH(mmhData, state.currentModel);
-            }
-        }
-    }
-
-    // 2. Define potential PHY names
+    // Define potential PHY names (different naming patterns exist)
     std::vector<std::string> phyCandidates;
 
     // Candidate A: Exact match (e.g. c_berkbear_0.phy)
@@ -570,13 +755,10 @@ bool loadModelFromEntry(AppState& state, const ERFEntry& entry) {
         phyCandidates.push_back(variantA + ".phy");
     }
 
-    std::cout << "=== Scanning all loaded ERFs for PHY candidates ===" << std::endl;
+    // Scan all loaded ERFs for matching PHY files
     bool foundPhy = false;
-
-    // 3. Scan ALL loaded ERFs
     for (const auto& erfPath : state.erfFiles) {
         ERFFile phyErf;
-        // Optimization: check if we can open the ERF
         if (phyErf.open(erfPath)) {
             for (const auto& e : phyErf.entries()) {
                 std::string eName = e.name;
@@ -588,8 +770,6 @@ bool loadModelFromEntry(AppState& state, const ERFEntry& entry) {
                     std::transform(candLower.begin(), candLower.end(), candLower.begin(), ::tolower);
 
                     if (eName == candLower) {
-                        std::cout << ">>> FOUND PHY: " << e.name << " in " << erfPath << " <<<" << std::endl;
-
                         std::vector<uint8_t> phyData = phyErf.readEntry(e);
                         if (!phyData.empty()) {
                             loadPHY(phyData, state.currentModel);
@@ -602,13 +782,6 @@ bool loadModelFromEntry(AppState& state, const ERFEntry& entry) {
             }
         }
         if (foundPhy) break;
-    }
-
-    if (!foundPhy) {
-        std::cout << "PHY file NOT FOUND in any loaded ERF." << std::endl;
-        std::cout << "Checked candidates: ";
-        for(const auto& c : phyCandidates) std::cout << c << " ";
-        std::cout << std::endl;
     }
 
     // Calculate bounds and position camera
@@ -1081,6 +1254,48 @@ void renderModel(const Model& model, const Camera& camera, const RenderSettings&
         glDisable(GL_BLEND);
     }
 
+    // Draw skeleton
+    if (settings.showSkeleton && !model.skeleton.bones.empty()) {
+        glDisable(GL_LIGHTING);
+        glDisable(GL_DEPTH_TEST);  // Draw on top
+        glLineWidth(2.0f);
+
+        // Draw bones as lines from parent to child
+        glBegin(GL_LINES);
+        for (const auto& bone : model.skeleton.bones) {
+            if (bone.parentIndex >= 0) {
+                const Bone& parent = model.skeleton.bones[bone.parentIndex];
+
+                // Parent position (green)
+                glColor3f(0.0f, 1.0f, 0.0f);
+                glVertex3f(parent.worldPosX, parent.worldPosY, parent.worldPosZ);
+
+                // Child position (yellow)
+                glColor3f(1.0f, 1.0f, 0.0f);
+                glVertex3f(bone.worldPosX, bone.worldPosY, bone.worldPosZ);
+            }
+        }
+        glEnd();
+
+        // Draw bone positions as points
+        glPointSize(6.0f);
+        glBegin(GL_POINTS);
+        for (const auto& bone : model.skeleton.bones) {
+            // Root bones in red, others in yellow
+            if (bone.parentIndex < 0) {
+                glColor3f(1.0f, 0.0f, 0.0f);
+            } else {
+                glColor3f(1.0f, 1.0f, 0.0f);
+            }
+            glVertex3f(bone.worldPosX, bone.worldPosY, bone.worldPosZ);
+        }
+        glEnd();
+
+        glPointSize(1.0f);
+        glLineWidth(1.0f);
+        glEnable(GL_DEPTH_TEST);
+    }
+
     glDisable(GL_DEPTH_TEST);
 }
 
@@ -1371,6 +1586,12 @@ int main() {
                 ImGui::Checkbox("Wireframe##coll", &state.renderSettings.collisionWireframe);
             }
 
+            ImGui::Checkbox("Show Skeleton", &state.renderSettings.showSkeleton);
+            if (state.renderSettings.showSkeleton && !state.currentModel.skeleton.bones.empty()) {
+                ImGui::SameLine();
+                ImGui::TextDisabled("(%zu bones)", state.currentModel.skeleton.bones.size());
+            }
+
             ImGui::Separator();
             ImGui::Text("Camera Speed: %.1f", state.camera.moveSpeed);
             ImGui::SliderFloat("##speed", &state.camera.moveSpeed, 0.1f, 100.0f, "%.1f");
@@ -1473,6 +1694,32 @@ int main() {
                             case CollisionShapeType::Mesh: typeStr = "Mesh"; break;
                         }
                         ImGui::BulletText("%s: %s", shape.name.c_str(), typeStr);
+                    }
+                }
+
+                // Skeleton bone list
+                if (!state.currentModel.skeleton.bones.empty()) {
+                    ImGui::Separator();
+                    if (ImGui::TreeNode("Skeleton", "Skeleton (%zu bones)", state.currentModel.skeleton.bones.size())) {
+                        // Calculate height based on number of bones (max 300)
+                        float boneListHeight = std::min(300.0f, state.currentModel.skeleton.bones.size() * 20.0f + 20.0f);
+                        ImGui::BeginChild("BoneList", ImVec2(0, boneListHeight), true);
+
+                        for (size_t i = 0; i < state.currentModel.skeleton.bones.size(); i++) {
+                            const auto& bone = state.currentModel.skeleton.bones[i];
+
+                            // Color root bones differently
+                            if (bone.parentIndex < 0) {
+                                ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.5f, 1.0f), "%s (root)", bone.name.c_str());
+                            } else {
+                                ImGui::Text("%s", bone.name.c_str());
+                                ImGui::SameLine();
+                                ImGui::TextDisabled("-> %s", bone.parentName.c_str());
+                            }
+                        }
+
+                        ImGui::EndChild();
+                        ImGui::TreePop();
                     }
                 }
             }
