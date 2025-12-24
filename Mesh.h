@@ -11,6 +11,25 @@ struct Vertex {
     float u, v;             // TexCoord
 };
 
+// Material data parsed from MAO files
+struct Material {
+    std::string name;
+    std::string maoContent;   // Raw MAO file content for viewing
+    std::string diffuseMap;   // Path to diffuse texture
+    std::string normalMap;    // Path to normal map
+    std::string specularMap;  // Path to specular map
+    std::string tintMap;      // Path to tint map
+
+    // Material properties from MAO
+    float specularPower = 50.0f;
+    float opacity = 1.0f;
+
+    // OpenGL texture ID (0 = not loaded)
+    uint32_t diffuseTexId = 0;
+    uint32_t normalTexId = 0;
+    uint32_t specularTexId = 0;
+};
+
 // Collision shape types (from PHY files)
 enum class CollisionShapeType {
     Box,      // boxs
@@ -68,6 +87,7 @@ struct Skeleton {
 struct Mesh {
     std::string name;
     std::string materialName;  // Material reference (.mao file) - from MMH, not MSH
+    int materialIndex = -1;    // Index into Model::materials, -1 = no material
     std::vector<Vertex> vertices;
     std::vector<uint32_t> indices;
 
@@ -107,6 +127,7 @@ struct Mesh {
 struct Model {
     std::string name;
     std::vector<Mesh> meshes;
+    std::vector<Material> materials;              // Loaded materials
     std::vector<CollisionShape> collisionShapes;  // From PHY file
     Skeleton skeleton;  // From MMH file
 
@@ -114,5 +135,13 @@ struct Model {
         for (auto& mesh : meshes) {
             mesh.calculateBounds();
         }
+    }
+
+    // Find material index by name, returns -1 if not found
+    int findMaterial(const std::string& name) const {
+        for (size_t i = 0; i < materials.size(); i++) {
+            if (materials[i].name == name) return (int)i;
+        }
+        return -1;
     }
 };

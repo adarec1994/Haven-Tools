@@ -5,6 +5,7 @@
 #include <memory>
 #include <cmath>
 #include <map>
+#include <set>
 #include <functional>
 #include <iostream>
 
@@ -23,7 +24,319 @@
 #include "Mesh.h"
 #include "model_loader.h"
 
+// OpenGL extension defines (may not be in all headers)
+#ifndef GL_BGR
+#define GL_BGR 0x80E0
+#endif
+#ifndef GL_BGRA
+#define GL_BGRA 0x80E1
+#endif
+#ifndef GL_RED
+#define GL_RED 0x1903
+#endif
+#ifndef GL_ALPHA
+#define GL_ALPHA 0x1906
+#endif
+
 namespace fs = std::filesystem;
+
+// ============================================================================
+// MAO (Material) Parser - XML-based material files
+// ============================================================================
+Material parseMAO(const std::string& maoContent, const std::string& materialName) {
+    Material mat;
+    mat.name = materialName;
+
+    std::cout << "    Parsing MAO content..." << std::endl;
+
+    // Simple XML parsing for texture references
+    // Look for patterns like: <Texture Name="mml_tDiffuse" ResName="path/to/texture.dds"/>
+    size_t pos = 0;
+    while ((pos = maoContent.find("<Texture", pos)) != std::string::npos) {
+        size_t endTag = maoContent.find("/>", pos);
+        if (endTag == std::string::npos) {
+            endTag = maoContent.find("</Texture>", pos);
+            if (endTag == std::string::npos) break;
+        }
+
+        std::string tag = maoContent.substr(pos, endTag - pos);
+
+        // Extract Name attribute
+        std::string texName;
+        size_t namePos = tag.find("Name=\"");
+        if (namePos != std::string::npos) {
+            namePos += 6;
+            size_t nameEnd = tag.find("\"", namePos);
+            if (nameEnd != std::string::npos) {
+                texName = tag.substr(namePos, nameEnd - namePos);
+            }
+        }
+
+        // Extract ResName attribute (texture path)
+        std::string resName;
+        size_t resPos = tag.find("ResName=\"");
+        if (resPos != std::string::npos) {
+            resPos += 9;
+            size_t resEnd = tag.find("\"", resPos);
+            if (resEnd != std::string::npos) {
+                resName = tag.substr(resPos, resEnd - resPos);
+            }
+        }
+
+        std::cout << "      Texture tag: Name='" << texName << "' ResName='" << resName << "'" << std::endl;
+
+        // Map texture type to material slot
+        if (!texName.empty() && !resName.empty()) {
+            // Convert to lowercase for comparison
+            std::string texNameLower = texName;
+            std::transform(texNameLower.begin(), texNameLower.end(), texNameLower.begin(), ::tolower);
+
+            if (texNameLower.find("diffuse") != std::string::npos) {
+                mat.diffuseMap = resName;
+                std::cout << "      -> Assigned as diffuse map" << std::endl;
+            } else if (texNameLower.find("normal") != std::string::npos) {
+                mat.normalMap = resName;
+            } else if (texNameLower.find("specular") != std::string::npos) {
+                mat.specularMap = resName;
+            } else if (texNameLower.find("tint") != std::string::npos) {
+                mat.tintMap = resName;
+            }
+        }
+
+        pos = endTag + 2;
+    }
+
+    if (mat.diffuseMap.empty()) {
+        std::cout << "      WARNING: No diffuse texture found in MAO!" << std::endl;
+    }
+
+    return mat;
+}
+
+// ============================================================================
+// DDS Texture Loader
+// ============================================================================
+// DDS file format structures
+#pragma pack(push, 1)
+struct DDSPixelFormat {
+    uint32_t size;
+    uint32_t flags;
+    uint32_t fourCC;
+    uint32_t rgbBitCount;
+    uint32_t rBitMask;
+    uint32_t gBitMask;
+    uint32_t bBitMask;
+    uint32_t aBitMask;
+};
+
+struct DDSHeader {
+    uint32_t magic;
+    uint32_t size;
+    uint32_t flags;
+    uint32_t height;
+    uint32_t width;
+    uint32_t pitchOrLinearSize;
+    uint32_t depth;
+    uint32_t mipMapCount;
+    uint32_t reserved1[11];
+    DDSPixelFormat pixelFormat;
+    uint32_t caps;
+    uint32_t caps2;
+    uint32_t caps3;
+    uint32_t caps4;
+    uint32_t reserved2;
+};
+
+struct DDSHeaderDX10 {
+    uint32_t dxgiFormat;
+    uint32_t resourceDimension;
+    uint32_t miscFlag;
+    uint32_t arraySize;
+    uint32_t miscFlags2;
+};
+#pragma pack(pop)
+
+// FourCC codes
+#define FOURCC(a, b, c, d) ((uint32_t)(a) | ((uint32_t)(b) << 8) | ((uint32_t)(c) << 16) | ((uint32_t)(d) << 24))
+#define FOURCC_DXT1 FOURCC('D', 'X', 'T', '1')
+#define FOURCC_DXT2 FOURCC('D', 'X', 'T', '2')
+#define FOURCC_DXT3 FOURCC('D', 'X', 'T', '3')
+#define FOURCC_DXT4 FOURCC('D', 'X', 'T', '4')
+#define FOURCC_DXT5 FOURCC('D', 'X', 'T', '5')
+#define FOURCC_ATI1 FOURCC('A', 'T', 'I', '1')
+#define FOURCC_ATI2 FOURCC('A', 'T', 'I', '2')
+#define FOURCC_BC4U FOURCC('B', 'C', '4', 'U')
+#define FOURCC_BC4S FOURCC('B', 'C', '4', 'S')
+#define FOURCC_BC5U FOURCC('B', 'C', '5', 'U')
+#define FOURCC_BC5S FOURCC('B', 'C', '5', 'S')
+#define FOURCC_DX10 FOURCC('D', 'X', '1', '0')
+
+// Load DDS texture from raw data, returns OpenGL texture ID (0 on failure)
+uint32_t loadDDSTexture(const std::vector<uint8_t>& data) {
+    if (data.size() < sizeof(DDSHeader)) {
+        std::cout << "      DDS too small" << std::endl;
+        return 0;
+    }
+
+    const DDSHeader* header = reinterpret_cast<const DDSHeader*>(data.data());
+
+    // Check magic number "DDS "
+    if (header->magic != 0x20534444) {
+        std::cout << "      Not a DDS file (bad magic)" << std::endl;
+        return 0;
+    }
+
+    uint32_t width = header->width;
+    uint32_t height = header->height;
+    uint32_t mipCount = header->mipMapCount;
+    if (mipCount == 0) mipCount = 1;
+
+    size_t headerSize = sizeof(DDSHeader);
+
+    // Determine format
+    uint32_t format = 0;
+    uint32_t blockSize = 16;
+    bool compressed = false;
+    uint32_t internalFormat = GL_RGBA;
+
+    // DDPF flags
+    const uint32_t DDPF_ALPHAPIXELS = 0x1;
+    const uint32_t DDPF_ALPHA = 0x2;
+    const uint32_t DDPF_FOURCC = 0x4;
+    const uint32_t DDPF_RGB = 0x40;
+    const uint32_t DDPF_LUMINANCE = 0x20000;
+
+    if (header->pixelFormat.flags & DDPF_FOURCC) {
+        uint32_t fourCC = header->pixelFormat.fourCC;
+
+        // Print FourCC for debugging
+        char fcc[5] = {0};
+        memcpy(fcc, &fourCC, 4);
+
+        switch (fourCC) {
+            case FOURCC_DXT1:
+                format = 0x83F1;  // GL_COMPRESSED_RGBA_S3TC_DXT1_EXT
+                blockSize = 8;
+                compressed = true;
+                break;
+            case FOURCC_DXT2:
+            case FOURCC_DXT3:
+                format = 0x83F2;  // GL_COMPRESSED_RGBA_S3TC_DXT3_EXT
+                blockSize = 16;
+                compressed = true;
+                break;
+            case FOURCC_DXT4:
+            case FOURCC_DXT5:
+                format = 0x83F3;  // GL_COMPRESSED_RGBA_S3TC_DXT5_EXT
+                blockSize = 16;
+                compressed = true;
+                break;
+            case FOURCC_ATI1:
+            case FOURCC_BC4U:
+                format = 0x8DBB;  // GL_COMPRESSED_RED_RGTC1
+                blockSize = 8;
+                compressed = true;
+                break;
+            case FOURCC_ATI2:
+            case FOURCC_BC5U:
+                format = 0x8DBD;  // GL_COMPRESSED_RG_RGTC2
+                blockSize = 16;
+                compressed = true;
+                break;
+            case FOURCC_DX10:
+                // DX10 extended header - skip for now, just warn
+                std::cout << "      DX10 extended format not fully supported" << std::endl;
+                return 0;
+            default:
+                std::cout << "      Unsupported FourCC: " << fcc << " (0x" << std::hex << fourCC << std::dec << ")" << std::endl;
+                return 0;
+        }
+    } else if (header->pixelFormat.flags & DDPF_RGB) {
+        // Uncompressed RGB/RGBA
+        compressed = false;
+        if (header->pixelFormat.rgbBitCount == 32) {
+            format = GL_RGBA;
+            internalFormat = GL_RGBA;
+            // Check channel ordering (BGRA vs RGBA)
+            if (header->pixelFormat.bBitMask == 0x000000FF) {
+                format = GL_BGRA;
+            }
+        } else if (header->pixelFormat.rgbBitCount == 24) {
+            format = GL_RGB;
+            internalFormat = GL_RGB;
+            if (header->pixelFormat.bBitMask == 0x000000FF) {
+                format = GL_BGR;
+            }
+        } else if (header->pixelFormat.rgbBitCount == 16) {
+            // 16-bit RGB - convert to 24-bit for simplicity
+            std::cout << "      16-bit RGB not yet supported" << std::endl;
+            return 0;
+        } else {
+            std::cout << "      Unsupported RGB bit count: " << header->pixelFormat.rgbBitCount << std::endl;
+            return 0;
+        }
+    } else if (header->pixelFormat.flags & DDPF_LUMINANCE) {
+        // Grayscale
+        compressed = false;
+        if (header->pixelFormat.rgbBitCount == 8) {
+            format = GL_RED;
+            internalFormat = GL_RED;
+        } else {
+            std::cout << "      Unsupported luminance bit count: " << header->pixelFormat.rgbBitCount << std::endl;
+            return 0;
+        }
+    } else if (header->pixelFormat.flags & DDPF_ALPHA) {
+        // Alpha only
+        compressed = false;
+        format = GL_ALPHA;
+        internalFormat = GL_ALPHA;
+    } else {
+        std::cout << "      Unsupported pixel format flags: 0x" << std::hex << header->pixelFormat.flags << std::dec << std::endl;
+        return 0;
+    }
+
+    // Create OpenGL texture
+    uint32_t texId;
+    glGenTextures(1, &texId);
+    glBindTexture(GL_TEXTURE_2D, texId);
+
+    // Set texture parameters
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, mipCount > 1 ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+    // Upload texture data
+    const uint8_t* dataPtr = data.data() + headerSize;
+    size_t offset = 0;
+
+    for (uint32_t level = 0; level < mipCount && (width || height); level++) {
+        if (width == 0) width = 1;
+        if (height == 0) height = 1;
+
+        if (compressed) {
+            uint32_t size = ((width + 3) / 4) * ((height + 3) / 4) * blockSize;
+            if (offset + size > data.size() - headerSize) break;
+
+            glCompressedTexImage2D(GL_TEXTURE_2D, level, format, width, height, 0, size, dataPtr + offset);
+            offset += size;
+        } else {
+            uint32_t bytesPerPixel = header->pixelFormat.rgbBitCount / 8;
+            if (bytesPerPixel == 0) bytesPerPixel = 1;  // For luminance/alpha
+            uint32_t size = width * height * bytesPerPixel;
+            if (offset + size > data.size() - headerSize) break;
+
+            glTexImage2D(GL_TEXTURE_2D, level, internalFormat, width, height, 0,
+                        format, GL_UNSIGNED_BYTE, dataPtr + offset);
+            offset += size;
+        }
+
+        width /= 2;
+        height /= 2;
+    }
+
+    return texId;
+}
 
 // Fly camera (game-style)
 struct Camera {
@@ -106,6 +419,7 @@ struct RenderSettings {
     bool collisionWireframe = true;  // Draw collision as wireframe or solid
     bool showSkeleton = true;
     bool showBoneNames = false;
+    bool showTextures = true;  // Enable/disable texture rendering
     std::vector<uint8_t> meshVisible;  // Per-mesh visibility (using uint8_t because vector<bool> is special)
 
     void initMeshVisibility(size_t count) {
@@ -518,9 +832,10 @@ void loadMMH(const std::vector<uint8_t>& data, Model& model) {
         const auto& s = gff.structs()[structIdx];
         std::string structType(s.structType);
 
-        if (structType == "mesh") {
+        if (structType == "mshh") {
             std::string meshName = gff.readStringByLabel(structIdx, 6006, offset);
             std::string materialName = gff.readStringByLabel(structIdx, 6001, offset);
+            std::cout << "  Found mshh struct: name='" << meshName << "' material='" << materialName << "'" << std::endl;
             if (!meshName.empty() && !materialName.empty()) {
                 meshMaterials[meshName] = materialName;
             }
@@ -590,12 +905,21 @@ void loadMMH(const std::vector<uint8_t>& data, Model& model) {
     findNodes(0, 0, "");
 
     std::cout << "Recursive search done. Found " << tempBones.size() << " bones." << std::endl;
+    std::cout << "Found " << meshMaterials.size() << " mesh->material mappings:" << std::endl;
+    for (const auto& [meshName, matName] : meshMaterials) {
+        std::cout << "  '" << meshName << "' -> '" << matName << "'" << std::endl;
+    }
 
     // Apply materials
+    std::cout << "Applying materials to " << model.meshes.size() << " meshes:" << std::endl;
     for (auto& mesh : model.meshes) {
+        std::cout << "  Mesh '" << mesh.name << "': ";
         auto it = meshMaterials.find(mesh.name);
         if (it != meshMaterials.end()) {
             mesh.materialName = it->second;
+            std::cout << "matched -> '" << it->second << "'" << std::endl;
+        } else {
+            std::cout << "NO MATCH" << std::endl;
         }
     }
 
@@ -715,7 +1039,19 @@ bool loadModelFromEntry(AppState& state, const ERFEntry& entry) {
         return false; // Indicate parsing failed but we have placeholder
     }
 
-    // Successfully loaded
+    // Successfully loaded - first clean up old textures
+    for (const auto& mat : state.currentModel.materials) {
+        if (mat.diffuseTexId != 0) {
+            glDeleteTextures(1, &mat.diffuseTexId);
+        }
+        if (mat.normalTexId != 0) {
+            glDeleteTextures(1, &mat.normalTexId);
+        }
+        if (mat.specularTexId != 0) {
+            glDeleteTextures(1, &mat.specularTexId);
+        }
+    }
+
     state.currentModel = model;
     state.currentModel.name = entry.name;
     state.hasModel = true;
@@ -853,6 +1189,110 @@ bool loadModelFromEntry(AppState& state, const ERFEntry& entry) {
             }
         }
         if (foundPhy) break;
+    }
+
+    // ---------------------------------------------------------
+    // LOAD MATERIALS (MAO files)
+    // ---------------------------------------------------------
+    // Collect unique material names from meshes
+    std::set<std::string> materialNames;
+    for (const auto& mesh : state.currentModel.meshes) {
+        if (!mesh.materialName.empty()) {
+            materialNames.insert(mesh.materialName);
+        }
+    }
+
+    std::cout << "Looking for " << materialNames.size() << " unique materials..." << std::endl;
+
+    // Search for MAO files in loaded ERFs (optional - for future texture loading)
+    for (const std::string& matName : materialNames) {
+        std::string maoName = matName + ".mao";
+        std::string maoNameLower = maoName;
+        std::transform(maoNameLower.begin(), maoNameLower.end(), maoNameLower.begin(), ::tolower);
+
+        bool foundMao = false;
+        for (const auto& erfPath : state.erfFiles) {
+            ERFFile maoErf;
+            if (maoErf.open(erfPath)) {
+                for (const auto& e : maoErf.entries()) {
+                    std::string eName = e.name;
+                    std::transform(eName.begin(), eName.end(), eName.begin(), ::tolower);
+
+                    if (eName == maoNameLower) {
+                        std::vector<uint8_t> maoData = maoErf.readEntry(e);
+                        if (!maoData.empty()) {
+                            std::string maoContent(maoData.begin(), maoData.end());
+                            Material mat = parseMAO(maoContent, matName);
+                            mat.maoContent = maoContent;  // Store raw MAO for viewing
+                            state.currentModel.materials.push_back(mat);
+                            std::cout << "  Found MAO: " << matName << ".mao" << std::endl;
+                            foundMao = true;
+                        }
+                        break;
+                    }
+                }
+            }
+            if (foundMao) break;
+        }
+        if (!foundMao) {
+            // Still add material entry even if MAO not found
+            Material mat;
+            mat.name = matName;
+            state.currentModel.materials.push_back(mat);
+            std::cout << "  Material (no MAO): " << matName << std::endl;
+        }
+    }
+
+    // Link meshes to materials
+    for (auto& mesh : state.currentModel.meshes) {
+        if (!mesh.materialName.empty()) {
+            mesh.materialIndex = state.currentModel.findMaterial(mesh.materialName);
+        }
+    }
+
+    // ---------------------------------------------------------
+    // LOAD TEXTURES - scan ALL loaded ERFs
+    // ---------------------------------------------------------
+    std::cout << "Searching for textures in " << state.erfFiles.size() << " ERF files..." << std::endl;
+
+    for (auto& mat : state.currentModel.materials) {
+        if (!mat.diffuseMap.empty() && mat.diffuseTexId == 0) {
+            std::string texName = mat.diffuseMap;
+            std::string texNameLower = texName;
+            std::transform(texNameLower.begin(), texNameLower.end(), texNameLower.begin(), ::tolower);
+
+            std::cout << "  Looking for texture: " << texName << std::endl;
+
+            // Search all loaded ERFs for the texture
+            for (const auto& erfPath : state.erfFiles) {
+                ERFFile texErf;
+                if (texErf.open(erfPath)) {
+                    for (const auto& e : texErf.entries()) {
+                        std::string eName = e.name;
+                        std::transform(eName.begin(), eName.end(), eName.begin(), ::tolower);
+
+                        if (eName == texNameLower) {
+                            std::cout << "    Found in: " << erfPath << std::endl;
+                            std::vector<uint8_t> texData = texErf.readEntry(e);
+                            if (!texData.empty()) {
+                                mat.diffuseTexId = loadDDSTexture(texData);
+                                if (mat.diffuseTexId != 0) {
+                                    std::cout << "    Loaded texture ID: " << mat.diffuseTexId << std::endl;
+                                } else {
+                                    std::cout << "    Failed to decode DDS!" << std::endl;
+                                }
+                            }
+                            break;
+                        }
+                    }
+                }
+                if (mat.diffuseTexId != 0) break;
+            }
+
+            if (mat.diffuseTexId == 0) {
+                std::cout << "    NOT FOUND in any ERF" << std::endl;
+            }
+        }
     }
 
     // Calculate bounds and position camera
@@ -1077,6 +1517,7 @@ void renderModel(const Model& model, const Camera& camera, const RenderSettings&
     if (!model.meshes.empty()) {
         if (settings.wireframe) {
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+            glDisable(GL_TEXTURE_2D);
             glColor3f(0.8f, 0.8f, 0.8f);
         } else {
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -1092,7 +1533,7 @@ void renderModel(const Model& model, const Camera& camera, const RenderSettings&
             glLightfv(GL_LIGHT0, GL_AMBIENT, lightAmbient);
             glLightfv(GL_LIGHT0, GL_DIFFUSE, lightDiffuse);
 
-            glColor3f(0.7f, 0.7f, 0.7f);
+            glColor3f(1.0f, 1.0f, 1.0f);  // White for textured surfaces
         }
 
         for (size_t meshIdx = 0; meshIdx < model.meshes.size(); meshIdx++) {
@@ -1102,16 +1543,39 @@ void renderModel(const Model& model, const Camera& camera, const RenderSettings&
             }
 
             const auto& mesh = model.meshes[meshIdx];
+
+            // Check if this mesh has a textured material
+            uint32_t texId = 0;
+            if (!settings.wireframe && settings.showTextures && mesh.materialIndex >= 0 &&
+                mesh.materialIndex < (int)model.materials.size()) {
+                texId = model.materials[mesh.materialIndex].diffuseTexId;
+            }
+
+            if (texId != 0) {
+                glEnable(GL_TEXTURE_2D);
+                glBindTexture(GL_TEXTURE_2D, texId);
+            } else {
+                glDisable(GL_TEXTURE_2D);
+                if (!settings.wireframe) {
+                    glColor3f(0.7f, 0.7f, 0.7f);  // Gray for untextured
+                }
+            }
+
             glBegin(GL_TRIANGLES);
             for (size_t i = 0; i < mesh.indices.size(); i += 3) {
                 for (int j = 0; j < 3; j++) {
                     const auto& v = mesh.vertices[mesh.indices[i + j]];
+                    if (texId != 0) {
+                        glTexCoord2f(v.u, 1.0f - v.v);  // Flip V for OpenGL
+                    }
                     glNormal3f(v.nx, v.ny, v.nz);
                     glVertex3f(v.x, v.y, v.z);
                 }
             }
             glEnd();
         }
+
+        glDisable(GL_TEXTURE_2D);
 
         if (!settings.wireframe) {
             glDisable(GL_LIGHTING);
@@ -1661,6 +2125,17 @@ int main() {
                 ImGui::TextDisabled("(%zu bones)", state.currentModel.skeleton.bones.size());
             }
 
+            ImGui::Checkbox("Show Textures", &state.renderSettings.showTextures);
+            if (!state.currentModel.materials.empty()) {
+                ImGui::SameLine();
+                // Count loaded textures
+                int loadedTex = 0;
+                for (const auto& mat : state.currentModel.materials) {
+                    if (mat.diffuseTexId != 0) loadedTex++;
+                }
+                ImGui::TextDisabled("(%d/%zu loaded)", loadedTex, state.currentModel.materials.size());
+            }
+
             ImGui::Separator();
             ImGui::Text("Camera Speed: %.1f", state.camera.moveSpeed);
             ImGui::SliderFloat("##speed", &state.camera.moveSpeed, 0.1f, 100.0f, "%.1f");
@@ -1723,6 +2198,26 @@ int main() {
                         if (ImGui::SmallButton("View UVs")) {
                             state.selectedMeshForUv = static_cast<int>(i);
                             state.showUvViewer = true;
+                        }
+
+                        // MAO View button (if mesh has a material)
+                        if (!mesh.materialName.empty()) {
+                            ImGui::SameLine();
+                            if (ImGui::SmallButton("View MAO")) {
+                                // Find the material and show its MAO content
+                                if (mesh.materialIndex >= 0 && mesh.materialIndex < (int)state.currentModel.materials.size()) {
+                                    const Material& mat = state.currentModel.materials[mesh.materialIndex];
+                                    if (!mat.maoContent.empty()) {
+                                        state.maoContent = mat.maoContent;
+                                        state.maoFileName = mesh.materialName + ".mao";
+                                        state.showMaoViewer = true;
+                                    } else {
+                                        state.maoContent = "(MAO file not found)";
+                                        state.maoFileName = mesh.materialName + ".mao";
+                                        state.showMaoViewer = true;
+                                    }
+                                }
+                            }
                         }
 
                         ImGui::Unindent();
