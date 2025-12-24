@@ -231,8 +231,6 @@ bool loadPHY(const std::vector<uint8_t>& data, Model& model) {
     auto quatRotate = [](float qx, float qy, float qz, float qw,
                          float vx, float vy, float vz,
                          float& rx, float& ry, float& rz) {
-        // v' = q * v * q^-1, but for unit quaternion: q^-1 = conjugate
-        // Optimized formula: v' = v + 2*w*(q x v) + 2*(q x (q x v))
         float cx = qy*vz - qz*vy;
         float cy = qz*vx - qx*vz;
         float cz = qx*vy - qy*vx;
@@ -244,28 +242,23 @@ bool loadPHY(const std::vector<uint8_t>& data, Model& model) {
         rz = vz + 2.0f*(qw*cz + cz2);
     };
 
-    // Transform struct to accumulate through hierarchy
-    struct Transform {
-        float posX = 0, posY = 0, posZ = 0;
-        float rotX = 0, rotY = 0, rotZ = 0, rotW = 1;
-    };
+    // Recursive function to find collision shapes, tracking the bone hierarchy
+    std::function<void(size_t, uint32_t, const std::string&)> processStruct =
+        [&](size_t structIdx, uint32_t offset, const std::string& parentBoneName) {
 
-    // Recursive function to find collision shapes, accumulating transforms
-    std::function<void(size_t, uint32_t, Transform)> processStruct = [&](size_t structIdx, uint32_t offset, Transform parentTransform) {
         if (structIdx >= gff.structs().size()) return;
 
         const auto& st = gff.structs()[structIdx];
         std::string structType(st.structType);
 
-        Transform currentTransform = parentTransform;
-
-        // If this is a "node" struct, read and accumulate its transform
-        // Note: PHY files don't have position/rotation in nodes - those are in MMH
+        // Determine the bone name for this level
+        std::string currentBoneName = parentBoneName;
         if (structType == "node") {
-            // PHY nodes only have name (6000) and children (6999)
-            // Position/rotation (6047/6048) are in MMH files, not PHY
-            // For now, we skip transform accumulation since PHY doesn't have the data
-        } // <--- FIXED: Added missing brace here
+            std::string name = gff.readStringByLabel(structIdx, 6000, offset);
+            if (!name.empty()) {
+                currentBoneName = name;
+            }
+        }
 
         // If this is a "shap" struct, extract the collision shape
         if (structType == "shap") {
@@ -298,18 +291,38 @@ bool loadPHY(const std::vector<uint8_t>& data, Model& model) {
                 localRotW = gff.readFloatAt(rotOffset + 12);
             }
 
-            // Use local position directly (PHY doesn't have parent bone transforms)
-            shape.posX = localPosX;
-            shape.posY = localPosY;
-            shape.posZ = localPosZ;
-            shape.rotX = localRotX;
-            shape.rotY = localRotY;
-            shape.rotZ = localRotZ;
-            shape.rotW = localRotW;
+            // --- TRANSFORM FIX: Convert Local Space -> World Space using Skeleton ---
+            int boneIdx = model.skeleton.findBone(currentBoneName);
+            if (boneIdx >= 0) {
+                const Bone& bone = model.skeleton.bones[boneIdx];
 
-            // Read shape type struct (field 6998) - this points to boxs/sphs/caps/mshs
-            // Field 6998 is a generic reference (ref=1, struct=0, list=0)
-            // Format: [structIndex (2 bytes), flags (2 bytes), offset (4 bytes)]
+                // 1. Rotate the shape's local position by the Bone's World Rotation
+                float rotatedPosX, rotatedPosY, rotatedPosZ;
+                quatRotate(bone.worldRotX, bone.worldRotY, bone.worldRotZ, bone.worldRotW,
+                           localPosX, localPosY, localPosZ,
+                           rotatedPosX, rotatedPosY, rotatedPosZ);
+
+                // 2. Add Bone's World Position
+                shape.posX = bone.worldPosX + rotatedPosX;
+                shape.posY = bone.worldPosY + rotatedPosY;
+                shape.posZ = bone.worldPosZ + rotatedPosZ;
+
+                // 3. Combine Rotations: ShapeWorldRot = BoneWorldRot * ShapeLocalRot
+                quatMul(bone.worldRotX, bone.worldRotY, bone.worldRotZ, bone.worldRotW,
+                        localRotX, localRotY, localRotZ, localRotW,
+                        shape.rotX, shape.rotY, shape.rotZ, shape.rotW);
+            } else {
+                // Fallback: If no bone matches, use local coordinates
+                shape.posX = localPosX;
+                shape.posY = localPosY;
+                shape.posZ = localPosZ;
+                shape.rotX = localRotX;
+                shape.rotY = localRotY;
+                shape.rotZ = localRotZ;
+                shape.rotW = localRotW;
+            }
+
+            // Read shape type struct (field 6998)
             const GFFField* shapeTypeField = gff.findField(structIdx, 6998);
             GFFStructRef dataRef;
             bool hasShapeData = false;
@@ -322,10 +335,8 @@ bool loadPHY(const std::vector<uint8_t>& data, Model& model) {
                 uint32_t dataPos = gff.dataOffset() + shapeTypeField->dataOffset + offset;
 
                 if (isRef && !isList && !isStruct) {
-                    // Generic reference: read structIndex (uint16), flags (uint16), offset (uint32)
                     uint16_t refStructIdx = gff.readUInt16At(dataPos);
                     uint32_t refOffset = gff.readUInt32At(dataPos + 4);
-
                     if (refStructIdx < gff.structs().size()) {
                         dataRef.structIndex = refStructIdx;
                         dataRef.offset = refOffset;
@@ -333,7 +344,6 @@ bool loadPHY(const std::vector<uint8_t>& data, Model& model) {
                     }
                 }
                 else if (isStruct && !isList) {
-                    // Single struct reference
                     int32_t ref = gff.readInt32At(dataPos);
                     if (ref >= 0) {
                         dataRef.structIndex = shapeTypeField->typeId;
@@ -342,7 +352,6 @@ bool loadPHY(const std::vector<uint8_t>& data, Model& model) {
                     }
                 }
                 else {
-                    // List - use normal readStructList
                     std::vector<GFFStructRef> shapeData = gff.readStructList(structIdx, 6998, offset);
                     if (!shapeData.empty()) {
                         dataRef = shapeData[0];
@@ -392,37 +401,22 @@ bool loadPHY(const std::vector<uint8_t>& data, Model& model) {
                 }
                 else if (dataType == "mshs") {
                     shape.type = CollisionShapeType::Mesh;
-
-                    // Field 6077 = BinaryCookedData (NXS format mesh data)
                     const GFFField* meshDataField = gff.findField(dataRef.structIndex, 6077);
                     if (meshDataField) {
                         uint32_t meshDataPos = gff.dataOffset() + meshDataField->dataOffset + dataRef.offset;
                         int32_t listRef = gff.readInt32At(meshDataPos);
 
                         if (listRef >= 0) {
-                            // Get the list position (skip 4 bytes for list count)
                             uint32_t nxsPos = gff.dataOffset() + listRef + 4;
-
-                            // Parse NXS format:
-                            // - 8 bytes: header string
-                            // - 5 x uint32: unknown values (20 bytes)
-                            // - uint32: vertex count
-                            // - uint32: face count
-                            // - vertCount * 3 floats: vertices (x,y,z)
-                            // - faceCount * 3 bytes: face indices
-
                             const auto& rawData = gff.rawData();
 
                             if (nxsPos + 36 < rawData.size()) {
-                                // Skip 8-byte header + 20 bytes unknown
-                                nxsPos += 28;
-
+                                nxsPos += 28; // Skip header
                                 uint32_t vertCount = gff.readUInt32At(nxsPos);
                                 nxsPos += 4;
                                 uint32_t faceCount = gff.readUInt32At(nxsPos);
                                 nxsPos += 4;
 
-                                // Read vertices
                                 size_t vertsDataSize = vertCount * 3 * sizeof(float);
                                 if (nxsPos + vertsDataSize <= rawData.size()) {
                                     shape.meshVerts.reserve(vertCount * 3);
@@ -432,8 +426,6 @@ bool loadPHY(const std::vector<uint8_t>& data, Model& model) {
                                         shape.meshVerts.push_back(gff.readFloatAt(nxsPos + 8));
                                         nxsPos += 12;
                                     }
-
-                                    // Read face indices (unsigned bytes)
                                     size_t facesDataSize = faceCount * 3;
                                     if (nxsPos + facesDataSize <= rawData.size()) {
                                         shape.meshIndices.reserve(faceCount * 3);
@@ -457,21 +449,19 @@ bool loadPHY(const std::vector<uint8_t>& data, Model& model) {
             }
         }
 
-        // Recurse into children (field 6999), passing current transform
+        // Recurse into children (field 6999), passing current bone name
         std::vector<GFFStructRef> children = gff.readStructList(structIdx, 6999, offset);
         for (const auto& child : children) {
-            processStruct(child.structIndex, child.offset, currentTransform);
+            processStruct(child.structIndex, child.offset, currentBoneName);
         }
     };
 
-    // Start from root struct (index 0) with identity transform
-    Transform identityTransform;
-    processStruct(0, 0, identityTransform);
+    // Start from root struct (index 0) with empty bone name (or "Root" if you prefer)
+    processStruct(0, 0, "");
 
     std::cout << "Loaded " << model.collisionShapes.size() << " collision shapes from PHY" << std::endl;
     return !model.collisionShapes.empty();
 }
-
 // Quaternion multiply helper for world transform calculation
 void quatMulWorld(float ax, float ay, float az, float aw,
                   float bx, float by, float bz, float bw,
