@@ -4,6 +4,9 @@
 #include <algorithm>
 #include <memory>
 #include <cmath>
+#include <map>
+#include <functional>
+#include <iostream>
 
 #ifdef _WIN32
 #define NOMINMAX
@@ -16,8 +19,8 @@
 #include "imgui_impl_opengl3.h"
 #include "ImGuiFileDialog.h"
 #include "erf.h"
-#include "Gff.h"
-#include "Mesh.h"
+#include "gff.h"
+#include "mesh.h"
 #include "model_loader.h"
 
 namespace fs = std::filesystem;
@@ -99,7 +102,7 @@ struct RenderSettings {
     bool wireframe = false;
     bool showAxes = true;
     bool showGrid = true;
-    bool showCollision = false;
+    bool showCollision = true;
     bool collisionWireframe = true;  // Draw collision as wireframe or solid
     std::vector<uint8_t> meshVisible;  // Per-mesh visibility (using uint8_t because vector<bool> is special)
 
@@ -113,8 +116,10 @@ struct AppState {
     bool showBrowser = true;
     bool showRenderSettings = false;
     bool showMaoViewer = false;
+    bool showUvViewer = false;
     std::string maoContent;
     std::string maoFileName;
+    int selectedMeshForUv = -1;
     std::string selectedFolder;
     std::vector<std::string> erfFiles;
     int selectedErfIndex = -1;
@@ -190,6 +195,241 @@ bool isMaoFile(const std::string& name) {
     return false;
 }
 
+// Check if entry is a PHY (physics/collision) file
+bool isPhyFile(const std::string& name) {
+    std::string lower = name;
+    std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
+
+    size_t dotPos = lower.rfind('.');
+    if (dotPos != std::string::npos) {
+        std::string ext = lower.substr(dotPos);
+        return ext == ".phy";
+    }
+    return false;
+}
+
+// Load collision shapes from PHY file
+bool loadPHY(const std::vector<uint8_t>& data, Model& model) {
+    std::cout << "=== loadPHY called, data size: " << data.size() << " ===" << std::endl;
+
+    GFFFile gff;
+    if (!gff.load(data)) {
+        std::cout << "ERROR: GFF failed to load PHY data" << std::endl;
+        return false;
+    }
+
+    std::cout << "PHY GFF loaded, structs: " << gff.structs().size() << std::endl;
+    for (size_t i = 0; i < gff.structs().size() && i < 10; i++) {
+        std::cout << "  Struct " << i << ": type='" << gff.structs()[i].structType
+                  << "', fields=" << gff.structs()[i].fieldCount << std::endl;
+    }
+
+    // Recursive function to find collision shapes
+    std::function<void(size_t, uint32_t)> processStruct = [&](size_t structIdx, uint32_t offset) {
+        if (structIdx >= gff.structs().size()) return;
+
+        const auto& st = gff.structs()[structIdx];
+        std::string structType(st.structType);
+
+        std::cout << "Processing struct " << structIdx << " type='" << structType << "' offset=" << offset << std::endl;
+
+        // If this is a "shap" struct, extract the collision shape
+        if (structType == "shap") {
+            std::cout << "  FOUND SHAPE STRUCT!" << std::endl;
+            CollisionShape shape;
+
+            // Read shape name (field 6241)
+            shape.name = gff.readStringByLabel(structIdx, 6241, offset);
+            if (shape.name.empty()) {
+                shape.name = "collision_" + std::to_string(model.collisionShapes.size());
+            }
+            std::cout << "  Shape name: " << shape.name << std::endl;
+
+            // Read position (field 6061) - Vector3f
+            const GFFField* posField = gff.findField(structIdx, 6061);
+            if (posField) {
+                uint32_t posOffset = gff.dataOffset() + posField->dataOffset + offset;
+                shape.posX = gff.readFloatAt(posOffset);
+                shape.posY = gff.readFloatAt(posOffset + 4);
+                shape.posZ = gff.readFloatAt(posOffset + 8);
+                std::cout << "  Position: " << shape.posX << ", " << shape.posY << ", " << shape.posZ << std::endl;
+            }
+
+            // Read rotation (field 6060) - Quaternion
+            const GFFField* rotField = gff.findField(structIdx, 6060);
+            if (rotField) {
+                uint32_t rotOffset = gff.dataOffset() + rotField->dataOffset + offset;
+                shape.rotX = gff.readFloatAt(rotOffset);
+                shape.rotY = gff.readFloatAt(rotOffset + 4);
+                shape.rotZ = gff.readFloatAt(rotOffset + 8);
+                shape.rotW = gff.readFloatAt(rotOffset + 12);
+            }
+
+            // Read shape type struct (field 6998) - this points to boxs/sphs/caps/mshs
+            std::vector<GFFStructRef> shapeData = gff.readStructList(structIdx, 6998, offset);
+            std::cout << "  Shape data structs: " << shapeData.size() << std::endl;
+
+            if (!shapeData.empty()) {
+                const auto& dataRef = shapeData[0];
+                if (dataRef.structIndex < gff.structs().size()) {
+                    std::string dataType(gff.structs()[dataRef.structIndex].structType);
+                    std::cout << "  Shape data type: " << dataType << std::endl;
+
+                    if (dataType == "boxs") {
+                        shape.type = CollisionShapeType::Box;
+                        const GFFField* dimField = gff.findField(dataRef.structIndex, 6071);
+                        if (dimField) {
+                            uint32_t dimOffset = gff.dataOffset() + dimField->dataOffset + dataRef.offset;
+                            shape.boxX = gff.readFloatAt(dimOffset);
+                            shape.boxY = gff.readFloatAt(dimOffset + 4);
+                            shape.boxZ = gff.readFloatAt(dimOffset + 8);
+                            std::cout << "  Box dims: " << shape.boxX << ", " << shape.boxY << ", " << shape.boxZ << std::endl;
+                        }
+                    }
+                    else if (dataType == "sphs") {
+                        shape.type = CollisionShapeType::Sphere;
+                        shape.radius = gff.readFloatByLabel(dataRef.structIndex, 6072, dataRef.offset);
+                        std::cout << "  Sphere radius: " << shape.radius << std::endl;
+                    }
+                    else if (dataType == "caps") {
+                        shape.type = CollisionShapeType::Capsule;
+                        shape.radius = gff.readFloatByLabel(dataRef.structIndex, 6072, dataRef.offset);
+                        shape.height = gff.readFloatByLabel(dataRef.structIndex, 6073, dataRef.offset);
+                        std::cout << "  Capsule radius: " << shape.radius << ", height: " << shape.height << std::endl;
+                    }
+                    else if (dataType == "mshs") {
+                        shape.type = CollisionShapeType::Mesh;
+                        std::cout << "  Mesh collision shape" << std::endl;
+
+                        // Field 6077 = BinaryCookedData (NXS format mesh data)
+                        const GFFField* meshDataField = gff.findField(dataRef.structIndex, 6077);
+                        if (meshDataField) {
+                            uint32_t dataPos = gff.dataOffset() + meshDataField->dataOffset + dataRef.offset;
+                            int32_t listRef = gff.readInt32At(dataPos);
+
+                            if (listRef >= 0) {
+                                // Get the list position (skip 4 bytes for list count)
+                                uint32_t nxsPos = gff.dataOffset() + listRef + 4;
+
+                                // Parse NXS format:
+                                // - 8 bytes: header string
+                                // - 5 x uint32: unknown values (20 bytes)
+                                // - uint32: vertex count
+                                // - uint32: face count
+                                // - vertCount * 3 floats: vertices (x,y,z)
+                                // - faceCount * 3 bytes: face indices
+
+                                const auto& rawData = gff.rawData();
+
+                                if (nxsPos + 36 < rawData.size()) {
+                                    // Skip 8-byte header + 20 bytes unknown
+                                    nxsPos += 28;
+
+                                    uint32_t vertCount = gff.readUInt32At(nxsPos);
+                                    nxsPos += 4;
+                                    uint32_t faceCount = gff.readUInt32At(nxsPos);
+                                    nxsPos += 4;
+
+                                    std::cout << "  Mesh collision: " << vertCount << " verts, " << faceCount << " faces" << std::endl;
+
+                                    // Read vertices
+                                    size_t vertsDataSize = vertCount * 3 * sizeof(float);
+                                    if (nxsPos + vertsDataSize <= rawData.size()) {
+                                        shape.meshVerts.reserve(vertCount * 3);
+                                        for (uint32_t v = 0; v < vertCount; v++) {
+                                            shape.meshVerts.push_back(gff.readFloatAt(nxsPos));
+                                            shape.meshVerts.push_back(gff.readFloatAt(nxsPos + 4));
+                                            shape.meshVerts.push_back(gff.readFloatAt(nxsPos + 8));
+                                            nxsPos += 12;
+                                        }
+
+                                        // Read face indices (unsigned bytes)
+                                        size_t facesDataSize = faceCount * 3;
+                                        if (nxsPos + facesDataSize <= rawData.size()) {
+                                            shape.meshIndices.reserve(faceCount * 3);
+                                            for (uint32_t f = 0; f < faceCount; f++) {
+                                                shape.meshIndices.push_back(gff.readUInt8At(nxsPos));
+                                                shape.meshIndices.push_back(gff.readUInt8At(nxsPos + 1));
+                                                shape.meshIndices.push_back(gff.readUInt8At(nxsPos + 2));
+                                                nxsPos += 3;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            model.collisionShapes.push_back(shape);
+            std::cout << "  ADDED collision shape! Total now: " << model.collisionShapes.size() << std::endl;
+        }
+
+        // Recurse into children (field 6999)
+        std::vector<GFFStructRef> children = gff.readStructList(structIdx, 6999, offset);
+        std::cout << "  Children count: " << children.size() << std::endl;
+        for (const auto& child : children) {
+            processStruct(child.structIndex, child.offset);
+        }
+    };
+
+    // Start from root struct (index 0)
+    processStruct(0, 0);
+
+    std::cout << "=== loadPHY complete, total collision shapes: " << model.collisionShapes.size() << " ===" << std::endl;
+    return !model.collisionShapes.empty();
+}
+
+// Load material names from MMH file and apply to model meshes
+void loadMaterialsFromMMH(const std::vector<uint8_t>& data, Model& model) {
+    GFFFile gff;
+    if (!gff.load(data)) {
+        return;
+    }
+
+    // Build a map of mesh name -> material name by traversing MMH hierarchy
+    std::map<std::string, std::string> meshMaterials;
+
+    // Recursive function to find mesh nodes in MMH
+    std::function<void(size_t, uint32_t)> findMeshNodes = [&](size_t structIdx, uint32_t offset) {
+        if (structIdx >= gff.structs().size()) return;
+
+        const auto& s = gff.structs()[structIdx];
+        std::string structType(s.structType);
+
+        // "mesh" struct type contains mesh name (6006) and material (6001)
+        if (structType == "mesh") {
+            std::string meshName = gff.readStringByLabel(structIdx, 6006, offset);  // MESH_NAME
+            std::string materialName = gff.readStringByLabel(structIdx, 6001, offset);  // MATERIAL_OBJ
+
+            if (!meshName.empty() && !materialName.empty()) {
+                meshMaterials[meshName] = materialName;
+            }
+        }
+
+        // Recurse into children (field 6999)
+        std::vector<GFFStructRef> children = gff.readStructList(structIdx, 6999, offset);
+        for (const auto& child : children) {
+            findMeshNodes(child.structIndex, child.offset);
+        }
+    };
+
+    // Start from root struct's children
+    std::vector<GFFStructRef> rootChildren = gff.readStructList(0, 6999, 0);
+    for (const auto& child : rootChildren) {
+        findMeshNodes(child.structIndex, child.offset);
+    }
+
+    // Apply materials to model meshes
+    for (auto& mesh : model.meshes) {
+        auto it = meshMaterials.find(mesh.name);
+        if (it != meshMaterials.end()) {
+            mesh.materialName = it->second;
+        }
+    }
+}
+
 // Try to load model from ERF entry
 bool loadModelFromEntry(AppState& state, const ERFEntry& entry) {
     if (!state.currentErf) return false;
@@ -263,6 +503,114 @@ bool loadModelFromEntry(AppState& state, const ERFEntry& entry) {
     // Init per-mesh visibility
     state.renderSettings.initMeshVisibility(model.meshes.size());
 
+    // Try to find and load corresponding PHY file for collision and MMH for materials
+    std::string baseName = entry.name;
+    size_t dotPos = baseName.rfind('.');
+    if (dotPos != std::string::npos) {
+        baseName = baseName.substr(0, dotPos);
+    }
+    std::string phyName = baseName + ".phy";
+    std::string mmhName = baseName + ".mmh";
+
+    std::cout << "=== Looking for PHY file ===" << std::endl;
+    std::cout << "Base name: " << baseName << std::endl;
+    std::cout << "PHY name: " << phyName << std::endl;
+    std::cout << "Selected folder: " << state.selectedFolder << std::endl;
+
+    // Search for MMH file in current ERF
+    for (const auto& e : state.currentErf->entries()) {
+        std::string eName = e.name;
+        std::transform(eName.begin(), eName.end(), eName.begin(), ::tolower);
+
+        std::string mmhLower = mmhName;
+        std::transform(mmhLower.begin(), mmhLower.end(), mmhLower.begin(), ::tolower);
+
+        if (eName == mmhLower) {
+            std::vector<uint8_t> mmhData = state.currentErf->readEntry(e);
+            if (!mmhData.empty()) {
+                loadMaterialsFromMMH(mmhData, state.currentModel);
+            }
+        }
+    }
+
+// (We use the mmhName defined above)
+
+    std::cout << "=== Looking for PHY file ===" << std::endl;
+    std::cout << "Base name: " << baseName << std::endl;
+
+    // 1. Search for MMH file in current ERF
+    for (const auto& e : state.currentErf->entries()) {
+        std::string eName = e.name;
+        std::transform(eName.begin(), eName.end(), eName.begin(), ::tolower);
+        std::string mmhLower = mmhName;
+        std::transform(mmhLower.begin(), mmhLower.end(), mmhLower.begin(), ::tolower);
+
+        if (eName == mmhLower) {
+            std::vector<uint8_t> mmhData = state.currentErf->readEntry(e);
+            if (!mmhData.empty()) {
+                loadMaterialsFromMMH(mmhData, state.currentModel);
+            }
+        }
+    }
+
+    // 2. Define potential PHY names
+    std::vector<std::string> phyCandidates;
+
+    // Candidate A: Exact match (e.g. c_berkbear_0.phy)
+    phyCandidates.push_back(baseName + ".phy");
+
+    // Candidate B: Append 'a' at end (e.g. c_berkbear_0a.phy)
+    phyCandidates.push_back(baseName + "a.phy");
+
+    // Candidate C: Insert 'a' before the last underscore (e.g. c_berkbear_0 -> c_berkbeara_0.phy)
+    size_t lastUnderscore = baseName.find_last_of('_');
+    if (lastUnderscore != std::string::npos) {
+        std::string variantA = baseName;
+        variantA.insert(lastUnderscore, "a");
+        phyCandidates.push_back(variantA + ".phy");
+    }
+
+    std::cout << "=== Scanning all loaded ERFs for PHY candidates ===" << std::endl;
+    bool foundPhy = false;
+
+    // 3. Scan ALL loaded ERFs
+    for (const auto& erfPath : state.erfFiles) {
+        ERFFile phyErf;
+        // Optimization: check if we can open the ERF
+        if (phyErf.open(erfPath)) {
+            for (const auto& e : phyErf.entries()) {
+                std::string eName = e.name;
+                std::transform(eName.begin(), eName.end(), eName.begin(), ::tolower);
+
+                // Check this entry against all candidates
+                for (const auto& candidate : phyCandidates) {
+                    std::string candLower = candidate;
+                    std::transform(candLower.begin(), candLower.end(), candLower.begin(), ::tolower);
+
+                    if (eName == candLower) {
+                        std::cout << ">>> FOUND PHY: " << e.name << " in " << erfPath << " <<<" << std::endl;
+
+                        std::vector<uint8_t> phyData = phyErf.readEntry(e);
+                        if (!phyData.empty()) {
+                            loadPHY(phyData, state.currentModel);
+                        }
+                        foundPhy = true;
+                        break;
+                    }
+                }
+                if (foundPhy) break;
+            }
+        }
+        if (foundPhy) break;
+    }
+
+    if (!foundPhy) {
+        std::cout << "PHY file NOT FOUND in any loaded ERF." << std::endl;
+        std::cout << "Checked candidates: ";
+        for(const auto& c : phyCandidates) std::cout << c << " ";
+        std::cout << std::endl;
+    }
+
     // Calculate bounds and position camera
     if (!model.meshes.empty()) {
         // Find overall bounds
@@ -291,6 +639,131 @@ bool loadModelFromEntry(AppState& state, const ERFEntry& entry) {
     }
 
     return true;
+}
+
+// Helper function to draw a solid box (for non-wireframe collision mode)
+void drawSolidBox(float x, float y, float z) {
+    glBegin(GL_QUADS);
+    // Front face
+    glNormal3f(0, 0, 1);
+    glVertex3f(-x, -y, z); glVertex3f(x, -y, z);
+    glVertex3f(x, y, z); glVertex3f(-x, y, z);
+    // Back face
+    glNormal3f(0, 0, -1);
+    glVertex3f(x, -y, -z); glVertex3f(-x, -y, -z);
+    glVertex3f(-x, y, -z); glVertex3f(x, y, -z);
+    // Top face
+    glNormal3f(0, 1, 0);
+    glVertex3f(-x, y, -z); glVertex3f(-x, y, z);
+    glVertex3f(x, y, z); glVertex3f(x, y, -z);
+    // Bottom face
+    glNormal3f(0, -1, 0);
+    glVertex3f(-x, -y, -z); glVertex3f(x, -y, -z);
+    glVertex3f(x, -y, z); glVertex3f(-x, -y, z);
+    // Right face
+    glNormal3f(1, 0, 0);
+    glVertex3f(x, -y, -z); glVertex3f(x, y, -z);
+    glVertex3f(x, y, z); glVertex3f(x, -y, z);
+    // Left face
+    glNormal3f(-1, 0, 0);
+    glVertex3f(-x, -y, z); glVertex3f(-x, y, z);
+    glVertex3f(-x, y, -z); glVertex3f(-x, -y, -z);
+    glEnd();
+}
+
+// Helper function to draw a solid sphere
+void drawSolidSphere(float radius, int slices, int stacks) {
+    for (int i = 0; i < stacks; i++) {
+        float lat0 = 3.14159f * (-0.5f + float(i) / stacks);
+        float z0 = radius * std::sin(lat0);
+        float zr0 = radius * std::cos(lat0);
+
+        float lat1 = 3.14159f * (-0.5f + float(i + 1) / stacks);
+        float z1 = radius * std::sin(lat1);
+        float zr1 = radius * std::cos(lat1);
+
+        glBegin(GL_QUAD_STRIP);
+        for (int j = 0; j <= slices; j++) {
+            float lng = 2.0f * 3.14159f * float(j) / slices;
+            float x = std::cos(lng);
+            float y = std::sin(lng);
+
+            glNormal3f(x * zr0 / radius, y * zr0 / radius, z0 / radius);
+            glVertex3f(x * zr0, y * zr0, z0);
+
+            glNormal3f(x * zr1 / radius, y * zr1 / radius, z1 / radius);
+            glVertex3f(x * zr1, y * zr1, z1);
+        }
+        glEnd();
+    }
+}
+
+// Helper function to draw a solid capsule
+void drawSolidCapsule(float radius, float height, int slices, int stacks) {
+    float halfHeight = height / 2.0f;
+
+    // Draw cylinder body
+    glBegin(GL_QUAD_STRIP);
+    for (int j = 0; j <= slices; j++) {
+        float lng = 2.0f * 3.14159f * float(j) / slices;
+        float x = std::cos(lng);
+        float y = std::sin(lng);
+
+        glNormal3f(x, y, 0);
+        glVertex3f(radius * x, radius * y, -halfHeight);
+        glVertex3f(radius * x, radius * y, halfHeight);
+    }
+    glEnd();
+
+    // Draw top hemisphere
+    for (int i = 0; i < stacks / 2; i++) {
+        float lat0 = 3.14159f * float(i) / stacks;
+        float z0 = radius * std::sin(lat0);
+        float zr0 = radius * std::cos(lat0);
+
+        float lat1 = 3.14159f * float(i + 1) / stacks;
+        float z1 = radius * std::sin(lat1);
+        float zr1 = radius * std::cos(lat1);
+
+        glBegin(GL_QUAD_STRIP);
+        for (int j = 0; j <= slices; j++) {
+            float lng = 2.0f * 3.14159f * float(j) / slices;
+            float x = std::cos(lng);
+            float y = std::sin(lng);
+
+            glNormal3f(x * zr0 / radius, y * zr0 / radius, z0 / radius);
+            glVertex3f(x * zr0, y * zr0, z0 + halfHeight);
+
+            glNormal3f(x * zr1 / radius, y * zr1 / radius, z1 / radius);
+            glVertex3f(x * zr1, y * zr1, z1 + halfHeight);
+        }
+        glEnd();
+    }
+
+    // Draw bottom hemisphere
+    for (int i = 0; i < stacks / 2; i++) {
+        float lat0 = -3.14159f * float(i) / stacks;
+        float z0 = radius * std::sin(lat0);
+        float zr0 = radius * std::cos(lat0);
+
+        float lat1 = -3.14159f * float(i + 1) / stacks;
+        float z1 = radius * std::sin(lat1);
+        float zr1 = radius * std::cos(lat1);
+
+        glBegin(GL_QUAD_STRIP);
+        for (int j = 0; j <= slices; j++) {
+            float lng = 2.0f * 3.14159f * float(j) / slices;
+            float x = std::cos(lng);
+            float y = std::sin(lng);
+
+            glNormal3f(x * zr0 / radius, y * zr0 / radius, z0 / radius);
+            glVertex3f(x * zr0, y * zr0, z0 - halfHeight);
+
+            glNormal3f(x * zr1 / radius, y * zr1 / radius, z1 / radius);
+            glVertex3f(x * zr1, y * zr1, z1 - halfHeight);
+        }
+        glEnd();
+    }
 }
 
 // Render model using immediate mode OpenGL
@@ -409,20 +882,18 @@ void renderModel(const Model& model, const Camera& camera, const RenderSettings&
 
     // Render collision shapes (cyan color)
     if (settings.showCollision && !model.collisionShapes.empty()) {
-        if (settings.collisionWireframe) {
+        bool wireframe = settings.collisionWireframe;
+
+        if (wireframe) {
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+            glColor3f(0.0f, 1.0f, 1.0f);  // Cyan solid for wireframe
         } else {
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
             glEnable(GL_BLEND);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        }
-
-        if (settings.collisionWireframe) {
-            glColor3f(0.0f, 1.0f, 1.0f);  // Cyan solid for wireframe
-        } else {
             glColor4f(0.0f, 1.0f, 1.0f, 0.3f);  // Cyan transparent for solid
         }
-        glLineWidth(1.5f);
+        glLineWidth(2.0f);
         glDisable(GL_LIGHTING);
 
         for (const auto& shape : model.collisionShapes) {
@@ -432,111 +903,172 @@ void renderModel(const Model& model, const Camera& camera, const RenderSettings&
             glTranslatef(shape.posX, shape.posY, shape.posZ);
 
             // Apply rotation (quaternion to axis-angle)
-            float angle = 2.0f * std::acos(shape.rotW) * 180.0f / 3.14159f;
-            float s = std::sqrt(1.0f - shape.rotW * shape.rotW);
-            if (s > 0.001f) {
-                glRotatef(angle, shape.rotX / s, shape.rotY / s, shape.rotZ / s);
+            float rotW = shape.rotW;
+            if (rotW > 1.0f) rotW = 1.0f;
+            if (rotW < -1.0f) rotW = -1.0f;
+            if (rotW < 0.9999f && rotW > -0.9999f) {
+                float angle = 2.0f * std::acos(rotW) * 180.0f / 3.14159f;
+                float s = std::sqrt(1.0f - rotW * rotW);
+                if (s > 0.001f) {
+                    glRotatef(angle, shape.rotX / s, shape.rotY / s, shape.rotZ / s);
+                }
             }
 
             switch (shape.type) {
                 case CollisionShapeType::Box: {
-                    // Draw wireframe box
-                    float x = shape.dimX, y = shape.dimY, z = shape.dimZ;
-                    glBegin(GL_LINE_LOOP); // Bottom
-                    glVertex3f(-x, -y, -z); glVertex3f(x, -y, -z);
-                    glVertex3f(x, y, -z); glVertex3f(-x, y, -z);
-                    glEnd();
-                    glBegin(GL_LINE_LOOP); // Top
-                    glVertex3f(-x, -y, z); glVertex3f(x, -y, z);
-                    glVertex3f(x, y, z); glVertex3f(-x, y, z);
-                    glEnd();
-                    glBegin(GL_LINES); // Verticals
-                    glVertex3f(-x, -y, -z); glVertex3f(-x, -y, z);
-                    glVertex3f(x, -y, -z); glVertex3f(x, -y, z);
-                    glVertex3f(x, y, -z); glVertex3f(x, y, z);
-                    glVertex3f(-x, y, -z); glVertex3f(-x, y, z);
-                    glEnd();
+                    float x = shape.boxX, y = shape.boxY, z = shape.boxZ;
+                    if (wireframe) {
+                        // Wireframe box
+                        glBegin(GL_LINE_LOOP);
+                        glVertex3f(-x, -y, -z); glVertex3f(x, -y, -z);
+                        glVertex3f(x, y, -z); glVertex3f(-x, y, -z);
+                        glEnd();
+                        glBegin(GL_LINE_LOOP);
+                        glVertex3f(-x, -y, z); glVertex3f(x, -y, z);
+                        glVertex3f(x, y, z); glVertex3f(-x, y, z);
+                        glEnd();
+                        glBegin(GL_LINES);
+                        glVertex3f(-x, -y, -z); glVertex3f(-x, -y, z);
+                        glVertex3f(x, -y, -z); glVertex3f(x, -y, z);
+                        glVertex3f(x, y, -z); glVertex3f(x, y, z);
+                        glVertex3f(-x, y, -z); glVertex3f(-x, y, z);
+                        glEnd();
+                    } else {
+                        drawSolidBox(x, y, z);
+                    }
                     break;
                 }
                 case CollisionShapeType::Sphere: {
-                    // Draw wireframe sphere (latitude/longitude lines)
-                    int segments = 16;
                     float r = shape.radius;
-                    // Latitude circles
-                    for (int i = 0; i <= segments / 2; i++) {
-                        float lat = 3.14159f * (-0.5f + float(i) / (segments / 2));
-                        float z1 = r * std::sin(lat);
-                        float r1 = r * std::cos(lat);
-                        glBegin(GL_LINE_LOOP);
-                        for (int j = 0; j < segments; j++) {
-                            float lng = 2.0f * 3.14159f * float(j) / segments;
-                            glVertex3f(r1 * std::cos(lng), r1 * std::sin(lng), z1);
+                    if (wireframe) {
+                        int segments = 24;
+                        for (int plane = 0; plane < 3; plane++) {
+                            glBegin(GL_LINE_LOOP);
+                            for (int i = 0; i < segments; i++) {
+                                float a = 2.0f * 3.14159f * float(i) / segments;
+                                float c = r * std::cos(a);
+                                float s = r * std::sin(a);
+                                if (plane == 0) glVertex3f(c, s, 0);
+                                else if (plane == 1) glVertex3f(c, 0, s);
+                                else glVertex3f(0, c, s);
+                            }
+                            glEnd();
                         }
-                        glEnd();
-                    }
-                    // Longitude circles
-                    for (int j = 0; j < segments / 2; j++) {
-                        float lng = 3.14159f * float(j) / (segments / 2);
-                        glBegin(GL_LINE_LOOP);
-                        for (int i = 0; i < segments; i++) {
-                            float lat = 2.0f * 3.14159f * float(i) / segments;
-                            glVertex3f(r * std::cos(lat) * std::cos(lng), r * std::cos(lat) * std::sin(lng), r * std::sin(lat));
-                        }
-                        glEnd();
+                    } else {
+                        drawSolidSphere(r, 16, 12);
                     }
                     break;
                 }
-                case CollisionShapeType::Capsule:
-                case CollisionShapeType::Cylinder: {
-                    // Draw wireframe cylinder/capsule
-                    int segments = 16;
+                case CollisionShapeType::Capsule: {
+                    int segments = 24;
                     float r = shape.radius;
                     float h = shape.height / 2.0f;
-                    // Top and bottom circles
-                    for (float zOff : {-h, h}) {
-                        glBegin(GL_LINE_LOOP);
-                        for (int i = 0; i < segments; i++) {
-                            float a = 2.0f * 3.14159f * float(i) / segments;
-                            glVertex3f(r * std::cos(a), r * std::sin(a), zOff);
+                    if (wireframe) {
+                        // Top and bottom circles
+                        for (float zOff : {-h, h}) {
+                            glBegin(GL_LINE_LOOP);
+                            for (int i = 0; i < segments; i++) {
+                                float a = 2.0f * 3.14159f * float(i) / segments;
+                                glVertex3f(r * std::cos(a), r * std::sin(a), zOff);
+                            }
+                            glEnd();
+                        }
+                        // Vertical lines
+                        glBegin(GL_LINES);
+                        for (int i = 0; i < 4; i++) {
+                            float a = 2.0f * 3.14159f * float(i) / 4;
+                            glVertex3f(r * std::cos(a), r * std::sin(a), -h);
+                            glVertex3f(r * std::cos(a), r * std::sin(a), h);
                         }
                         glEnd();
-                    }
-                    // Vertical lines
-                    glBegin(GL_LINES);
-                    for (int i = 0; i < segments; i += segments / 4) {
-                        float a = 2.0f * 3.14159f * float(i) / segments;
-                        glVertex3f(r * std::cos(a), r * std::sin(a), -h);
-                        glVertex3f(r * std::cos(a), r * std::sin(a), h);
-                    }
-                    glEnd();
-                    // For capsule, add hemisphere caps
-                    if (shape.type == CollisionShapeType::Capsule) {
+                        // Hemisphere caps
                         for (float zSign : {-1.0f, 1.0f}) {
-                            for (int i = 1; i <= 4; i++) {
-                                float lat = (3.14159f / 2.0f) * float(i) / 4;
-                                float z1 = r * std::sin(lat) * zSign + h * zSign;
-                                float r1 = r * std::cos(lat);
+                            for (int j = 1; j <= 4; j++) {
+                                float lat = (3.14159f / 2.0f) * float(j) / 4;
+                                float zOff = r * std::sin(lat) * zSign + h * zSign;
+                                float rOff = r * std::cos(lat);
                                 glBegin(GL_LINE_LOOP);
-                                for (int j = 0; j < segments; j++) {
-                                    float lng = 2.0f * 3.14159f * float(j) / segments;
-                                    glVertex3f(r1 * std::cos(lng), r1 * std::sin(lng), z1);
+                                for (int i = 0; i < segments; i++) {
+                                    float a = 2.0f * 3.14159f * float(i) / segments;
+                                    glVertex3f(rOff * std::cos(a), rOff * std::sin(a), zOff);
                                 }
                                 glEnd();
                             }
                         }
+                    } else {
+                        drawSolidCapsule(r, shape.height, 16, 12);
                     }
                     break;
                 }
                 case CollisionShapeType::Mesh: {
                     // Draw collision mesh
-                    glBegin(GL_TRIANGLES);
-                    for (size_t i = 0; i < shape.mesh.indices.size(); i += 3) {
-                        for (int j = 0; j < 3; j++) {
-                            const auto& v = shape.mesh.vertices[shape.mesh.indices[i + j]];
-                            glVertex3f(v.x, v.y, v.z);
+                    if (!shape.meshVerts.empty() && !shape.meshIndices.empty()) {
+                        if (wireframe) {
+                            // Draw as wireframe triangles
+                            for (size_t i = 0; i + 2 < shape.meshIndices.size(); i += 3) {
+                                uint32_t i0 = shape.meshIndices[i];
+                                uint32_t i1 = shape.meshIndices[i + 1];
+                                uint32_t i2 = shape.meshIndices[i + 2];
+
+                                if (i0 * 3 + 2 < shape.meshVerts.size() &&
+                                    i1 * 3 + 2 < shape.meshVerts.size() &&
+                                    i2 * 3 + 2 < shape.meshVerts.size()) {
+
+                                    glBegin(GL_LINE_LOOP);
+                                    glVertex3f(shape.meshVerts[i0 * 3],
+                                              shape.meshVerts[i0 * 3 + 1],
+                                              shape.meshVerts[i0 * 3 + 2]);
+                                    glVertex3f(shape.meshVerts[i1 * 3],
+                                              shape.meshVerts[i1 * 3 + 1],
+                                              shape.meshVerts[i1 * 3 + 2]);
+                                    glVertex3f(shape.meshVerts[i2 * 3],
+                                              shape.meshVerts[i2 * 3 + 1],
+                                              shape.meshVerts[i2 * 3 + 2]);
+                                    glEnd();
+                                }
+                            }
+                        } else {
+                            // Draw as solid triangles with computed normals
+                            glBegin(GL_TRIANGLES);
+                            for (size_t i = 0; i + 2 < shape.meshIndices.size(); i += 3) {
+                                uint32_t i0 = shape.meshIndices[i];
+                                uint32_t i1 = shape.meshIndices[i + 1];
+                                uint32_t i2 = shape.meshIndices[i + 2];
+
+                                if (i0 * 3 + 2 < shape.meshVerts.size() &&
+                                    i1 * 3 + 2 < shape.meshVerts.size() &&
+                                    i2 * 3 + 2 < shape.meshVerts.size()) {
+
+                                    float v0x = shape.meshVerts[i0 * 3];
+                                    float v0y = shape.meshVerts[i0 * 3 + 1];
+                                    float v0z = shape.meshVerts[i0 * 3 + 2];
+                                    float v1x = shape.meshVerts[i1 * 3];
+                                    float v1y = shape.meshVerts[i1 * 3 + 1];
+                                    float v1z = shape.meshVerts[i1 * 3 + 2];
+                                    float v2x = shape.meshVerts[i2 * 3];
+                                    float v2y = shape.meshVerts[i2 * 3 + 1];
+                                    float v2z = shape.meshVerts[i2 * 3 + 2];
+
+                                    // Compute face normal
+                                    float e1x = v1x - v0x, e1y = v1y - v0y, e1z = v1z - v0z;
+                                    float e2x = v2x - v0x, e2y = v2y - v0y, e2z = v2z - v0z;
+                                    float nx = e1y * e2z - e1z * e2y;
+                                    float ny = e1z * e2x - e1x * e2z;
+                                    float nz = e1x * e2y - e1y * e2x;
+                                    float len = std::sqrt(nx*nx + ny*ny + nz*nz);
+                                    if (len > 0.0001f) {
+                                        nx /= len; ny /= len; nz /= len;
+                                    }
+
+                                    glNormal3f(nx, ny, nz);
+                                    glVertex3f(v0x, v0y, v0z);
+                                    glVertex3f(v1x, v1y, v1z);
+                                    glVertex3f(v2x, v2y, v2z);
+                                }
+                            }
+                            glEnd();
                         }
                     }
-                    glEnd();
                     break;
                 }
             }
@@ -726,11 +1258,14 @@ int main() {
                     // Highlight model and material files
                     bool isModel = isModelFile(entry.name);
                     bool isMao = isMaoFile(entry.name);
+                    bool isPhy = isPhyFile(entry.name);
 
                     if (isModel) {
                         ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.4f, 1.0f, 0.4f, 1.0f));  // Green
                     } else if (isMao) {
                         ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.8f, 0.4f, 1.0f));  // Orange
+                    } else if (isPhy) {
+                        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.4f, 1.0f, 1.0f));  // Magenta
                     }
 
                     char label[256];
@@ -763,7 +1298,7 @@ int main() {
                         }
                     }
 
-                    if (isModel || isMao) {
+                    if (isModel || isMao || isPhy) {
                         ImGui::PopStyleColor();
                     }
 
@@ -778,6 +1313,8 @@ int main() {
                             ImGui::Text("Double-click to load model");
                         } else if (isMao) {
                             ImGui::Text("Double-click to view material");
+                        } else if (isPhy) {
+                            ImGui::Text("Collision data (auto-loaded with model)");
                         }
                         ImGui::EndTooltip();
                     }
@@ -820,10 +1357,10 @@ int main() {
             ImGui::EndMainMenuBar();
         }
 
-        // Render Settings window
+        // Render Settings window - auto-size to fit content
         if (state.showRenderSettings) {
-            ImGui::SetNextWindowSize(ImVec2(350, 500), ImGuiCond_FirstUseEver);
-            ImGui::Begin("Render Settings", &state.showRenderSettings);
+            ImGui::SetNextWindowSizeConstraints(ImVec2(300, 100), ImVec2(500, 800));
+            ImGui::Begin("Render Settings", &state.showRenderSettings, ImGuiWindowFlags_AlwaysAutoResize);
 
             ImGui::Checkbox("Wireframe", &state.renderSettings.wireframe);
             ImGui::Checkbox("Show Axes", &state.renderSettings.showAxes);
@@ -852,29 +1389,27 @@ int main() {
                 // Mesh list with visibility and material names
                 if (state.currentModel.meshes.size() >= 1) {
                     ImGui::Separator();
-                    if (state.currentModel.meshes.size() > 1) {
-                        ImGui::Text("Mesh Visibility:");
-                    } else {
-                        ImGui::Text("Mesh Info:");
-                    }
+                    ImGui::Text("Meshes:");
 
                     // Ensure visibility array is correct size
                     if (state.renderSettings.meshVisible.size() != state.currentModel.meshes.size()) {
                         state.renderSettings.initMeshVisibility(state.currentModel.meshes.size());
                     }
 
-                    ImGui::BeginChild("MeshList", ImVec2(0, 200), true);
+                    // Calculate height based on number of meshes (max 300)
+                    float listHeight = std::min(300.0f, state.currentModel.meshes.size() * 70.0f + 20.0f);
+                    ImGui::BeginChild("MeshList", ImVec2(0, listHeight), true);
                     for (size_t i = 0; i < state.currentModel.meshes.size(); i++) {
                         const auto& mesh = state.currentModel.meshes[i];
 
-                        // Visibility checkbox (only if multiple meshes)
-                        if (state.currentModel.meshes.size() > 1) {
-                            bool visible = state.renderSettings.meshVisible[i] != 0;
-                            if (ImGui::Checkbox(("##mesh" + std::to_string(i)).c_str(), &visible)) {
-                                state.renderSettings.meshVisible[i] = visible ? 1 : 0;
-                            }
-                            ImGui::SameLine();
+                        ImGui::PushID(static_cast<int>(i));
+
+                        // Visibility checkbox
+                        bool visible = state.renderSettings.meshVisible[i] != 0;
+                        if (ImGui::Checkbox("##vis", &visible)) {
+                            state.renderSettings.meshVisible[i] = visible ? 1 : 0;
                         }
+                        ImGui::SameLine();
 
                         // Mesh name
                         std::string meshLabel = mesh.name.empty() ?
@@ -885,11 +1420,23 @@ int main() {
                         ImGui::Indent();
                         ImGui::TextDisabled("%zu verts, %zu tris",
                             mesh.vertices.size(), mesh.indices.size() / 3);
+
+                        // Material name (.mao)
                         if (!mesh.materialName.empty()) {
                             ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.4f, 1.0f),
-                                "Material: %s", mesh.materialName.c_str());
+                                "Material: %s.mao", mesh.materialName.c_str());
+                        } else {
+                            ImGui::TextDisabled("Material: (none)");
                         }
+
+                        // UV View button
+                        if (ImGui::SmallButton("View UVs")) {
+                            state.selectedMeshForUv = static_cast<int>(i);
+                            state.showUvViewer = true;
+                        }
+
                         ImGui::Unindent();
+                        ImGui::PopID();
 
                         if (i < state.currentModel.meshes.size() - 1) {
                             ImGui::Spacing();
@@ -897,7 +1444,7 @@ int main() {
                     }
                     ImGui::EndChild();
 
-                    // Show all / Hide all buttons (only if multiple meshes)
+                    // Show all / Hide all buttons
                     if (state.currentModel.meshes.size() > 1) {
                         if (ImGui::Button("Show All")) {
                             for (size_t i = 0; i < state.renderSettings.meshVisible.size(); i++) {
@@ -913,10 +1460,20 @@ int main() {
                     }
                 }
 
-                // Collision mesh info
+                // Collision shapes info
                 if (!state.currentModel.collisionShapes.empty()) {
                     ImGui::Separator();
-                    ImGui::Text("Collision shapes: %zu", state.currentModel.collisionShapes.size());
+                    ImGui::Text("Collision Shapes: %zu", state.currentModel.collisionShapes.size());
+                    for (const auto& shape : state.currentModel.collisionShapes) {
+                        const char* typeStr = "Unknown";
+                        switch (shape.type) {
+                            case CollisionShapeType::Box: typeStr = "Box"; break;
+                            case CollisionShapeType::Sphere: typeStr = "Sphere"; break;
+                            case CollisionShapeType::Capsule: typeStr = "Capsule"; break;
+                            case CollisionShapeType::Mesh: typeStr = "Mesh"; break;
+                        }
+                        ImGui::BulletText("%s: %s", shape.name.c_str(), typeStr);
+                    }
                 }
             }
 
@@ -939,6 +1496,61 @@ int main() {
             ImGui::BeginChild("MaoContent", ImVec2(0, 0), true, ImGuiWindowFlags_HorizontalScrollbar);
             ImGui::TextUnformatted(state.maoContent.c_str());
             ImGui::EndChild();
+
+            ImGui::End();
+        }
+
+        // UV Viewer window
+        if (state.showUvViewer && state.hasModel && state.selectedMeshForUv >= 0 &&
+            state.selectedMeshForUv < static_cast<int>(state.currentModel.meshes.size())) {
+
+            const auto& mesh = state.currentModel.meshes[state.selectedMeshForUv];
+            std::string title = "UV Viewer - " + (mesh.name.empty() ? "Mesh " + std::to_string(state.selectedMeshForUv) : mesh.name);
+
+            ImGui::SetNextWindowSize(ImVec2(400, 400), ImGuiCond_FirstUseEver);
+            ImGui::Begin(title.c_str(), &state.showUvViewer);
+
+            ImVec2 canvasSize = ImGui::GetContentRegionAvail();
+            float size = std::min(canvasSize.x, canvasSize.y - 20);
+            if (size < 100) size = 100;
+
+            ImVec2 canvasPos = ImGui::GetCursorScreenPos();
+            ImDrawList* drawList = ImGui::GetWindowDrawList();
+
+            // Draw background
+            drawList->AddRectFilled(canvasPos, ImVec2(canvasPos.x + size, canvasPos.y + size),
+                IM_COL32(40, 40, 40, 255));
+
+            // Draw grid
+            int gridLines = 8;
+            for (int i = 0; i <= gridLines; i++) {
+                float t = float(i) / gridLines;
+                ImU32 col = (i == 0 || i == gridLines) ? IM_COL32(100, 100, 100, 255) : IM_COL32(60, 60, 60, 255);
+                drawList->AddLine(
+                    ImVec2(canvasPos.x + t * size, canvasPos.y),
+                    ImVec2(canvasPos.x + t * size, canvasPos.y + size), col);
+                drawList->AddLine(
+                    ImVec2(canvasPos.x, canvasPos.y + t * size),
+                    ImVec2(canvasPos.x + size, canvasPos.y + t * size), col);
+            }
+
+            // Draw UV triangles
+            for (size_t i = 0; i + 2 < mesh.indices.size(); i += 3) {
+                const auto& v0 = mesh.vertices[mesh.indices[i]];
+                const auto& v1 = mesh.vertices[mesh.indices[i + 1]];
+                const auto& v2 = mesh.vertices[mesh.indices[i + 2]];
+
+                ImVec2 p0(canvasPos.x + v0.u * size, canvasPos.y + (1.0f - v0.v) * size);
+                ImVec2 p1(canvasPos.x + v1.u * size, canvasPos.y + (1.0f - v1.v) * size);
+                ImVec2 p2(canvasPos.x + v2.u * size, canvasPos.y + (1.0f - v2.v) * size);
+
+                drawList->AddTriangle(p0, p1, p2, IM_COL32(0, 200, 255, 200), 1.0f);
+            }
+
+            // Reserve space for the canvas
+            ImGui::Dummy(ImVec2(size, size));
+
+            ImGui::Text("Triangles: %zu", mesh.indices.size() / 3);
 
             ImGui::End();
         }

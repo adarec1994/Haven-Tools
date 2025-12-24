@@ -11,13 +11,41 @@ struct Vertex {
     float u, v;             // TexCoord
 };
 
+// Collision shape types (from PHY files)
+enum class CollisionShapeType {
+    Box,      // boxs
+    Sphere,   // sphs
+    Capsule,  // caps
+    Mesh      // mshs
+};
+
+struct CollisionShape {
+    std::string name;
+    CollisionShapeType type = CollisionShapeType::Box;
+
+    // Position and rotation (quaternion)
+    float posX = 0, posY = 0, posZ = 0;
+    float rotX = 0, rotY = 0, rotZ = 0, rotW = 1;
+
+    // Box dimensions (half-extents)
+    float boxX = 1, boxY = 1, boxZ = 1;
+
+    // Sphere/Capsule radius and height
+    float radius = 1;
+    float height = 2;
+
+    // For mesh collision - vertices and indices
+    std::vector<float> meshVerts;  // x,y,z triplets
+    std::vector<uint32_t> meshIndices;
+};
+
 struct Mesh {
     std::string name;
-    std::string materialName;  // Material reference
+    std::string materialName;  // Material reference (.mao file) - from MMH, not MSH
     std::vector<Vertex> vertices;
     std::vector<uint32_t> indices;
 
-    // Bounding box for camera positioning
+    // Bounding box
     float minX = 0, minY = 0, minZ = 0;
     float maxX = 0, maxY = 0, maxZ = 0;
 
@@ -50,36 +78,10 @@ struct Mesh {
     }
 };
 
-// Collision shape types
-enum class CollisionShapeType {
-    Box,
-    Sphere,
-    Capsule,
-    Cylinder,
-    Mesh
-};
-
-struct CollisionShape {
-    std::string name;
-    CollisionShapeType type = CollisionShapeType::Box;
-
-    // Position and rotation
-    float posX = 0, posY = 0, posZ = 0;
-    float rotX = 0, rotY = 0, rotZ = 0, rotW = 1;  // Quaternion
-
-    // Dimensions (usage depends on type)
-    float dimX = 1, dimY = 1, dimZ = 1;  // Box half-extents
-    float radius = 1;                      // Sphere/Capsule/Cylinder radius
-    float height = 1;                      // Capsule/Cylinder height
-
-    // For mesh collision
-    Mesh mesh;
-};
-
 struct Model {
     std::string name;
     std::vector<Mesh> meshes;
-    std::vector<CollisionShape> collisionShapes;
+    std::vector<CollisionShape> collisionShapes;  // From PHY file
 
     void calculateBounds() {
         for (auto& mesh : meshes) {
