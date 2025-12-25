@@ -71,6 +71,9 @@ public:
     uint32_t readUInt32ByLabel(uint32_t structIndex, uint32_t label, uint32_t baseOffset = 0);
     float readFloatByLabel(uint32_t structIndex, uint32_t label, uint32_t baseOffset = 0);
 
+    // Read a single struct reference (FLAG_REFERENCE only, no FLAG_LIST)
+    GFFStructRef readStructRef(uint32_t structIndex, uint32_t label, uint32_t baseOffset = 0);
+
     // Read struct lists
     std::vector<GFFStructRef> readStructList(uint32_t structIndex, uint32_t label, uint32_t baseOffset = 0);
 

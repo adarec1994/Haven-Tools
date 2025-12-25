@@ -18,3 +18,6 @@ bool loadMSH(const std::vector<uint8_t>& data, Model& outModel);
 
 // Helper to convert half-float to float
 float halfToFloat(uint16_t h);
+
+// Read vertex data based on declaration type
+void readDeclType(const std::vector<uint8_t>& data, uint32_t offset, uint32_t dataType, float* out);

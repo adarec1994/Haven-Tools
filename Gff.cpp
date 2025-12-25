@@ -200,6 +200,33 @@ float GFFFile::readFloatByLabel(uint32_t structIndex, uint32_t label, uint32_t b
     return readAt<float>(dataPos);
 }
 
+GFFStructRef GFFFile::readStructRef(uint32_t structIndex, uint32_t label, uint32_t baseOffset) {
+    GFFStructRef result = {0, 0};
+
+    if (structIndex >= m_structs.size()) return result;
+
+    const GFFField* field = findField(structIndex, label);
+    if (!field) return result;
+
+    bool isRef = (field->flags & FLAG_REFERENCE) != 0;
+    bool isList = (field->flags & FLAG_LIST) != 0;
+
+    // For a single reference (not a list), read the reference data directly
+    if (isRef && !isList) {
+        uint32_t dataPos = m_header.dataOffset + field->dataOffset + baseOffset;
+
+        // Read the reference: structIndex (2 bytes) + flags (2 bytes) + offset (4 bytes)
+        uint16_t refStructIdx = readAt<uint16_t>(dataPos);
+        uint16_t refFlags = readAt<uint16_t>(dataPos + 2);
+        uint32_t refOffset = readAt<uint32_t>(dataPos + 4);
+
+        result.structIndex = refStructIdx;
+        result.offset = refOffset;
+    }
+
+    return result;
+}
+
 std::vector<GFFStructRef> GFFFile::readStructList(uint32_t structIndex, uint32_t label, uint32_t baseOffset) {
     std::vector<GFFStructRef> result;
 

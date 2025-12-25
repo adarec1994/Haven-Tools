@@ -5,10 +5,17 @@
 #include <array>
 #include <cmath>
 
+// Maximum bones per vertex (Dragon Age uses 4)
+constexpr int MAX_BONES_PER_VERTEX = 4;
+
 struct Vertex {
     float x, y, z;
     float nx, ny, nz;
     float u, v;
+    // Bone weights and indices for skeletal animation
+    // boneIndices are mesh-local indices that map through bonesUsed to skeleton bones
+    float boneWeights[MAX_BONES_PER_VERTEX] = {0, 0, 0, 0};
+    int boneIndices[MAX_BONES_PER_VERTEX] = {-1, -1, -1, -1};
 };
 
 struct Material {
@@ -54,6 +61,9 @@ struct Bone {
     float rotX = 0, rotY = 0, rotZ = 0, rotW = 1;
     float worldPosX = 0, worldPosY = 0, worldPosZ = 0;
     float worldRotX = 0, worldRotY = 0, worldRotZ = 0, worldRotW = 1;
+    // Inverse bind pose for skinning (computed from initial world transform)
+    float invBindPosX = 0, invBindPosY = 0, invBindPosZ = 0;
+    float invBindRotX = 0, invBindRotY = 0, invBindRotZ = 0, invBindRotW = 1;
 };
 
 struct Skeleton {
@@ -72,8 +82,18 @@ struct Mesh {
     int materialIndex = -1;
     std::vector<Vertex> vertices;
     std::vector<uint32_t> indices;
+    // BonesUsed: maps mesh-local bone indices to skeleton bone indices
+    // vertex.boneIndices[i] -> bonesUsed[vertex.boneIndices[i]] -> skeleton.bones index
+    std::vector<int> bonesUsed;
+    bool hasSkinning = false;
     float minX = 0, minY = 0, minZ = 0;
     float maxX = 0, maxY = 0, maxZ = 0;
+
+    // Skinning cache: maps vertex bone index -> skeleton bone index directly
+    // This eliminates string lookups during rendering
+    std::vector<int> skinningBoneMap;  // skinningBoneMap[meshLocalBoneIdx] = skeletonBoneIdx
+    bool skinningCacheBuilt = false;
+
     void calculateBounds() {
         if (vertices.empty()) return;
         minX = maxX = vertices[0].x;
@@ -105,6 +125,8 @@ struct Model {
     std::vector<Material> materials;
     std::vector<CollisionShape> collisionShapes;
     Skeleton skeleton;
+    // Skeleton bone index array for mapping bone indices from MMH
+    std::vector<std::string> boneIndexArray;
     void calculateBounds() {
         for (auto& mesh : meshes) {
             mesh.calculateBounds();
