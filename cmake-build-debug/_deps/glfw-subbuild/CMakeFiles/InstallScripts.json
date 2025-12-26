@@ -1,7 +1,7 @@
 {
 	"InstallScripts" : 
 	[
-		"C:/Users/pwd12/OneDrive/Documents/GitHub/Haven-Tools/cmake-build-debug/_deps/glfw-subbuild/cmake_install.cmake"
+		"/home/matthew/Documents/GitHub/Haven-Tools/cmake-build-debug/_deps/glfw-subbuild/cmake_install.cmake"
 	],
 	"Parallel" : false
 }

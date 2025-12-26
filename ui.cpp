@@ -9,9 +9,91 @@
 #include <algorithm>
 #include <filesystem>
 #include <iostream>
+#include <fstream>
 #include <set>
 
 namespace fs = std::filesystem;
+
+static const char* SETTINGS_FILE = "erfbrowser_settings.ini";
+
+static void saveSettings(const AppState& state) {
+    std::ofstream f(SETTINGS_FILE);
+    if (f.is_open()) {
+        f << "lastDialogPath=" << state.lastDialogPath << "\n";
+        f << "selectedFolder=" << state.selectedFolder << "\n";
+    }
+}
+
+static void loadSettings(AppState& state) {
+    std::ifstream f(SETTINGS_FILE);
+    if (f.is_open()) {
+        std::string line;
+        while (std::getline(f, line)) {
+            size_t eq = line.find('=');
+            if (eq != std::string::npos) {
+                std::string key = line.substr(0, eq);
+                std::string val = line.substr(eq + 1);
+                if (key == "lastDialogPath") state.lastDialogPath = val;
+                else if (key == "selectedFolder") state.selectedFolder = val;
+            }
+        }
+    }
+}
+
+static void loadMeshDatabase(AppState& state) {
+    if (state.meshBrowser.loaded) return;
+
+    std::string dbPath = (fs::path(getExeDir()) / "model_names.csv").string();
+    std::ifstream f(dbPath);
+    if (!f.is_open()) {
+        std::cerr << "Could not open model_names.csv" << std::endl;
+        state.meshBrowser.loaded = true;
+        return;
+    }
+
+    std::set<std::string> catSet;
+    catSet.insert("All");
+
+    std::string line;
+    std::getline(f, line);
+
+    while (std::getline(f, line)) {
+        if (line.empty()) continue;
+
+        MeshEntry entry;
+        size_t p1 = line.find(',');
+        if (p1 == std::string::npos) continue;
+        entry.mshFile = line.substr(0, p1);
+
+        size_t p2 = line.find(',', p1 + 1);
+        if (p2 == std::string::npos) continue;
+        entry.mshName = line.substr(p1 + 1, p2 - p1 - 1);
+
+        size_t p3 = line.find(',', p2 + 1);
+        if (p3 == std::string::npos) continue;
+        std::string lodStr = line.substr(p2 + 1, p3 - p2 - 1);
+        entry.lod = lodStr.empty() ? 0 : std::stoi(lodStr);
+
+        entry.category = line.substr(p3 + 1);
+        if (entry.category.empty()) entry.category = "UNK";
+
+        catSet.insert(entry.category);
+        state.meshBrowser.allMeshes.push_back(entry);
+    }
+
+    state.meshBrowser.categories.assign(catSet.begin(), catSet.end());
+    std::sort(state.meshBrowser.categories.begin(), state.meshBrowser.categories.end());
+
+    auto it = std::find(state.meshBrowser.categories.begin(), state.meshBrowser.categories.end(), "All");
+    if (it != state.meshBrowser.categories.end()) {
+        state.meshBrowser.categories.erase(it);
+        state.meshBrowser.categories.insert(state.meshBrowser.categories.begin(), "All");
+    }
+
+    state.meshBrowser.loaded = true;
+    std::cout << "Loaded " << state.meshBrowser.allMeshes.size() << " mesh entries, "
+              << state.meshBrowser.categories.size() << " categories" << std::endl;
+}
 
 static void dumpAllMshFileNames(const AppState& state) {
     std::cout << "\n=== ALL MSH FILES ===" << std::endl;
@@ -33,6 +115,12 @@ static void dumpAllMshFileNames(const AppState& state) {
 }
 
 void handleInput(AppState& state, GLFWwindow* window, ImGuiIO& io) {
+    static bool settingsLoaded = false;
+    if (!settingsLoaded) {
+        loadSettings(state);
+        settingsLoaded = true;
+    }
+
     if (!io.WantCaptureMouse) {
         double mx, my;
         glfwGetCursorPos(window, &mx, &my);
@@ -71,13 +159,136 @@ void handleInput(AppState& state, GLFWwindow* window, ImGuiIO& io) {
     }
 }
 
+static void drawMeshBrowserWindow(AppState& state) {
+    loadMeshDatabase(state);
+
+    ImGui::SetNextWindowSize(ImVec2(400, 500), ImGuiCond_FirstUseEver);
+    ImGui::Begin("Mesh Browser", &state.showMeshBrowser);
+
+    if (state.meshBrowser.allMeshes.empty()) {
+        ImGui::TextDisabled("No mesh database loaded.");
+        ImGui::TextDisabled("Place model_names.csv in exe directory.");
+        ImGui::End();
+        return;
+    }
+
+    ImGui::Checkbox("Categorized", &state.meshBrowser.categorized);
+    ImGui::SameLine();
+    ImGui::SetNextItemWidth(150);
+    if (ImGui::BeginCombo("Category", state.meshBrowser.categories[state.meshBrowser.selectedCategory].c_str())) {
+        for (size_t i = 0; i < state.meshBrowser.categories.size(); i++) {
+            bool selected = (state.meshBrowser.selectedCategory == (int)i);
+            if (ImGui::Selectable(state.meshBrowser.categories[i].c_str(), selected)) {
+                state.meshBrowser.selectedCategory = (int)i;
+            }
+            if (selected) ImGui::SetItemDefaultFocus();
+        }
+        ImGui::EndCombo();
+    }
+
+    if (ImGui::BeginTabBar("LODTabs")) {
+        const char* lodNames[] = {"LOD 0", "LOD 1", "LOD 2", "LOD 3"};
+        for (int lod = 0; lod < 4; lod++) {
+            if (ImGui::BeginTabItem(lodNames[lod])) {
+                state.meshBrowser.selectedLod = lod;
+                ImGui::EndTabItem();
+            }
+        }
+        ImGui::EndTabBar();
+    }
+
+    ImGui::InputText("Filter", state.meshBrowser.meshFilter, sizeof(state.meshBrowser.meshFilter));
+
+    std::string filterLower = state.meshBrowser.meshFilter;
+    std::transform(filterLower.begin(), filterLower.end(), filterLower.begin(), ::tolower);
+
+    std::string selectedCat = state.meshBrowser.categories[state.meshBrowser.selectedCategory];
+
+    std::vector<const MeshEntry*> filtered;
+    for (const auto& entry : state.meshBrowser.allMeshes) {
+        if (entry.lod != state.meshBrowser.selectedLod) continue;
+        if (state.meshBrowser.categorized && selectedCat != "All" && entry.category != selectedCat) continue;
+
+        std::string displayName = entry.mshName.empty() ? entry.mshFile : entry.mshName;
+        std::string displayLower = displayName;
+        std::transform(displayLower.begin(), displayLower.end(), displayLower.begin(), ::tolower);
+        if (!filterLower.empty() && displayLower.find(filterLower) == std::string::npos) continue;
+
+        filtered.push_back(&entry);
+    }
+
+    ImGui::Text("%zu meshes", filtered.size());
+    ImGui::Separator();
+
+    ImGui::BeginChild("MeshList", ImVec2(0, 0), true);
+    ImGuiListClipper clipper;
+    clipper.Begin(static_cast<int>(filtered.size()));
+    while (clipper.Step()) {
+        for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; i++) {
+            const MeshEntry* entry = filtered[i];
+            std::string displayName = entry->mshName.empty() ? entry->mshFile : entry->mshName;
+
+            char label[512];
+            if (state.meshBrowser.categorized || selectedCat == "All") {
+                snprintf(label, sizeof(label), "%s##%d", displayName.c_str(), i);
+            } else {
+                snprintf(label, sizeof(label), "[%s] %s##%d", entry->category.c_str(), displayName.c_str(), i);
+            }
+
+            bool selected = (state.meshBrowser.selectedMeshIndex == i);
+            if (ImGui::Selectable(label, selected, ImGuiSelectableFlags_AllowDoubleClick)) {
+                state.meshBrowser.selectedMeshIndex = i;
+                if (ImGui::IsMouseDoubleClicked(0)) {
+                    std::string mshLower = entry->mshFile;
+                    std::transform(mshLower.begin(), mshLower.end(), mshLower.begin(), ::tolower);
+
+                    for (const auto& erfPath : state.erfFiles) {
+                        ERFFile erf;
+                        if (erf.open(erfPath)) {
+                            for (const auto& erfEntry : erf.entries()) {
+                                std::string entryLower = erfEntry.name;
+                                std::transform(entryLower.begin(), entryLower.end(), entryLower.begin(), ::tolower);
+
+                                if (entryLower == mshLower) {
+                                    state.currentErf = std::make_unique<ERFFile>();
+                                    if (state.currentErf->open(erfPath)) {
+                                        if (loadModelFromEntry(state, erfEntry)) {
+                                            state.statusMessage = "Loaded: " + displayName;
+                                            state.showRenderSettings = true;
+                                        } else {
+                                            state.statusMessage = "Failed to load: " + displayName;
+                                        }
+                                    }
+                                    goto done_search;
+                                }
+                            }
+                        }
+                    }
+                    done_search:;
+                }
+            }
+            if (ImGui::IsItemHovered()) {
+                ImGui::BeginTooltip();
+                ImGui::Text("File: %s", entry->mshFile.c_str());
+                if (!entry->mshName.empty()) ImGui::Text("Name: %s", entry->mshName.c_str());
+                ImGui::Text("Category: %s", entry->category.c_str());
+                ImGui::Text("LOD: %d", entry->lod);
+                ImGui::EndTooltip();
+            }
+        }
+    }
+    ImGui::EndChild();
+    ImGui::End();
+}
+
 static void drawBrowserWindow(AppState& state) {
     ImGui::SetNextWindowSize(ImVec2(500, 600), ImGuiCond_FirstUseEver);
     ImGui::Begin("ERF Browser", &state.showBrowser, ImGuiWindowFlags_MenuBar);
     if (ImGui::BeginMenuBar()) {
         if (ImGui::Button("Open Folder")) {
             IGFD::FileDialogConfig config;
-            config.path = state.selectedFolder.empty() ? "." : state.selectedFolder;
+            config.path = state.lastDialogPath.empty() ?
+                (state.selectedFolder.empty() ? "." : state.selectedFolder) : state.lastDialogPath;
             ImGuiFileDialog::Instance()->OpenDialog("ChooseFolder", "Choose Folder", nullptr, config);
         }
         ImGui::SameLine();
@@ -214,14 +425,13 @@ static void drawRenderSettingsWindow(AppState& state) {
 
                     ImGui::PushID(static_cast<int>(i));
 
-                    // Color based on selection and root status
                     ImVec4 color;
                     if (isSelected) {
-                        color = ImVec4(1.0f, 1.0f, 0.0f, 1.0f);  // Yellow for selected
+                        color = ImVec4(1.0f, 1.0f, 0.0f, 1.0f);
                     } else if (bone.parentIndex < 0) {
-                        color = ImVec4(1.0f, 0.5f, 0.5f, 1.0f);  // Red for root
+                        color = ImVec4(1.0f, 0.5f, 0.5f, 1.0f);
                     } else {
-                        color = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);  // White for normal
+                        color = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
                     }
 
                     ImGui::PushStyleColor(ImGuiCol_Text, color);
@@ -234,7 +444,7 @@ static void drawRenderSettingsWindow(AppState& state) {
                     }
 
                     if (ImGui::Selectable(label, isSelected)) {
-                        state.selectedBoneIndex = isSelected ? -1 : (int)i;  // Toggle selection
+                        state.selectedBoneIndex = isSelected ? -1 : (int)i;
                     }
 
                     ImGui::PopStyleColor();
@@ -321,7 +531,6 @@ static void drawAnimWindow(AppState& state, ImGuiIO& io) {
                                 if (!aniData.empty()) {
                                     state.currentAnim = loadANI(aniData, entry.name);
 
-                                    // Try exact matching first
                                     int matched = 0;
                                     for (auto& track : state.currentAnim.tracks) {
                                         track.boneIndex = state.currentModel.skeleton.findBone(track.boneName);
@@ -332,7 +541,6 @@ static void drawAnimWindow(AppState& state, ImGuiIO& io) {
                                     }
                                     std::cout << "  Exact matches: " << matched << "/" << state.currentAnim.tracks.size() << std::endl;
 
-                                    // If no exact matches, try case-insensitive matching
                                     if (matched == 0) {
                                         std::cout << "  Trying case-insensitive matching..." << std::endl;
                                         for (auto& track : state.currentAnim.tracks) {
@@ -378,20 +586,24 @@ static void drawAnimWindow(AppState& state, ImGuiIO& io) {
 
 void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
     if (state.showBrowser) drawBrowserWindow(state);
+    if (state.showMeshBrowser) drawMeshBrowserWindow(state);
     if (ImGuiFileDialog::Instance()->Display("ChooseFolder", ImGuiWindowFlags_NoCollapse, ImVec2(600, 400))) {
         if (ImGuiFileDialog::Instance()->IsOk()) {
             state.selectedFolder = ImGuiFileDialog::Instance()->GetCurrentPath();
+            state.lastDialogPath = state.selectedFolder;
             state.erfFiles = scanForERFFiles(state.selectedFolder);
             state.selectedErfIndex = -1;
             state.currentErf.reset();
             state.selectedEntryIndex = -1;
             state.statusMessage = "Found " + std::to_string(state.erfFiles.size()) + " ERF files";
+            saveSettings(state);
         }
         ImGuiFileDialog::Instance()->Close();
     }
     if (ImGui::BeginMainMenuBar()) {
         if (ImGui::BeginMenu("View")) {
             ImGui::MenuItem("Browser", nullptr, &state.showBrowser);
+            ImGui::MenuItem("Mesh Browser", nullptr, &state.showMeshBrowser);
             ImGui::MenuItem("Render Settings", nullptr, &state.showRenderSettings);
             ImGui::MenuItem("Animation", nullptr, &state.showAnimWindow);
             ImGui::EndMenu();

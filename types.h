@@ -6,7 +6,6 @@
 #include "Mesh.h"
 #include "erf.h"
 
-// Forward declarations
 class ERFFile;
 
 struct Camera {
@@ -87,22 +86,37 @@ struct RenderSettings {
     }
 };
 
+struct MeshEntry {
+    std::string mshFile;
+    std::string mshName;
+    int lod;
+    std::string category;
+};
+
+struct MeshBrowserState {
+    std::vector<MeshEntry> allMeshes;
+    std::vector<std::string> categories;
+    int selectedCategory = 0;
+    int selectedLod = 0;
+    int selectedMeshIndex = -1;
+    bool categorized = true;
+    bool loaded = false;
+    char meshFilter[64] = "";
+};
+
 struct AppState {
-    // UI state
     bool showBrowser = true;
     bool showRenderSettings = false;
     bool showMaoViewer = false;
     bool showUvViewer = false;
     bool showAnimWindow = false;
+    bool showMeshBrowser = false;
 
-    // MAO viewer
     std::string maoContent;
     std::string maoFileName;
 
-    // UV viewer
     int selectedMeshForUv = -1;
 
-    // ERF browser
     std::string selectedFolder;
     std::vector<std::string> erfFiles;
     int selectedErfIndex = -1;
@@ -110,21 +124,18 @@ struct AppState {
     int selectedEntryIndex = -1;
     std::string statusMessage;
     std::string extractPath;
+    std::string lastDialogPath;
 
-    // Model state
     Model currentModel;
     bool hasModel = false;
 
-    // Camera and rendering
     Camera camera;
     RenderSettings renderSettings;
 
-    // Mouse state
     bool isPanning = false;
     double lastMouseX = 0;
     double lastMouseY = 0;
 
-    // Animation
     std::vector<std::pair<std::string, std::string>> availableAnimFiles;
     int selectedAnimIndex = -1;
     Animation currentAnim;
@@ -134,22 +145,20 @@ struct AppState {
     std::vector<Bone> basePoseBones;
     char animFilter[64] = "";
 
-    // Bone selection for visualization
     int selectedBoneIndex = -1;
+
+    MeshBrowserState meshBrowser;
 };
 
-// Utility functions
 std::string getExeDir();
 void ensureExtractDir(const std::string& exeDir);
 std::string versionToString(ERFVersion v);
 
-// File type detection
 bool isModelFile(const std::string& name);
 bool isMaoFile(const std::string& name);
 bool isPhyFile(const std::string& name);
 bool isAnimFile(const std::string& name);
 bool isMshFile(const std::string& name);
 
-// Dump all MSH filenames to console
 void dumpAllMshFileNames(const std::vector<std::string>& erfFiles);
 bool isMshFile(const std::string& name);

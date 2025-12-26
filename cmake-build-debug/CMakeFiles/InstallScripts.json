@@ -1,10 +1,10 @@
 {
 	"InstallScripts" : 
 	[
-		"C:/Users/pwd12/OneDrive/Documents/GitHub/Haven-Tools/cmake-build-debug/cmake_install.cmake",
-		"C:/Users/pwd12/OneDrive/Documents/GitHub/Haven-Tools/cmake-build-debug/_deps/glfw-build/cmake_install.cmake",
-		"C:/Users/pwd12/OneDrive/Documents/GitHub/Haven-Tools/cmake-build-debug/_deps/glfw-build/src/cmake_install.cmake",
-		"C:/Users/pwd12/OneDrive/Documents/GitHub/Haven-Tools/cmake-build-debug/_deps/imguifiledialog-build/cmake_install.cmake"
+		"/home/matthew/Documents/GitHub/Haven-Tools/cmake-build-debug/cmake_install.cmake",
+		"/home/matthew/Documents/GitHub/Haven-Tools/cmake-build-debug/_deps/glfw-build/cmake_install.cmake",
+		"/home/matthew/Documents/GitHub/Haven-Tools/cmake-build-debug/_deps/glfw-build/src/cmake_install.cmake",
+		"/home/matthew/Documents/GitHub/Haven-Tools/cmake-build-debug/_deps/imguifiledialog-build/cmake_install.cmake"
 	],
 	"Parallel" : false
 }
