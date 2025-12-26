@@ -3,6 +3,8 @@
 #include "mmh_loader.h"
 #include "animation.h"
 #include "erf.h"
+#include "export.h"
+#include "dds_loader.h"
 #include <GLFW/glfw3.h>
 #include "imgui.h"
 #include "ImGuiFileDialog.h"
@@ -18,7 +20,7 @@
 
 namespace fs = std::filesystem;
 
-static const char* SETTINGS_FILE = "erfbrowser_settings.ini";
+static const char* SETTINGS_FILE = "haventools_settings.ini";
 
 static void saveSettings(const AppState& state) {
     std::ofstream f(SETTINGS_FILE);
@@ -73,7 +75,23 @@ static void loadMeshDatabase(AppState& state) {
         std::string lodStr = line.substr(p2 + 1, p3 - p2 - 1);
         entry.lod = lodStr.empty() ? 0 : std::stoi(lodStr);
 
-        entry.category = line.substr(p3 + 1);
+        size_t p4 = line.find(',', p3 + 1);
+        if (p4 == std::string::npos) {
+            entry.category = line.substr(p3 + 1);
+        } else {
+            entry.category = line.substr(p3 + 1, p4 - p3 - 1);
+            std::string animStr = line.substr(p4 + 1);
+            while (!animStr.empty() && (animStr.back() == '\r' || animStr.back() == '\n'))
+                animStr.pop_back();
+            if (!animStr.empty()) {
+                std::istringstream animStream(animStr);
+                std::string anim;
+                while (animStream >> anim) {
+                    entry.animations.push_back(anim);
+                }
+            }
+        }
+
         while (!entry.category.empty() && (entry.category.back() == '\r' || entry.category.back() == '\n'))
             entry.category.pop_back();
         if (entry.category.empty()) entry.category = "UNK";
@@ -92,8 +110,6 @@ static void loadMeshDatabase(AppState& state) {
     }
 
     state.meshBrowser.loaded = true;
-    std::cout << "Loaded " << state.meshBrowser.allMeshes.size() << " mesh entries, "
-              << state.meshBrowser.categories.size() << " categories" << std::endl;
 }
 
 void handleInput(AppState& state, GLFWwindow* window, ImGuiIO& io) {
@@ -237,6 +253,7 @@ static void drawMeshBrowserWindow(AppState& state) {
                                     if (loadModelFromEntry(state, erfEntry)) {
                                         state.statusMessage = "Loaded: " + displayName;
                                         state.showRenderSettings = true;
+                                        state.currentModelAnimations = entry->animations;
                                     } else {
                                         state.statusMessage = "Failed to load: " + displayName;
                                     }
@@ -313,19 +330,77 @@ static void drawBrowserWindow(AppState& state) {
     ImGui::EndChild();
     ImGui::NextColumn();
     if (!state.selectedErfName.empty() && !state.mergedEntries.empty()) {
+        bool hasTextures = false, hasModels = false;
+        for (const auto& ce : state.mergedEntries) {
+            if (ce.name.size() > 4 && ce.name.substr(ce.name.size() - 4) == ".dds") hasTextures = true;
+            if (isModelFile(ce.name)) hasModels = true;
+            if (hasTextures && hasModels) break;
+        }
+
         ImGui::Text("Contents (%zu)", state.mergedEntries.size());
+        ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+        ImGui::InputText("##contentSearch", state.contentFilter, sizeof(state.contentFilter));
+        if (hasTextures && ImGui::Button("Dump Textures")) {
+            IGFD::FileDialogConfig config;
+            #ifdef _WIN32
+            char* userProfile = getenv("USERPROFILE");
+            if (userProfile) config.path = std::string(userProfile) + "\\Documents";
+            else config.path = ".";
+            #else
+            char* home = getenv("HOME");
+            if (home) config.path = std::string(home) + "/Documents";
+            else config.path = ".";
+            #endif
+            ImGuiFileDialog::Instance()->OpenDialog("DumpTextures", "Select Output Folder", nullptr, config);
+        }
+        if (hasModels) {
+            if (hasTextures) ImGui::SameLine();
+            if (ImGui::Button("Dump Models")) {
+                IGFD::FileDialogConfig config;
+                #ifdef _WIN32
+                char* userProfile = getenv("USERPROFILE");
+                if (userProfile) config.path = std::string(userProfile) + "\\Documents";
+                else config.path = ".";
+                #else
+                char* home = getenv("HOME");
+                if (home) config.path = std::string(home) + "/Documents";
+                else config.path = ".";
+                #endif
+                ImGuiFileDialog::Instance()->OpenDialog("DumpModels", "Select Output Folder", nullptr, config);
+            }
+        }
         ImGui::Separator();
+
+        std::string filterLower = state.contentFilter;
+        std::transform(filterLower.begin(), filterLower.end(), filterLower.begin(), ::tolower);
+
+        std::vector<int> filteredIndices;
+        for (int i = 0; i < (int)state.mergedEntries.size(); i++) {
+            if (filterLower.empty()) {
+                filteredIndices.push_back(i);
+            } else {
+                std::string nameLower = state.mergedEntries[i].name;
+                std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), ::tolower);
+                if (nameLower.find(filterLower) != std::string::npos) {
+                    filteredIndices.push_back(i);
+                }
+            }
+        }
+
         ImGui::BeginChild("EntryList", ImVec2(0, 0), true);
         ImGuiListClipper entryClipper;
-        entryClipper.Begin(static_cast<int>(state.mergedEntries.size()));
+        entryClipper.Begin(static_cast<int>(filteredIndices.size()));
         while (entryClipper.Step()) {
-            for (int i = entryClipper.DisplayStart; i < entryClipper.DisplayEnd; i++) {
+            for (int fi = entryClipper.DisplayStart; fi < entryClipper.DisplayEnd; fi++) {
+                int i = filteredIndices[fi];
                 const CachedEntry& ce = state.mergedEntries[i];
 
                 bool isModel = isModelFile(ce.name), isMao = isMaoFile(ce.name), isPhy = isPhyFile(ce.name);
+                bool isTexture = ce.name.size() > 4 && ce.name.substr(ce.name.size() - 4) == ".dds";
                 if (isModel) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.4f, 1.0f, 0.4f, 1.0f));
                 else if (isMao) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.8f, 0.4f, 1.0f));
                 else if (isPhy) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.4f, 1.0f, 1.0f));
+                else if (isTexture) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.4f, 0.8f, 1.0f, 1.0f));
                 char label[256]; snprintf(label, sizeof(label), "%s##%d", ce.name.c_str(), i);
                 if (ImGui::Selectable(label, i == state.selectedEntryIndex, ImGuiSelectableFlags_AllowDoubleClick)) {
                     state.selectedEntryIndex = i;
@@ -337,7 +412,21 @@ static void drawBrowserWindow(AppState& state) {
                                 if (isModel) {
                                     state.currentErf = std::make_unique<ERFFile>();
                                     state.currentErf->open(state.erfFiles[ce.erfIdx]);
-                                    if (loadModelFromEntry(state, entry)) state.statusMessage = "Loaded: " + ce.name;
+                                    if (loadModelFromEntry(state, entry)) {
+                                        state.statusMessage = "Loaded: " + ce.name;
+                                        state.currentModelAnimations.clear();
+                                        loadMeshDatabase(state);
+                                        std::string mshLower = ce.name;
+                                        std::transform(mshLower.begin(), mshLower.end(), mshLower.begin(), ::tolower);
+                                        for (const auto& me : state.meshBrowser.allMeshes) {
+                                            std::string dbLower = me.mshFile;
+                                            std::transform(dbLower.begin(), dbLower.end(), dbLower.begin(), ::tolower);
+                                            if (dbLower == mshLower) {
+                                                state.currentModelAnimations = me.animations;
+                                                break;
+                                            }
+                                        }
+                                    }
                                     else state.statusMessage = "Failed to parse: " + ce.name;
                                     state.showRenderSettings = true;
                                 } else if (isMao) {
@@ -352,7 +441,69 @@ static void drawBrowserWindow(AppState& state) {
                         }
                     }
                 }
-                if (isModel || isMao || isPhy) ImGui::PopStyleColor();
+                if (isModel && ImGui::BeginPopupContextItem()) {
+                    if (ImGui::MenuItem("Export as GLB...")) {
+                        state.pendingExportEntry = ce;
+                        state.pendingExport = true;
+                        IGFD::FileDialogConfig config;
+                        #ifdef _WIN32
+                        char* userProfile = getenv("USERPROFILE");
+                        if (userProfile) config.path = std::string(userProfile) + "\\Documents";
+                        else config.path = ".";
+                        #else
+                        char* home = getenv("HOME");
+                        if (home) config.path = std::string(home) + "/Documents";
+                        else config.path = ".";
+                        #endif
+                        std::string defaultName = ce.name;
+                        size_t dotPos = defaultName.rfind('.');
+                        if (dotPos != std::string::npos) defaultName = defaultName.substr(0, dotPos);
+                        defaultName += ".glb";
+                        config.fileName = defaultName;
+                        ImGuiFileDialog::Instance()->OpenDialog("ExportGLB", "Export as GLB", ".glb", config);
+                    }
+                    ImGui::EndPopup();
+                }
+                if (isTexture && ImGui::BeginPopupContextItem()) {
+                    if (ImGui::MenuItem("Export as DDS...")) {
+                        state.pendingTextureExport = ce;
+                        state.pendingTexExportDds = true;
+                        IGFD::FileDialogConfig config;
+                        #ifdef _WIN32
+                        char* userProfile = getenv("USERPROFILE");
+                        if (userProfile) config.path = std::string(userProfile) + "\\Documents";
+                        else config.path = ".";
+                        #else
+                        char* home = getenv("HOME");
+                        if (home) config.path = std::string(home) + "/Documents";
+                        else config.path = ".";
+                        #endif
+                        config.fileName = ce.name;
+                        ImGuiFileDialog::Instance()->OpenDialog("ExportTexDDS", "Export as DDS", ".dds", config);
+                    }
+                    if (ImGui::MenuItem("Export as PNG...")) {
+                        state.pendingTextureExport = ce;
+                        state.pendingTexExportPng = true;
+                        IGFD::FileDialogConfig config;
+                        #ifdef _WIN32
+                        char* userProfile = getenv("USERPROFILE");
+                        if (userProfile) config.path = std::string(userProfile) + "\\Documents";
+                        else config.path = ".";
+                        #else
+                        char* home = getenv("HOME");
+                        if (home) config.path = std::string(home) + "/Documents";
+                        else config.path = ".";
+                        #endif
+                        std::string defaultName = ce.name;
+                        size_t dotPos = defaultName.rfind('.');
+                        if (dotPos != std::string::npos) defaultName = defaultName.substr(0, dotPos);
+                        defaultName += ".png";
+                        config.fileName = defaultName;
+                        ImGuiFileDialog::Instance()->OpenDialog("ExportTexPNG", "Export as PNG", ".png", config);
+                    }
+                    ImGui::EndPopup();
+                }
+                if (isModel || isMao || isPhy || isTexture) ImGui::PopStyleColor();
             }
         }
         ImGui::EndChild();
@@ -621,7 +772,25 @@ static void drawUvViewer(AppState& state) {
 static void drawAnimWindow(AppState& state, ImGuiIO& io) {
     ImGui::SetNextWindowSize(ImVec2(300, 400), ImGuiCond_FirstUseEver);
     ImGui::Begin("Animations", &state.showAnimWindow);
-    if (state.availableAnimFiles.empty()) ImGui::TextDisabled("No animations found");
+
+    std::vector<size_t> filteredAnims;
+    for (size_t ii = 0; ii < state.availableAnimFiles.size(); ii++) {
+        if (state.currentModelAnimations.empty()) {
+            filteredAnims.push_back(ii);
+        } else {
+            std::string animName = state.availableAnimFiles[ii].first;
+            size_t dotPos = animName.rfind('.');
+            if (dotPos != std::string::npos) animName = animName.substr(0, dotPos);
+            for (const auto& validAnim : state.currentModelAnimations) {
+                if (animName == validAnim) {
+                    filteredAnims.push_back(ii);
+                    break;
+                }
+            }
+        }
+    }
+
+    if (filteredAnims.empty()) ImGui::TextDisabled("No animations for this model");
     else {
         if (state.animPlaying && state.currentAnim.duration > 0) {
             ImGui::TextColored(ImVec4(0.5f, 1.0f, 0.5f, 1.0f), "Playing: %s", state.currentAnim.name.c_str());
@@ -629,22 +798,22 @@ static void drawAnimWindow(AppState& state, ImGuiIO& io) {
             if (ImGui::Button("Stop")) { state.animPlaying = false; state.animTime = 0.0f; state.currentModel.skeleton.bones = state.basePoseBones; }
             ImGui::Separator();
         }
-        ImGui::Text("%zu animations", state.availableAnimFiles.size());
+        ImGui::Text("%zu animations", filteredAnims.size());
         ImGui::InputText("Filter", state.animFilter, sizeof(state.animFilter));
         std::string filterLower = state.animFilter;
         std::transform(filterLower.begin(), filterLower.end(), filterLower.begin(), ::tolower);
         ImGui::BeginChild("AnimList", ImVec2(0, 0), true);
-        for (size_t ii = 0; ii < state.availableAnimFiles.size(); ii++) {
-            std::string nameLower = state.availableAnimFiles[ii].first;
+        for (size_t idx : filteredAnims) {
+            std::string nameLower = state.availableAnimFiles[idx].first;
             std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), ::tolower);
             if (!filterLower.empty() && nameLower.find(filterLower) == std::string::npos) continue;
-            if (ImGui::Selectable(state.availableAnimFiles[ii].first.c_str(), state.selectedAnimIndex == (int)ii, ImGuiSelectableFlags_AllowDoubleClick)) {
-                state.selectedAnimIndex = (int)ii;
+            if (ImGui::Selectable(state.availableAnimFiles[idx].first.c_str(), state.selectedAnimIndex == (int)idx, ImGuiSelectableFlags_AllowDoubleClick)) {
+                state.selectedAnimIndex = (int)idx;
                 if (ImGui::IsMouseDoubleClicked(0)) {
                     ERFFile erf;
-                    if (erf.open(state.availableAnimFiles[ii].second)) {
+                    if (erf.open(state.availableAnimFiles[idx].second)) {
                         for (const auto& entry : erf.entries()) {
-                            if (entry.name == state.availableAnimFiles[ii].first) {
+                            if (entry.name == state.availableAnimFiles[idx].first) {
                                 auto aniData = erf.readEntry(entry);
                                 if (!aniData.empty()) {
                                     state.currentAnim = loadANI(aniData, entry.name);
@@ -727,12 +896,12 @@ static void drawSplashScreen(AppState& state, int displayW, int displayH) {
     float centerX = displayW * 0.5f;
     float centerY = displayH * 0.5f;
 
-    const char* title = "Dragon Age Model Browser";
+    const char* title = "Haven Tools";
     ImVec2 titleSize = ImGui::CalcTextSize(title);
     ImGui::SetCursorPos(ImVec2(centerX - titleSize.x * 0.5f, centerY - 60));
     ImGui::Text("%s", title);
 
-    const char* subtitle = "Select your Dragon Age: Origins installation";
+    const char* subtitle = "Dragon Age: Origins Model Browser";
     ImVec2 subSize = ImGui::CalcTextSize(subtitle);
     ImGui::SetCursorPos(ImVec2(centerX - subSize.x * 0.5f, centerY - 30));
     ImGui::TextDisabled("%s", subtitle);
@@ -796,6 +965,198 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
             state.selectedEntryIndex = -1;
             state.statusMessage = "Found " + std::to_string(state.erfsByName.size()) + " ERF files";
             saveSettings(state);
+        }
+        ImGuiFileDialog::Instance()->Close();
+    }
+    if (ImGuiFileDialog::Instance()->Display("ExportGLB", ImGuiWindowFlags_NoCollapse, ImVec2(600, 400))) {
+        if (ImGuiFileDialog::Instance()->IsOk() && state.pendingExport) {
+            std::string exportPath = ImGuiFileDialog::Instance()->GetFilePathName();
+
+            ERFFile erf;
+            if (erf.open(state.erfFiles[state.pendingExportEntry.erfIdx])) {
+                if (state.pendingExportEntry.entryIdx < erf.entries().size()) {
+                    const auto& entry = erf.entries()[state.pendingExportEntry.entryIdx];
+                    state.currentErf = std::make_unique<ERFFile>();
+                    state.currentErf->open(state.erfFiles[state.pendingExportEntry.erfIdx]);
+                    if (loadModelFromEntry(state, entry)) {
+                        std::vector<Animation> exportAnims;
+                        for (const auto& animFile : state.availableAnimFiles) {
+                            std::string animName = animFile.first;
+                            size_t dotPos = animName.rfind('.');
+                            if (dotPos != std::string::npos) animName = animName.substr(0, dotPos);
+                            bool found = false;
+                            for (const auto& validAnim : state.currentModelAnimations) {
+                                if (animName == validAnim) { found = true; break; }
+                            }
+                            if (!found) continue;
+
+                            ERFFile animErf;
+                            if (animErf.open(animFile.second)) {
+                                for (const auto& animEntry : animErf.entries()) {
+                                    if (animEntry.name == animFile.first) {
+                                        auto aniData = animErf.readEntry(animEntry);
+                                        if (!aniData.empty()) {
+                                            Animation anim = loadANI(aniData, animEntry.name);
+                                            for (auto& track : anim.tracks) {
+                                                track.boneIndex = state.currentModel.skeleton.findBone(track.boneName);
+                                            }
+                                            exportAnims.push_back(anim);
+                                        }
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+
+                        if (exportToGLB(state.currentModel, exportAnims, exportPath)) {
+                            state.statusMessage = "Exported: " + exportPath + " (" + std::to_string(exportAnims.size()) + " anims)";
+                        } else {
+                            state.statusMessage = "Export failed!";
+                        }
+                    }
+                }
+            }
+            state.pendingExport = false;
+        }
+        ImGuiFileDialog::Instance()->Close();
+    }
+    if (ImGuiFileDialog::Instance()->Display("ExportTexDDS", ImGuiWindowFlags_NoCollapse, ImVec2(600, 400))) {
+        if (ImGuiFileDialog::Instance()->IsOk() && state.pendingTexExportDds) {
+            std::string exportPath = ImGuiFileDialog::Instance()->GetFilePathName();
+            ERFFile erf;
+            if (erf.open(state.erfFiles[state.pendingTextureExport.erfIdx])) {
+                if (state.pendingTextureExport.entryIdx < erf.entries().size()) {
+                    auto data = erf.readEntry(erf.entries()[state.pendingTextureExport.entryIdx]);
+                    if (!data.empty()) {
+                        std::ofstream out(exportPath, std::ios::binary);
+                        out.write(reinterpret_cast<const char*>(data.data()), data.size());
+                        state.statusMessage = "Exported: " + exportPath;
+                    }
+                }
+            }
+            state.pendingTexExportDds = false;
+        }
+        ImGuiFileDialog::Instance()->Close();
+    }
+    if (ImGuiFileDialog::Instance()->Display("ExportTexPNG", ImGuiWindowFlags_NoCollapse, ImVec2(600, 400))) {
+        if (ImGuiFileDialog::Instance()->IsOk() && state.pendingTexExportPng) {
+            std::string exportPath = ImGuiFileDialog::Instance()->GetFilePathName();
+            ERFFile erf;
+            if (erf.open(state.erfFiles[state.pendingTextureExport.erfIdx])) {
+                if (state.pendingTextureExport.entryIdx < erf.entries().size()) {
+                    auto data = erf.readEntry(erf.entries()[state.pendingTextureExport.entryIdx]);
+                    if (!data.empty()) {
+                        std::vector<uint8_t> rgba;
+                        int w, h;
+                        if (decodeDDSToRGBA(data, rgba, w, h)) {
+                            std::vector<uint8_t> png;
+                            encodePNG(rgba, w, h, png);
+                            std::ofstream out(exportPath, std::ios::binary);
+                            out.write(reinterpret_cast<const char*>(png.data()), png.size());
+                            state.statusMessage = "Exported: " + exportPath;
+                        } else {
+                            state.statusMessage = "Failed to decode texture";
+                        }
+                    }
+                }
+            }
+            state.pendingTexExportPng = false;
+        }
+        ImGuiFileDialog::Instance()->Close();
+    }
+    if (ImGuiFileDialog::Instance()->Display("DumpTextures", ImGuiWindowFlags_NoCollapse, ImVec2(600, 400))) {
+        if (ImGuiFileDialog::Instance()->IsOk()) {
+            std::string outDir = ImGuiFileDialog::Instance()->GetCurrentPath();
+            int exported = 0;
+            for (const auto& ce : state.mergedEntries) {
+                if (ce.name.size() > 4 && ce.name.substr(ce.name.size() - 4) == ".dds") {
+                    ERFFile erf;
+                    if (erf.open(state.erfFiles[ce.erfIdx])) {
+                        if (ce.entryIdx < erf.entries().size()) {
+                            auto data = erf.readEntry(erf.entries()[ce.entryIdx]);
+                            if (!data.empty()) {
+                                std::string outPath = outDir + "/" + ce.name;
+                                std::ofstream out(outPath, std::ios::binary);
+                                out.write(reinterpret_cast<const char*>(data.data()), data.size());
+                                exported++;
+                            }
+                        }
+                    }
+                }
+            }
+            state.statusMessage = "Dumped " + std::to_string(exported) + " textures to " + outDir;
+        }
+        ImGuiFileDialog::Instance()->Close();
+    }
+    if (ImGuiFileDialog::Instance()->Display("DumpModels", ImGuiWindowFlags_NoCollapse, ImVec2(600, 400))) {
+        if (ImGuiFileDialog::Instance()->IsOk()) {
+            std::string outDir = ImGuiFileDialog::Instance()->GetCurrentPath();
+            int exported = 0;
+            loadMeshDatabase(state);
+            for (const auto& ce : state.mergedEntries) {
+                if (isModelFile(ce.name)) {
+                    ERFFile erf;
+                    if (erf.open(state.erfFiles[ce.erfIdx])) {
+                        if (ce.entryIdx < erf.entries().size()) {
+                            const auto& entry = erf.entries()[ce.entryIdx];
+                            state.currentErf = std::make_unique<ERFFile>();
+                            state.currentErf->open(state.erfFiles[ce.erfIdx]);
+                            if (loadModelFromEntry(state, entry)) {
+                                state.currentModelAnimations.clear();
+                                std::string mshLower = ce.name;
+                                std::transform(mshLower.begin(), mshLower.end(), mshLower.begin(), ::tolower);
+                                for (const auto& me : state.meshBrowser.allMeshes) {
+                                    std::string dbLower = me.mshFile;
+                                    std::transform(dbLower.begin(), dbLower.end(), dbLower.begin(), ::tolower);
+                                    if (dbLower == mshLower) {
+                                        state.currentModelAnimations = me.animations;
+                                        break;
+                                    }
+                                }
+
+                                std::vector<Animation> exportAnims;
+                                for (const auto& animFile : state.availableAnimFiles) {
+                                    std::string animName = animFile.first;
+                                    size_t dotPos = animName.rfind('.');
+                                    if (dotPos != std::string::npos) animName = animName.substr(0, dotPos);
+                                    bool found = false;
+                                    for (const auto& validAnim : state.currentModelAnimations) {
+                                        if (animName == validAnim) { found = true; break; }
+                                    }
+                                    if (!found) continue;
+
+                                    ERFFile animErf;
+                                    if (animErf.open(animFile.second)) {
+                                        for (const auto& animEntry : animErf.entries()) {
+                                            if (animEntry.name == animFile.first) {
+                                                auto aniData = animErf.readEntry(animEntry);
+                                                if (!aniData.empty()) {
+                                                    Animation anim = loadANI(aniData, animEntry.name);
+                                                    for (auto& track : anim.tracks) {
+                                                        track.boneIndex = state.currentModel.skeleton.findBone(track.boneName);
+                                                    }
+                                                    exportAnims.push_back(anim);
+                                                }
+                                                break;
+                                            }
+                                        }
+                                    }
+                                }
+
+                                std::string outName = ce.name;
+                                size_t dotPos = outName.rfind('.');
+                                if (dotPos != std::string::npos) outName = outName.substr(0, dotPos);
+                                outName += ".glb";
+                                std::string outPath = outDir + "/" + outName;
+                                if (exportToGLB(state.currentModel, exportAnims, outPath)) {
+                                    exported++;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            state.statusMessage = "Dumped " + std::to_string(exported) + " models to " + outDir;
         }
         ImGuiFileDialog::Instance()->Close();
     }

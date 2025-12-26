@@ -31,6 +31,8 @@ struct Material {
     uint32_t normalTexId = 0;
     uint32_t specularTexId = 0;
     uint32_t tintTexId = 0;
+    std::vector<uint8_t> diffuseData;
+    int diffuseWidth = 0, diffuseHeight = 0;
 };
 
 enum class CollisionShapeType {

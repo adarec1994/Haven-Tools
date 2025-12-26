@@ -2,5 +2,6 @@
 #include <vector>
 #include <cstdint>
 
-// Load a DDS texture and return OpenGL texture ID (0 on failure)
 uint32_t loadDDSTexture(const std::vector<uint8_t>& data);
+bool decodeDDSToRGBA(const std::vector<uint8_t>& data, std::vector<uint8_t>& rgba, int& width, int& height);
+void encodePNG(const std::vector<uint8_t>& rgba, int width, int height, std::vector<uint8_t>& png);

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(ERFBrowser)
+project(HavenTools)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -58,15 +58,24 @@ add_library(imguifiledialog_lib STATIC
 target_include_directories(imguifiledialog_lib PUBLIC ${imguifiledialog_SOURCE_DIR})
 target_link_libraries(imguifiledialog_lib PUBLIC imgui_lib)
 
-add_custom_command(
-        OUTPUT ${CMAKE_BINARY_DIR}/model_names_csv.h
-        COMMAND xxd -i model_names.csv > ${CMAKE_BINARY_DIR}/model_names_csv.h
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-        DEPENDS ${CMAKE_SOURCE_DIR}/model_names.csv
-        COMMENT "Embedding model_names.csv"
-)
+# Embed model_names.csv into the executable
+file(READ "${CMAKE_SOURCE_DIR}/model_names.csv" CSV_CONTENT HEX)
+string(LENGTH "${CSV_CONTENT}" CSV_HEX_LENGTH)
+math(EXPR CSV_LENGTH "${CSV_HEX_LENGTH} / 2")
 
-add_executable(ERFBrowser
+# Convert hex to C array
+string(REGEX REPLACE "([0-9a-f][0-9a-f])" "0x\\1," CSV_ARRAY "${CSV_CONTENT}")
+string(REGEX REPLACE ",$" "" CSV_ARRAY "${CSV_ARRAY}")
+
+file(WRITE "${CMAKE_BINARY_DIR}/model_names_csv.h"
+        "#pragma once
+unsigned char model_names_csv[] = {
+${CSV_ARRAY}
+};
+unsigned int model_names_csv_len = ${CSV_LENGTH};
+")
+
+add_executable(HavenTools
         main.cpp
         types.cpp
         types.h
@@ -90,16 +99,17 @@ add_executable(ERFBrowser
         renderer.h
         ui.cpp
         ui.h
-        ${CMAKE_BINARY_DIR}/model_names_csv.h
+        export.cpp
+        export.h
 )
 
-target_include_directories(ERFBrowser PRIVATE ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR})
-target_link_libraries(ERFBrowser PRIVATE imgui_lib imguifiledialog_lib)
+target_include_directories(HavenTools PRIVATE ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR})
+target_link_libraries(HavenTools PRIVATE imgui_lib imguifiledialog_lib)
 
 if(WIN32)
-    target_compile_definitions(ERFBrowser PRIVATE _CRT_SECURE_NO_WARNINGS)
+    target_compile_definitions(HavenTools PRIVATE _CRT_SECURE_NO_WARNINGS)
 endif()
 
 if(UNIX AND NOT APPLE)
-    target_link_libraries(ERFBrowser PRIVATE dl pthread)
+    target_link_libraries(HavenTools PRIVATE dl pthread)
 endif()

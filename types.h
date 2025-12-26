@@ -92,6 +92,7 @@ struct MeshEntry {
     std::string mshName;
     int lod;
     std::string category;
+    std::vector<std::string> animations;
 };
 
 struct CachedEntry {
@@ -136,6 +137,13 @@ struct AppState {
     std::string statusMessage;
     std::string extractPath;
     std::string lastDialogPath;
+    char contentFilter[128] = "";
+
+    CachedEntry pendingTextureExport;
+    bool pendingTexExportPng = false;
+    bool pendingTexExportDds = false;
+    bool pendingTexDumpAll = false;
+    bool pendingTexDumpPng = false;
 
     Model currentModel;
     bool hasModel = false;
@@ -148,6 +156,7 @@ struct AppState {
     double lastMouseY = 0;
 
     std::vector<std::pair<std::string, std::string>> availableAnimFiles;
+    std::vector<std::string> currentModelAnimations;
     int selectedAnimIndex = -1;
     Animation currentAnim;
     bool animPlaying = false;
@@ -163,6 +172,9 @@ struct AppState {
     std::string previewTextureName;
     int previewMeshIndex = -1;
     bool showUvOverlay = false;
+
+    bool pendingExport = false;
+    CachedEntry pendingExportEntry;
 
     MeshBrowserState meshBrowser;
 

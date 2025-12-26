@@ -298,7 +298,7 @@ static std::vector<uint8_t> readFromMaterialErfs(AppState& state, const std::str
     return {};
 }
 
-static uint32_t loadTextureByName(AppState& state, const std::string& texName) {
+static uint32_t loadTextureByName(AppState& state, const std::string& texName, std::vector<uint8_t>* rgbaOut = nullptr, int* wOut = nullptr, int* hOut = nullptr) {
     if (texName.empty()) return 0;
 
     std::string texNameLower = texName;
@@ -310,7 +310,12 @@ static uint32_t loadTextureByName(AppState& state, const std::string& texName) {
             std::transform(entryLower.begin(), entryLower.end(), entryLower.begin(), ::tolower);
             if (entryLower == texNameLower) {
                 std::vector<uint8_t> texData = erf->readEntry(entry);
-                if (!texData.empty()) return loadDDSTexture(texData);
+                if (!texData.empty()) {
+                    if (rgbaOut && wOut && hOut) {
+                        decodeDDSToRGBA(texData, *rgbaOut, *wOut, *hOut);
+                    }
+                    return loadDDSTexture(texData);
+                }
             }
         }
     }
@@ -406,7 +411,9 @@ bool loadModelFromEntry(AppState& state, const ERFEntry& entry) {
     }
 
     for (auto& mat : state.currentModel.materials) {
-        if (!mat.diffuseMap.empty() && mat.diffuseTexId == 0) mat.diffuseTexId = loadTextureByName(state, mat.diffuseMap);
+        if (!mat.diffuseMap.empty() && mat.diffuseTexId == 0) {
+            mat.diffuseTexId = loadTextureByName(state, mat.diffuseMap, &mat.diffuseData, &mat.diffuseWidth, &mat.diffuseHeight);
+        }
         if (!mat.normalMap.empty() && mat.normalTexId == 0) mat.normalTexId = loadTextureByName(state, mat.normalMap);
         if (!mat.specularMap.empty() && mat.specularTexId == 0) mat.specularTexId = loadTextureByName(state, mat.specularMap);
         if (!mat.tintMap.empty() && mat.tintTexId == 0) mat.tintTexId = loadTextureByName(state, mat.tintMap);

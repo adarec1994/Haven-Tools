@@ -233,3 +233,234 @@ uint32_t loadDDSTexture(const std::vector<uint8_t>& data) {
 
     return texId;
 }
+
+static void decompressDXT1Block(const uint8_t* block, uint8_t* out, int stride) {
+    uint16_t c0 = block[0] | (block[1] << 8);
+    uint16_t c1 = block[2] | (block[3] << 8);
+
+    uint8_t colors[4][4];
+    colors[0][0] = ((c0 >> 11) & 0x1F) * 255 / 31;
+    colors[0][1] = ((c0 >> 5) & 0x3F) * 255 / 63;
+    colors[0][2] = (c0 & 0x1F) * 255 / 31;
+    colors[0][3] = 255;
+
+    colors[1][0] = ((c1 >> 11) & 0x1F) * 255 / 31;
+    colors[1][1] = ((c1 >> 5) & 0x3F) * 255 / 63;
+    colors[1][2] = (c1 & 0x1F) * 255 / 31;
+    colors[1][3] = 255;
+
+    if (c0 > c1) {
+        colors[2][0] = (2 * colors[0][0] + colors[1][0]) / 3;
+        colors[2][1] = (2 * colors[0][1] + colors[1][1]) / 3;
+        colors[2][2] = (2 * colors[0][2] + colors[1][2]) / 3;
+        colors[2][3] = 255;
+        colors[3][0] = (colors[0][0] + 2 * colors[1][0]) / 3;
+        colors[3][1] = (colors[0][1] + 2 * colors[1][1]) / 3;
+        colors[3][2] = (colors[0][2] + 2 * colors[1][2]) / 3;
+        colors[3][3] = 255;
+    } else {
+        colors[2][0] = (colors[0][0] + colors[1][0]) / 2;
+        colors[2][1] = (colors[0][1] + colors[1][1]) / 2;
+        colors[2][2] = (colors[0][2] + colors[1][2]) / 2;
+        colors[2][3] = 255;
+        colors[3][0] = 0; colors[3][1] = 0; colors[3][2] = 0; colors[3][3] = 0;
+    }
+
+    uint32_t bits = block[4] | (block[5] << 8) | (block[6] << 16) | (block[7] << 24);
+    for (int y = 0; y < 4; y++) {
+        for (int x = 0; x < 4; x++) {
+            int idx = bits & 3;
+            bits >>= 2;
+            uint8_t* p = out + y * stride + x * 4;
+            p[0] = colors[idx][0];
+            p[1] = colors[idx][1];
+            p[2] = colors[idx][2];
+            p[3] = colors[idx][3];
+        }
+    }
+}
+
+static void decompressDXT5Block(const uint8_t* block, uint8_t* out, int stride) {
+    uint8_t a0 = block[0], a1 = block[1];
+    uint8_t alphas[8];
+    alphas[0] = a0; alphas[1] = a1;
+    if (a0 > a1) {
+        for (int i = 2; i < 8; i++) alphas[i] = ((8 - i) * a0 + (i - 1) * a1) / 7;
+    } else {
+        for (int i = 2; i < 6; i++) alphas[i] = ((6 - i) * a0 + (i - 1) * a1) / 5;
+        alphas[6] = 0; alphas[7] = 255;
+    }
+
+    uint64_t alphaBits = 0;
+    for (int i = 0; i < 6; i++) alphaBits |= (uint64_t)block[2 + i] << (8 * i);
+
+    decompressDXT1Block(block + 8, out, stride);
+
+    for (int y = 0; y < 4; y++) {
+        for (int x = 0; x < 4; x++) {
+            int idx = (alphaBits >> ((y * 4 + x) * 3)) & 7;
+            out[y * stride + x * 4 + 3] = alphas[idx];
+        }
+    }
+}
+
+bool decodeDDSToRGBA(const std::vector<uint8_t>& data, std::vector<uint8_t>& rgba, int& width, int& height) {
+    if (data.size() < sizeof(DDSHeader)) return false;
+
+    const DDSHeader* header = reinterpret_cast<const DDSHeader*>(data.data());
+    if (header->magic != 0x20534444) return false;
+
+    width = header->width;
+    height = header->height;
+    size_t headerSize = sizeof(DDSHeader);
+
+    rgba.resize(width * height * 4);
+
+    const uint32_t DDPF_FOURCC = 0x4;
+    const uint32_t DDPF_RGB = 0x40;
+
+    if (header->pixelFormat.flags & DDPF_FOURCC) {
+        uint32_t fourCC = header->pixelFormat.fourCC;
+        const uint8_t* src = data.data() + headerSize;
+
+        if (fourCC == FOURCC_DXT1) {
+            int stride = width * 4;
+            for (int by = 0; by < height; by += 4) {
+                for (int bx = 0; bx < width; bx += 4) {
+                    uint8_t block[4 * 4 * 4];
+                    decompressDXT1Block(src, block, 16);
+                    src += 8;
+                    for (int y = 0; y < 4 && by + y < height; y++) {
+                        for (int x = 0; x < 4 && bx + x < width; x++) {
+                            int di = ((by + y) * width + (bx + x)) * 4;
+                            rgba[di + 0] = block[y * 16 + x * 4 + 0];
+                            rgba[di + 1] = block[y * 16 + x * 4 + 1];
+                            rgba[di + 2] = block[y * 16 + x * 4 + 2];
+                            rgba[di + 3] = block[y * 16 + x * 4 + 3];
+                        }
+                    }
+                }
+            }
+            return true;
+        } else if (fourCC == FOURCC_DXT5 || fourCC == FOURCC_DXT3 || fourCC == FOURCC_DXT4) {
+            int stride = width * 4;
+            for (int by = 0; by < height; by += 4) {
+                for (int bx = 0; bx < width; bx += 4) {
+                    uint8_t block[4 * 4 * 4];
+                    decompressDXT5Block(src, block, 16);
+                    src += 16;
+                    for (int y = 0; y < 4 && by + y < height; y++) {
+                        for (int x = 0; x < 4 && bx + x < width; x++) {
+                            int di = ((by + y) * width + (bx + x)) * 4;
+                            rgba[di + 0] = block[y * 16 + x * 4 + 0];
+                            rgba[di + 1] = block[y * 16 + x * 4 + 1];
+                            rgba[di + 2] = block[y * 16 + x * 4 + 2];
+                            rgba[di + 3] = block[y * 16 + x * 4 + 3];
+                        }
+                    }
+                }
+            }
+            return true;
+        }
+        return false;
+    } else if (header->pixelFormat.flags & DDPF_RGB) {
+        const uint8_t* src = data.data() + headerSize;
+        int bpp = header->pixelFormat.rgbBitCount / 8;
+        bool bgr = (header->pixelFormat.bBitMask == 0x000000FF);
+
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                int di = (y * width + x) * 4;
+                if (bpp == 4) {
+                    if (bgr) {
+                        rgba[di + 0] = src[2]; rgba[di + 1] = src[1]; rgba[di + 2] = src[0]; rgba[di + 3] = src[3];
+                    } else {
+                        rgba[di + 0] = src[0]; rgba[di + 1] = src[1]; rgba[di + 2] = src[2]; rgba[di + 3] = src[3];
+                    }
+                } else if (bpp == 3) {
+                    if (bgr) {
+                        rgba[di + 0] = src[2]; rgba[di + 1] = src[1]; rgba[di + 2] = src[0];
+                    } else {
+                        rgba[di + 0] = src[0]; rgba[di + 1] = src[1]; rgba[di + 2] = src[2];
+                    }
+                    rgba[di + 3] = 255;
+                }
+                src += bpp;
+            }
+        }
+        return true;
+    }
+    return false;
+}
+
+void encodePNG(const std::vector<uint8_t>& rgba, int w, int h, std::vector<uint8_t>& png) {
+    uint32_t crc_table[256];
+    for (int n = 0; n < 256; n++) {
+        uint32_t c = n;
+        for (int k = 0; k < 8; k++) c = (c & 1) ? 0xedb88320 ^ (c >> 1) : c >> 1;
+        crc_table[n] = c;
+    }
+    auto crc32 = [&](const uint8_t* data, size_t len) {
+        uint32_t c = 0xffffffff;
+        for (size_t i = 0; i < len; i++) c = crc_table[(c ^ data[i]) & 0xff] ^ (c >> 8);
+        return c ^ 0xffffffff;
+    };
+    auto write32be = [](std::vector<uint8_t>& v, uint32_t val) {
+        v.push_back((val >> 24) & 0xff); v.push_back((val >> 16) & 0xff);
+        v.push_back((val >> 8) & 0xff); v.push_back(val & 0xff);
+    };
+    auto writeChunk = [&](const char* type, const std::vector<uint8_t>& data) {
+        write32be(png, (uint32_t)data.size());
+        png.insert(png.end(), type, type + 4);
+        png.insert(png.end(), data.begin(), data.end());
+        std::vector<uint8_t> forCrc(type, type + 4);
+        forCrc.insert(forCrc.end(), data.begin(), data.end());
+        write32be(png, crc32(forCrc.data(), forCrc.size()));
+    };
+
+    png = {0x89, 'P', 'N', 'G', 0x0D, 0x0A, 0x1A, 0x0A};
+
+    std::vector<uint8_t> ihdr(13);
+    ihdr[0] = (w >> 24) & 0xff; ihdr[1] = (w >> 16) & 0xff; ihdr[2] = (w >> 8) & 0xff; ihdr[3] = w & 0xff;
+    ihdr[4] = (h >> 24) & 0xff; ihdr[5] = (h >> 16) & 0xff; ihdr[6] = (h >> 8) & 0xff; ihdr[7] = h & 0xff;
+    ihdr[8] = 8; ihdr[9] = 6; ihdr[10] = 0; ihdr[11] = 0; ihdr[12] = 0;
+    writeChunk("IHDR", ihdr);
+
+    std::vector<uint8_t> raw;
+    for (int y = 0; y < h; y++) {
+        raw.push_back(0);
+        raw.insert(raw.end(), rgba.begin() + y * w * 4, rgba.begin() + (y + 1) * w * 4);
+    }
+
+    std::vector<uint8_t> deflated;
+    deflated.push_back(0x78); deflated.push_back(0x01);
+
+    size_t pos = 0;
+    while (pos < raw.size()) {
+        size_t remain = raw.size() - pos;
+        size_t blockLen = remain > 65535 ? 65535 : remain;
+        bool last = (pos + blockLen >= raw.size());
+        deflated.push_back(last ? 1 : 0);
+        deflated.push_back(blockLen & 0xff);
+        deflated.push_back((blockLen >> 8) & 0xff);
+        deflated.push_back(~blockLen & 0xff);
+        deflated.push_back((~blockLen >> 8) & 0xff);
+        deflated.insert(deflated.end(), raw.begin() + pos, raw.begin() + pos + blockLen);
+        pos += blockLen;
+    }
+
+    uint32_t adler = 1;
+    for (size_t i = 0; i < raw.size(); i++) {
+        uint32_t s1 = adler & 0xffff, s2 = (adler >> 16) & 0xffff;
+        s1 = (s1 + raw[i]) % 65521;
+        s2 = (s2 + s1) % 65521;
+        adler = (s2 << 16) | s1;
+    }
+    deflated.push_back((adler >> 24) & 0xff);
+    deflated.push_back((adler >> 16) & 0xff);
+    deflated.push_back((adler >> 8) & 0xff);
+    deflated.push_back(adler & 0xff);
+
+    writeChunk("IDAT", deflated);
+    writeChunk("IEND", {});
+}
