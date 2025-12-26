@@ -9,6 +9,9 @@
 #include <functional>
 #include <cmath>
 #include <set>
+#include <filesystem>
+
+namespace fs = std::filesystem;
 
 #ifdef _WIN32
 #define NOMINMAX
@@ -206,8 +209,120 @@ bool loadPHY(const std::vector<uint8_t>& data, Model& model) {
     return !model.collisionShapes.empty();
 }
 
+static void loadTextureErfs(AppState& state) {
+    if (state.textureErfsLoaded) return;
+
+    state.textureErfs.clear();
+    for (const auto& erfPath : state.erfFiles) {
+        std::string filename = fs::path(erfPath).filename().string();
+        std::string filenameLower = filename;
+        std::transform(filenameLower.begin(), filenameLower.end(), filenameLower.begin(), ::tolower);
+
+        if (filenameLower.find("texture") != std::string::npos) {
+            auto erf = std::make_unique<ERFFile>();
+            if (erf->open(erfPath) && erf->encryption() == 0) {
+                state.textureErfs.push_back(std::move(erf));
+            }
+        }
+    }
+    state.textureErfsLoaded = true;
+}
+
+static void loadModelErfs(AppState& state) {
+    if (state.modelErfsLoaded) return;
+
+    state.modelErfs.clear();
+    for (const auto& erfPath : state.erfFiles) {
+        std::string filename = fs::path(erfPath).filename().string();
+        std::string filenameLower = filename;
+        std::transform(filenameLower.begin(), filenameLower.end(), filenameLower.begin(), ::tolower);
+
+        if (filenameLower.find("modelhierarch") != std::string::npos) {
+            auto erf = std::make_unique<ERFFile>();
+            if (erf->open(erfPath) && erf->encryption() == 0) {
+                state.modelErfs.push_back(std::move(erf));
+            }
+        }
+    }
+    state.modelErfsLoaded = true;
+}
+
+static void loadMaterialErfs(AppState& state) {
+    if (state.materialErfsLoaded) return;
+
+    state.materialErfs.clear();
+    for (const auto& erfPath : state.erfFiles) {
+        std::string filename = fs::path(erfPath).filename().string();
+        std::string filenameLower = filename;
+        std::transform(filenameLower.begin(), filenameLower.end(), filenameLower.begin(), ::tolower);
+
+        if (filenameLower.find("materialobject") != std::string::npos) {
+            auto erf = std::make_unique<ERFFile>();
+            if (erf->open(erfPath) && erf->encryption() == 0) {
+                state.materialErfs.push_back(std::move(erf));
+            }
+        }
+    }
+    state.materialErfsLoaded = true;
+}
+
+static std::vector<uint8_t> readFromModelErfs(AppState& state, const std::string& name) {
+    std::string nameLower = name;
+    std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), ::tolower);
+
+    for (const auto& erf : state.modelErfs) {
+        for (const auto& entry : erf->entries()) {
+            std::string entryLower = entry.name;
+            std::transform(entryLower.begin(), entryLower.end(), entryLower.begin(), ::tolower);
+            if (entryLower == nameLower) {
+                return erf->readEntry(entry);
+            }
+        }
+    }
+    return {};
+}
+
+static std::vector<uint8_t> readFromMaterialErfs(AppState& state, const std::string& name) {
+    std::string nameLower = name;
+    std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), ::tolower);
+
+    for (const auto& erf : state.materialErfs) {
+        for (const auto& entry : erf->entries()) {
+            std::string entryLower = entry.name;
+            std::transform(entryLower.begin(), entryLower.end(), entryLower.begin(), ::tolower);
+            if (entryLower == nameLower) {
+                return erf->readEntry(entry);
+            }
+        }
+    }
+    return {};
+}
+
+static uint32_t loadTextureByName(AppState& state, const std::string& texName) {
+    if (texName.empty()) return 0;
+
+    std::string texNameLower = texName;
+    std::transform(texNameLower.begin(), texNameLower.end(), texNameLower.begin(), ::tolower);
+
+    for (const auto& erf : state.textureErfs) {
+        for (const auto& entry : erf->entries()) {
+            std::string entryLower = entry.name;
+            std::transform(entryLower.begin(), entryLower.end(), entryLower.begin(), ::tolower);
+            if (entryLower == texNameLower) {
+                std::vector<uint8_t> texData = erf->readEntry(entry);
+                if (!texData.empty()) return loadDDSTexture(texData);
+            }
+        }
+    }
+    return 0;
+}
+
 bool loadModelFromEntry(AppState& state, const ERFEntry& entry) {
     if (!state.currentErf) return false;
+
+    loadTextureErfs(state);
+    loadModelErfs(state);
+    loadMaterialErfs(state);
 
     std::vector<uint8_t> data = state.currentErf->readEntry(entry);
     if (data.empty()) return false;
@@ -235,7 +350,6 @@ bool loadModelFromEntry(AppState& state, const ERFEntry& entry) {
     size_t dotPos = baseName.rfind('.');
     if (dotPos != std::string::npos) baseName = baseName.substr(0, dotPos);
 
-    // Search for MMH
     std::vector<std::string> mmhCandidates = {baseName + ".mmh", baseName + "a.mmh"};
     size_t lastUnderscore = baseName.find_last_of('_');
     if (lastUnderscore != std::string::npos) {
@@ -244,91 +358,41 @@ bool loadModelFromEntry(AppState& state, const ERFEntry& entry) {
         mmhCandidates.push_back(variantA + ".mmh");
     }
 
-    bool foundMMH = false;
-    for (const auto& erfPath : state.erfFiles) {
-        ERFFile searchErf;
-        bool useCurrentErf = (state.currentErf && state.currentErf->path() == erfPath);
-        ERFFile* erf = useCurrentErf ? state.currentErf.get() : &searchErf;
-        if (!useCurrentErf && !searchErf.open(erfPath)) continue;
-
-        for (const auto& e : erf->entries()) {
-            std::string eName = e.name;
-            std::transform(eName.begin(), eName.end(), eName.begin(), ::tolower);
-            for (const auto& candidate : mmhCandidates) {
-                std::string candLower = candidate;
-                std::transform(candLower.begin(), candLower.end(), candLower.begin(), ::tolower);
-                if (eName == candLower) {
-                    std::vector<uint8_t> mmhData = erf->readEntry(e);
-                    if (!mmhData.empty()) { loadMMH(mmhData, state.currentModel); foundMMH = true; }
-                    break;
-                }
-            }
-            if (foundMMH) break;
+    for (const auto& candidate : mmhCandidates) {
+        std::vector<uint8_t> mmhData = readFromModelErfs(state, candidate);
+        if (!mmhData.empty()) {
+            loadMMH(mmhData, state.currentModel);
+            break;
         }
-        if (foundMMH) break;
     }
 
-    // Search for PHY
     std::vector<std::string> phyCandidates = {baseName + ".phy", baseName + "a.phy"};
     if (lastUnderscore != std::string::npos) {
         std::string variantA = baseName;
         variantA.insert(lastUnderscore, "a");
         phyCandidates.push_back(variantA + ".phy");
     }
-    bool foundPhy = false;
-    for (const auto& erfPath : state.erfFiles) {
-        ERFFile phyErf;
-        if (!phyErf.open(erfPath)) continue;
-        for (const auto& e : phyErf.entries()) {
-            std::string eName = e.name;
-            std::transform(eName.begin(), eName.end(), eName.begin(), ::tolower);
-            for (const auto& candidate : phyCandidates) {
-                std::string candLower = candidate;
-                std::transform(candLower.begin(), candLower.end(), candLower.begin(), ::tolower);
-                if (eName == candLower) {
-                    std::cout << "  Found PHY (" << e.name << ")" << std::endl;
-                    std::vector<uint8_t> phyData = phyErf.readEntry(e);
-                    if (!phyData.empty()) loadPHY(phyData, state.currentModel);
-                    foundPhy = true;
-                    break;
-                }
-            }
-            if (foundPhy) break;
+    for (const auto& candidate : phyCandidates) {
+        std::vector<uint8_t> phyData = readFromModelErfs(state, candidate);
+        if (!phyData.empty()) {
+            loadPHY(phyData, state.currentModel);
+            break;
         }
-        if (foundPhy) break;
     }
 
-    // Load materials and textures
     std::set<std::string> materialNames;
     for (const auto& mesh : state.currentModel.meshes) {
         if (!mesh.materialName.empty()) materialNames.insert(mesh.materialName);
     }
 
     for (const std::string& matName : materialNames) {
-        std::string maoNameLower = matName + ".mao";
-        std::transform(maoNameLower.begin(), maoNameLower.end(), maoNameLower.begin(), ::tolower);
-        bool foundMao = false;
-        for (const auto& erfPath : state.erfFiles) {
-            ERFFile maoErf;
-            if (!maoErf.open(erfPath)) continue;
-            for (const auto& e : maoErf.entries()) {
-                std::string eName = e.name;
-                std::transform(eName.begin(), eName.end(), eName.begin(), ::tolower);
-                if (eName == maoNameLower) {
-                    std::vector<uint8_t> maoData = maoErf.readEntry(e);
-                    if (!maoData.empty()) {
-                        std::string maoContent(maoData.begin(), maoData.end());
-                        Material mat = parseMAO(maoContent, matName);
-                        mat.maoContent = maoContent;
-                        state.currentModel.materials.push_back(mat);
-                        foundMao = true;
-                    }
-                    break;
-                }
-            }
-            if (foundMao) break;
-        }
-        if (!foundMao) {
+        std::vector<uint8_t> maoData = readFromMaterialErfs(state, matName + ".mao");
+        if (!maoData.empty()) {
+            std::string maoContent(maoData.begin(), maoData.end());
+            Material mat = parseMAO(maoContent, matName);
+            mat.maoContent = maoContent;
+            state.currentModel.materials.push_back(mat);
+        } else {
             Material mat;
             mat.name = matName;
             state.currentModel.materials.push_back(mat);
@@ -341,31 +405,11 @@ bool loadModelFromEntry(AppState& state, const ERFEntry& entry) {
         }
     }
 
-    // Load textures
-    auto loadTextureFromERFs = [&state](const std::string& texName) -> uint32_t {
-        if (texName.empty()) return 0;
-        std::string texNameLower = texName;
-        std::transform(texNameLower.begin(), texNameLower.end(), texNameLower.begin(), ::tolower);
-        for (const auto& erfPath : state.erfFiles) {
-            ERFFile texErf;
-            if (!texErf.open(erfPath)) continue;
-            for (const auto& e : texErf.entries()) {
-                std::string eName = e.name;
-                std::transform(eName.begin(), eName.end(), eName.begin(), ::tolower);
-                if (eName == texNameLower) {
-                    std::vector<uint8_t> texData = texErf.readEntry(e);
-                    if (!texData.empty()) return loadDDSTexture(texData);
-                }
-            }
-        }
-        return 0;
-    };
-
     for (auto& mat : state.currentModel.materials) {
-        if (!mat.diffuseMap.empty() && mat.diffuseTexId == 0) mat.diffuseTexId = loadTextureFromERFs(mat.diffuseMap);
-        if (!mat.normalMap.empty() && mat.normalTexId == 0) mat.normalTexId = loadTextureFromERFs(mat.normalMap);
-        if (!mat.specularMap.empty() && mat.specularTexId == 0) mat.specularTexId = loadTextureFromERFs(mat.specularMap);
-        if (!mat.tintMap.empty() && mat.tintTexId == 0) mat.tintTexId = loadTextureFromERFs(mat.tintMap);
+        if (!mat.diffuseMap.empty() && mat.diffuseTexId == 0) mat.diffuseTexId = loadTextureByName(state, mat.diffuseMap);
+        if (!mat.normalMap.empty() && mat.normalTexId == 0) mat.normalTexId = loadTextureByName(state, mat.normalMap);
+        if (!mat.specularMap.empty() && mat.specularTexId == 0) mat.specularTexId = loadTextureByName(state, mat.specularMap);
+        if (!mat.tintMap.empty() && mat.tintTexId == 0) mat.tintTexId = loadTextureByName(state, mat.tintMap);
     }
 
     // Center camera

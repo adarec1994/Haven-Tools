@@ -22,7 +22,6 @@
 Material parseMAO(const std::string& maoContent, const std::string& materialName) {
     Material mat;
     mat.name = materialName;
-    std::cout << "    Parsing MAO content..." << std::endl;
 
     size_t pos = 0;
     while ((pos = maoContent.find("<Texture", pos)) != std::string::npos) {
@@ -53,15 +52,12 @@ Material parseMAO(const std::string& maoContent, const std::string& materialName
             }
         }
 
-        std::cout << "      Texture tag: Name='" << texName << "' ResName='" << resName << "'" << std::endl;
-
         if (!texName.empty() && !resName.empty()) {
             std::string texNameLower = texName;
             std::transform(texNameLower.begin(), texNameLower.end(), texNameLower.begin(), ::tolower);
 
             if (texNameLower.find("diffuse") != std::string::npos) {
                 mat.diffuseMap = resName;
-                std::cout << "      -> Assigned as diffuse map" << std::endl;
             } else if (texNameLower.find("normal") != std::string::npos) {
                 mat.normalMap = resName;
             } else if (texNameLower.find("specular") != std::string::npos) {
@@ -73,9 +69,6 @@ Material parseMAO(const std::string& maoContent, const std::string& materialName
         pos = endTag + 2;
     }
 
-    if (mat.diffuseMap.empty()) {
-        std::cout << "      WARNING: No diffuse texture found in MAO!" << std::endl;
-    }
     return mat;
 }
 

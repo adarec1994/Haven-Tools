@@ -10,8 +10,11 @@
 #include <filesystem>
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <set>
 #include <map>
+
+#include "model_names_csv.h"
 
 namespace fs = std::filesystem;
 
@@ -44,13 +47,8 @@ static void loadSettings(AppState& state) {
 static void loadMeshDatabase(AppState& state) {
     if (state.meshBrowser.loaded) return;
 
-    std::string dbPath = (fs::path(getExeDir()) / "model_names.csv").string();
-    std::ifstream f(dbPath);
-    if (!f.is_open()) {
-        std::cerr << "Could not open model_names.csv" << std::endl;
-        state.meshBrowser.loaded = true;
-        return;
-    }
+    std::string csvData(reinterpret_cast<const char*>(model_names_csv), model_names_csv_len);
+    std::istringstream f(csvData);
 
     std::set<std::string> catSet;
     catSet.insert("All");
@@ -76,6 +74,8 @@ static void loadMeshDatabase(AppState& state) {
         entry.lod = lodStr.empty() ? 0 : std::stoi(lodStr);
 
         entry.category = line.substr(p3 + 1);
+        while (!entry.category.empty() && (entry.category.back() == '\r' || entry.category.back() == '\n'))
+            entry.category.pop_back();
         if (entry.category.empty()) entry.category = "UNK";
 
         catSet.insert(entry.category);
@@ -406,6 +406,81 @@ static void drawRenderSettingsWindow(AppState& state) {
                 if (ImGui::Button("Hide All")) for (auto& v : state.renderSettings.meshVisible) v = 0;
             }
         }
+        if (!state.currentModel.materials.empty()) {
+            ImGui::Separator();
+            if (ImGui::TreeNode("Materials", "Materials (%zu)", state.currentModel.materials.size())) {
+                for (size_t i = 0; i < state.currentModel.materials.size(); i++) {
+                    const auto& mat = state.currentModel.materials[i];
+                    ImGui::PushID(static_cast<int>(i));
+                    ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.4f, 1.0f), "%s", mat.name.c_str());
+                    ImGui::Indent();
+                    if (!mat.maoContent.empty()) {
+                        if (ImGui::SmallButton("View MAO")) {
+                            state.maoContent = mat.maoContent;
+                            state.maoFileName = mat.name + ".mao";
+                            state.showMaoViewer = true;
+                        }
+                    }
+
+                    int meshForMat = -1;
+                    for (size_t mi = 0; mi < state.currentModel.meshes.size(); mi++) {
+                        if (state.currentModel.meshes[mi].materialIndex == (int)i) { meshForMat = (int)mi; break; }
+                    }
+
+                    if (!mat.diffuseMap.empty()) {
+                        ImGui::Text("Diffuse: %s", mat.diffuseMap.c_str());
+                        if (mat.diffuseTexId != 0) {
+                            ImGui::SameLine();
+                            if (ImGui::SmallButton("Preview##diff")) {
+                                state.previewTextureId = mat.diffuseTexId;
+                                state.previewTextureName = mat.diffuseMap;
+                                state.previewMeshIndex = meshForMat;
+                                state.showTexturePreview = true;
+                            }
+                        }
+                    }
+                    if (!mat.normalMap.empty()) {
+                        ImGui::Text("Normal: %s", mat.normalMap.c_str());
+                        if (mat.normalTexId != 0) {
+                            ImGui::SameLine();
+                            if (ImGui::SmallButton("Preview##norm")) {
+                                state.previewTextureId = mat.normalTexId;
+                                state.previewTextureName = mat.normalMap;
+                                state.previewMeshIndex = meshForMat;
+                                state.showTexturePreview = true;
+                            }
+                        }
+                    }
+                    if (!mat.specularMap.empty()) {
+                        ImGui::Text("Specular: %s", mat.specularMap.c_str());
+                        if (mat.specularTexId != 0) {
+                            ImGui::SameLine();
+                            if (ImGui::SmallButton("Preview##spec")) {
+                                state.previewTextureId = mat.specularTexId;
+                                state.previewTextureName = mat.specularMap;
+                                state.previewMeshIndex = meshForMat;
+                                state.showTexturePreview = true;
+                            }
+                        }
+                    }
+                    if (!mat.tintMap.empty()) {
+                        ImGui::Text("Tint: %s", mat.tintMap.c_str());
+                        if (mat.tintTexId != 0) {
+                            ImGui::SameLine();
+                            if (ImGui::SmallButton("Preview##tint")) {
+                                state.previewTextureId = mat.tintTexId;
+                                state.previewTextureName = mat.tintMap;
+                                state.previewMeshIndex = meshForMat;
+                                state.showTexturePreview = true;
+                            }
+                        }
+                    }
+                    ImGui::Unindent();
+                    ImGui::PopID();
+                }
+                ImGui::TreePop();
+            }
+        }
         if (!state.currentModel.skeleton.bones.empty()) {
             ImGui::Separator();
             if (ImGui::TreeNode("Skeleton", "Skeleton (%zu bones)", state.currentModel.skeleton.bones.size())) {
@@ -465,6 +540,50 @@ static void drawMaoViewer(AppState& state) {
     ImGui::BeginChild("MaoContent", ImVec2(0, 0), true, ImGuiWindowFlags_HorizontalScrollbar);
     ImGui::TextUnformatted(state.maoContent.c_str());
     ImGui::EndChild();
+    ImGui::End();
+}
+
+static void drawTexturePreview(AppState& state) {
+    std::string title = "Texture Preview - " + state.previewTextureName;
+    ImGui::SetNextWindowSize(ImVec2(520, 580), ImGuiCond_FirstUseEver);
+    ImGui::Begin(title.c_str(), &state.showTexturePreview);
+
+    ImGui::Checkbox("Show UV Overlay", &state.showUvOverlay);
+    ImGui::Separator();
+
+    ImVec2 avail = ImGui::GetContentRegionAvail();
+    float size = std::min(avail.x, avail.y - 20);
+    if (size < 100) size = 100;
+
+    ImVec2 canvasPos = ImGui::GetCursorScreenPos();
+    ImDrawList* drawList = ImGui::GetWindowDrawList();
+
+    drawList->AddRectFilled(canvasPos, ImVec2(canvasPos.x + size, canvasPos.y + size), IM_COL32(40, 40, 40, 255));
+
+    if (state.previewTextureId != 0) {
+        drawList->AddImage(
+            (ImTextureID)(intptr_t)state.previewTextureId,
+            canvasPos,
+            ImVec2(canvasPos.x + size, canvasPos.y + size),
+            ImVec2(0, 0), ImVec2(1, 1)
+        );
+    }
+
+    if (state.showUvOverlay && state.previewMeshIndex >= 0 &&
+        state.previewMeshIndex < (int)state.currentModel.meshes.size()) {
+        const auto& mesh = state.currentModel.meshes[state.previewMeshIndex];
+        for (size_t i = 0; i + 2 < mesh.indices.size(); i += 3) {
+            const auto& v0 = mesh.vertices[mesh.indices[i]];
+            const auto& v1 = mesh.vertices[mesh.indices[i + 1]];
+            const auto& v2 = mesh.vertices[mesh.indices[i + 2]];
+            ImVec2 p0(canvasPos.x + v0.u * size, canvasPos.y + (1.0f - v0.v) * size);
+            ImVec2 p1(canvasPos.x + v1.u * size, canvasPos.y + (1.0f - v1.v) * size);
+            ImVec2 p2(canvasPos.x + v2.u * size, canvasPos.y + (1.0f - v2.v) * size);
+            drawList->AddTriangle(p0, p1, p2, IM_COL32(255, 255, 0, 200), 1.0f);
+        }
+    }
+
+    ImGui::Dummy(ImVec2(size, size));
     ImGui::End();
 }
 
@@ -643,6 +762,12 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
                 state.lastDialogPath = state.selectedFolder;
                 state.erfFiles = scanForERFFiles(state.selectedFolder);
                 filterEncryptedErfs(state);
+                state.textureErfsLoaded = false;
+                state.textureErfs.clear();
+                state.modelErfsLoaded = false;
+                state.modelErfs.clear();
+                state.materialErfsLoaded = false;
+                state.materialErfs.clear();
                 state.statusMessage = "Found " + std::to_string(state.filteredErfIndices.size()) + " ERF files";
                 saveSettings(state);
                 showSplash = false;
@@ -660,6 +785,12 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
             state.lastDialogPath = state.selectedFolder;
             state.erfFiles = scanForERFFiles(state.selectedFolder);
             filterEncryptedErfs(state);
+            state.textureErfsLoaded = false;
+            state.textureErfs.clear();
+            state.modelErfsLoaded = false;
+            state.modelErfs.clear();
+            state.materialErfsLoaded = false;
+            state.materialErfs.clear();
             state.selectedErfName.clear();
             state.mergedEntries.clear();
             state.selectedEntryIndex = -1;
@@ -684,6 +815,7 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
     }
     if (state.showRenderSettings) drawRenderSettingsWindow(state);
     if (state.showMaoViewer) drawMaoViewer(state);
+    if (state.showTexturePreview && state.previewTextureId != 0) drawTexturePreview(state);
     if (state.showUvViewer && state.hasModel && state.selectedMeshForUv >= 0 && state.selectedMeshForUv < (int)state.currentModel.meshes.size()) drawUvViewer(state);
     if (state.showAnimWindow && state.hasModel) drawAnimWindow(state, io);
 }

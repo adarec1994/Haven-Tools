@@ -158,7 +158,20 @@ struct AppState {
 
     int selectedBoneIndex = -1;
 
+    bool showTexturePreview = false;
+    int previewTextureId = 0;
+    std::string previewTextureName;
+    int previewMeshIndex = -1;
+    bool showUvOverlay = false;
+
     MeshBrowserState meshBrowser;
+
+    std::vector<std::unique_ptr<ERFFile>> textureErfs;
+    std::vector<std::unique_ptr<ERFFile>> modelErfs;
+    std::vector<std::unique_ptr<ERFFile>> materialErfs;
+    bool textureErfsLoaded = false;
+    bool modelErfsLoaded = false;
+    bool materialErfsLoaded = false;
 };
 
 std::string getExeDir();

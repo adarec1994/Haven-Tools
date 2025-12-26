@@ -58,6 +58,14 @@ add_library(imguifiledialog_lib STATIC
 target_include_directories(imguifiledialog_lib PUBLIC ${imguifiledialog_SOURCE_DIR})
 target_link_libraries(imguifiledialog_lib PUBLIC imgui_lib)
 
+add_custom_command(
+        OUTPUT ${CMAKE_BINARY_DIR}/model_names_csv.h
+        COMMAND xxd -i model_names.csv > ${CMAKE_BINARY_DIR}/model_names_csv.h
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        DEPENDS ${CMAKE_SOURCE_DIR}/model_names.csv
+        COMMENT "Embedding model_names.csv"
+)
+
 add_executable(ERFBrowser
         main.cpp
         types.cpp
@@ -82,9 +90,10 @@ add_executable(ERFBrowser
         renderer.h
         ui.cpp
         ui.h
+        ${CMAKE_BINARY_DIR}/model_names_csv.h
 )
 
-target_include_directories(ERFBrowser PRIVATE ${CMAKE_SOURCE_DIR})
+target_include_directories(ERFBrowser PRIVATE ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR})
 target_link_libraries(ERFBrowser PRIVATE imgui_lib imguifiledialog_lib)
 
 if(WIN32)
