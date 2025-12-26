@@ -122,6 +122,86 @@ void handleInput(AppState& state, GLFWwindow* window, ImGuiIO& io) {
     if (!io.WantCaptureMouse) {
         double mx, my;
         glfwGetCursorPos(window, &mx, &my);
+
+        static bool wasLeftPressed = false;
+        bool leftPressed = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
+
+        if (leftPressed && !wasLeftPressed && state.hasModel && state.renderSettings.showSkeleton) {
+            int width, height;
+            glfwGetFramebufferSize(window, &width, &height);
+
+            float aspect = (float)width / (float)height;
+            float fov = 45.0f * 3.14159f / 180.0f;
+            float nearPlane = 0.1f;
+            float top = nearPlane * std::tan(fov / 2.0f);
+            float right = top * aspect;
+
+            float ndcX = (2.0f * (float)mx / width) - 1.0f;
+            float ndcY = 1.0f - (2.0f * (float)my / height);
+
+            float rayX = ndcX * right / nearPlane;
+            float rayY = ndcY * top / nearPlane;
+            float rayZ = -1.0f;
+
+            float cp = std::cos(-state.camera.pitch);
+            float sp = std::sin(-state.camera.pitch);
+            float cy = std::cos(-state.camera.yaw);
+            float sy = std::sin(-state.camera.yaw);
+
+            float rx1 = rayX;
+            float ry1 = rayY * cp - rayZ * sp;
+            float rz1 = rayY * sp + rayZ * cp;
+
+            float dirX = rx1 * cy + rz1 * sy;
+            float dirY = ry1;
+            float dirZ = -rx1 * sy + rz1 * cy;
+
+            float len = std::sqrt(dirX*dirX + dirY*dirY + dirZ*dirZ);
+            dirX /= len; dirY /= len; dirZ /= len;
+
+            float origX = state.camera.x;
+            float origY = state.camera.y;
+            float origZ = state.camera.z;
+
+            int closestBone = -1;
+            float closestDist = 999999.0f;
+            float threshold = 0.15f;
+
+            for (size_t i = 0; i < state.currentModel.skeleton.bones.size(); i++) {
+                const auto& bone = state.currentModel.skeleton.bones[i];
+                float bx = bone.worldPosY;
+                float by = bone.worldPosZ;
+                float bz = -bone.worldPosX;
+
+                float toX = bx - origX;
+                float toY = by - origY;
+                float toZ = bz - origZ;
+
+                float t = toX*dirX + toY*dirY + toZ*dirZ;
+                if (t < 0) continue;
+
+                float closestX = origX + dirX * t;
+                float closestY = origY + dirY * t;
+                float closestZ = origZ + dirZ * t;
+
+                float dx = closestX - bx;
+                float dy = closestY - by;
+                float dz = closestZ - bz;
+                float dist = std::sqrt(dx*dx + dy*dy + dz*dz);
+
+                if (dist < threshold && t < closestDist) {
+                    closestDist = t;
+                    closestBone = (int)i;
+                }
+            }
+
+            if (closestBone >= 0) {
+                state.selectedBoneIndex = closestBone;
+                std::cout << "Selected bone " << closestBone << ": " << state.currentModel.skeleton.bones[closestBone].name << std::endl;
+            }
+        }
+        wasLeftPressed = leftPressed;
+
         if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS) {
             ImGui::SetWindowFocus(nullptr);
             if (state.isPanning) {
@@ -818,36 +898,34 @@ static void drawAnimWindow(AppState& state, ImGuiIO& io) {
                                 if (!aniData.empty()) {
                                     state.currentAnim = loadANI(aniData, entry.name);
 
+                                    auto normalize = [](const std::string& s) {
+                                        std::string result;
+                                        for (char c : s) {
+                                            if (c != '_') result += std::tolower(c);
+                                        }
+                                        return result;
+                                    };
+
                                     int matched = 0;
                                     for (auto& track : state.currentAnim.tracks) {
                                         track.boneIndex = state.currentModel.skeleton.findBone(track.boneName);
                                         if (track.boneIndex >= 0) {
                                             matched++;
                                             std::cout << "  EXACT MATCH: '" << track.boneName << "' -> bone " << track.boneIndex << std::endl;
+                                            continue;
                                         }
-                                    }
-                                    std::cout << "  Exact matches: " << matched << "/" << state.currentAnim.tracks.size() << std::endl;
 
-                                    if (matched == 0) {
-                                        std::cout << "  Trying case-insensitive matching..." << std::endl;
-                                        for (auto& track : state.currentAnim.tracks) {
-                                            std::string trackNameLower = track.boneName;
-                                            std::transform(trackNameLower.begin(), trackNameLower.end(), trackNameLower.begin(), ::tolower);
-
-                                            for (size_t bi = 0; bi < state.currentModel.skeleton.bones.size(); bi++) {
-                                                std::string boneNameLower = state.currentModel.skeleton.bones[bi].name;
-                                                std::transform(boneNameLower.begin(), boneNameLower.end(), boneNameLower.begin(), ::tolower);
-
-                                                if (trackNameLower == boneNameLower) {
-                                                    track.boneIndex = (int)bi;
-                                                    matched++;
-                                                    std::cout << "  CASE-INSENSITIVE MATCH: '" << track.boneName << "' -> '" << state.currentModel.skeleton.bones[bi].name << "' (bone " << bi << ")" << std::endl;
-                                                    break;
-                                                }
+                                        std::string trackNorm = normalize(track.boneName);
+                                        for (size_t bi = 0; bi < state.currentModel.skeleton.bones.size(); bi++) {
+                                            std::string boneNorm = normalize(state.currentModel.skeleton.bones[bi].name);
+                                            if (trackNorm == boneNorm) {
+                                                track.boneIndex = (int)bi;
+                                                matched++;
+                                                std::cout << "  NORMALIZED MATCH: '" << track.boneName << "' -> '" << state.currentModel.skeleton.bones[bi].name << "' (bone " << bi << ")" << std::endl;
+                                                break;
                                             }
                                         }
                                     }
-
                                     std::cout << "  Final matched: " << matched << "/" << state.currentAnim.tracks.size() << " bones" << std::endl;
 
                                     if (matched > 0) {
@@ -997,8 +1075,24 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
                                         auto aniData = animErf.readEntry(animEntry);
                                         if (!aniData.empty()) {
                                             Animation anim = loadANI(aniData, animEntry.name);
+                                            auto normalize = [](const std::string& s) {
+                                                std::string result;
+                                                for (char c : s) {
+                                                    if (c != '_') result += std::tolower(c);
+                                                }
+                                                return result;
+                                            };
                                             for (auto& track : anim.tracks) {
                                                 track.boneIndex = state.currentModel.skeleton.findBone(track.boneName);
+                                                if (track.boneIndex < 0) {
+                                                    std::string trackNorm = normalize(track.boneName);
+                                                    for (size_t bi = 0; bi < state.currentModel.skeleton.bones.size(); bi++) {
+                                                        if (trackNorm == normalize(state.currentModel.skeleton.bones[bi].name)) {
+                                                            track.boneIndex = (int)bi;
+                                                            break;
+                                                        }
+                                                    }
+                                                }
                                             }
                                             exportAnims.push_back(anim);
                                         }
@@ -1115,6 +1209,13 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
                                 }
 
                                 std::vector<Animation> exportAnims;
+                                auto normalize = [](const std::string& s) {
+                                    std::string result;
+                                    for (char c : s) {
+                                        if (c != '_') result += std::tolower(c);
+                                    }
+                                    return result;
+                                };
                                 for (const auto& animFile : state.availableAnimFiles) {
                                     std::string animName = animFile.first;
                                     size_t dotPos = animName.rfind('.');
@@ -1134,6 +1235,15 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
                                                     Animation anim = loadANI(aniData, animEntry.name);
                                                     for (auto& track : anim.tracks) {
                                                         track.boneIndex = state.currentModel.skeleton.findBone(track.boneName);
+                                                        if (track.boneIndex < 0) {
+                                                            std::string trackNorm = normalize(track.boneName);
+                                                            for (size_t bi = 0; bi < state.currentModel.skeleton.bones.size(); bi++) {
+                                                                if (trackNorm == normalize(state.currentModel.skeleton.bones[bi].name)) {
+                                                                    track.boneIndex = (int)bi;
+                                                                    break;
+                                                                }
+                                                            }
+                                                        }
                                                     }
                                                     exportAnims.push_back(anim);
                                                 }
