@@ -158,26 +158,39 @@ bool loadPHY(const std::vector<uint8_t>& data, Model& model) {
                     shape.type = CollisionShapeType::Mesh;
                     const GFFField* meshDataField = gff.findField(dataRef.structIndex, 6077);
                     if (meshDataField) {
-                        int32_t listRef = gff.readInt32At(gff.dataOffset() + meshDataField->dataOffset + dataRef.offset);
+                        uint32_t meshDataPos = gff.dataOffset() + meshDataField->dataOffset + dataRef.offset;
+                        int32_t listRef = gff.readInt32At(meshDataPos);
                         if (listRef >= 0) {
-                            uint32_t nxsPos = gff.dataOffset() + listRef + 4 + 28;
-                            uint32_t vertCount = gff.readUInt32At(nxsPos); nxsPos += 4;
-                            uint32_t faceCount = gff.readUInt32At(nxsPos); nxsPos += 4;
-                            shape.meshVerts.reserve(vertCount * 3);
-                            for (uint32_t v = 0; v < vertCount; v++) {
-                                shape.meshVerts.push_back(gff.readFloatAt(nxsPos));
-                                shape.meshVerts.push_back(gff.readFloatAt(nxsPos + 4));
-                                shape.meshVerts.push_back(gff.readFloatAt(nxsPos + 8));
-                                nxsPos += 12;
+                            uint32_t nxsPos = gff.dataOffset() + listRef + 4;
+                            const auto& rawData = gff.rawData();
+                            if (nxsPos + 36 < rawData.size()) {
+                                nxsPos += 28;
+                                uint32_t vertCount = gff.readUInt32At(nxsPos);
+                                nxsPos += 4;
+                                uint32_t faceCount = gff.readUInt32At(nxsPos);
+                                nxsPos += 4;
+                                size_t vertsDataSize = vertCount * 3 * sizeof(float);
+                                if (nxsPos + vertsDataSize <= rawData.size()) {
+                                    shape.meshVerts.reserve(vertCount * 3);
+                                    for (uint32_t v = 0; v < vertCount; v++) {
+                                        shape.meshVerts.push_back(gff.readFloatAt(nxsPos));
+                                        shape.meshVerts.push_back(gff.readFloatAt(nxsPos + 4));
+                                        shape.meshVerts.push_back(gff.readFloatAt(nxsPos + 8));
+                                        nxsPos += 12;
+                                    }
+                                    size_t facesDataSize = faceCount * 3;
+                                    if (nxsPos + facesDataSize <= rawData.size()) {
+                                        shape.meshIndices.reserve(faceCount * 3);
+                                        for (uint32_t f = 0; f < faceCount; f++) {
+                                            shape.meshIndices.push_back(gff.readUInt8At(nxsPos));
+                                            shape.meshIndices.push_back(gff.readUInt8At(nxsPos + 1));
+                                            shape.meshIndices.push_back(gff.readUInt8At(nxsPos + 2));
+                                            nxsPos += 3;
+                                        }
+                                        shapeValid = !shape.meshVerts.empty();
+                                    }
+                                }
                             }
-                            shape.meshIndices.reserve(faceCount * 3);
-                            for (uint32_t f = 0; f < faceCount; f++) {
-                                shape.meshIndices.push_back(gff.readUInt8At(nxsPos));
-                                shape.meshIndices.push_back(gff.readUInt8At(nxsPos + 1));
-                                shape.meshIndices.push_back(gff.readUInt8At(nxsPos + 2));
-                                nxsPos += 3;
-                            }
-                            shapeValid = !shape.meshVerts.empty();
                         }
                     }
                 }
@@ -257,6 +270,12 @@ bool loadModelFromEntry(AppState& state, const ERFEntry& entry) {
 
     // Search for PHY
     std::vector<std::string> phyCandidates = {baseName + ".phy", baseName + "a.phy"};
+    if (lastUnderscore != std::string::npos) {
+        std::string variantA = baseName;
+        variantA.insert(lastUnderscore, "a");
+        phyCandidates.push_back(variantA + ".phy");
+    }
+    bool foundPhy = false;
     for (const auto& erfPath : state.erfFiles) {
         ERFFile phyErf;
         if (!phyErf.open(erfPath)) continue;
@@ -267,12 +286,16 @@ bool loadModelFromEntry(AppState& state, const ERFEntry& entry) {
                 std::string candLower = candidate;
                 std::transform(candLower.begin(), candLower.end(), candLower.begin(), ::tolower);
                 if (eName == candLower) {
+                    std::cout << "  Found PHY (" << e.name << ")" << std::endl;
                     std::vector<uint8_t> phyData = phyErf.readEntry(e);
                     if (!phyData.empty()) loadPHY(phyData, state.currentModel);
+                    foundPhy = true;
                     break;
                 }
             }
+            if (foundPhy) break;
         }
+        if (foundPhy) break;
     }
 
     // Load materials and textures

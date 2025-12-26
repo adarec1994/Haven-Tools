@@ -133,6 +133,9 @@ struct AppState {
     float animSpeed = 1.0f;
     std::vector<Bone> basePoseBones;
     char animFilter[64] = "";
+
+    // Bone selection for visualization
+    int selectedBoneIndex = -1;
 };
 
 // Utility functions
@@ -145,3 +148,8 @@ bool isModelFile(const std::string& name);
 bool isMaoFile(const std::string& name);
 bool isPhyFile(const std::string& name);
 bool isAnimFile(const std::string& name);
+bool isMshFile(const std::string& name);
+
+// Dump all MSH filenames to console
+void dumpAllMshFileNames(const std::vector<std::string>& erfFiles);
+bool isMshFile(const std::string& name);

@@ -11,7 +11,7 @@ void buildSkinningCache(Mesh& mesh, const Model& model);
 // Render the model with given camera and settings
 // Note: Model is non-const because skinning cache may be built on first animated render
 void renderModel(Model& model, const Camera& camera, const RenderSettings& settings,
-                 int width, int height, bool animating = false);
+                 int width, int height, bool animating = false, int selectedBone = -1);
 
 // Drawing primitives for collision shapes
 void drawSolidBox(float x, float y, float z);

@@ -80,3 +80,37 @@ bool isAnimFile(const std::string& name) {
     }
     return false;
 }
+
+bool isMshFile(const std::string& name) {
+    std::string lower = name;
+    std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
+    size_t dotPos = lower.rfind('.');
+    if (dotPos != std::string::npos) {
+        std::string ext = lower.substr(dotPos);
+        return ext == ".msh";
+    }
+    return false;
+}
+
+#include "erf.h"
+#include <iostream>
+#include <set>
+
+void dumpAllMshFileNames(const std::vector<std::string>& erfFiles) {
+    std::cout << "\n=== ALL MSH FILES ===" << std::endl;
+    std::set<std::string> allMsh;
+    for (const auto& erfPath : erfFiles) {
+        ERFFile erf;
+        if (erf.open(erfPath)) {
+            for (const auto& entry : erf.entries()) {
+                if (isMshFile(entry.name)) {
+                    allMsh.insert(entry.name);
+                }
+            }
+        }
+    }
+    for (const auto& name : allMsh) {
+        std::cout << name << std::endl;
+    }
+    std::cout << "=== TOTAL: " << allMsh.size() << " MSH files ===" << std::endl;
+}

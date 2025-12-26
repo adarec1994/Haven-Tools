@@ -244,7 +244,7 @@ void drawSolidCapsule(float radius, float height, int slices, int stacks) {
 }
 
 void renderModel(Model& model, const Camera& camera, const RenderSettings& settings,
-                 int width, int height, bool animating) {
+                 int width, int height, bool animating, int selectedBone) {
     glEnable(GL_DEPTH_TEST);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
@@ -358,20 +358,28 @@ void renderModel(Model& model, const Camera& camera, const RenderSettings& setti
 
     // Render collision shapes
     if (settings.showCollision && !model.collisionShapes.empty()) {
+        // Ensure clean GL state
+        glDisable(GL_TEXTURE_2D);
+        glDisable(GL_LIGHTING);
+
         bool wireframe = settings.collisionWireframe;
         if (wireframe) {
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-            glColor3f(0.0f, 1.0f, 1.0f);
         } else {
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
             glEnable(GL_BLEND);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-            glColor4f(0.0f, 1.0f, 1.0f, 0.3f);
         }
         glLineWidth(2.0f);
-        glDisable(GL_LIGHTING);
 
         for (const auto& shape : model.collisionShapes) {
+            // Set color inside loop to ensure it's applied
+            if (wireframe) {
+                glColor3f(0.0f, 1.0f, 1.0f);
+            } else {
+                glColor4f(0.0f, 1.0f, 1.0f, 0.3f);
+            }
+
             glPushMatrix();
             glTranslatef(shape.posX, shape.posY, shape.posZ);
             float rotW = shape.rotW;
@@ -426,6 +434,7 @@ void renderModel(Model& model, const Camera& camera, const RenderSettings& setti
                     if (wireframe) {
                         int segments = 24;
                         float r = shape.radius, h = shape.height / 2.0f;
+                        // Draw the two end circles
                         for (float zOff : {-h, h}) {
                             glBegin(GL_LINE_LOOP);
                             for (int i = 0; i < segments; i++) {
@@ -434,6 +443,7 @@ void renderModel(Model& model, const Camera& camera, const RenderSettings& setti
                             }
                             glEnd();
                         }
+                        // Draw the vertical lines
                         glBegin(GL_LINES);
                         for (int i = 0; i < 4; i++) {
                             float a = 2.0f * 3.14159f * float(i) / 4;
@@ -441,6 +451,20 @@ void renderModel(Model& model, const Camera& camera, const RenderSettings& setti
                             glVertex3f(r * std::cos(a), r * std::sin(a), h);
                         }
                         glEnd();
+                        // Draw hemisphere caps
+                        for (float zSign : {-1.0f, 1.0f}) {
+                            for (int jj = 1; jj <= 4; jj++) {
+                                float lat = (3.14159f / 2.0f) * float(jj) / 4;
+                                float zOff = r * std::sin(lat) * zSign + h * zSign;
+                                float rOff = r * std::cos(lat);
+                                glBegin(GL_LINE_LOOP);
+                                for (int i = 0; i < segments; i++) {
+                                    float a = 2.0f * 3.14159f * float(i) / segments;
+                                    glVertex3f(rOff * std::cos(a), rOff * std::sin(a), zOff);
+                                }
+                                glEnd();
+                            }
+                        }
                     } else {
                         drawSolidCapsule(shape.radius, shape.height, 16, 12);
                     }
@@ -496,25 +520,82 @@ void renderModel(Model& model, const Camera& camera, const RenderSettings& setti
     if (settings.showSkeleton && !model.skeleton.bones.empty()) {
         glDisable(GL_LIGHTING);
         glDisable(GL_DEPTH_TEST);
+
+        // Draw bone connections
         glLineWidth(2.0f);
         glBegin(GL_LINES);
-        for (const auto& bone : model.skeleton.bones) {
+        for (size_t i = 0; i < model.skeleton.bones.size(); i++) {
+            const auto& bone = model.skeleton.bones[i];
             if (bone.parentIndex >= 0) {
                 const Bone& parent = model.skeleton.bones[bone.parentIndex];
-                glColor3f(0.0f, 1.0f, 0.0f);
+
+                // Highlight if this bone or parent is selected
+                bool isHighlighted = (selectedBone == (int)i) || (selectedBone == bone.parentIndex);
+
+                if (isHighlighted) {
+                    glColor3f(1.0f, 0.0f, 1.0f);  // Magenta for highlighted
+                } else {
+                    glColor3f(0.0f, 1.0f, 0.0f);  // Green for normal
+                }
                 glVertex3f(parent.worldPosX, parent.worldPosY, parent.worldPosZ);
-                glColor3f(1.0f, 1.0f, 0.0f);
+
+                if (selectedBone == (int)i) {
+                    glColor3f(1.0f, 1.0f, 0.0f);  // Yellow for selected bone end
+                } else if (isHighlighted) {
+                    glColor3f(1.0f, 0.0f, 1.0f);  // Magenta for highlighted
+                } else {
+                    glColor3f(1.0f, 1.0f, 0.0f);  // Yellow for normal
+                }
                 glVertex3f(bone.worldPosX, bone.worldPosY, bone.worldPosZ);
             }
         }
         glEnd();
+
+        // Draw bone points - normal bones first
         glPointSize(6.0f);
         glBegin(GL_POINTS);
-        for (const auto& bone : model.skeleton.bones) {
-            glColor3f(bone.parentIndex < 0 ? 1.0f : 1.0f, bone.parentIndex < 0 ? 0.0f : 1.0f, 0.0f);
+        for (size_t i = 0; i < model.skeleton.bones.size(); i++) {
+            if (selectedBone == (int)i) continue;  // Skip selected, draw it later
+            const auto& bone = model.skeleton.bones[i];
+            if (bone.parentIndex < 0) {
+                glColor3f(1.0f, 0.0f, 0.0f);  // Red for root
+            } else {
+                glColor3f(1.0f, 1.0f, 0.0f);  // Yellow for normal
+            }
             glVertex3f(bone.worldPosX, bone.worldPosY, bone.worldPosZ);
         }
         glEnd();
+
+        // Draw selected bone larger and in a distinct color
+        if (selectedBone >= 0 && selectedBone < (int)model.skeleton.bones.size()) {
+            const auto& bone = model.skeleton.bones[selectedBone];
+
+            // Draw a larger point
+            glPointSize(14.0f);
+            glBegin(GL_POINTS);
+            glColor3f(1.0f, 0.0f, 1.0f);  // Magenta
+            glVertex3f(bone.worldPosX, bone.worldPosY, bone.worldPosZ);
+            glEnd();
+
+            // Draw axis indicators at the bone
+            glLineWidth(3.0f);
+            float axisLen = 0.1f;
+            glBegin(GL_LINES);
+            // X axis - red
+            glColor3f(1.0f, 0.0f, 0.0f);
+            glVertex3f(bone.worldPosX, bone.worldPosY, bone.worldPosZ);
+            glVertex3f(bone.worldPosX + axisLen, bone.worldPosY, bone.worldPosZ);
+            // Y axis - green
+            glColor3f(0.0f, 1.0f, 0.0f);
+            glVertex3f(bone.worldPosX, bone.worldPosY, bone.worldPosZ);
+            glVertex3f(bone.worldPosX, bone.worldPosY + axisLen, bone.worldPosZ);
+            // Z axis - blue
+            glColor3f(0.0f, 0.0f, 1.0f);
+            glVertex3f(bone.worldPosX, bone.worldPosY, bone.worldPosZ);
+            glVertex3f(bone.worldPosX, bone.worldPosY, bone.worldPosZ + axisLen);
+            glEnd();
+        }
+
         glPointSize(1.0f);
         glLineWidth(1.0f);
         glEnable(GL_DEPTH_TEST);

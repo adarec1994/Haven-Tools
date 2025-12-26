@@ -313,8 +313,41 @@ void findAnimationsForModel(AppState& state, const std::string& modelBaseName) {
     state.basePoseBones = state.currentModel.skeleton.bones;
 }
 
-void applyAnimation(Model& model, const Animation& anim, float time) {
+void dumpAllAnimFileNames(const AppState& state) {
+    std::cout << "\n=== ALL ANI FILES ===" << std::endl;
+    std::set<std::string> allAnis;
+    for (const auto& erfPath : state.erfFiles) {
+        ERFFile erf;
+        if (erf.open(erfPath)) {
+            for (const auto& entry : erf.entries()) {
+                if (isAnimFile(entry.name)) {
+                    allAnis.insert(entry.name);
+                }
+            }
+        }
+    }
+    for (const auto& name : allAnis) {
+        std::cout << name << std::endl;
+    }
+    std::cout << "=== TOTAL: " << allAnis.size() << " ANI files ===" << std::endl;
+}
+
+void applyAnimation(Model& model, const Animation& anim, float time, const std::vector<Bone>& basePose) {
     if (anim.tracks.empty()) return;
+
+    // Step 0: Restore base pose for all bones first
+    // This ensures bones without animation tracks keep their bind pose
+    if (!basePose.empty() && basePose.size() == model.skeleton.bones.size()) {
+        for (size_t i = 0; i < model.skeleton.bones.size(); i++) {
+            model.skeleton.bones[i].posX = basePose[i].posX;
+            model.skeleton.bones[i].posY = basePose[i].posY;
+            model.skeleton.bones[i].posZ = basePose[i].posZ;
+            model.skeleton.bones[i].rotX = basePose[i].rotX;
+            model.skeleton.bones[i].rotY = basePose[i].rotY;
+            model.skeleton.bones[i].rotZ = basePose[i].rotZ;
+            model.skeleton.bones[i].rotW = basePose[i].rotW;
+        }
+    }
 
     // Helper lambdas for quaternion math
     auto quatRotate = [](float qx, float qy, float qz, float qw,
@@ -337,11 +370,12 @@ void applyAnimation(Model& model, const Animation& anim, float time) {
         rz = q1w*q2z + q1x*q2y - q1y*q2x + q1z*q2w;
     };
 
-    // Step 1: Apply animation keyframes to local transforms (rot/pos)
+    // Step 1: Apply animation keyframes to local transforms
     for (const auto& track : anim.tracks) {
         if (track.boneIndex < 0 || track.boneIndex >= (int)model.skeleton.bones.size()) continue;
         if (track.keyframes.empty()) continue;
 
+        // Find the two keyframes to interpolate between
         size_t k0 = 0, k1 = 0;
         for (size_t i = 0; i < track.keyframes.size(); i++) {
             if (track.keyframes[i].time <= time) {
@@ -364,24 +398,42 @@ void applyAnimation(Model& model, const Animation& anim, float time) {
         Bone& bone = model.skeleton.bones[track.boneIndex];
 
         if (track.isRotation) {
+            // SLERP-like interpolation (simplified NLERP)
             float dot = kf0.x*kf1.x + kf0.y*kf1.y + kf0.z*kf1.z + kf0.w*kf1.w;
             float sign = (dot < 0) ? -1.0f : 1.0f;
-            bone.rotX = kf0.x * (1-t) + kf1.x * sign * t;
-            bone.rotY = kf0.y * (1-t) + kf1.y * sign * t;
-            bone.rotZ = kf0.z * (1-t) + kf1.z * sign * t;
-            bone.rotW = kf0.w * (1-t) + kf1.w * sign * t;
-            float len = std::sqrt(bone.rotX*bone.rotX + bone.rotY*bone.rotY + bone.rotZ*bone.rotZ + bone.rotW*bone.rotW);
+
+            // Interpolate quaternion
+            float rx = kf0.x * (1-t) + kf1.x * sign * t;
+            float ry = kf0.y * (1-t) + kf1.y * sign * t;
+            float rz = kf0.z * (1-t) + kf1.z * sign * t;
+            float rw = kf0.w * (1-t) + kf1.w * sign * t;
+
+            // Normalize
+            float len = std::sqrt(rx*rx + ry*ry + rz*rz + rw*rw);
             if (len > 0.0001f) {
-                bone.rotX /= len; bone.rotY /= len; bone.rotZ /= len; bone.rotW /= len;
+                rx /= len; ry /= len; rz /= len; rw /= len;
             }
-        } else if (track.isTranslation) {
-            bone.posX = kf0.x * (1-t) + kf1.x * t;
-            bone.posY = kf0.y * (1-t) + kf1.y * t;
-            bone.posZ = kf0.z * (1-t) + kf1.z * t;
+
+            // Animation quaternion is the LOCAL rotation for this bone
+            bone.rotX = rx;
+            bone.rotY = ry;
+            bone.rotZ = rz;
+            bone.rotW = rw;
+        }
+        else if (track.isTranslation) {
+            // Interpolate position
+            float px = kf0.x * (1-t) + kf1.x * t;
+            float py = kf0.y * (1-t) + kf1.y * t;
+            float pz = kf0.z * (1-t) + kf1.z * t;
+
+            // Animation provides the LOCAL position
+            bone.posX = px;
+            bone.posY = py;
+            bone.posZ = pz;
         }
     }
 
-    // Step 2: Build hierarchical processing order
+    // Step 2: Build hierarchical processing order (parents before children)
     std::vector<int> processingOrder;
     std::vector<bool> processed(model.skeleton.bones.size(), false);
 
@@ -399,7 +451,7 @@ void applyAnimation(Model& model, const Animation& anim, float time) {
         }
 
         if (!addedAny) {
-            std::cerr << "WARNING: Could not build bone hierarchy - possible cycle detected!" << std::endl;
+            // Handle cycles by adding remaining bones
             for (size_t i = 0; i < model.skeleton.bones.size(); i++) {
                 if (!processed[i]) {
                     processingOrder.push_back((int)i);
@@ -415,6 +467,7 @@ void applyAnimation(Model& model, const Animation& anim, float time) {
         Bone& bone = model.skeleton.bones[boneIdx];
 
         if (bone.parentIndex < 0) {
+            // Root bone - local = world
             bone.worldPosX = bone.posX;
             bone.worldPosY = bone.posY;
             bone.worldPosZ = bone.posZ;
@@ -425,15 +478,18 @@ void applyAnimation(Model& model, const Animation& anim, float time) {
         } else {
             const Bone& parent = model.skeleton.bones[bone.parentIndex];
 
+            // Rotate local position by parent's world rotation
             float rotatedX, rotatedY, rotatedZ;
             quatRotate(parent.worldRotX, parent.worldRotY, parent.worldRotZ, parent.worldRotW,
                        bone.posX, bone.posY, bone.posZ,
                        rotatedX, rotatedY, rotatedZ);
 
+            // World position = parent world position + rotated local position
             bone.worldPosX = parent.worldPosX + rotatedX;
             bone.worldPosY = parent.worldPosY + rotatedY;
             bone.worldPosZ = parent.worldPosZ + rotatedZ;
 
+            // World rotation = parent world rotation * local rotation
             quatMul(parent.worldRotX, parent.worldRotY, parent.worldRotZ, parent.worldRotW,
                     bone.rotX, bone.rotY, bone.rotZ, bone.rotW,
                     bone.worldRotX, bone.worldRotY, bone.worldRotZ, bone.worldRotW);

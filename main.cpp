@@ -50,11 +50,11 @@ int main() {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         if (state.hasModel) {
             if (state.animPlaying && state.currentAnim.duration > 0)
-                applyAnimation(state.currentModel, state.currentAnim, state.animTime);
-            renderModel(state.currentModel, state.camera, state.renderSettings, display_w, display_h, state.animPlaying);
+                applyAnimation(state.currentModel, state.currentAnim, state.animTime, state.basePoseBones);
+            renderModel(state.currentModel, state.camera, state.renderSettings, display_w, display_h, state.animPlaying, state.selectedBoneIndex);
         } else {
             Model empty;
-            renderModel(empty, state.camera, state.renderSettings, display_w, display_h, false);
+            renderModel(empty, state.camera, state.renderSettings, display_w, display_h, false, -1);
         }
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         glfwSwapBuffers(window);

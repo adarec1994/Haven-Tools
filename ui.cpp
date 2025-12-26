@@ -9,8 +9,28 @@
 #include <algorithm>
 #include <filesystem>
 #include <iostream>
+#include <set>
 
 namespace fs = std::filesystem;
+
+static void dumpAllMshFileNames(const AppState& state) {
+    std::cout << "\n=== ALL MSH FILES ===" << std::endl;
+    std::set<std::string> allMsh;
+    for (const auto& erfPath : state.erfFiles) {
+        ERFFile erf;
+        if (erf.open(erfPath)) {
+            for (const auto& entry : erf.entries()) {
+                if (isMshFile(entry.name)) {
+                    allMsh.insert(entry.name);
+                }
+            }
+        }
+    }
+    for (const auto& name : allMsh) {
+        std::cout << name << std::endl;
+    }
+    std::cout << "=== TOTAL: " << allMsh.size() << " MSH files ===" << std::endl;
+}
 
 void handleInput(AppState& state, GLFWwindow* window, ImGuiIO& io) {
     if (!io.WantCaptureMouse) {
@@ -60,6 +80,8 @@ static void drawBrowserWindow(AppState& state) {
             config.path = state.selectedFolder.empty() ? "." : state.selectedFolder;
             ImGuiFileDialog::Instance()->OpenDialog("ChooseFolder", "Choose Folder", nullptr, config);
         }
+        ImGui::SameLine();
+        if (ImGui::Button("Dump MSH Names")) { dumpAllMshFileNames(state.erfFiles); }
         if (!state.statusMessage.empty()) { ImGui::SameLine(); ImGui::Text("%s", state.statusMessage.c_str()); }
         ImGui::EndMenuBar();
     }
@@ -177,10 +199,46 @@ static void drawRenderSettingsWindow(AppState& state) {
         if (!state.currentModel.skeleton.bones.empty()) {
             ImGui::Separator();
             if (ImGui::TreeNode("Skeleton", "Skeleton (%zu bones)", state.currentModel.skeleton.bones.size())) {
+                if (state.selectedBoneIndex >= 0) {
+                    ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Selected: %s",
+                        state.currentModel.skeleton.bones[state.selectedBoneIndex].name.c_str());
+                    ImGui::SameLine();
+                    if (ImGui::SmallButton("Clear")) state.selectedBoneIndex = -1;
+                } else {
+                    ImGui::TextDisabled("Click a bone to highlight it");
+                }
                 ImGui::BeginChild("BoneList", ImVec2(0, 200), true);
-                for (const auto& bone : state.currentModel.skeleton.bones) {
-                    if (bone.parentIndex < 0) ImGui::TextColored(ImVec4(1.0f, 0.5f, 0.5f, 1.0f), "%s (root)", bone.name.c_str());
-                    else { ImGui::Text("%s", bone.name.c_str()); ImGui::SameLine(); ImGui::TextDisabled("-> %s", bone.parentName.c_str()); }
+                for (size_t i = 0; i < state.currentModel.skeleton.bones.size(); i++) {
+                    const auto& bone = state.currentModel.skeleton.bones[i];
+                    bool isSelected = (state.selectedBoneIndex == (int)i);
+
+                    ImGui::PushID(static_cast<int>(i));
+
+                    // Color based on selection and root status
+                    ImVec4 color;
+                    if (isSelected) {
+                        color = ImVec4(1.0f, 1.0f, 0.0f, 1.0f);  // Yellow for selected
+                    } else if (bone.parentIndex < 0) {
+                        color = ImVec4(1.0f, 0.5f, 0.5f, 1.0f);  // Red for root
+                    } else {
+                        color = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);  // White for normal
+                    }
+
+                    ImGui::PushStyleColor(ImGuiCol_Text, color);
+
+                    char label[256];
+                    if (bone.parentIndex < 0) {
+                        snprintf(label, sizeof(label), "[%zu] %s (root)", i, bone.name.c_str());
+                    } else {
+                        snprintf(label, sizeof(label), "[%zu] %s -> %s", i, bone.name.c_str(), bone.parentName.c_str());
+                    }
+
+                    if (ImGui::Selectable(label, isSelected)) {
+                        state.selectedBoneIndex = isSelected ? -1 : (int)i;  // Toggle selection
+                    }
+
+                    ImGui::PopStyleColor();
+                    ImGui::PopID();
                 }
                 ImGui::EndChild();
                 ImGui::TreePop();

@@ -187,6 +187,13 @@ bool loadMSH(const std::vector<uint8_t>& data, Model& outModel) {
         return false;
     }
 
+    // Dump all struct types
+    std::cout << "=== MSH Struct Types ===" << std::endl;
+    for (size_t i = 0; i < gff.structs().size(); i++) {
+        std::cout << "  [" << i << "] " << gff.structs()[i].structType << std::endl;
+    }
+    std::cout << "========================" << std::endl;
+
     outModel.meshes.clear();
     outModel.name = "Model";
 
