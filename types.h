@@ -3,6 +3,7 @@
 #include <vector>
 #include <memory>
 #include <cmath>
+#include <map>
 #include "Mesh.h"
 #include "erf.h"
 
@@ -93,6 +94,12 @@ struct MeshEntry {
     std::string category;
 };
 
+struct CachedEntry {
+    std::string name;
+    size_t erfIdx;
+    size_t entryIdx;
+};
+
 struct MeshBrowserState {
     std::vector<MeshEntry> allMeshes;
     std::vector<std::string> categories;
@@ -119,6 +126,10 @@ struct AppState {
 
     std::string selectedFolder;
     std::vector<std::string> erfFiles;
+    std::vector<size_t> filteredErfIndices;
+    std::map<std::string, std::vector<size_t>> erfsByName;
+    std::string selectedErfName;
+    std::vector<CachedEntry> mergedEntries;
     int selectedErfIndex = -1;
     std::unique_ptr<ERFFile> currentErf;
     int selectedEntryIndex = -1;

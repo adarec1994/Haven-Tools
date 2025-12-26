@@ -11,6 +11,7 @@
 #include <iostream>
 #include <fstream>
 #include <set>
+#include <map>
 
 namespace fs = std::filesystem;
 
@@ -93,25 +94,6 @@ static void loadMeshDatabase(AppState& state) {
     state.meshBrowser.loaded = true;
     std::cout << "Loaded " << state.meshBrowser.allMeshes.size() << " mesh entries, "
               << state.meshBrowser.categories.size() << " categories" << std::endl;
-}
-
-static void dumpAllMshFileNames(const AppState& state) {
-    std::cout << "\n=== ALL MSH FILES ===" << std::endl;
-    std::set<std::string> allMsh;
-    for (const auto& erfPath : state.erfFiles) {
-        ERFFile erf;
-        if (erf.open(erfPath)) {
-            for (const auto& entry : erf.entries()) {
-                if (isMshFile(entry.name)) {
-                    allMsh.insert(entry.name);
-                }
-            }
-        }
-    }
-    for (const auto& name : allMsh) {
-        std::cout << name << std::endl;
-    }
-    std::cout << "=== TOTAL: " << allMsh.size() << " MSH files ===" << std::endl;
 }
 
 void handleInput(AppState& state, GLFWwindow* window, ImGuiIO& io) {
@@ -251,13 +233,12 @@ static void drawMeshBrowserWindow(AppState& state) {
 
                                 if (entryLower == mshLower) {
                                     state.currentErf = std::make_unique<ERFFile>();
-                                    if (state.currentErf->open(erfPath)) {
-                                        if (loadModelFromEntry(state, erfEntry)) {
-                                            state.statusMessage = "Loaded: " + displayName;
-                                            state.showRenderSettings = true;
-                                        } else {
-                                            state.statusMessage = "Failed to load: " + displayName;
-                                        }
+                                    state.currentErf->open(erfPath);
+                                    if (loadModelFromEntry(state, erfEntry)) {
+                                        state.statusMessage = "Loaded: " + displayName;
+                                        state.showRenderSettings = true;
+                                    } else {
+                                        state.statusMessage = "Failed to load: " + displayName;
                                     }
                                     goto done_search;
                                 }
@@ -291,64 +272,82 @@ static void drawBrowserWindow(AppState& state) {
                 (state.selectedFolder.empty() ? "." : state.selectedFolder) : state.lastDialogPath;
             ImGuiFileDialog::Instance()->OpenDialog("ChooseFolder", "Choose Folder", nullptr, config);
         }
-        ImGui::SameLine();
-        if (ImGui::Button("Dump MSH Names")) { dumpAllMshFileNames(state.erfFiles); }
         if (!state.statusMessage.empty()) { ImGui::SameLine(); ImGui::Text("%s", state.statusMessage.c_str()); }
         ImGui::EndMenuBar();
     }
     ImGui::Columns(2, "browser_columns");
-    ImGui::Text("ERF Files (%zu)", state.erfFiles.size());
+    ImGui::Text("ERF Files (%zu)", state.erfsByName.size());
     ImGui::Separator();
     ImGui::BeginChild("ERFList", ImVec2(0, 0), true);
-    ImGuiListClipper erfClipper;
-    erfClipper.Begin(static_cast<int>(state.erfFiles.size()));
-    while (erfClipper.Step()) {
-        for (int i = erfClipper.DisplayStart; i < erfClipper.DisplayEnd; i++) {
-            std::string displayName = fs::path(state.erfFiles[i]).filename().string();
-            if (ImGui::Selectable(displayName.c_str(), i == state.selectedErfIndex)) {
-                if (state.selectedErfIndex != i) {
-                    state.selectedErfIndex = i;
-                    state.selectedEntryIndex = -1;
-                    state.currentErf = std::make_unique<ERFFile>();
-                    if (!state.currentErf->open(state.erfFiles[i])) {
-                        state.statusMessage = "Failed to open";
-                        state.currentErf.reset();
-                    } else state.statusMessage = versionToString(state.currentErf->version());
+
+    for (const auto& [filename, indices] : state.erfsByName) {
+        bool isSelected = (state.selectedErfName == filename);
+        if (ImGui::Selectable(filename.c_str(), isSelected)) {
+            if (!isSelected) {
+                state.selectedErfName = filename;
+                state.selectedEntryIndex = -1;
+                state.mergedEntries.clear();
+
+                std::set<std::string> seenNames;
+                for (size_t erfIdx : indices) {
+                    ERFFile erf;
+                    if (erf.open(state.erfFiles[erfIdx])) {
+                        for (size_t entryIdx = 0; entryIdx < erf.entries().size(); entryIdx++) {
+                            const std::string& name = erf.entries()[entryIdx].name;
+                            if (seenNames.find(name) == seenNames.end()) {
+                                seenNames.insert(name);
+                                CachedEntry ce;
+                                ce.name = name;
+                                ce.erfIdx = erfIdx;
+                                ce.entryIdx = entryIdx;
+                                state.mergedEntries.push_back(ce);
+                            }
+                        }
+                    }
                 }
+                state.statusMessage = std::to_string(state.mergedEntries.size()) + " entries from " + std::to_string(indices.size()) + " ERF(s)";
             }
         }
     }
+
     ImGui::EndChild();
     ImGui::NextColumn();
-    if (state.currentErf) {
-        ImGui::Text("Contents (%zu)", state.currentErf->entries().size());
-        if (state.currentErf->encryption() != 0) { ImGui::SameLine(); ImGui::TextColored(ImVec4(1, 0.5f, 0, 1), "[Enc]"); }
-        if (state.currentErf->compression() != 0) { ImGui::SameLine(); ImGui::TextColored(ImVec4(0.5f, 0.5f, 1, 1), "[Comp]"); }
+    if (!state.selectedErfName.empty() && !state.mergedEntries.empty()) {
+        ImGui::Text("Contents (%zu)", state.mergedEntries.size());
         ImGui::Separator();
         ImGui::BeginChild("EntryList", ImVec2(0, 0), true);
         ImGuiListClipper entryClipper;
-        entryClipper.Begin(static_cast<int>(state.currentErf->entries().size()));
+        entryClipper.Begin(static_cast<int>(state.mergedEntries.size()));
         while (entryClipper.Step()) {
             for (int i = entryClipper.DisplayStart; i < entryClipper.DisplayEnd; i++) {
-                const auto& entry = state.currentErf->entries()[i];
-                bool isModel = isModelFile(entry.name), isMao = isMaoFile(entry.name), isPhy = isPhyFile(entry.name);
+                const CachedEntry& ce = state.mergedEntries[i];
+
+                bool isModel = isModelFile(ce.name), isMao = isMaoFile(ce.name), isPhy = isPhyFile(ce.name);
                 if (isModel) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.4f, 1.0f, 0.4f, 1.0f));
                 else if (isMao) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.8f, 0.4f, 1.0f));
                 else if (isPhy) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.4f, 1.0f, 1.0f));
-                char label[256]; snprintf(label, sizeof(label), "%s##%d", entry.name.c_str(), i);
+                char label[256]; snprintf(label, sizeof(label), "%s##%d", ce.name.c_str(), i);
                 if (ImGui::Selectable(label, i == state.selectedEntryIndex, ImGuiSelectableFlags_AllowDoubleClick)) {
                     state.selectedEntryIndex = i;
                     if (ImGui::IsMouseDoubleClicked(0)) {
-                        if (isModel) {
-                            if (loadModelFromEntry(state, entry)) state.statusMessage = "Loaded: " + entry.name;
-                            else state.statusMessage = "Failed to parse: " + entry.name;
-                            state.showRenderSettings = true;
-                        } else if (isMao) {
-                            auto data = state.currentErf->readEntry(entry);
-                            if (!data.empty()) {
-                                state.maoContent = std::string(data.begin(), data.end());
-                                state.maoFileName = entry.name;
-                                state.showMaoViewer = true;
+                        ERFFile erf;
+                        if (erf.open(state.erfFiles[ce.erfIdx])) {
+                            if (ce.entryIdx < erf.entries().size()) {
+                                const auto& entry = erf.entries()[ce.entryIdx];
+                                if (isModel) {
+                                    state.currentErf = std::make_unique<ERFFile>();
+                                    state.currentErf->open(state.erfFiles[ce.erfIdx]);
+                                    if (loadModelFromEntry(state, entry)) state.statusMessage = "Loaded: " + ce.name;
+                                    else state.statusMessage = "Failed to parse: " + ce.name;
+                                    state.showRenderSettings = true;
+                                } else if (isMao) {
+                                    auto data = erf.readEntry(entry);
+                                    if (!data.empty()) {
+                                        state.maoContent = std::string(data.begin(), data.end());
+                                        state.maoFileName = ce.name;
+                                        state.showMaoViewer = true;
+                                    }
+                                }
                             }
                         }
                     }
@@ -584,7 +583,75 @@ static void drawAnimWindow(AppState& state, ImGuiIO& io) {
     }
 }
 
+static bool showSplash = true;
+
+static void filterEncryptedErfs(AppState& state) {
+    state.filteredErfIndices.clear();
+    state.erfsByName.clear();
+    for (size_t i = 0; i < state.erfFiles.size(); i++) {
+        ERFFile testErf;
+        if (testErf.open(state.erfFiles[i]) && testErf.encryption() == 0) {
+            state.filteredErfIndices.push_back(i);
+            std::string filename = fs::path(state.erfFiles[i]).filename().string();
+            state.erfsByName[filename].push_back(i);
+        }
+    }
+}
+
+static void drawSplashScreen(AppState& state, int displayW, int displayH) {
+    ImGui::SetNextWindowPos(ImVec2(0, 0));
+    ImGui::SetNextWindowSize(ImVec2((float)displayW, (float)displayH));
+    ImGui::Begin("##Splash", nullptr,
+        ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
+        ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings);
+
+    float centerX = displayW * 0.5f;
+    float centerY = displayH * 0.5f;
+
+    const char* title = "Dragon Age Model Browser";
+    ImVec2 titleSize = ImGui::CalcTextSize(title);
+    ImGui::SetCursorPos(ImVec2(centerX - titleSize.x * 0.5f, centerY - 60));
+    ImGui::Text("%s", title);
+
+    const char* subtitle = "Select your Dragon Age: Origins installation";
+    ImVec2 subSize = ImGui::CalcTextSize(subtitle);
+    ImGui::SetCursorPos(ImVec2(centerX - subSize.x * 0.5f, centerY - 30));
+    ImGui::TextDisabled("%s", subtitle);
+
+    ImVec2 buttonSize(250, 40);
+    ImGui::SetCursorPos(ImVec2(centerX - buttonSize.x * 0.5f, centerY + 10));
+    if (ImGui::Button("Browse to DAOriginsLauncher.exe", buttonSize)) {
+        IGFD::FileDialogConfig config;
+        config.path = state.lastDialogPath.empty() ? "." : state.lastDialogPath;
+        ImGuiFileDialog::Instance()->OpenDialog("ChooseLauncher", "Select DAOriginsLauncher.exe", ".exe", config);
+    }
+
+    ImGui::End();
+}
+
 void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
+    int displayW, displayH;
+    glfwGetFramebufferSize(window, &displayW, &displayH);
+
+    if (showSplash) {
+        drawSplashScreen(state, displayW, displayH);
+
+        if (ImGuiFileDialog::Instance()->Display("ChooseLauncher", ImGuiWindowFlags_NoCollapse, ImVec2(700, 450))) {
+            if (ImGuiFileDialog::Instance()->IsOk()) {
+                std::string filePath = ImGuiFileDialog::Instance()->GetFilePathName();
+                state.selectedFolder = fs::path(filePath).parent_path().string();
+                state.lastDialogPath = state.selectedFolder;
+                state.erfFiles = scanForERFFiles(state.selectedFolder);
+                filterEncryptedErfs(state);
+                state.statusMessage = "Found " + std::to_string(state.filteredErfIndices.size()) + " ERF files";
+                saveSettings(state);
+                showSplash = false;
+            }
+            ImGuiFileDialog::Instance()->Close();
+        }
+        return;
+    }
+
     if (state.showBrowser) drawBrowserWindow(state);
     if (state.showMeshBrowser) drawMeshBrowserWindow(state);
     if (ImGuiFileDialog::Instance()->Display("ChooseFolder", ImGuiWindowFlags_NoCollapse, ImVec2(600, 400))) {
@@ -592,10 +659,11 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
             state.selectedFolder = ImGuiFileDialog::Instance()->GetCurrentPath();
             state.lastDialogPath = state.selectedFolder;
             state.erfFiles = scanForERFFiles(state.selectedFolder);
-            state.selectedErfIndex = -1;
-            state.currentErf.reset();
+            filterEncryptedErfs(state);
+            state.selectedErfName.clear();
+            state.mergedEntries.clear();
             state.selectedEntryIndex = -1;
-            state.statusMessage = "Found " + std::to_string(state.erfFiles.size()) + " ERF files";
+            state.statusMessage = "Found " + std::to_string(state.erfsByName.size()) + " ERF files";
             saveSettings(state);
         }
         ImGuiFileDialog::Instance()->Close();
