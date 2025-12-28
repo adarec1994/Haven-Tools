@@ -7,7 +7,6 @@
 #include <sstream>
 #include <cstring>
 
-// GFF Field Flags
 enum GFFFieldFlags : uint16_t {
     FLAG_LIST = 0x8000,
     FLAG_STRUCT = 0x4000,
@@ -15,10 +14,10 @@ enum GFFFieldFlags : uint16_t {
 };
 
 struct GFFHeader {
-    uint32_t magic;         // "GFF " = 0x47464620
-    uint32_t version;       // "V4.0" = 0x56342E30
+    uint32_t magic;
+    uint32_t version;
     uint32_t platform;
-    uint32_t fileType;      // "MMH " etc
+    uint32_t fileType;
     uint32_t fileVersion;
     uint32_t structCount;
     uint32_t dataOffset;
@@ -32,14 +31,13 @@ struct GFFField {
 };
 
 struct GFFStruct {
-    char structType[5];     // 4 chars + null
+    char structType[5];
     uint32_t fieldCount;
     uint32_t fieldOffset;
     uint32_t structSize;
     std::vector<GFFField> fields;
 };
 
-// Reference to a struct in a list: (structIndex, offset)
 struct GFFStructRef {
     uint32_t structIndex;
     uint32_t offset;
@@ -61,30 +59,23 @@ public:
     const GFFHeader& header() const { return m_header; }
     const std::vector<GFFStruct>& structs() const { return m_structs; }
 
-    // Find field by label in a struct
     const GFFField* findField(const GFFStruct& st, uint32_t label) const;
     const GFFField* findField(uint32_t structIndex, uint32_t label) const;
 
-    // Read data by field label from a struct at given offset
     std::string readStringByLabel(uint32_t structIndex, uint32_t label, uint32_t baseOffset = 0);
     int32_t readInt32ByLabel(uint32_t structIndex, uint32_t label, uint32_t baseOffset = 0);
     uint32_t readUInt32ByLabel(uint32_t structIndex, uint32_t label, uint32_t baseOffset = 0);
     float readFloatByLabel(uint32_t structIndex, uint32_t label, uint32_t baseOffset = 0);
 
-    // Read a single struct reference (FLAG_REFERENCE only, no FLAG_LIST)
     GFFStructRef readStructRef(uint32_t structIndex, uint32_t label, uint32_t baseOffset = 0);
 
-    // Read struct lists
     std::vector<GFFStructRef> readStructList(uint32_t structIndex, uint32_t label, uint32_t baseOffset = 0);
 
-    // Get raw data offset (for vertex/index buffers)
     uint32_t getListDataOffset(uint32_t structIndex, uint32_t label, uint32_t baseOffset = 0);
 
-    // Direct data access
     uint32_t dataOffset() const { return m_header.dataOffset; }
     const std::vector<uint8_t>& rawData() const { return m_data; }
 
-    // Read from raw data at absolute position
     template<typename T>
     T readAt(uint32_t pos) const {
         if (pos + sizeof(T) > m_data.size()) return T{};
@@ -110,20 +101,14 @@ private:
     bool m_loaded;
 };
 
-// Common field IDs used in MMH/MSH files
 namespace GFFFieldID {
-    // Common
-    constexpr uint32_t NAME = 2;           // Chunk name (in MSH)
-    constexpr uint32_t NODE_NAME = 6000;   // Node name (in MMH)
+    constexpr uint32_t NAME = 2;
+    constexpr uint32_t NODE_NAME = 6000;
     constexpr uint32_t CHILDREN = 6999;
-    constexpr uint32_t MESH_NAME = 6006;   // Mesh name reference
-
-    // MSH root level
+    constexpr uint32_t MESH_NAME = 6006;
     constexpr uint32_t MESH_CHUNKS = 8021;
     constexpr uint32_t VERTEX_BUFFER = 8022;
     constexpr uint32_t INDEX_BUFFER = 8023;
-
-    // Mesh chunk data (in MSH)
     constexpr uint32_t VERTEX_SIZE = 8000;
     constexpr uint32_t VERTEX_COUNT = 8001;
     constexpr uint32_t INDEX_COUNT = 8002;
@@ -135,8 +120,6 @@ namespace GFFFieldID {
     constexpr uint32_t REFERENCED_VERTS = 8008;
     constexpr uint32_t INDEX_OFFSET = 8009;
     constexpr uint32_t VERTEX_DECLARATOR = 8025;
-
-    // Vertex declarator fields
     constexpr uint32_t DECL_STREAM = 8026;
     constexpr uint32_t DECL_OFFSET = 8027;
     constexpr uint32_t DECL_DATATYPE = 8028;
@@ -144,7 +127,6 @@ namespace GFFFieldID {
     constexpr uint32_t DECL_USAGE_INDEX = 8030;
 }
 
-// Vertex declaration data types
 namespace VertexDeclType {
     constexpr uint32_t FLOAT1 = 0;
     constexpr uint32_t FLOAT2 = 1;
@@ -163,7 +145,6 @@ namespace VertexDeclType {
     constexpr uint32_t FLOAT16_4 = 16;
 }
 
-// Vertex usage types
 namespace VertexUsage {
     constexpr uint32_t POSITION = 0;
     constexpr uint32_t BLENDWEIGHT = 1;

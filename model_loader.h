@@ -4,7 +4,6 @@
 #include <vector>
 #include <cstdint>
 
-// Vertex stream descriptor
 struct VertexStreamDesc {
     uint32_t stream;
     uint32_t offset;
@@ -13,11 +12,8 @@ struct VertexStreamDesc {
     uint32_t usageIndex;
 };
 
-// Load a model from MSH file data
 bool loadMSH(const std::vector<uint8_t>& data, Model& outModel);
 
-// Helper to convert half-float to float
 float halfToFloat(uint16_t h);
 
-// Read vertex data based on declaration type
 void readDeclType(const std::vector<uint8_t>& data, uint32_t offset, uint32_t dataType, float* out);

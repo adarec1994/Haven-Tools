@@ -419,7 +419,6 @@ bool loadModelFromEntry(AppState& state, const ERFEntry& entry) {
         if (!mat.tintMap.empty() && mat.tintTexId == 0) mat.tintTexId = loadTextureByName(state, mat.tintMap);
     }
 
-    // Center camera
     if (!state.currentModel.meshes.empty()) {
         float minX = state.currentModel.meshes[0].minX, maxX = state.currentModel.meshes[0].maxX;
         float minY = state.currentModel.meshes[0].minY, maxY = state.currentModel.meshes[0].maxY;

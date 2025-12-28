@@ -67,7 +67,6 @@ bool ERFFile::open(const std::string& path) {
     char magic[16];
     m_file.read(magic, 16);
 
-    // Check for V1.x format (ASCII magic)
     if (std::memcmp(magic, "ERF ", 4) == 0 ||
         std::memcmp(magic, "MOD ", 4) == 0 ||
         std::memcmp(magic, "SAV ", 4) == 0 ||
@@ -81,7 +80,6 @@ bool ERFFile::open(const std::string& path) {
         }
     }
 
-    // Check for V2.x/V3.x format (UTF-16 LE magic)
     std::u16string ver16(8, u'\0');
     std::memcpy(&ver16[0], magic, 16);
     std::string verStr = u16ToUtf8(ver16);
@@ -140,7 +138,7 @@ bool ERFFile::parseV1() {
         keys[i].resref = name;
         keys[i].resid = readLE<uint32_t>(m_file);
         keys[i].restype = readLE<uint16_t>(m_file);
-        m_file.seekg(2, std::ios::cur); // skip 2 bytes padding
+        m_file.seekg(2, std::ios::cur);
     }
 
     m_file.seekg(resOffset);
@@ -164,15 +162,13 @@ bool ERFFile::parseV1() {
 }
 
 bool ERFFile::parseV2_0() {
-    // Header: magic(16) already read, now at offset 16
     uint32_t fileCount = readLE<uint32_t>(m_file);
     uint32_t year = readLE<uint32_t>(m_file);
     uint32_t day = readLE<uint32_t>(m_file);
-    uint32_t unknown = readLE<uint32_t>(m_file); // should be 0xFFFFFFFF
+    uint32_t unknown = readLE<uint32_t>(m_file);
 
     m_entries.resize(fileCount);
     for (uint32_t i = 0; i < fileCount; i++) {
-        // Entry: name(64 bytes utf16) + offset(4) + size(4)
         std::u16string name16 = readU16String(m_file, 64);
         m_entries[i].name = u16ToUtf8(name16);
         m_entries[i].offset = readLE<uint32_t>(m_file);
@@ -188,7 +184,6 @@ bool ERFFile::parseV2_0() {
 }
 
 bool ERFFile::parseV2_2() {
-    // Header after magic(16): fileCount(4) + year(4) + day(4) + unknown(4) + flags(4) + moduleId(4) + pwDigest(16)
     uint32_t fileCount = readLE<uint32_t>(m_file);
     uint32_t year = readLE<uint32_t>(m_file);
     uint32_t day = readLE<uint32_t>(m_file);
@@ -196,7 +191,6 @@ bool ERFFile::parseV2_2() {
     uint32_t flags = readLE<uint32_t>(m_file);
     uint32_t moduleId = readLE<uint32_t>(m_file);
 
-    // Skip password digest (16 bytes)
     m_file.seekg(16, std::ios::cur);
 
     m_encryption = (flags >> 4) & 0xF;
@@ -204,7 +198,6 @@ bool ERFFile::parseV2_2() {
 
     m_entries.resize(fileCount);
     for (uint32_t i = 0; i < fileCount; i++) {
-        // Entry: name(64 bytes utf16) + offset(4) + packedSize(4) + unpackedSize(4)
         std::u16string name16 = readU16String(m_file, 64);
         m_entries[i].name = u16ToUtf8(name16);
         m_entries[i].offset = readLE<uint32_t>(m_file);
@@ -220,25 +213,21 @@ bool ERFFile::parseV2_2() {
 }
 
 bool ERFFile::parseV3_0() {
-    // Header after magic(16): stringTableSize(4) + fileCount(4) + flags(4) + moduleId(4) + pwDigest(16)
     uint32_t stringTableSize = readLE<uint32_t>(m_file);
     uint32_t fileCount = readLE<uint32_t>(m_file);
     uint32_t flags = readLE<uint32_t>(m_file);
     uint32_t moduleId = readLE<uint32_t>(m_file);
 
-    // Skip password digest (16 bytes)
     m_file.seekg(16, std::ios::cur);
 
     m_encryption = (flags >> 4) & 0xF;
     m_compression = (flags >> 29) & 0x7;
 
-    // Read string table
     std::map<uint32_t, std::string> names;
     if (stringTableSize > 0) {
         std::vector<char> stringTable(stringTableSize);
         m_file.read(stringTable.data(), stringTableSize);
 
-        // Parse null-terminated strings, tracking their offsets
         uint32_t offset = 0;
         size_t start = 0;
         for (size_t i = 0; i < stringTableSize; i++) {
@@ -254,7 +243,6 @@ bool ERFFile::parseV3_0() {
 
     m_entries.resize(fileCount);
     for (uint32_t i = 0; i < fileCount; i++) {
-        // Entry: nameOffset(4) + nameHash(8) + typeHash(4) + offset(4) + packedSize(4) + unpackedSize(4)
         int32_t nameOffset = readLE<int32_t>(m_file);
         uint64_t nameHash = readLE<uint64_t>(m_file);
         uint32_t typeHash = readLE<uint32_t>(m_file);
@@ -270,7 +258,6 @@ bool ERFFile::parseV3_0() {
             }
         }
 
-        // If no name found, generate one from hashes
         if (name.empty()) {
             std::stringstream ss;
             ss << "[" << std::hex << std::setfill('0') << std::setw(16) << nameHash
@@ -297,7 +284,6 @@ std::vector<uint8_t> ERFFile::readEntry(const ERFEntry& entry) {
     m_file.clear();
     m_file.seekg(entry.offset);
 
-    // Just read raw data - no decryption/decompression
     std::vector<uint8_t> data(entry.packed_length);
     m_file.read(reinterpret_cast<char*>(data.data()), entry.packed_length);
     return data;

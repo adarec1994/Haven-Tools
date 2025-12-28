@@ -74,7 +74,6 @@ bool GFFFile::parseHeader() {
     m_header.structCount = readAt<uint32_t>(20);
     m_header.dataOffset = readAt<uint32_t>(24);
 
-    // Check magic "GFF " = 0x20464647
     if (m_header.magic != 0x20464647) {
         return false;
     }
@@ -87,7 +86,6 @@ bool GFFFile::parseStructs() {
 
     m_structs.resize(m_header.structCount);
 
-    // Struct definitions start at offset 28
     uint32_t pos = 28;
 
     for (uint32_t i = 0; i < m_header.structCount; i++) {
@@ -99,7 +97,6 @@ bool GFFFile::parseStructs() {
         pos += 16;
     }
 
-    // Read fields for each struct
     for (uint32_t i = 0; i < m_header.structCount; i++) {
         uint32_t fieldPos = m_structs[i].fieldOffset;
         m_structs[i].fields.resize(m_structs[i].fieldCount);
@@ -117,12 +114,10 @@ bool GFFFile::parseStructs() {
 }
 
 bool GFFFile::isMMH() const {
-    // "MMH " = 0x204D484D
     return m_header.fileType == 0x204D484D;
 }
 
 bool GFFFile::isMSH() const {
-    // "MESH" = 0x4853454D
     return m_header.fileType == 0x4853454D;
 }
 
@@ -146,13 +141,12 @@ std::string GFFFile::readStringByLabel(uint32_t structIndex, uint32_t label, uin
     const GFFField* field = findField(structIndex, label);
     if (!field) return "";
 
-    // Type 14 is ECString
     if (field->typeId != 14) return "";
 
     uint32_t dataPos = m_header.dataOffset + field->dataOffset + baseOffset;
     int32_t strOffset = readAt<int32_t>(dataPos);
 
-    if (strOffset < 0) return ""; // Null reference
+    if (strOffset < 0) return "";
 
     uint32_t strPos = m_header.dataOffset + strOffset;
     uint32_t length = readAt<uint32_t>(strPos);
@@ -163,7 +157,7 @@ std::string GFFFile::readStringByLabel(uint32_t structIndex, uint32_t label, uin
 
     for (uint32_t i = 0; i < length && strPos + 1 < m_data.size(); i++) {
         char c = static_cast<char>(m_data[strPos]);
-        strPos += 2; // Skip second byte (wchar)
+        strPos += 2;
         if (c != '\0') result += c;
     }
 
@@ -211,11 +205,9 @@ GFFStructRef GFFFile::readStructRef(uint32_t structIndex, uint32_t label, uint32
     bool isRef = (field->flags & FLAG_REFERENCE) != 0;
     bool isList = (field->flags & FLAG_LIST) != 0;
 
-    // For a single reference (not a list), read the reference data directly
     if (isRef && !isList) {
         uint32_t dataPos = m_header.dataOffset + field->dataOffset + baseOffset;
 
-        // Read the reference: structIndex (2 bytes) + flags (2 bytes) + offset (4 bytes)
         uint16_t refStructIdx = readAt<uint16_t>(dataPos);
         uint16_t refFlags = readAt<uint16_t>(dataPos + 2);
         uint32_t refOffset = readAt<uint32_t>(dataPos + 4);
@@ -242,14 +234,13 @@ std::vector<GFFStructRef> GFFFile::readStructList(uint32_t structIndex, uint32_t
     uint32_t dataPos = m_header.dataOffset + field->dataOffset + baseOffset;
     int32_t ref = readAt<int32_t>(dataPos);
 
-    if (ref < 0) return result; // Null reference
+    if (ref < 0) return result;
 
     uint32_t listPos = m_header.dataOffset + ref;
     uint32_t listCount = readAt<uint32_t>(listPos);
     listPos += 4;
 
     if (isList && isStruct && !isRef) {
-        // Struct list - items are sequential in memory
         uint32_t structSize = m_structs[field->typeId].structSize;
         uint32_t itemOffset = ref + 4;
 
@@ -262,7 +253,6 @@ std::vector<GFFStructRef> GFFFile::readStructList(uint32_t structIndex, uint32_t
         }
     }
     else if (isList && isStruct && isRef) {
-        // Ref struct list - each item is an offset
         for (uint32_t i = 0; i < listCount; i++) {
             uint32_t itemOffset = readAt<uint32_t>(listPos);
             listPos += 4;
@@ -274,7 +264,6 @@ std::vector<GFFStructRef> GFFFile::readStructList(uint32_t structIndex, uint32_t
         }
     }
     else if (isList && isRef && !isStruct) {
-        // Generic list with references
         for (uint32_t i = 0; i < listCount; i++) {
             uint16_t structRef = readAt<uint16_t>(listPos);
             listPos += 2;
@@ -304,5 +293,5 @@ uint32_t GFFFile::getListDataOffset(uint32_t structIndex, uint32_t label, uint32
 
     if (ref < 0) return 0;
 
-    return ref; // Return offset relative to data section
+    return ref;
 }

@@ -58,7 +58,6 @@ Material parseMAO(const std::string& maoContent, const std::string& materialName
             std::string resNameLower = resName;
             std::transform(resNameLower.begin(), resNameLower.end(), resNameLower.begin(), ::tolower);
 
-            // Face-specific textures (check these first as they're more specific)
             if (texNameLower.find("agediffuse") != std::string::npos ||
                 texNameLower.find("age_diffuse") != std::string::npos) {
                 mat.ageDiffuseMap = resName;
@@ -71,7 +70,7 @@ Material parseMAO(const std::string& maoContent, const std::string& materialName
                        texNameLower.find("normal") == std::string::npos) {
                 mat.browStubbleMap = resName;
             }
-            // Standard textures
+
             else if (texNameLower.find("diffuse") != std::string::npos ||
                 texNameLower.find("packedtexture") != std::string::npos ||
                 texNameLower.find("_d") != std::string::npos) {
@@ -83,12 +82,10 @@ Material parseMAO(const std::string& maoContent, const std::string& materialName
                        texNameLower.find("_s") != std::string::npos) {
                 mat.specularMap = resName;
             } else if (texNameLower.find("tintmask") != std::string::npos) {
-                // TintMask is the mask, not the tint texture itself
-                // Skip Default_White.dds
+
             } else if (texNameLower.find("tint") != std::string::npos) {
                 mat.tintMap = resName;
             } else if (mat.diffuseMap.empty()) {
-                // Fallback: check ResName for hints (e.g., _0d.dds = diffuse)
                 if (resNameLower.find("_d.") != std::string::npos ||
                     resNameLower.find("0d.") != std::string::npos ||
                     resNameLower.find("_d_") != std::string::npos) {
@@ -111,7 +108,6 @@ Material parseMAO(const std::string& maoContent, const std::string& materialName
     return mat;
 }
 
-// Quaternion helpers
 static void quatMulWorld(float ax, float ay, float az, float aw,
                          float bx, float by, float bz, float bw,
                          float& rx, float& ry, float& rz, float& rw) {

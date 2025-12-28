@@ -175,10 +175,8 @@ void findAnimationsForModel(AppState& state, const std::string& modelBaseName) {
 
     std::set<std::string> foundNames;
 
-    // If we have specific animations from CSV, search for those
     if (!state.currentModelAnimations.empty()) {
 
-        // Build a set of animation names to search for (lowercase, with .ani extension)
         std::set<std::string> targetAnims;
         for (const auto& anim : state.currentModelAnimations) {
             std::string animLower = anim;
@@ -205,7 +203,6 @@ void findAnimationsForModel(AppState& state, const std::string& modelBaseName) {
         }
     }
 
-    // If no specific animations or none found, fall back to prefix search
     if (state.availableAnimFiles.empty()) {
         std::string baseNameLower = modelBaseName;
         std::transform(baseNameLower.begin(), baseNameLower.end(), baseNameLower.begin(), ::tolower);
@@ -339,7 +336,6 @@ void applyAnimation(Model& model, const Animation& anim, float time, const std::
             float ty = kf0.y * (1-t) + kf1.y * t;
             float tz = kf0.z * (1-t) + kf1.z * t;
 
-            // Animation translation is additive to bind pose
             const Bone& base = basePose[track.boneIndex];
             bone.posX = base.posX + tx;
             bone.posY = base.posY + ty;
