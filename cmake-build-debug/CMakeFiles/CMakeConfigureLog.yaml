@@ -109,8 +109,8 @@ events:
     checks:
       - "Detecting C compiler ABI info"
     directories:
-      source: "C:/Users/pwd12/OneDrive/Documents/GitHub/Haven-Tools/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-7k2sl4"
-      binary: "C:/Users/pwd12/OneDrive/Documents/GitHub/Haven-Tools/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-7k2sl4"
+      source: "C:/Users/pwd12/OneDrive/Documents/GitHub/Haven-Tools/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-4akezx"
+      binary: "C:/Users/pwd12/OneDrive/Documents/GitHub/Haven-Tools/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-4akezx"
     cmakeVariables:
       CMAKE_C_FLAGS: "/DWIN32 /D_WINDOWS"
       CMAKE_C_FLAGS_DEBUG: "/Zi /Ob0 /Od /RTC1"
@@ -119,28 +119,28 @@ events:
       variable: "CMAKE_C_ABI_COMPILED"
       cached: true
       stdout: |
-        Change Dir: 'C:/Users/pwd12/OneDrive/Documents/GitHub/Haven-Tools/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-7k2sl4'
+        Change Dir: 'C:/Users/pwd12/OneDrive/Documents/GitHub/Haven-Tools/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-4akezx'
         
-        Run Build Command(s): "C:/Program Files/JetBrains/CLion 2025.2.1/bin/cmake/win/x64/bin/cmake.exe" -E env VERBOSE=1 nmake -f Makefile /nologo cmTC_ca945\\fast
-        	"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.44.35207\\bin\\HostX64\\x64\\nmake.exe"  -f CMakeFiles\\cmTC_ca945.dir\\build.make /nologo -L                  CMakeFiles\\cmTC_ca945.dir\\build
-        Building C object CMakeFiles/cmTC_ca945.dir/CMakeCCompilerABI.c.obj
-        	"C:\\Program Files\\JetBrains\\CLion 2025.2.1\\bin\\cmake\\win\\x64\\bin\\cmake.exe" -E cmake_cl_compile_depends --dep-file=CMakeFiles\\cmTC_ca945.dir\\CMakeCCompilerABI.c.obj.d --working-dir=C:\\Users\\pwd12\\OneDrive\\Documents\\GitHub\\Haven-Tools\\cmake-build-debug\\CMakeFiles\\CMakeScratch\\TryCompile-7k2sl4 --filter-prefix="Note: including file: " -- C:\\PROGRA~1\\MICROS~1\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1444~1.352\\bin\\Hostx64\\x64\\cl.exe @C:\\Users\\pwd12\\AppData\\Local\\Temp\\nm6FF9.tmp
+        Run Build Command(s): "C:/Program Files/JetBrains/CLion 2025.2.1/bin/cmake/win/x64/bin/cmake.exe" -E env VERBOSE=1 nmake -f Makefile /nologo cmTC_d335a\\fast
+        	"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.44.35207\\bin\\HostX64\\x64\\nmake.exe"  -f CMakeFiles\\cmTC_d335a.dir\\build.make /nologo -L                  CMakeFiles\\cmTC_d335a.dir\\build
+        Building C object CMakeFiles/cmTC_d335a.dir/CMakeCCompilerABI.c.obj
+        	"C:\\Program Files\\JetBrains\\CLion 2025.2.1\\bin\\cmake\\win\\x64\\bin\\cmake.exe" -E cmake_cl_compile_depends --dep-file=CMakeFiles\\cmTC_d335a.dir\\CMakeCCompilerABI.c.obj.d --working-dir=C:\\Users\\pwd12\\OneDrive\\Documents\\GitHub\\Haven-Tools\\cmake-build-debug\\CMakeFiles\\CMakeScratch\\TryCompile-4akezx --filter-prefix="Note: including file: " -- C:\\PROGRA~1\\MICROS~1\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1444~1.352\\bin\\Hostx64\\x64\\cl.exe @C:\\Users\\pwd12\\AppData\\Local\\Temp\\nm768A.tmp
         CMakeCCompilerABI.c
-        Linking C executable cmTC_ca945.exe
-        	"C:\\Program Files\\JetBrains\\CLion 2025.2.1\\bin\\cmake\\win\\x64\\bin\\cmake.exe" -E vs_link_exe --msvc-ver=1944 --intdir=CMakeFiles\\cmTC_ca945.dir --rc=C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100261~1.0\\x64\\rc.exe --mt=C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100261~1.0\\x64\\mt.exe --manifests -- C:\\PROGRA~1\\MICROS~1\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1444~1.352\\bin\\Hostx64\\x64\\link.exe /nologo @CMakeFiles\\cmTC_ca945.dir\\objects1.rsp @C:\\Users\\pwd12\\AppData\\Local\\Temp\\nm7171.tmp
+        Linking C executable cmTC_d335a.exe
+        	"C:\\Program Files\\JetBrains\\CLion 2025.2.1\\bin\\cmake\\win\\x64\\bin\\cmake.exe" -E vs_link_exe --msvc-ver=1944 --intdir=CMakeFiles\\cmTC_d335a.dir --rc=C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100261~1.0\\x64\\rc.exe --mt=C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100261~1.0\\x64\\mt.exe --manifests -- C:\\PROGRA~1\\MICROS~1\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1444~1.352\\bin\\Hostx64\\x64\\link.exe /nologo @CMakeFiles\\cmTC_d335a.dir\\objects1.rsp @C:\\Users\\pwd12\\AppData\\Local\\Temp\\nm7718.tmp
         Visual Studio Incremental Link with embedded manifests
-        Create CMakeFiles\\cmTC_ca945.dir/manifest.rc
-        Create empty: CMakeFiles\\cmTC_ca945.dir/embed.manifest
+        Create CMakeFiles\\cmTC_d335a.dir/manifest.rc
+        Create empty: CMakeFiles\\cmTC_d335a.dir/embed.manifest
         RC Pass 1:
-        C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100261~1.0\\x64\\rc.exe /fo CMakeFiles\\cmTC_ca945.dir/manifest.res CMakeFiles\\cmTC_ca945.dir/manifest.rc
+        C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100261~1.0\\x64\\rc.exe /fo CMakeFiles\\cmTC_d335a.dir/manifest.res CMakeFiles\\cmTC_d335a.dir/manifest.rc
         LINK Pass 1:
-        C:\\PROGRA~1\\MICROS~1\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1444~1.352\\bin\\Hostx64\\x64\\link.exe /nologo @CMakeFiles\\cmTC_ca945.dir\\objects1.rsp /out:cmTC_ca945.exe /implib:cmTC_ca945.lib /pdb:C:\\Users\\pwd12\\OneDrive\\Documents\\GitHub\\Haven-Tools\\cmake-build-debug\\CMakeFiles\\CMakeScratch\\TryCompile-7k2sl4\\cmTC_ca945.pdb /version:0.0 /machine:x64 /debug /INCREMENTAL /subsystem:console kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTFILE:CMakeFiles\\cmTC_ca945.dir/intermediate.manifest CMakeFiles\\cmTC_ca945.dir/manifest.res
+        C:\\PROGRA~1\\MICROS~1\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1444~1.352\\bin\\Hostx64\\x64\\link.exe /nologo @CMakeFiles\\cmTC_d335a.dir\\objects1.rsp /out:cmTC_d335a.exe /implib:cmTC_d335a.lib /pdb:C:\\Users\\pwd12\\OneDrive\\Documents\\GitHub\\Haven-Tools\\cmake-build-debug\\CMakeFiles\\CMakeScratch\\TryCompile-4akezx\\cmTC_d335a.pdb /version:0.0 /machine:x64 /debug /INCREMENTAL /subsystem:console kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTFILE:CMakeFiles\\cmTC_d335a.dir/intermediate.manifest CMakeFiles\\cmTC_d335a.dir/manifest.res
         MT:
-        C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100261~1.0\\x64\\mt.exe /nologo /manifest CMakeFiles\\cmTC_ca945.dir/intermediate.manifest /out:CMakeFiles\\cmTC_ca945.dir/embed.manifest /notify_update
+        C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100261~1.0\\x64\\mt.exe /nologo /manifest CMakeFiles\\cmTC_d335a.dir/intermediate.manifest /out:CMakeFiles\\cmTC_d335a.dir/embed.manifest /notify_update
         RC Pass 2:
-        C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100261~1.0\\x64\\rc.exe /fo CMakeFiles\\cmTC_ca945.dir/manifest.res CMakeFiles\\cmTC_ca945.dir/manifest.rc
+        C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100261~1.0\\x64\\rc.exe /fo CMakeFiles\\cmTC_d335a.dir/manifest.res CMakeFiles\\cmTC_d335a.dir/manifest.rc
         FINAL LINK:
-        C:\\PROGRA~1\\MICROS~1\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1444~1.352\\bin\\Hostx64\\x64\\link.exe /nologo @CMakeFiles\\cmTC_ca945.dir\\objects1.rsp /out:cmTC_ca945.exe /implib:cmTC_ca945.lib /pdb:C:\\Users\\pwd12\\OneDrive\\Documents\\GitHub\\Haven-Tools\\cmake-build-debug\\CMakeFiles\\CMakeScratch\\TryCompile-7k2sl4\\cmTC_ca945.pdb /version:0.0 /machine:x64 /debug /INCREMENTAL /subsystem:console kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTFILE:CMakeFiles\\cmTC_ca945.dir/intermediate.manifest CMakeFiles\\cmTC_ca945.dir/manifest.res
+        C:\\PROGRA~1\\MICROS~1\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1444~1.352\\bin\\Hostx64\\x64\\link.exe /nologo @CMakeFiles\\cmTC_d335a.dir\\objects1.rsp /out:cmTC_d335a.exe /implib:cmTC_d335a.lib /pdb:C:\\Users\\pwd12\\OneDrive\\Documents\\GitHub\\Haven-Tools\\cmake-build-debug\\CMakeFiles\\CMakeScratch\\TryCompile-4akezx\\cmTC_d335a.pdb /version:0.0 /machine:x64 /debug /INCREMENTAL /subsystem:console kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTFILE:CMakeFiles\\cmTC_d335a.dir/intermediate.manifest CMakeFiles\\cmTC_d335a.dir/manifest.res
         
       exitCode: 0
   -
@@ -180,8 +180,8 @@ events:
     checks:
       - "Detecting CXX compiler ABI info"
     directories:
-      source: "C:/Users/pwd12/OneDrive/Documents/GitHub/Haven-Tools/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-me8guh"
-      binary: "C:/Users/pwd12/OneDrive/Documents/GitHub/Haven-Tools/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-me8guh"
+      source: "C:/Users/pwd12/OneDrive/Documents/GitHub/Haven-Tools/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-rsapc7"
+      binary: "C:/Users/pwd12/OneDrive/Documents/GitHub/Haven-Tools/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-rsapc7"
     cmakeVariables:
       CMAKE_CXX_FLAGS: "/DWIN32 /D_WINDOWS /GR /EHsc"
       CMAKE_CXX_FLAGS_DEBUG: "/Zi /Ob0 /Od /RTC1"
@@ -191,28 +191,28 @@ events:
       variable: "CMAKE_CXX_ABI_COMPILED"
       cached: true
       stdout: |
-        Change Dir: 'C:/Users/pwd12/OneDrive/Documents/GitHub/Haven-Tools/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-me8guh'
+        Change Dir: 'C:/Users/pwd12/OneDrive/Documents/GitHub/Haven-Tools/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-rsapc7'
         
-        Run Build Command(s): "C:/Program Files/JetBrains/CLion 2025.2.1/bin/cmake/win/x64/bin/cmake.exe" -E env VERBOSE=1 nmake -f Makefile /nologo cmTC_aa0ba\\fast
-        	"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.44.35207\\bin\\HostX64\\x64\\nmake.exe"  -f CMakeFiles\\cmTC_aa0ba.dir\\build.make /nologo -L                  CMakeFiles\\cmTC_aa0ba.dir\\build
-        Building CXX object CMakeFiles/cmTC_aa0ba.dir/CMakeCXXCompilerABI.cpp.obj
-        	"C:\\Program Files\\JetBrains\\CLion 2025.2.1\\bin\\cmake\\win\\x64\\bin\\cmake.exe" -E cmake_cl_compile_depends --dep-file=CMakeFiles\\cmTC_aa0ba.dir\\CMakeCXXCompilerABI.cpp.obj.d --working-dir=C:\\Users\\pwd12\\OneDrive\\Documents\\GitHub\\Haven-Tools\\cmake-build-debug\\CMakeFiles\\CMakeScratch\\TryCompile-me8guh --filter-prefix="Note: including file: " -- C:\\PROGRA~1\\MICROS~1\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1444~1.352\\bin\\Hostx64\\x64\\cl.exe @C:\\Users\\pwd12\\AppData\\Local\\Temp\\nm7420.tmp
+        Run Build Command(s): "C:/Program Files/JetBrains/CLion 2025.2.1/bin/cmake/win/x64/bin/cmake.exe" -E env VERBOSE=1 nmake -f Makefile /nologo cmTC_c8a02\\fast
+        	"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.44.35207\\bin\\HostX64\\x64\\nmake.exe"  -f CMakeFiles\\cmTC_c8a02.dir\\build.make /nologo -L                  CMakeFiles\\cmTC_c8a02.dir\\build
+        Building CXX object CMakeFiles/cmTC_c8a02.dir/CMakeCXXCompilerABI.cpp.obj
+        	"C:\\Program Files\\JetBrains\\CLion 2025.2.1\\bin\\cmake\\win\\x64\\bin\\cmake.exe" -E cmake_cl_compile_depends --dep-file=CMakeFiles\\cmTC_c8a02.dir\\CMakeCXXCompilerABI.cpp.obj.d --working-dir=C:\\Users\\pwd12\\OneDrive\\Documents\\GitHub\\Haven-Tools\\cmake-build-debug\\CMakeFiles\\CMakeScratch\\TryCompile-rsapc7 --filter-prefix="Note: including file: " -- C:\\PROGRA~1\\MICROS~1\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1444~1.352\\bin\\Hostx64\\x64\\cl.exe @C:\\Users\\pwd12\\AppData\\Local\\Temp\\nm79C6.tmp
         CMakeCXXCompilerABI.cpp
-        Linking CXX executable cmTC_aa0ba.exe
-        	"C:\\Program Files\\JetBrains\\CLion 2025.2.1\\bin\\cmake\\win\\x64\\bin\\cmake.exe" -E vs_link_exe --msvc-ver=1944 --intdir=CMakeFiles\\cmTC_aa0ba.dir --rc=C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100261~1.0\\x64\\rc.exe --mt=C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100261~1.0\\x64\\mt.exe --manifests -- C:\\PROGRA~1\\MICROS~1\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1444~1.352\\bin\\Hostx64\\x64\\link.exe /nologo @CMakeFiles\\cmTC_aa0ba.dir\\objects1.rsp @C:\\Users\\pwd12\\AppData\\Local\\Temp\\nm747E.tmp
+        Linking CXX executable cmTC_c8a02.exe
+        	"C:\\Program Files\\JetBrains\\CLion 2025.2.1\\bin\\cmake\\win\\x64\\bin\\cmake.exe" -E vs_link_exe --msvc-ver=1944 --intdir=CMakeFiles\\cmTC_c8a02.dir --rc=C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100261~1.0\\x64\\rc.exe --mt=C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100261~1.0\\x64\\mt.exe --manifests -- C:\\PROGRA~1\\MICROS~1\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1444~1.352\\bin\\Hostx64\\x64\\link.exe /nologo @CMakeFiles\\cmTC_c8a02.dir\\objects1.rsp @C:\\Users\\pwd12\\AppData\\Local\\Temp\\nm7A25.tmp
         Visual Studio Incremental Link with embedded manifests
-        Create CMakeFiles\\cmTC_aa0ba.dir/manifest.rc
-        Create empty: CMakeFiles\\cmTC_aa0ba.dir/embed.manifest
+        Create CMakeFiles\\cmTC_c8a02.dir/manifest.rc
+        Create empty: CMakeFiles\\cmTC_c8a02.dir/embed.manifest
         RC Pass 1:
-        C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100261~1.0\\x64\\rc.exe /fo CMakeFiles\\cmTC_aa0ba.dir/manifest.res CMakeFiles\\cmTC_aa0ba.dir/manifest.rc
+        C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100261~1.0\\x64\\rc.exe /fo CMakeFiles\\cmTC_c8a02.dir/manifest.res CMakeFiles\\cmTC_c8a02.dir/manifest.rc
         LINK Pass 1:
-        C:\\PROGRA~1\\MICROS~1\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1444~1.352\\bin\\Hostx64\\x64\\link.exe /nologo @CMakeFiles\\cmTC_aa0ba.dir\\objects1.rsp /out:cmTC_aa0ba.exe /implib:cmTC_aa0ba.lib /pdb:C:\\Users\\pwd12\\OneDrive\\Documents\\GitHub\\Haven-Tools\\cmake-build-debug\\CMakeFiles\\CMakeScratch\\TryCompile-me8guh\\cmTC_aa0ba.pdb /version:0.0 /machine:x64 /debug /INCREMENTAL /subsystem:console kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTFILE:CMakeFiles\\cmTC_aa0ba.dir/intermediate.manifest CMakeFiles\\cmTC_aa0ba.dir/manifest.res
+        C:\\PROGRA~1\\MICROS~1\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1444~1.352\\bin\\Hostx64\\x64\\link.exe /nologo @CMakeFiles\\cmTC_c8a02.dir\\objects1.rsp /out:cmTC_c8a02.exe /implib:cmTC_c8a02.lib /pdb:C:\\Users\\pwd12\\OneDrive\\Documents\\GitHub\\Haven-Tools\\cmake-build-debug\\CMakeFiles\\CMakeScratch\\TryCompile-rsapc7\\cmTC_c8a02.pdb /version:0.0 /machine:x64 /debug /INCREMENTAL /subsystem:console kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTFILE:CMakeFiles\\cmTC_c8a02.dir/intermediate.manifest CMakeFiles\\cmTC_c8a02.dir/manifest.res
         MT:
-        C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100261~1.0\\x64\\mt.exe /nologo /manifest CMakeFiles\\cmTC_aa0ba.dir/intermediate.manifest /out:CMakeFiles\\cmTC_aa0ba.dir/embed.manifest /notify_update
+        C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100261~1.0\\x64\\mt.exe /nologo /manifest CMakeFiles\\cmTC_c8a02.dir/intermediate.manifest /out:CMakeFiles\\cmTC_c8a02.dir/embed.manifest /notify_update
         RC Pass 2:
-        C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100261~1.0\\x64\\rc.exe /fo CMakeFiles\\cmTC_aa0ba.dir/manifest.res CMakeFiles\\cmTC_aa0ba.dir/manifest.rc
+        C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100261~1.0\\x64\\rc.exe /fo CMakeFiles\\cmTC_c8a02.dir/manifest.res CMakeFiles\\cmTC_c8a02.dir/manifest.rc
         FINAL LINK:
-        C:\\PROGRA~1\\MICROS~1\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1444~1.352\\bin\\Hostx64\\x64\\link.exe /nologo @CMakeFiles\\cmTC_aa0ba.dir\\objects1.rsp /out:cmTC_aa0ba.exe /implib:cmTC_aa0ba.lib /pdb:C:\\Users\\pwd12\\OneDrive\\Documents\\GitHub\\Haven-Tools\\cmake-build-debug\\CMakeFiles\\CMakeScratch\\TryCompile-me8guh\\cmTC_aa0ba.pdb /version:0.0 /machine:x64 /debug /INCREMENTAL /subsystem:console kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTFILE:CMakeFiles\\cmTC_aa0ba.dir/intermediate.manifest CMakeFiles\\cmTC_aa0ba.dir/manifest.res
+        C:\\PROGRA~1\\MICROS~1\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1444~1.352\\bin\\Hostx64\\x64\\link.exe /nologo @CMakeFiles\\cmTC_c8a02.dir\\objects1.rsp /out:cmTC_c8a02.exe /implib:cmTC_c8a02.lib /pdb:C:\\Users\\pwd12\\OneDrive\\Documents\\GitHub\\Haven-Tools\\cmake-build-debug\\CMakeFiles\\CMakeScratch\\TryCompile-rsapc7\\cmTC_c8a02.pdb /version:0.0 /machine:x64 /debug /INCREMENTAL /subsystem:console kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTFILE:CMakeFiles\\cmTC_c8a02.dir/intermediate.manifest CMakeFiles\\cmTC_c8a02.dir/manifest.res
         
       exitCode: 0
   -
@@ -254,8 +254,8 @@ events:
     checks:
       - "Performing Test CMAKE_HAVE_LIBC_PTHREAD"
     directories:
-      source: "C:/Users/pwd12/OneDrive/Documents/GitHub/Haven-Tools/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-jq29rw"
-      binary: "C:/Users/pwd12/OneDrive/Documents/GitHub/Haven-Tools/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-jq29rw"
+      source: "C:/Users/pwd12/OneDrive/Documents/GitHub/Haven-Tools/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-mt2uis"
+      binary: "C:/Users/pwd12/OneDrive/Documents/GitHub/Haven-Tools/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-mt2uis"
     cmakeVariables:
       CMAKE_C_FLAGS: "/DWIN32 /D_WINDOWS"
       CMAKE_C_FLAGS_DEBUG: "/Zi /Ob0 /Od /RTC1"
@@ -265,17 +265,17 @@ events:
       variable: "CMAKE_HAVE_LIBC_PTHREAD"
       cached: true
       stdout: |
-        Change Dir: 'C:/Users/pwd12/OneDrive/Documents/GitHub/Haven-Tools/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-jq29rw'
+        Change Dir: 'C:/Users/pwd12/OneDrive/Documents/GitHub/Haven-Tools/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-mt2uis'
         
-        Run Build Command(s): "C:/Program Files/JetBrains/CLion 2025.2.1/bin/cmake/win/x64/bin/cmake.exe" -E env VERBOSE=1 nmake -f Makefile /nologo cmTC_3a0d5\\fast
-        	"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.44.35207\\bin\\HostX64\\x64\\nmake.exe"  -f CMakeFiles\\cmTC_3a0d5.dir\\build.make /nologo -L                  CMakeFiles\\cmTC_3a0d5.dir\\build
-        Building C object CMakeFiles/cmTC_3a0d5.dir/src.c.obj
-        	"C:\\Program Files\\JetBrains\\CLion 2025.2.1\\bin\\cmake\\win\\x64\\bin\\cmake.exe" -E cmake_cl_compile_depends --dep-file=CMakeFiles\\cmTC_3a0d5.dir\\src.c.obj.d --working-dir=C:\\Users\\pwd12\\OneDrive\\Documents\\GitHub\\Haven-Tools\\cmake-build-debug\\CMakeFiles\\CMakeScratch\\TryCompile-jq29rw --filter-prefix="Note: including file: " -- C:\\PROGRA~1\\MICROS~1\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1444~1.352\\bin\\Hostx64\\x64\\cl.exe @C:\\Users\\pwd12\\AppData\\Local\\Temp\\nm88D1.tmp
+        Run Build Command(s): "C:/Program Files/JetBrains/CLion 2025.2.1/bin/cmake/win/x64/bin/cmake.exe" -E env VERBOSE=1 nmake -f Makefile /nologo cmTC_06bce\\fast
+        	"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.44.35207\\bin\\HostX64\\x64\\nmake.exe"  -f CMakeFiles\\cmTC_06bce.dir\\build.make /nologo -L                  CMakeFiles\\cmTC_06bce.dir\\build
+        Building C object CMakeFiles/cmTC_06bce.dir/src.c.obj
+        	"C:\\Program Files\\JetBrains\\CLion 2025.2.1\\bin\\cmake\\win\\x64\\bin\\cmake.exe" -E cmake_cl_compile_depends --dep-file=CMakeFiles\\cmTC_06bce.dir\\src.c.obj.d --working-dir=C:\\Users\\pwd12\\OneDrive\\Documents\\GitHub\\Haven-Tools\\cmake-build-debug\\CMakeFiles\\CMakeScratch\\TryCompile-mt2uis --filter-prefix="Note: including file: " -- C:\\PROGRA~1\\MICROS~1\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1444~1.352\\bin\\Hostx64\\x64\\cl.exe @C:\\Users\\pwd12\\AppData\\Local\\Temp\\nm905C.tmp
         src.c
-        C:\\Users\\pwd12\\OneDrive\\Documents\\GitHub\\Haven-Tools\\cmake-build-debug\\CMakeFiles\\CMakeScratch\\TryCompile-jq29rw\\src.c(1): fatal error C1083: Cannot open include file: 'pthread.h': No such file or directory
-        NMAKE : fatal error U1077: '"C:\\Program Files\\JetBrains\\CLion 2025.2.1\\bin\\cmake\\win\\x64\\bin\\cmake.exe" -E cmake_cl_compile_depends --dep-file=CMakeFiles\\cmTC_3a0d5.dir\\src.c.obj.d --working-dir=C:\\Users\\pwd12\\OneDrive\\Documents\\GitHub\\Haven-Tools\\cmake-build-debug\\CMakeFiles\\CMakeScratch\\TryCompile-jq29rw --filter-prefix="Note: including file: " -- C:\\PROGRA~1\\MICROS~1\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1444~1.352\\bin\\Hostx64\\x64\\cl.exe @C:\\Users\\pwd12\\AppData\\Local\\Temp\\nm88D1.tmp' : return code '0x2'
+        C:\\Users\\pwd12\\OneDrive\\Documents\\GitHub\\Haven-Tools\\cmake-build-debug\\CMakeFiles\\CMakeScratch\\TryCompile-mt2uis\\src.c(1): fatal error C1083: Cannot open include file: 'pthread.h': No such file or directory
+        NMAKE : fatal error U1077: '"C:\\Program Files\\JetBrains\\CLion 2025.2.1\\bin\\cmake\\win\\x64\\bin\\cmake.exe" -E cmake_cl_compile_depends --dep-file=CMakeFiles\\cmTC_06bce.dir\\src.c.obj.d --working-dir=C:\\Users\\pwd12\\OneDrive\\Documents\\GitHub\\Haven-Tools\\cmake-build-debug\\CMakeFiles\\CMakeScratch\\TryCompile-mt2uis --filter-prefix="Note: including file: " -- C:\\PROGRA~1\\MICROS~1\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1444~1.352\\bin\\Hostx64\\x64\\cl.exe @C:\\Users\\pwd12\\AppData\\Local\\Temp\\nm905C.tmp' : return code '0x2'
         Stop.
-        NMAKE : fatal error U1077: '"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.44.35207\\bin\\HostX64\\x64\\nmake.exe"  -f CMakeFiles\\cmTC_3a0d5.dir\\build.make /nologo -L                  CMakeFiles\\cmTC_3a0d5.dir\\build' : return code '0x2'
+        NMAKE : fatal error U1077: '"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.44.35207\\bin\\HostX64\\x64\\nmake.exe"  -f CMakeFiles\\cmTC_06bce.dir\\build.make /nologo -L                  CMakeFiles\\cmTC_06bce.dir\\build' : return code '0x2'
         Stop.
         
       exitCode: 2
@@ -289,8 +289,8 @@ events:
     checks:
       - "Looking for pthread_create in pthreads"
     directories:
-      source: "C:/Users/pwd12/OneDrive/Documents/GitHub/Haven-Tools/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-mbz7rf"
-      binary: "C:/Users/pwd12/OneDrive/Documents/GitHub/Haven-Tools/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-mbz7rf"
+      source: "C:/Users/pwd12/OneDrive/Documents/GitHub/Haven-Tools/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-110w8i"
+      binary: "C:/Users/pwd12/OneDrive/Documents/GitHub/Haven-Tools/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-110w8i"
     cmakeVariables:
       CMAKE_C_FLAGS: "/DWIN32 /D_WINDOWS"
       CMAKE_C_FLAGS_DEBUG: "/Zi /Ob0 /Od /RTC1"
@@ -300,27 +300,27 @@ events:
       variable: "CMAKE_HAVE_PTHREADS_CREATE"
       cached: true
       stdout: |
-        Change Dir: 'C:/Users/pwd12/OneDrive/Documents/GitHub/Haven-Tools/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-mbz7rf'
+        Change Dir: 'C:/Users/pwd12/OneDrive/Documents/GitHub/Haven-Tools/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-110w8i'
         
-        Run Build Command(s): "C:/Program Files/JetBrains/CLion 2025.2.1/bin/cmake/win/x64/bin/cmake.exe" -E env VERBOSE=1 nmake -f Makefile /nologo cmTC_8b1a6\\fast
-        	"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.44.35207\\bin\\HostX64\\x64\\nmake.exe"  -f CMakeFiles\\cmTC_8b1a6.dir\\build.make /nologo -L                  CMakeFiles\\cmTC_8b1a6.dir\\build
-        Building C object CMakeFiles/cmTC_8b1a6.dir/CheckFunctionExists.c.obj
-        	"C:\\Program Files\\JetBrains\\CLion 2025.2.1\\bin\\cmake\\win\\x64\\bin\\cmake.exe" -E cmake_cl_compile_depends --dep-file=CMakeFiles\\cmTC_8b1a6.dir\\CheckFunctionExists.c.obj.d --working-dir=C:\\Users\\pwd12\\OneDrive\\Documents\\GitHub\\Haven-Tools\\cmake-build-debug\\CMakeFiles\\CMakeScratch\\TryCompile-mbz7rf --filter-prefix="Note: including file: " -- C:\\PROGRA~1\\MICROS~1\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1444~1.352\\bin\\Hostx64\\x64\\cl.exe @C:\\Users\\pwd12\\AppData\\Local\\Temp\\nm89EA.tmp
+        Run Build Command(s): "C:/Program Files/JetBrains/CLion 2025.2.1/bin/cmake/win/x64/bin/cmake.exe" -E env VERBOSE=1 nmake -f Makefile /nologo cmTC_3a0d5\\fast
+        	"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.44.35207\\bin\\HostX64\\x64\\nmake.exe"  -f CMakeFiles\\cmTC_3a0d5.dir\\build.make /nologo -L                  CMakeFiles\\cmTC_3a0d5.dir\\build
+        Building C object CMakeFiles/cmTC_3a0d5.dir/CheckFunctionExists.c.obj
+        	"C:\\Program Files\\JetBrains\\CLion 2025.2.1\\bin\\cmake\\win\\x64\\bin\\cmake.exe" -E cmake_cl_compile_depends --dep-file=CMakeFiles\\cmTC_3a0d5.dir\\CheckFunctionExists.c.obj.d --working-dir=C:\\Users\\pwd12\\OneDrive\\Documents\\GitHub\\Haven-Tools\\cmake-build-debug\\CMakeFiles\\CMakeScratch\\TryCompile-110w8i --filter-prefix="Note: including file: " -- C:\\PROGRA~1\\MICROS~1\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1444~1.352\\bin\\Hostx64\\x64\\cl.exe @C:\\Users\\pwd12\\AppData\\Local\\Temp\\nm91B3.tmp
         CheckFunctionExists.c
-        Linking C executable cmTC_8b1a6.exe
-        	"C:\\Program Files\\JetBrains\\CLion 2025.2.1\\bin\\cmake\\win\\x64\\bin\\cmake.exe" -E vs_link_exe --msvc-ver=1944 --intdir=CMakeFiles\\cmTC_8b1a6.dir --rc=C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100261~1.0\\x64\\rc.exe --mt=C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100261~1.0\\x64\\mt.exe --manifests -- C:\\PROGRA~1\\MICROS~1\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1444~1.352\\bin\\Hostx64\\x64\\link.exe /nologo @CMakeFiles\\cmTC_8b1a6.dir\\objects1.rsp @C:\\Users\\pwd12\\AppData\\Local\\Temp\\nm8A29.tmp
+        Linking C executable cmTC_3a0d5.exe
+        	"C:\\Program Files\\JetBrains\\CLion 2025.2.1\\bin\\cmake\\win\\x64\\bin\\cmake.exe" -E vs_link_exe --msvc-ver=1944 --intdir=CMakeFiles\\cmTC_3a0d5.dir --rc=C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100261~1.0\\x64\\rc.exe --mt=C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100261~1.0\\x64\\mt.exe --manifests -- C:\\PROGRA~1\\MICROS~1\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1444~1.352\\bin\\Hostx64\\x64\\link.exe /nologo @CMakeFiles\\cmTC_3a0d5.dir\\objects1.rsp @C:\\Users\\pwd12\\AppData\\Local\\Temp\\nm9212.tmp
         Visual Studio Incremental Link with embedded manifests
-        Create CMakeFiles\\cmTC_8b1a6.dir/manifest.rc
-        Create empty: CMakeFiles\\cmTC_8b1a6.dir/embed.manifest
+        Create CMakeFiles\\cmTC_3a0d5.dir/manifest.rc
+        Create empty: CMakeFiles\\cmTC_3a0d5.dir/embed.manifest
         RC Pass 1:
-        C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100261~1.0\\x64\\rc.exe /fo CMakeFiles\\cmTC_8b1a6.dir/manifest.res CMakeFiles\\cmTC_8b1a6.dir/manifest.rc
+        C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100261~1.0\\x64\\rc.exe /fo CMakeFiles\\cmTC_3a0d5.dir/manifest.res CMakeFiles\\cmTC_3a0d5.dir/manifest.rc
         LINK Pass 1:
-        C:\\PROGRA~1\\MICROS~1\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1444~1.352\\bin\\Hostx64\\x64\\link.exe /nologo @CMakeFiles\\cmTC_8b1a6.dir\\objects1.rsp /out:cmTC_8b1a6.exe /implib:cmTC_8b1a6.lib /pdb:C:\\Users\\pwd12\\OneDrive\\Documents\\GitHub\\Haven-Tools\\cmake-build-debug\\CMakeFiles\\CMakeScratch\\TryCompile-mbz7rf\\cmTC_8b1a6.pdb /version:0.0 /machine:x64 /debug /INCREMENTAL /subsystem:console pthreads.lib kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTFILE:CMakeFiles\\cmTC_8b1a6.dir/intermediate.manifest CMakeFiles\\cmTC_8b1a6.dir/manifest.res
-        LINK Pass 1: command "C:\\PROGRA~1\\MICROS~1\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1444~1.352\\bin\\Hostx64\\x64\\link.exe /nologo @CMakeFiles\\cmTC_8b1a6.dir\\objects1.rsp /out:cmTC_8b1a6.exe /implib:cmTC_8b1a6.lib /pdb:C:\\Users\\pwd12\\OneDrive\\Documents\\GitHub\\Haven-Tools\\cmake-build-debug\\CMakeFiles\\CMakeScratch\\TryCompile-mbz7rf\\cmTC_8b1a6.pdb /version:0.0 /machine:x64 /debug /INCREMENTAL /subsystem:console pthreads.lib kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTFILE:CMakeFiles\\cmTC_8b1a6.dir/intermediate.manifest CMakeFiles\\cmTC_8b1a6.dir/manifest.res" failed (exit code 1104) with the following output:
+        C:\\PROGRA~1\\MICROS~1\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1444~1.352\\bin\\Hostx64\\x64\\link.exe /nologo @CMakeFiles\\cmTC_3a0d5.dir\\objects1.rsp /out:cmTC_3a0d5.exe /implib:cmTC_3a0d5.lib /pdb:C:\\Users\\pwd12\\OneDrive\\Documents\\GitHub\\Haven-Tools\\cmake-build-debug\\CMakeFiles\\CMakeScratch\\TryCompile-110w8i\\cmTC_3a0d5.pdb /version:0.0 /machine:x64 /debug /INCREMENTAL /subsystem:console pthreads.lib kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTFILE:CMakeFiles\\cmTC_3a0d5.dir/intermediate.manifest CMakeFiles\\cmTC_3a0d5.dir/manifest.res
+        LINK Pass 1: command "C:\\PROGRA~1\\MICROS~1\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1444~1.352\\bin\\Hostx64\\x64\\link.exe /nologo @CMakeFiles\\cmTC_3a0d5.dir\\objects1.rsp /out:cmTC_3a0d5.exe /implib:cmTC_3a0d5.lib /pdb:C:\\Users\\pwd12\\OneDrive\\Documents\\GitHub\\Haven-Tools\\cmake-build-debug\\CMakeFiles\\CMakeScratch\\TryCompile-110w8i\\cmTC_3a0d5.pdb /version:0.0 /machine:x64 /debug /INCREMENTAL /subsystem:console pthreads.lib kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTFILE:CMakeFiles\\cmTC_3a0d5.dir/intermediate.manifest CMakeFiles\\cmTC_3a0d5.dir/manifest.res" failed (exit code 1104) with the following output:
         LINK : fatal error LNK1104: cannot open file 'pthreads.lib'
-        NMAKE : fatal error U1077: '"C:\\Program Files\\JetBrains\\CLion 2025.2.1\\bin\\cmake\\win\\x64\\bin\\cmake.exe" -E vs_link_exe --msvc-ver=1944 --intdir=CMakeFiles\\cmTC_8b1a6.dir --rc=C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100261~1.0\\x64\\rc.exe --mt=C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100261~1.0\\x64\\mt.exe --manifests -- C:\\PROGRA~1\\MICROS~1\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1444~1.352\\bin\\Hostx64\\x64\\link.exe /nologo @CMakeFiles\\cmTC_8b1a6.dir\\objects1.rsp @C:\\Users\\pwd12\\AppData\\Local\\Temp\\nm8A29.tmp' : return code '0xffffffff'
+        NMAKE : fatal error U1077: '"C:\\Program Files\\JetBrains\\CLion 2025.2.1\\bin\\cmake\\win\\x64\\bin\\cmake.exe" -E vs_link_exe --msvc-ver=1944 --intdir=CMakeFiles\\cmTC_3a0d5.dir --rc=C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100261~1.0\\x64\\rc.exe --mt=C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100261~1.0\\x64\\mt.exe --manifests -- C:\\PROGRA~1\\MICROS~1\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1444~1.352\\bin\\Hostx64\\x64\\link.exe /nologo @CMakeFiles\\cmTC_3a0d5.dir\\objects1.rsp @C:\\Users\\pwd12\\AppData\\Local\\Temp\\nm9212.tmp' : return code '0xffffffff'
         Stop.
-        NMAKE : fatal error U1077: '"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.44.35207\\bin\\HostX64\\x64\\nmake.exe"  -f CMakeFiles\\cmTC_8b1a6.dir\\build.make /nologo -L                  CMakeFiles\\cmTC_8b1a6.dir\\build' : return code '0x2'
+        NMAKE : fatal error U1077: '"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.44.35207\\bin\\HostX64\\x64\\nmake.exe"  -f CMakeFiles\\cmTC_3a0d5.dir\\build.make /nologo -L                  CMakeFiles\\cmTC_3a0d5.dir\\build' : return code '0x2'
         Stop.
         
       exitCode: 2
@@ -334,8 +334,8 @@ events:
     checks:
       - "Looking for pthread_create in pthread"
     directories:
-      source: "C:/Users/pwd12/OneDrive/Documents/GitHub/Haven-Tools/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-8x7vpu"
-      binary: "C:/Users/pwd12/OneDrive/Documents/GitHub/Haven-Tools/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-8x7vpu"
+      source: "C:/Users/pwd12/OneDrive/Documents/GitHub/Haven-Tools/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-hmmrbi"
+      binary: "C:/Users/pwd12/OneDrive/Documents/GitHub/Haven-Tools/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-hmmrbi"
     cmakeVariables:
       CMAKE_C_FLAGS: "/DWIN32 /D_WINDOWS"
       CMAKE_C_FLAGS_DEBUG: "/Zi /Ob0 /Od /RTC1"
@@ -345,27 +345,27 @@ events:
       variable: "CMAKE_HAVE_PTHREAD_CREATE"
       cached: true
       stdout: |
-        Change Dir: 'C:/Users/pwd12/OneDrive/Documents/GitHub/Haven-Tools/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-8x7vpu'
+        Change Dir: 'C:/Users/pwd12/OneDrive/Documents/GitHub/Haven-Tools/cmake-build-debug/CMakeFiles/CMakeScratch/TryCompile-hmmrbi'
         
-        Run Build Command(s): "C:/Program Files/JetBrains/CLion 2025.2.1/bin/cmake/win/x64/bin/cmake.exe" -E env VERBOSE=1 nmake -f Makefile /nologo cmTC_bb569\\fast
-        	"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.44.35207\\bin\\HostX64\\x64\\nmake.exe"  -f CMakeFiles\\cmTC_bb569.dir\\build.make /nologo -L                  CMakeFiles\\cmTC_bb569.dir\\build
-        Building C object CMakeFiles/cmTC_bb569.dir/CheckFunctionExists.c.obj
-        	"C:\\Program Files\\JetBrains\\CLion 2025.2.1\\bin\\cmake\\win\\x64\\bin\\cmake.exe" -E cmake_cl_compile_depends --dep-file=CMakeFiles\\cmTC_bb569.dir\\CheckFunctionExists.c.obj.d --working-dir=C:\\Users\\pwd12\\OneDrive\\Documents\\GitHub\\Haven-Tools\\cmake-build-debug\\CMakeFiles\\CMakeScratch\\TryCompile-8x7vpu --filter-prefix="Note: including file: " -- C:\\PROGRA~1\\MICROS~1\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1444~1.352\\bin\\Hostx64\\x64\\cl.exe @C:\\Users\\pwd12\\AppData\\Local\\Temp\\nm8B42.tmp
+        Run Build Command(s): "C:/Program Files/JetBrains/CLion 2025.2.1/bin/cmake/win/x64/bin/cmake.exe" -E env VERBOSE=1 nmake -f Makefile /nologo cmTC_8491d\\fast
+        	"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.44.35207\\bin\\HostX64\\x64\\nmake.exe"  -f CMakeFiles\\cmTC_8491d.dir\\build.make /nologo -L                  CMakeFiles\\cmTC_8491d.dir\\build
+        Building C object CMakeFiles/cmTC_8491d.dir/CheckFunctionExists.c.obj
+        	"C:\\Program Files\\JetBrains\\CLion 2025.2.1\\bin\\cmake\\win\\x64\\bin\\cmake.exe" -E cmake_cl_compile_depends --dep-file=CMakeFiles\\cmTC_8491d.dir\\CheckFunctionExists.c.obj.d --working-dir=C:\\Users\\pwd12\\OneDrive\\Documents\\GitHub\\Haven-Tools\\cmake-build-debug\\CMakeFiles\\CMakeScratch\\TryCompile-hmmrbi --filter-prefix="Note: including file: " -- C:\\PROGRA~1\\MICROS~1\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1444~1.352\\bin\\Hostx64\\x64\\cl.exe @C:\\Users\\pwd12\\AppData\\Local\\Temp\\nm9359.tmp
         CheckFunctionExists.c
-        Linking C executable cmTC_bb569.exe
-        	"C:\\Program Files\\JetBrains\\CLion 2025.2.1\\bin\\cmake\\win\\x64\\bin\\cmake.exe" -E vs_link_exe --msvc-ver=1944 --intdir=CMakeFiles\\cmTC_bb569.dir --rc=C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100261~1.0\\x64\\rc.exe --mt=C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100261~1.0\\x64\\mt.exe --manifests -- C:\\PROGRA~1\\MICROS~1\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1444~1.352\\bin\\Hostx64\\x64\\link.exe /nologo @CMakeFiles\\cmTC_bb569.dir\\objects1.rsp @C:\\Users\\pwd12\\AppData\\Local\\Temp\\nm8B91.tmp
+        Linking C executable cmTC_8491d.exe
+        	"C:\\Program Files\\JetBrains\\CLion 2025.2.1\\bin\\cmake\\win\\x64\\bin\\cmake.exe" -E vs_link_exe --msvc-ver=1944 --intdir=CMakeFiles\\cmTC_8491d.dir --rc=C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100261~1.0\\x64\\rc.exe --mt=C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100261~1.0\\x64\\mt.exe --manifests -- C:\\PROGRA~1\\MICROS~1\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1444~1.352\\bin\\Hostx64\\x64\\link.exe /nologo @CMakeFiles\\cmTC_8491d.dir\\objects1.rsp @C:\\Users\\pwd12\\AppData\\Local\\Temp\\nm9399.tmp
         Visual Studio Incremental Link with embedded manifests
-        Create CMakeFiles\\cmTC_bb569.dir/manifest.rc
-        Create empty: CMakeFiles\\cmTC_bb569.dir/embed.manifest
+        Create CMakeFiles\\cmTC_8491d.dir/manifest.rc
+        Create empty: CMakeFiles\\cmTC_8491d.dir/embed.manifest
         RC Pass 1:
-        C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100261~1.0\\x64\\rc.exe /fo CMakeFiles\\cmTC_bb569.dir/manifest.res CMakeFiles\\cmTC_bb569.dir/manifest.rc
+        C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100261~1.0\\x64\\rc.exe /fo CMakeFiles\\cmTC_8491d.dir/manifest.res CMakeFiles\\cmTC_8491d.dir/manifest.rc
         LINK Pass 1:
-        C:\\PROGRA~1\\MICROS~1\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1444~1.352\\bin\\Hostx64\\x64\\link.exe /nologo @CMakeFiles\\cmTC_bb569.dir\\objects1.rsp /out:cmTC_bb569.exe /implib:cmTC_bb569.lib /pdb:C:\\Users\\pwd12\\OneDrive\\Documents\\GitHub\\Haven-Tools\\cmake-build-debug\\CMakeFiles\\CMakeScratch\\TryCompile-8x7vpu\\cmTC_bb569.pdb /version:0.0 /machine:x64 /debug /INCREMENTAL /subsystem:console pthread.lib kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTFILE:CMakeFiles\\cmTC_bb569.dir/intermediate.manifest CMakeFiles\\cmTC_bb569.dir/manifest.res
-        LINK Pass 1: command "C:\\PROGRA~1\\MICROS~1\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1444~1.352\\bin\\Hostx64\\x64\\link.exe /nologo @CMakeFiles\\cmTC_bb569.dir\\objects1.rsp /out:cmTC_bb569.exe /implib:cmTC_bb569.lib /pdb:C:\\Users\\pwd12\\OneDrive\\Documents\\GitHub\\Haven-Tools\\cmake-build-debug\\CMakeFiles\\CMakeScratch\\TryCompile-8x7vpu\\cmTC_bb569.pdb /version:0.0 /machine:x64 /debug /INCREMENTAL /subsystem:console pthread.lib kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTFILE:CMakeFiles\\cmTC_bb569.dir/intermediate.manifest CMakeFiles\\cmTC_bb569.dir/manifest.res" failed (exit code 1104) with the following output:
+        C:\\PROGRA~1\\MICROS~1\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1444~1.352\\bin\\Hostx64\\x64\\link.exe /nologo @CMakeFiles\\cmTC_8491d.dir\\objects1.rsp /out:cmTC_8491d.exe /implib:cmTC_8491d.lib /pdb:C:\\Users\\pwd12\\OneDrive\\Documents\\GitHub\\Haven-Tools\\cmake-build-debug\\CMakeFiles\\CMakeScratch\\TryCompile-hmmrbi\\cmTC_8491d.pdb /version:0.0 /machine:x64 /debug /INCREMENTAL /subsystem:console pthread.lib kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTFILE:CMakeFiles\\cmTC_8491d.dir/intermediate.manifest CMakeFiles\\cmTC_8491d.dir/manifest.res
+        LINK Pass 1: command "C:\\PROGRA~1\\MICROS~1\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1444~1.352\\bin\\Hostx64\\x64\\link.exe /nologo @CMakeFiles\\cmTC_8491d.dir\\objects1.rsp /out:cmTC_8491d.exe /implib:cmTC_8491d.lib /pdb:C:\\Users\\pwd12\\OneDrive\\Documents\\GitHub\\Haven-Tools\\cmake-build-debug\\CMakeFiles\\CMakeScratch\\TryCompile-hmmrbi\\cmTC_8491d.pdb /version:0.0 /machine:x64 /debug /INCREMENTAL /subsystem:console pthread.lib kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTFILE:CMakeFiles\\cmTC_8491d.dir/intermediate.manifest CMakeFiles\\cmTC_8491d.dir/manifest.res" failed (exit code 1104) with the following output:
         LINK : fatal error LNK1104: cannot open file 'pthread.lib'
-        NMAKE : fatal error U1077: '"C:\\Program Files\\JetBrains\\CLion 2025.2.1\\bin\\cmake\\win\\x64\\bin\\cmake.exe" -E vs_link_exe --msvc-ver=1944 --intdir=CMakeFiles\\cmTC_bb569.dir --rc=C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100261~1.0\\x64\\rc.exe --mt=C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100261~1.0\\x64\\mt.exe --manifests -- C:\\PROGRA~1\\MICROS~1\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1444~1.352\\bin\\Hostx64\\x64\\link.exe /nologo @CMakeFiles\\cmTC_bb569.dir\\objects1.rsp @C:\\Users\\pwd12\\AppData\\Local\\Temp\\nm8B91.tmp' : return code '0xffffffff'
+        NMAKE : fatal error U1077: '"C:\\Program Files\\JetBrains\\CLion 2025.2.1\\bin\\cmake\\win\\x64\\bin\\cmake.exe" -E vs_link_exe --msvc-ver=1944 --intdir=CMakeFiles\\cmTC_8491d.dir --rc=C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100261~1.0\\x64\\rc.exe --mt=C:\\PROGRA~2\\WI3CF2~1\\10\\bin\\100261~1.0\\x64\\mt.exe --manifests -- C:\\PROGRA~1\\MICROS~1\\2022\\COMMUN~1\\VC\\Tools\\MSVC\\1444~1.352\\bin\\Hostx64\\x64\\link.exe /nologo @CMakeFiles\\cmTC_8491d.dir\\objects1.rsp @C:\\Users\\pwd12\\AppData\\Local\\Temp\\nm9399.tmp' : return code '0xffffffff'
         Stop.
-        NMAKE : fatal error U1077: '"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.44.35207\\bin\\HostX64\\x64\\nmake.exe"  -f CMakeFiles\\cmTC_bb569.dir\\build.make /nologo -L                  CMakeFiles\\cmTC_bb569.dir\\build' : return code '0x2'
+        NMAKE : fatal error U1077: '"C:\\Program Files\\Microsoft Visual Studio\\2022\\Community\\VC\\Tools\\MSVC\\14.44.35207\\bin\\HostX64\\x64\\nmake.exe"  -f CMakeFiles\\cmTC_8491d.dir\\build.make /nologo -L                  CMakeFiles\\cmTC_8491d.dir\\build' : return code '0x2'
         Stop.
         
       exitCode: 2

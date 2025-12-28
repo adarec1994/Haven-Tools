@@ -89,13 +89,11 @@ uint32_t loadDDSTexture(const std::vector<uint8_t>& data) {
     initGLCompressedTexImage2D();
 
     if (data.size() < sizeof(DDSHeader)) {
-        std::cout << "      DDS too small" << std::endl;
         return 0;
     }
 
     const DDSHeader* header = reinterpret_cast<const DDSHeader*>(data.data());
     if (header->magic != 0x20534444) {
-        std::cout << "      Not a DDS file (bad magic)" << std::endl;
         return 0;
     }
 
@@ -104,6 +102,36 @@ uint32_t loadDDSTexture(const std::vector<uint8_t>& data) {
     uint32_t mipCount = header->mipMapCount;
     if (mipCount == 0) mipCount = 1;
 
+    // Check if this is DXT5/DXT3 (has alpha) - use software decompression for proper alpha
+    const uint32_t DDPF_FOURCC = 0x4;
+    if (header->pixelFormat.flags & DDPF_FOURCC) {
+        uint32_t fourCC = header->pixelFormat.fourCC;
+        if (fourCC == FOURCC_DXT5 || fourCC == FOURCC_DXT3 || fourCC == FOURCC_DXT4) {
+            // Use software decompression for DXT5/3/4 to ensure alpha works properly
+            std::vector<uint8_t> rgba;
+            int w, h;
+            if (decodeDDSToRGBA(data, rgba, w, h)) {
+                // Debug: check alpha values
+                int nonOpaquePixels = 0;
+                int totalPixels = w * h;
+                for (int i = 0; i < totalPixels; i++) {
+                    if (rgba[i * 4 + 3] < 255) nonOpaquePixels++;
+                }
+
+                uint32_t texId;
+                glGenTextures(1, &texId);
+                glBindTexture(GL_TEXTURE_2D, texId);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+                glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+                glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, rgba.data());
+                return texId;
+            }
+        }
+    }
+
+    // Continue with existing code for non-alpha formats...
     size_t headerSize = sizeof(DDSHeader);
     uint32_t format = 0;
     uint32_t blockSize = 16;
@@ -112,7 +140,7 @@ uint32_t loadDDSTexture(const std::vector<uint8_t>& data) {
 
     const uint32_t DDPF_ALPHAPIXELS = 0x1;
     const uint32_t DDPF_ALPHA = 0x2;
-    const uint32_t DDPF_FOURCC = 0x4;
+    // DDPF_FOURCC already defined above
     const uint32_t DDPF_RGB = 0x40;
     const uint32_t DDPF_LUMINANCE = 0x20000;
 
@@ -152,10 +180,8 @@ uint32_t loadDDSTexture(const std::vector<uint8_t>& data) {
                 compressed = true;
                 break;
             case FOURCC_DX10:
-                std::cout << "      DX10 extended format not fully supported" << std::endl;
                 return 0;
             default:
-                std::cout << "      Unsupported FourCC: " << fcc << " (0x" << std::hex << fourCC << std::dec << ")" << std::endl;
                 return 0;
         }
     } else if (header->pixelFormat.flags & DDPF_RGB) {
@@ -173,10 +199,12 @@ uint32_t loadDDSTexture(const std::vector<uint8_t>& data) {
                 format = GL_BGR;
             }
         } else if (header->pixelFormat.rgbBitCount == 16) {
-            std::cout << "      16-bit RGB not yet supported" << std::endl;
-            return 0;
+            // 16-bit RGB - need to convert to 24/32-bit for OpenGL
+            // We'll handle this specially below
+            compressed = false;
+            format = GL_RGB;
+            internalFormat = GL_RGB;
         } else {
-            std::cout << "      Unsupported RGB bit count: " << header->pixelFormat.rgbBitCount << std::endl;
             return 0;
         }
     } else if (header->pixelFormat.flags & DDPF_LUMINANCE) {
@@ -185,7 +213,6 @@ uint32_t loadDDSTexture(const std::vector<uint8_t>& data) {
             format = GL_RED;
             internalFormat = GL_RED;
         } else {
-            std::cout << "      Unsupported luminance bit count: " << header->pixelFormat.rgbBitCount << std::endl;
             return 0;
         }
     } else if (header->pixelFormat.flags & DDPF_ALPHA) {
@@ -193,7 +220,6 @@ uint32_t loadDDSTexture(const std::vector<uint8_t>& data) {
         format = GL_ALPHA;
         internalFormat = GL_ALPHA;
     } else {
-        std::cout << "      Unsupported pixel format flags: 0x" << std::hex << header->pixelFormat.flags << std::dec << std::endl;
         return 0;
     }
 
@@ -222,13 +248,136 @@ uint32_t loadDDSTexture(const std::vector<uint8_t>& data) {
             if (bytesPerPixel == 0) bytesPerPixel = 1;
             uint32_t size = width * height * bytesPerPixel;
             if (offset + size > data.size() - headerSize) break;
-            glTexImage2D(GL_TEXTURE_2D, level, internalFormat, width, height, 0,
-                        format, GL_UNSIGNED_BYTE, dataPtr + offset);
+
+            if (header->pixelFormat.rgbBitCount == 16) {
+                // Convert 16-bit to 24-bit RGB
+                std::vector<uint8_t> converted(width * height * 3);
+                const uint16_t* src16 = reinterpret_cast<const uint16_t*>(dataPtr + offset);
+
+                // Detect format from masks
+                uint32_t rMask = header->pixelFormat.rBitMask;
+                uint32_t gMask = header->pixelFormat.gBitMask;
+                uint32_t bMask = header->pixelFormat.bBitMask;
+
+                for (uint32_t i = 0; i < width * height; i++) {
+                    uint16_t pixel = src16[i];
+                    uint8_t r, g, b;
+
+                    if (rMask == 0xF800 && gMask == 0x07E0 && bMask == 0x001F) {
+                        // RGB565
+                        r = ((pixel >> 11) & 0x1F) * 255 / 31;
+                        g = ((pixel >> 5) & 0x3F) * 255 / 63;
+                        b = (pixel & 0x1F) * 255 / 31;
+                    } else if (rMask == 0x7C00 && gMask == 0x03E0 && bMask == 0x001F) {
+                        // RGB555 / XRGB1555
+                        r = ((pixel >> 10) & 0x1F) * 255 / 31;
+                        g = ((pixel >> 5) & 0x1F) * 255 / 31;
+                        b = (pixel & 0x1F) * 255 / 31;
+                    } else if (rMask == 0x0F00 && gMask == 0x00F0 && bMask == 0x000F) {
+                        // RGBA4444 / XRGB4444
+                        r = ((pixel >> 8) & 0x0F) * 255 / 15;
+                        g = ((pixel >> 4) & 0x0F) * 255 / 15;
+                        b = (pixel & 0x0F) * 255 / 15;
+                    } else {
+                        // Generic - just extract based on masks
+                        r = (pixel & rMask) ? 255 : 0;
+                        g = (pixel & gMask) ? 255 : 0;
+                        b = (pixel & bMask) ? 255 : 0;
+                    }
+
+                    converted[i * 3 + 0] = r;
+                    converted[i * 3 + 1] = g;
+                    converted[i * 3 + 2] = b;
+                }
+
+                glTexImage2D(GL_TEXTURE_2D, level, GL_RGB, width, height, 0,
+                            GL_RGB, GL_UNSIGNED_BYTE, converted.data());
+            } else {
+                glTexImage2D(GL_TEXTURE_2D, level, internalFormat, width, height, 0,
+                            format, GL_UNSIGNED_BYTE, dataPtr + offset);
+            }
             offset += size;
         }
 
         width /= 2;
         height /= 2;
+    }
+
+    return texId;
+}
+
+// Special loader for hair textures: R channel -> RGB (grayscale), B channel -> Alpha
+uint32_t loadDDSTextureHair(const std::vector<uint8_t>& data) {
+    std::vector<uint8_t> rgba;
+    int w, h;
+    if (!decodeDDSToRGBA(data, rgba, w, h)) {
+        return 0;
+    }
+
+    // Swizzle: R -> RGB (grayscale for tinting), B -> A (opacity)
+    for (int i = 0; i < w * h; i++) {
+        uint8_t r = rgba[i * 4 + 0];  // Diffuse grayscale
+        uint8_t b = rgba[i * 4 + 2];  // Alpha/opacity mask
+        rgba[i * 4 + 0] = r;  // R = diffuse
+        rgba[i * 4 + 1] = r;  // G = diffuse
+        rgba[i * 4 + 2] = r;  // B = diffuse
+        rgba[i * 4 + 3] = b;  // A = from blue channel
+    }
+
+    uint32_t texId;
+    glGenTextures(1, &texId);
+    glBindTexture(GL_TEXTURE_2D, texId);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+    // Build mipmaps manually for better distance rendering
+    int level = 0;
+    int mipW = w, mipH = h;
+    std::vector<uint8_t> mipData = rgba;
+
+    while (mipW > 0 && mipH > 0) {
+        glTexImage2D(GL_TEXTURE_2D, level, GL_RGBA, mipW, mipH, 0, GL_RGBA, GL_UNSIGNED_BYTE, mipData.data());
+
+        if (mipW == 1 && mipH == 1) break;
+
+        // Generate next mip level
+        int newW = std::max(1, mipW / 2);
+        int newH = std::max(1, mipH / 2);
+        std::vector<uint8_t> newMip(newW * newH * 4);
+
+        for (int y = 0; y < newH; y++) {
+            for (int x = 0; x < newW; x++) {
+                int srcX = x * 2;
+                int srcY = y * 2;
+
+                // Average 2x2 block, but for alpha use MAX to preserve coverage
+                int r = 0, g = 0, b = 0, a = 0;
+                int count = 0;
+                for (int dy = 0; dy < 2 && srcY + dy < mipH; dy++) {
+                    for (int dx = 0; dx < 2 && srcX + dx < mipW; dx++) {
+                        int idx = ((srcY + dy) * mipW + (srcX + dx)) * 4;
+                        r += mipData[idx + 0];
+                        g += mipData[idx + 1];
+                        b += mipData[idx + 2];
+                        a = std::max(a, (int)mipData[idx + 3]);  // MAX for alpha to preserve coverage
+                        count++;
+                    }
+                }
+
+                int dstIdx = (y * newW + x) * 4;
+                newMip[dstIdx + 0] = r / count;
+                newMip[dstIdx + 1] = g / count;
+                newMip[dstIdx + 2] = b / count;
+                newMip[dstIdx + 3] = a;  // Use max alpha
+            }
+        }
+
+        mipData = std::move(newMip);
+        mipW = newW;
+        mipH = newH;
+        level++;
     }
 
     return texId;
@@ -382,6 +531,35 @@ bool decodeDDSToRGBA(const std::vector<uint8_t>& data, std::vector<uint8_t>& rgb
                         rgba[di + 0] = src[2]; rgba[di + 1] = src[1]; rgba[di + 2] = src[0];
                     } else {
                         rgba[di + 0] = src[0]; rgba[di + 1] = src[1]; rgba[di + 2] = src[2];
+                    }
+                    rgba[di + 3] = 255;
+                } else if (bpp == 2) {
+                    // 16-bit RGB
+                    uint16_t pixel = src[0] | (src[1] << 8);
+                    uint32_t rMask = header->pixelFormat.rBitMask;
+                    uint32_t gMask = header->pixelFormat.gBitMask;
+                    uint32_t bMask = header->pixelFormat.bBitMask;
+
+                    if (rMask == 0xF800 && gMask == 0x07E0 && bMask == 0x001F) {
+                        // RGB565
+                        rgba[di + 0] = ((pixel >> 11) & 0x1F) * 255 / 31;
+                        rgba[di + 1] = ((pixel >> 5) & 0x3F) * 255 / 63;
+                        rgba[di + 2] = (pixel & 0x1F) * 255 / 31;
+                    } else if (rMask == 0x7C00 && gMask == 0x03E0 && bMask == 0x001F) {
+                        // RGB555
+                        rgba[di + 0] = ((pixel >> 10) & 0x1F) * 255 / 31;
+                        rgba[di + 1] = ((pixel >> 5) & 0x1F) * 255 / 31;
+                        rgba[di + 2] = (pixel & 0x1F) * 255 / 31;
+                    } else if (rMask == 0x0F00 && gMask == 0x00F0 && bMask == 0x000F) {
+                        // RGBA4444
+                        rgba[di + 0] = ((pixel >> 8) & 0x0F) * 255 / 15;
+                        rgba[di + 1] = ((pixel >> 4) & 0x0F) * 255 / 15;
+                        rgba[di + 2] = (pixel & 0x0F) * 255 / 15;
+                    } else {
+                        // Fallback - assume RGB565
+                        rgba[di + 0] = ((pixel >> 11) & 0x1F) * 255 / 31;
+                        rgba[di + 1] = ((pixel >> 5) & 0x3F) * 255 / 63;
+                        rgba[di + 2] = (pixel & 0x1F) * 255 / 31;
                     }
                     rgba[di + 3] = 255;
                 }

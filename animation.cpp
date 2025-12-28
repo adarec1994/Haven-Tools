@@ -1,7 +1,6 @@
 #include "animation.h"
 #include "Gff.h"
 #include "erf.h"
-#include <iostream>
 #include <algorithm>
 #include <set>
 #include <cmath>
@@ -56,14 +55,11 @@ void decompressQuat(uint32_t quat32, uint32_t quat64, uint16_t quat48, int quali
 Animation loadANI(const std::vector<uint8_t>& data, const std::string& filename) {
     Animation anim;
     anim.filename = filename;
-    std::cout << "Loading ANI: " << filename << " (" << data.size() << " bytes)" << std::endl;
     if (data.size() < 16) return anim;
     GFFFile gff;
     if (!gff.load(data)) {
-        std::cout << "  Failed to load GFF" << std::endl;
         return anim;
     }
-    std::cout << "  File type: '" << gff.structs()[0].structType << "'" << std::endl;
     anim.name = gff.readStringByLabel(0, 4007, 0);
     if (anim.name.empty()) anim.name = filename;
     const GFFField* lenField = gff.findField(0, 4009);
@@ -71,11 +67,8 @@ Animation loadANI(const std::vector<uint8_t>& data, const std::string& filename)
         anim.duration = gff.readFloatAt(gff.dataOffset() + lenField->dataOffset);
     }
     if (anim.duration <= 0) anim.duration = 1.0f;
-    std::cout << "  Name: '" << anim.name << "' Duration: " << anim.duration << "s" << std::endl;
     std::vector<GFFStructRef> nodeList = gff.readStructList(0, 4005, 0);
-    std::cout << "  Tracks: " << nodeList.size() << std::endl;
     int tracksWithKeyframes = 0;
-    int debugTrackCount = 0;
     for (const auto& nodeRef : nodeList) {
         AnimTrack track;
         std::string fullName = gff.readStringByLabel(nodeRef.structIndex, 4000, nodeRef.offset);
@@ -91,15 +84,8 @@ Animation loadANI(const std::vector<uint8_t>& data, const std::string& filename)
         }
         const GFFField* targetField = gff.findField(nodeRef.structIndex, 4001);
         uint32_t target = 2;
-        bool debugThisTrack = (debugTrackCount < 3 && track.isRotation);
         if (targetField) {
             uint32_t dataPos = gff.dataOffset() + targetField->dataOffset + nodeRef.offset;
-            if (debugThisTrack) {
-                std::cout << "  DEBUG Track '" << track.boneName << "'" << std::endl;
-                std::cout << "    Field 4001: typeId=" << targetField->typeId
-                          << " flags=0x" << std::hex << targetField->flags << std::dec
-                          << " dataOffset=" << targetField->dataOffset << std::endl;
-            }
             if (targetField->typeId == 0) {
                 target = gff.readUInt8At(dataPos);
             } else if (targetField->typeId == 1) {
@@ -114,20 +100,9 @@ Animation loadANI(const std::vector<uint8_t>& data, const std::string& filename)
                 uint8_t val8 = gff.readUInt8At(dataPos);
                 uint16_t val16 = gff.readUInt16At(dataPos);
                 uint32_t val32 = gff.readUInt32At(dataPos);
-                if (debugThisTrack) {
-                    std::cout << "    Unknown typeId, raw bytes: u8=" << (int)val8
-                              << " u16=" << val16 << " u32=" << val32 << std::endl;
-                }
                 if (val8 >= 2 && val8 <= 6) target = val8;
                 else if (val16 >= 2 && val16 <= 6) target = val16;
                 else target = val32;
-            }
-            if (debugThisTrack) {
-                std::cout << "    target=" << target << std::endl;
-            }
-        } else {
-            if (debugThisTrack) {
-                std::cout << "  DEBUG Track '" << track.boneName << "' - NO FIELD 4001!" << std::endl;
             }
         }
         GFFStructRef data1 = gff.readStructRef(nodeRef.structIndex, 4004, nodeRef.offset);
@@ -135,10 +110,6 @@ Animation loadANI(const std::vector<uint8_t>& data, const std::string& filename)
             continue;
         }
         std::vector<GFFStructRef> keyframes = gff.readStructList(data1.structIndex, 4004, data1.offset);
-        if (debugThisTrack) {
-            std::cout << "    Keyframes: " << keyframes.size() << std::endl;
-        }
-        int debugKfCount = 0;
         for (const auto& kfRef : keyframes) {
             AnimKeyframe kf;
             const GFFField* timeField = gff.findField(kfRef.structIndex, 4035);
@@ -153,33 +124,14 @@ Animation loadANI(const std::vector<uint8_t>& data, const std::string& filename)
                 uint32_t off = gff.dataOffset() + d0->dataOffset + kfRef.offset;
                 if (target == 2) {
                     uint32_t quat32 = gff.readUInt32At(off);
-                    if (debugThisTrack && debugKfCount < 3) {
-                        std::cout << "    KF[" << debugKfCount << "] time=" << kf.time
-                                  << " raw32=0x" << std::hex << quat32 << std::dec << std::endl;
-                    }
                     decompressQuat(quat32, 0, 0, 2, kf.x, kf.y, kf.z, kf.w);
-                    if (debugThisTrack && debugKfCount < 3) {
-                        std::cout << "      -> quat(" << kf.x << ", " << kf.y << ", " << kf.z << ", " << kf.w << ")" << std::endl;
-                        debugKfCount++;
-                    }
                 }
                 else if (target == 4) {
                     uint32_t quat64_low = gff.readUInt32At(off);
                     uint32_t quat64_high = gff.readUInt32At(off + 4);
                     uint32_t quat32 = quat64_high;
                     uint32_t quat64 = quat64_low;
-                    if (debugThisTrack && debugKfCount < 3) {
-                        std::cout << "    KF[" << debugKfCount << "] time=" << kf.time
-                                  << " read_lo=0x" << std::hex << quat64_low
-                                  << " read_hi=0x" << quat64_high
-                                  << " -> quat32=0x" << quat32
-                                  << " quat64=0x" << quat64 << std::dec << std::endl;
-                    }
                     decompressQuat(quat32, quat64, 0, 4, kf.x, kf.y, kf.z, kf.w);
-                    if (debugThisTrack && debugKfCount < 3) {
-                        std::cout << "      -> quat(" << kf.x << ", " << kf.y << ", " << kf.z << ", " << kf.w << ")" << std::endl;
-                        debugKfCount++;
-                    }
                 }
                 else if (target == 3) {
                     uint32_t q32 = gff.readUInt16At(off);
@@ -194,10 +146,6 @@ Animation loadANI(const std::vector<uint8_t>& data, const std::string& filename)
                     decompressQuat(q32, q64, q48, 3, kf.x, kf.y, kf.z, kf.w);
                 }
                 else {
-                    if (debugThisTrack && debugKfCount < 3) {
-                        std::cout << "    KF[" << debugKfCount << "] target=" << target << " - using default quat" << std::endl;
-                        debugKfCount++;
-                    }
                     kf.x = 0; kf.y = 0; kf.z = 0; kf.w = 1;
                 }
             }
@@ -214,11 +162,8 @@ Animation loadANI(const std::vector<uint8_t>& data, const std::string& filename)
         if (!track.keyframes.empty()) {
             tracksWithKeyframes++;
             anim.tracks.push_back(track);
-            if (debugThisTrack) debugTrackCount++;
         }
     }
-    std::cout << "  Tracks with keyframes: " << tracksWithKeyframes << std::endl;
-    std::cout << "  Final track count: " << anim.tracks.size() << std::endl;
     return anim;
 }
 void findAnimationsForModel(AppState& state, const std::string& modelBaseName) {
@@ -227,37 +172,71 @@ void findAnimationsForModel(AppState& state, const std::string& modelBaseName) {
     state.animPlaying = false;
     state.animTime = 0.0f;
     state.currentAnim = Animation();
-    std::string baseNameLower = modelBaseName;
-    std::transform(baseNameLower.begin(), baseNameLower.end(), baseNameLower.begin(), ::tolower);
-    std::string prefix;
-    if (baseNameLower.length() >= 2) {
-        prefix = baseNameLower.substr(0, 2);
-    } else {
-        prefix = baseNameLower;
-    }
-    std::cout << "Searching for animations with prefix: " << prefix << std::endl;
+
     std::set<std::string> foundNames;
-    for (const auto& erfPath : state.erfFiles) {
-        ERFFile erf;
-        if (erf.open(erfPath)) {
-            for (const auto& entry : erf.entries()) {
-                if (isAnimFile(entry.name)) {
-                    std::string entryLower = entry.name;
-                    std::transform(entryLower.begin(), entryLower.end(), entryLower.begin(), ::tolower);
-                    if (entryLower.find(prefix) == 0 && foundNames.find(entryLower) == foundNames.end()) {
-                        foundNames.insert(entryLower);
-                        state.availableAnimFiles.push_back({entry.name, erfPath});
+
+    // If we have specific animations from CSV, search for those
+    if (!state.currentModelAnimations.empty()) {
+
+        // Build a set of animation names to search for (lowercase, with .ani extension)
+        std::set<std::string> targetAnims;
+        for (const auto& anim : state.currentModelAnimations) {
+            std::string animLower = anim;
+            std::transform(animLower.begin(), animLower.end(), animLower.begin(), ::tolower);
+            targetAnims.insert(animLower + ".ani");
+        }
+
+        for (const auto& erfPath : state.erfFiles) {
+            ERFFile erf;
+            if (erf.open(erfPath)) {
+                for (const auto& entry : erf.entries()) {
+                    if (isAnimFile(entry.name)) {
+                        std::string entryLower = entry.name;
+                        std::transform(entryLower.begin(), entryLower.end(), entryLower.begin(), ::tolower);
+
+                        if (targetAnims.find(entryLower) != targetAnims.end() &&
+                            foundNames.find(entryLower) == foundNames.end()) {
+                            foundNames.insert(entryLower);
+                            state.availableAnimFiles.push_back({entry.name, erfPath});
+                        }
                     }
                 }
             }
         }
     }
+
+    // If no specific animations or none found, fall back to prefix search
+    if (state.availableAnimFiles.empty()) {
+        std::string baseNameLower = modelBaseName;
+        std::transform(baseNameLower.begin(), baseNameLower.end(), baseNameLower.begin(), ::tolower);
+        std::string prefix;
+        if (baseNameLower.length() >= 2) {
+            prefix = baseNameLower.substr(0, 2);
+        } else {
+            prefix = baseNameLower;
+        }
+
+        for (const auto& erfPath : state.erfFiles) {
+            ERFFile erf;
+            if (erf.open(erfPath)) {
+                for (const auto& entry : erf.entries()) {
+                    if (isAnimFile(entry.name)) {
+                        std::string entryLower = entry.name;
+                        std::transform(entryLower.begin(), entryLower.end(), entryLower.begin(), ::tolower);
+                        if (entryLower.find(prefix) == 0 && foundNames.find(entryLower) == foundNames.end()) {
+                            foundNames.insert(entryLower);
+                            state.availableAnimFiles.push_back({entry.name, erfPath});
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     std::sort(state.availableAnimFiles.begin(), state.availableAnimFiles.end());
-    std::cout << "Found " << state.availableAnimFiles.size() << " animation files" << std::endl;
     state.basePoseBones = state.currentModel.skeleton.bones;
 }
 void dumpAllAnimFileNames(const AppState& state) {
-    std::cout << "\n=== ALL ANI FILES ===" << std::endl;
     std::set<std::string> allAnis;
     for (const auto& erfPath : state.erfFiles) {
         ERFFile erf;
@@ -270,9 +249,7 @@ void dumpAllAnimFileNames(const AppState& state) {
         }
     }
     for (const auto& name : allAnis) {
-        std::cout << name << std::endl;
     }
-    std::cout << "=== TOTAL: " << allAnis.size() << " ANI files ===" << std::endl;
 }
 void applyAnimation(Model& model, const Animation& anim, float time, const std::vector<Bone>& basePose) {
     if (anim.tracks.empty()) return;
@@ -282,12 +259,8 @@ void applyAnimation(Model& model, const Animation& anim, float time, const std::
     std::string modelName = model.skeleton.bones.empty() ? "" : model.skeleton.bones[0].name;
     if (modelName != lastModelName) {
         lastModelName = modelName;
-        std::cout << "\n=== SKELETON HIERARCHY ===" << std::endl;
         for (size_t i = 0; i < model.skeleton.bones.size() && i < 10; i++) {
             const auto& b = model.skeleton.bones[i];
-            std::cout << "Bone " << i << ": " << b.name << " parent=" << b.parentIndex;
-            std::cout << " pos=(" << b.posX << "," << b.posY << "," << b.posZ << ")";
-            std::cout << " rot=(" << b.rotX << "," << b.rotY << "," << b.rotZ << "," << b.rotW << ")" << std::endl;
         }
     }
 

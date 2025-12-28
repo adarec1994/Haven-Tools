@@ -262,6 +262,15 @@ bool exportToGLB(const Model& model, const std::vector<Animation>& animations, c
             if (boneIdx < 0) continue;
             if (track.keyframes.empty()) continue;
 
+            // Check if this is GOD/GOB bone - skip translation for these
+            std::string boneNameLower = model.skeleton.bones[boneIdx].name;
+            std::transform(boneNameLower.begin(), boneNameLower.end(), boneNameLower.begin(), ::tolower);
+            bool isGodBone = (boneNameLower == "god" || boneNameLower == "gob");
+
+            if (track.isTranslation && isGodBone) {
+                continue; // Skip GOD/GOB translation
+            }
+
             size_t timeOff = binBuffer.size();
             float minTime = track.keyframes[0].time;
             float maxTime = track.keyframes[0].time;
@@ -294,10 +303,15 @@ bool exportToGLB(const Model& model, const std::vector<Animation>& animations, c
                 ae.samplerIndices.push_back(samplerIdx);
                 ae.channels.push_back({boneIdx, "rotation"});
             } else if (track.isTranslation) {
+                // Get bind pose offset for this bone
+                const Bone& bone = model.skeleton.bones[boneIdx];
+                float baseX = bone.posX, baseY = bone.posY, baseZ = bone.posZ;
+
                 for (const auto& kf : track.keyframes) {
-                    writeFloat(binBuffer, kf.x);
-                    writeFloat(binBuffer, kf.y);
-                    writeFloat(binBuffer, kf.z);
+                    // Animation translation is additive to bind pose
+                    writeFloat(binBuffer, baseX + kf.x);
+                    writeFloat(binBuffer, baseY + kf.y);
+                    writeFloat(binBuffer, baseZ + kf.z);
                 }
                 int valView = (int)bufferViews.size();
                 bufferViews.push_back({valOff, binBuffer.size() - valOff, 0});

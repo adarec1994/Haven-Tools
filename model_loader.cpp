@@ -1,7 +1,6 @@
 #include "model_loader.h"
 #include <cstring>
 #include <cmath>
-#include <iostream>
 
 
 float halfToFloat(uint16_t h) {
@@ -273,7 +272,6 @@ bool loadMSH(const std::vector<uint8_t>& data, Model& outModel) {
         mesh.hasSkinning = hasBlendWeight && hasBlendIndex;
 
         if (mesh.hasSkinning) {
-            std::cout << "  Mesh '" << mesh.name << "' has skinning data" << std::endl;
         }
 
 

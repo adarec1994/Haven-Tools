@@ -20,17 +20,29 @@ struct Vertex {
 
 struct Material {
     std::string name;
-    std::string maoContent;
+    std::string maoSource;   // MAO filename this material came from
+    std::string maoContent;  // Raw MAO XML content
     std::string diffuseMap;
     std::string normalMap;
     std::string specularMap;
     std::string tintMap;
+
+    // Face-specific textures
+    std::string ageDiffuseMap;    // mml_tAgeDiffuseMap - aged skin overlay
+    std::string ageNormalMap;     // mml_tAgeNormalMap
+    std::string tattooMap;        // mml_tTattooMask
+    std::string browStubbleMap;   // mml_tBrowStubble
+
     float specularPower = 50.0f;
     float opacity = 1.0f;
     uint32_t diffuseTexId = 0;
     uint32_t normalTexId = 0;
     uint32_t specularTexId = 0;
     uint32_t tintTexId = 0;
+    uint32_t ageDiffuseTexId = 0;
+    uint32_t ageNormalTexId = 0;
+    uint32_t tattooTexId = 0;
+
     std::vector<uint8_t> diffuseData;
     int diffuseWidth = 0, diffuseHeight = 0;
 };
@@ -162,3 +174,6 @@ struct Animation {
     float frameRate = 30.0f;
     std::vector<AnimTrack> tracks;
 };
+
+// Model loading
+bool loadMSH(const std::vector<uint8_t>& data, Model& outModel);

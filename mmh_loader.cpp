@@ -4,7 +4,6 @@
 #include "animation.h"
 #include "Gff.h"
 #include "erf.h"
-#include <iostream>
 #include <algorithm>
 #include <map>
 #include <set>
@@ -56,14 +55,54 @@ Material parseMAO(const std::string& maoContent, const std::string& materialName
             std::string texNameLower = texName;
             std::transform(texNameLower.begin(), texNameLower.end(), texNameLower.begin(), ::tolower);
 
-            if (texNameLower.find("diffuse") != std::string::npos) {
+            std::string resNameLower = resName;
+            std::transform(resNameLower.begin(), resNameLower.end(), resNameLower.begin(), ::tolower);
+
+            // Face-specific textures (check these first as they're more specific)
+            if (texNameLower.find("agediffuse") != std::string::npos ||
+                texNameLower.find("age_diffuse") != std::string::npos) {
+                mat.ageDiffuseMap = resName;
+            } else if (texNameLower.find("agenormal") != std::string::npos ||
+                       texNameLower.find("age_normal") != std::string::npos) {
+                mat.ageNormalMap = resName;
+            } else if (texNameLower.find("tattoo") != std::string::npos) {
+                mat.tattooMap = resName;
+            } else if (texNameLower.find("browstubble") != std::string::npos &&
+                       texNameLower.find("normal") == std::string::npos) {
+                mat.browStubbleMap = resName;
+            }
+            // Standard textures
+            else if (texNameLower.find("diffuse") != std::string::npos ||
+                texNameLower.find("packedtexture") != std::string::npos ||
+                texNameLower.find("_d") != std::string::npos) {
                 mat.diffuseMap = resName;
-            } else if (texNameLower.find("normal") != std::string::npos) {
+            } else if (texNameLower.find("normal") != std::string::npos ||
+                       texNameLower.find("_n") != std::string::npos) {
                 mat.normalMap = resName;
-            } else if (texNameLower.find("specular") != std::string::npos) {
+            } else if (texNameLower.find("specular") != std::string::npos ||
+                       texNameLower.find("_s") != std::string::npos) {
                 mat.specularMap = resName;
+            } else if (texNameLower.find("tintmask") != std::string::npos) {
+                // TintMask is the mask, not the tint texture itself
+                // Skip Default_White.dds
             } else if (texNameLower.find("tint") != std::string::npos) {
                 mat.tintMap = resName;
+            } else if (mat.diffuseMap.empty()) {
+                // Fallback: check ResName for hints (e.g., _0d.dds = diffuse)
+                if (resNameLower.find("_d.") != std::string::npos ||
+                    resNameLower.find("0d.") != std::string::npos ||
+                    resNameLower.find("_d_") != std::string::npos) {
+                    mat.diffuseMap = resName;
+                } else if (resNameLower.find("_n.") != std::string::npos ||
+                           resNameLower.find("0n.") != std::string::npos) {
+                    mat.normalMap = resName;
+                } else if (resNameLower.find("_s.") != std::string::npos ||
+                           resNameLower.find("0s.") != std::string::npos) {
+                    mat.specularMap = resName;
+                } else if (resNameLower.find("_t.") != std::string::npos ||
+                           resNameLower.find("0t.") != std::string::npos) {
+                    mat.tintMap = resName;
+                }
             }
         }
         pos = endTag + 2;
