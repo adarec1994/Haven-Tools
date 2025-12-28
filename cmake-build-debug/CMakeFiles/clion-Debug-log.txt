@@ -28,6 +28,6 @@ CMake Deprecation Warning at cmake-build-debug/_deps/imguifiledialog-src/CMakeLi
   to work with policies introduced by <max> or earlier.
 
 
--- Configuring done (27.8s)
+-- Configuring done (30.5s)
 -- Generating done (0.1s)
 -- Build files have been written to: C:/Users/pwd12/OneDrive/Documents/GitHub/Haven-Tools/cmake-build-debug
