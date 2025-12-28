@@ -6,6 +6,13 @@
 #include "export.h"
 #include "dds_loader.h"
 #include "Gff.h"
+#ifdef _WIN32
+#define NOMINMAX
+#include <windows.h>
+#include <shellapi.h>
+#include <mmsystem.h>
+#pragma comment(lib, "winmm.lib")
+#endif
 #include <GLFW/glfw3.h>
 #include "imgui.h"
 #include "ImGuiFileDialog.h"
@@ -42,6 +49,427 @@ static void loadSettings(AppState& state) {
         }
     }
 }
+static void scanAudioFiles(AppState& state) {
+    state.audioFiles.clear();
+    state.voiceOverFiles.clear();
+    if (state.selectedFolder.empty()) return;
+
+    fs::path basePath = fs::path(state.selectedFolder);
+
+    fs::path audioPath = basePath / "modules" / "single player" / "audio" / "sound";
+    if (fs::exists(audioPath)) {
+        for (const auto& entry : fs::recursive_directory_iterator(audioPath)) {
+            if (entry.is_regular_file()) {
+                std::string ext = entry.path().extension().string();
+                std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
+                if (ext == ".fsb") {
+                    state.audioFiles.push_back(entry.path().string());
+                }
+            }
+        }
+    }
+
+    fs::path voPath = basePath / "modules" / "single player" / "audio" / "vo" / "en-us" / "vo";
+    if (fs::exists(voPath)) {
+        for (const auto& entry : fs::recursive_directory_iterator(voPath)) {
+            if (entry.is_regular_file()) {
+                std::string ext = entry.path().extension().string();
+                std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
+                if (ext == ".fsb") {
+                    state.voiceOverFiles.push_back(entry.path().string());
+                }
+            }
+        }
+    }
+
+    state.audioFilesLoaded = true;
+}
+static bool extractFSB4toMP3(const std::string& fsbPath, const std::string& outPath) {
+    std::ifstream f(fsbPath, std::ios::binary);
+    if (!f) return false;
+
+    f.seekg(0, std::ios::end);
+    size_t fileSize = f.tellg();
+    f.seekg(0, std::ios::beg);
+
+    if (fileSize < 0x80) return false;
+
+    std::vector<uint8_t> data(fileSize);
+    f.read(reinterpret_cast<char*>(data.data()), fileSize);
+
+    if (data[0] != 'F' || data[1] != 'S' || data[2] != 'B' || data[3] != '4') {
+        return false;
+    }
+
+    uint32_t numSamples = *reinterpret_cast<uint32_t*>(&data[4]);
+    uint32_t headerSize = *reinterpret_cast<uint32_t*>(&data[8]);
+    uint32_t dataSize = *reinterpret_cast<uint32_t*>(&data[12]);
+    uint32_t mode = *reinterpret_cast<uint32_t*>(&data[16]);
+
+    // Only support single-sample MP3 FSBs (voice files)
+    if (numSamples != 1) {
+        return false; // Multi-sample bank not supported
+    }
+
+    if (!(mode & 0x00040000)) {
+        return false; // Not MP3 format
+    }
+
+    // Verify MP3 sync word at data start
+    size_t mp3Start = 0x30 + headerSize;
+    if (mp3Start + 2 > fileSize) return false;
+
+    // Check for MP3 frame sync (0xFF followed by 0xFx or 0xEx)
+    if (data[mp3Start] != 0xFF || (data[mp3Start + 1] & 0xE0) != 0xE0) {
+        return false; // Not valid MP3 data
+    }
+
+    if (mp3Start + dataSize > fileSize) {
+        dataSize = fileSize - mp3Start;
+    }
+
+    std::ofstream out(outPath, std::ios::binary);
+    if (!out) return false;
+
+    out.write(reinterpret_cast<char*>(&data[mp3Start]), dataSize);
+    return true;
+}
+static std::vector<uint8_t> extractFSB4toMP3Data(const std::string& fsbPath) {
+    std::vector<uint8_t> result;
+    std::ifstream f(fsbPath, std::ios::binary);
+    if (!f) return result;
+
+    f.seekg(0, std::ios::end);
+    size_t fileSize = f.tellg();
+    f.seekg(0, std::ios::beg);
+
+    if (fileSize < 0x80) return result;
+
+    std::vector<uint8_t> data(fileSize);
+    f.read(reinterpret_cast<char*>(data.data()), fileSize);
+
+    if (data[0] != 'F' || data[1] != 'S' || data[2] != 'B' || data[3] != '4') {
+        return result;
+    }
+
+    uint32_t numSamples = *reinterpret_cast<uint32_t*>(&data[4]);
+    uint32_t headerSize = *reinterpret_cast<uint32_t*>(&data[8]);
+    uint32_t dataSize = *reinterpret_cast<uint32_t*>(&data[12]);
+    uint32_t mode = *reinterpret_cast<uint32_t*>(&data[16]);
+
+    // Only support single-sample MP3 FSBs (voice files)
+    if (numSamples != 1) {
+        return result; // Multi-sample bank not supported
+    }
+
+    if (!(mode & 0x00040000)) {
+        return result; // Not MP3 format
+    }
+
+    // Verify MP3 sync word at data start
+    size_t mp3Start = 0x30 + headerSize;
+    if (mp3Start + 2 > fileSize) return result;
+
+    // Check for MP3 frame sync (0xFF followed by 0xFx or 0xEx)
+    if (data[mp3Start] != 0xFF || (data[mp3Start + 1] & 0xE0) != 0xE0) {
+        return result; // Not valid MP3 data
+    }
+
+    if (mp3Start + dataSize > fileSize) {
+        dataSize = fileSize - mp3Start;
+    }
+
+    result.assign(data.begin() + mp3Start, data.begin() + mp3Start + dataSize);
+    return result;
+}
+static std::string getFSB4SampleName(const std::string& fsbPath) {
+    std::ifstream f(fsbPath, std::ios::binary);
+    if (!f) return "";
+
+    std::vector<uint8_t> header(0x60);
+    f.read(reinterpret_cast<char*>(header.data()), 0x60);
+
+    if (header[0] != 'F' || header[1] != 'S' || header[2] != 'B' || header[3] != '4') {
+        return "";
+    }
+
+    std::string name;
+    for (int i = 0x32; i < 0x60 && header[i] != 0; i++) {
+        name += (char)header[i];
+    }
+    return name;
+}
+
+// Simple MP3 decoder state - we'll use Windows Media Foundation for memory playback
+#ifdef _WIN32
+#include <mmreg.h>
+#include <mfapi.h>
+#include <mfidl.h>
+#include <mfreadwrite.h>
+#include <propvarutil.h>
+#pragma comment(lib, "mfplat.lib")
+#pragma comment(lib, "mfreadwrite.lib")
+#pragma comment(lib, "mfuuid.lib")
+
+static IMFSourceReader* g_pReader = nullptr;
+static std::vector<uint8_t> g_audioBuffer;
+static size_t g_audioBufferPos = 0;
+static size_t g_audioBufferSize = 0;
+static WAVEFORMATEX g_waveFormat = {0};
+static HWAVEOUT g_hWaveOut = nullptr;
+static WAVEHDR g_waveHdr = {0};
+static bool g_audioPlaying = false;
+static bool g_mfInitialized = false;
+static std::vector<uint8_t> g_currentMP3Data;
+static int g_audioDurationMs = 0;
+static int g_audioStartTime = 0;
+static bool g_audioPaused = false;
+
+class MemoryStream : public IStream {
+public:
+    MemoryStream(const uint8_t* data, size_t size) : m_data(data), m_size(size), m_pos(0), m_ref(1) {}
+
+    HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void** ppv) override {
+        if (riid == IID_IUnknown || riid == IID_IStream || riid == IID_ISequentialStream) {
+            *ppv = static_cast<IStream*>(this);
+            AddRef();
+            return S_OK;
+        }
+        *ppv = nullptr;
+        return E_NOINTERFACE;
+    }
+    ULONG STDMETHODCALLTYPE AddRef() override { return InterlockedIncrement(&m_ref); }
+    ULONG STDMETHODCALLTYPE Release() override {
+        ULONG ref = InterlockedDecrement(&m_ref);
+        if (ref == 0) delete this;
+        return ref;
+    }
+    HRESULT STDMETHODCALLTYPE Read(void* pv, ULONG cb, ULONG* pcbRead) override {
+        size_t toRead = (std::min)((size_t)cb, m_size - m_pos);
+        memcpy(pv, m_data + m_pos, toRead);
+        m_pos += toRead;
+        if (pcbRead) *pcbRead = (ULONG)toRead;
+        return S_OK;
+    }
+    HRESULT STDMETHODCALLTYPE Write(const void*, ULONG, ULONG*) override { return E_NOTIMPL; }
+    HRESULT STDMETHODCALLTYPE Seek(LARGE_INTEGER move, DWORD origin, ULARGE_INTEGER* newPos) override {
+        switch (origin) {
+            case STREAM_SEEK_SET: m_pos = (size_t)move.QuadPart; break;
+            case STREAM_SEEK_CUR: m_pos += (size_t)move.QuadPart; break;
+            case STREAM_SEEK_END: m_pos = m_size + (size_t)move.QuadPart; break;
+        }
+        if (m_pos > m_size) m_pos = m_size;
+        if (newPos) newPos->QuadPart = m_pos;
+        return S_OK;
+    }
+    HRESULT STDMETHODCALLTYPE SetSize(ULARGE_INTEGER) override { return E_NOTIMPL; }
+    HRESULT STDMETHODCALLTYPE CopyTo(IStream*, ULARGE_INTEGER, ULARGE_INTEGER*, ULARGE_INTEGER*) override { return E_NOTIMPL; }
+    HRESULT STDMETHODCALLTYPE Commit(DWORD) override { return S_OK; }
+    HRESULT STDMETHODCALLTYPE Revert() override { return E_NOTIMPL; }
+    HRESULT STDMETHODCALLTYPE LockRegion(ULARGE_INTEGER, ULARGE_INTEGER, DWORD) override { return E_NOTIMPL; }
+    HRESULT STDMETHODCALLTYPE UnlockRegion(ULARGE_INTEGER, ULARGE_INTEGER, DWORD) override { return E_NOTIMPL; }
+    HRESULT STDMETHODCALLTYPE Stat(STATSTG* pstat, DWORD) override {
+        memset(pstat, 0, sizeof(*pstat));
+        pstat->type = STGTY_STREAM;
+        pstat->cbSize.QuadPart = m_size;
+        return S_OK;
+    }
+    HRESULT STDMETHODCALLTYPE Clone(IStream**) override { return E_NOTIMPL; }
+private:
+    const uint8_t* m_data;
+    size_t m_size;
+    size_t m_pos;
+    LONG m_ref;
+};
+
+static void stopAudio() {
+    if (g_hWaveOut) {
+        waveOutReset(g_hWaveOut);
+        waveOutUnprepareHeader(g_hWaveOut, &g_waveHdr, sizeof(g_waveHdr));
+        waveOutClose(g_hWaveOut);
+        g_hWaveOut = nullptr;
+    }
+    if (g_pReader) {
+        g_pReader->Release();
+        g_pReader = nullptr;
+    }
+    g_audioPlaying = false;
+    g_audioPaused = false;
+    g_audioBuffer.clear();
+}
+
+static bool playAudioFromMemory(const std::vector<uint8_t>& mp3Data) {
+    stopAudio();
+
+    if (!g_mfInitialized) {
+        if (FAILED(MFStartup(MF_VERSION))) return false;
+        g_mfInitialized = true;
+    }
+
+    g_currentMP3Data = mp3Data;
+
+    MemoryStream* pStream = new MemoryStream(g_currentMP3Data.data(), g_currentMP3Data.size());
+    IMFByteStream* pByteStream = nullptr;
+    if (FAILED(MFCreateMFByteStreamOnStream(pStream, &pByteStream))) {
+        pStream->Release();
+        return false;
+    }
+    pStream->Release();
+
+    IMFAttributes* pAttrs = nullptr;
+    MFCreateAttributes(&pAttrs, 1);
+
+    if (FAILED(MFCreateSourceReaderFromByteStream(pByteStream, pAttrs, &g_pReader))) {
+        pByteStream->Release();
+        if (pAttrs) pAttrs->Release();
+        return false;
+    }
+    pByteStream->Release();
+    if (pAttrs) pAttrs->Release();
+
+    IMFMediaType* pPartialType = nullptr;
+    MFCreateMediaType(&pPartialType);
+    pPartialType->SetGUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio);
+    pPartialType->SetGUID(MF_MT_SUBTYPE, MFAudioFormat_PCM);
+    g_pReader->SetCurrentMediaType(MF_SOURCE_READER_FIRST_AUDIO_STREAM, nullptr, pPartialType);
+    pPartialType->Release();
+
+    IMFMediaType* pUncompType = nullptr;
+    g_pReader->GetCurrentMediaType(MF_SOURCE_READER_FIRST_AUDIO_STREAM, &pUncompType);
+
+    UINT32 channels = 0, sampleRate = 0, bitsPerSample = 0;
+    pUncompType->GetUINT32(MF_MT_AUDIO_NUM_CHANNELS, &channels);
+    pUncompType->GetUINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, &sampleRate);
+    pUncompType->GetUINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, &bitsPerSample);
+    pUncompType->Release();
+
+    PROPVARIANT var;
+    PropVariantInit(&var);
+    if (SUCCEEDED(g_pReader->GetPresentationAttribute(MF_SOURCE_READER_MEDIASOURCE, MF_PD_DURATION, &var))) {
+        g_audioDurationMs = (int)(var.uhVal.QuadPart / 10000);
+        PropVariantClear(&var);
+    }
+
+    g_audioBuffer.clear();
+    while (true) {
+        IMFSample* pSample = nullptr;
+        DWORD flags = 0;
+        HRESULT hr = g_pReader->ReadSample(MF_SOURCE_READER_FIRST_AUDIO_STREAM, 0, nullptr, &flags, nullptr, &pSample);
+        if (FAILED(hr) || (flags & MF_SOURCE_READERF_ENDOFSTREAM)) {
+            if (pSample) pSample->Release();
+            break;
+        }
+        if (pSample) {
+            IMFMediaBuffer* pBuffer = nullptr;
+            pSample->ConvertToContiguousBuffer(&pBuffer);
+            BYTE* pData = nullptr;
+            DWORD cbData = 0;
+            pBuffer->Lock(&pData, nullptr, &cbData);
+            size_t oldSize = g_audioBuffer.size();
+            g_audioBuffer.resize(oldSize + cbData);
+            memcpy(g_audioBuffer.data() + oldSize, pData, cbData);
+            pBuffer->Unlock();
+            pBuffer->Release();
+            pSample->Release();
+        }
+    }
+
+    g_pReader->Release();
+    g_pReader = nullptr;
+
+    if (g_audioBuffer.empty()) return false;
+
+    g_waveFormat.wFormatTag = WAVE_FORMAT_PCM;
+    g_waveFormat.nChannels = (WORD)channels;
+    g_waveFormat.nSamplesPerSec = sampleRate;
+    g_waveFormat.wBitsPerSample = (WORD)bitsPerSample;
+    g_waveFormat.nBlockAlign = g_waveFormat.nChannels * g_waveFormat.wBitsPerSample / 8;
+    g_waveFormat.nAvgBytesPerSec = g_waveFormat.nSamplesPerSec * g_waveFormat.nBlockAlign;
+    g_waveFormat.cbSize = 0;
+
+    if (waveOutOpen(&g_hWaveOut, WAVE_MAPPER, &g_waveFormat, 0, 0, CALLBACK_NULL) != MMSYSERR_NOERROR) {
+        return false;
+    }
+
+    memset(&g_waveHdr, 0, sizeof(g_waveHdr));
+    g_waveHdr.lpData = (LPSTR)g_audioBuffer.data();
+    g_waveHdr.dwBufferLength = (DWORD)g_audioBuffer.size();
+    waveOutPrepareHeader(g_hWaveOut, &g_waveHdr, sizeof(g_waveHdr));
+    waveOutWrite(g_hWaveOut, &g_waveHdr, sizeof(g_waveHdr));
+
+    g_audioPlaying = true;
+    g_audioPaused = false;
+    g_audioStartTime = GetTickCount();
+
+    return true;
+}
+
+static bool isAudioPlaying() {
+    if (!g_hWaveOut || !g_audioPlaying) return false;
+    if (g_audioPaused) return false;
+    return (g_waveHdr.dwFlags & WHDR_DONE) == 0;
+}
+
+static int getAudioLength() {
+    return g_audioDurationMs;
+}
+
+static int getAudioPosition() {
+    if (!g_hWaveOut || !g_audioPlaying) return 0;
+    if (g_audioPaused) {
+        return g_audioBufferPos;
+    }
+    MMTIME mmt;
+    mmt.wType = TIME_MS;
+    if (waveOutGetPosition(g_hWaveOut, &mmt, sizeof(mmt)) == MMSYSERR_NOERROR) {
+        return mmt.u.ms;
+    }
+    return 0;
+}
+
+static void setAudioPosition(int ms) {
+    // WaveOut doesn't support seeking easily, would need to restart from position
+    // For now, just note: seeking not fully supported with this simple approach
+}
+
+static void pauseAudio() {
+    if (g_hWaveOut && g_audioPlaying) {
+        g_audioBufferPos = getAudioPosition();
+        waveOutPause(g_hWaveOut);
+        g_audioPaused = true;
+    }
+}
+
+static void resumeAudio() {
+    if (g_hWaveOut && g_audioPlaying && g_audioPaused) {
+        waveOutRestart(g_hWaveOut);
+        g_audioPaused = false;
+    }
+}
+
+static bool playAudio(const std::string& mp3Path) {
+    std::ifstream f(mp3Path, std::ios::binary);
+    if (!f) return false;
+    f.seekg(0, std::ios::end);
+    size_t size = f.tellg();
+    f.seekg(0, std::ios::beg);
+    std::vector<uint8_t> data(size);
+    f.read(reinterpret_cast<char*>(data.data()), size);
+    return playAudioFromMemory(data);
+}
+
+#else
+static void stopAudio() {}
+static bool playAudioFromMemory(const std::vector<uint8_t>&) { return false; }
+static bool playAudio(const std::string&) { return false; }
+static bool isAudioPlaying() { return false; }
+static int getAudioLength() { return 0; }
+static int getAudioPosition() { return 0; }
+static void setAudioPosition(int) {}
+static void pauseAudio() {}
+static void resumeAudio() {}
+#endif
+
 static size_t lastMeshCacheSize = 0;
 static void loadMeshDatabase(AppState& state) {
     bool needsCacheUpdate = (state.meshCache.size() != lastMeshCacheSize);
@@ -702,9 +1130,51 @@ static void drawBrowserWindow(AppState& state) {
         ImGui::EndMenuBar();
     }
     ImGui::Columns(2, "browser_columns");
-    ImGui::Text("ERF Files (%zu)", state.erfsByName.size());
+    ImGui::Text("Files");
     ImGui::Separator();
     ImGui::BeginChild("ERFList", ImVec2(0, 0), true);
+    if (!state.audioFilesLoaded && !state.selectedFolder.empty()) {
+        scanAudioFiles(state);
+    }
+    bool audioSelected = (state.selectedErfName == "[Audio]");
+    if (ImGui::Selectable("Audio - Sound Effects", audioSelected)) {
+        if (!audioSelected) {
+            state.selectedErfName = "[Audio]";
+            state.selectedEntryIndex = -1;
+            state.mergedEntries.clear();
+            state.filteredEntryIndices.clear();
+            state.lastContentFilter.clear();
+            for (size_t i = 0; i < state.audioFiles.size(); i++) {
+                CachedEntry ce;
+                size_t lastSlash = state.audioFiles[i].find_last_of("/\\");
+                ce.name = (lastSlash != std::string::npos) ? state.audioFiles[i].substr(lastSlash + 1) : state.audioFiles[i];
+                ce.erfIdx = i;
+                ce.entryIdx = 0;
+                state.mergedEntries.push_back(ce);
+            }
+            state.statusMessage = std::to_string(state.audioFiles.size()) + " audio files";
+        }
+    }
+    bool voSelected = (state.selectedErfName == "[VoiceOver]");
+    if (ImGui::Selectable("Audio - Voice Over", voSelected)) {
+        if (!voSelected) {
+            state.selectedErfName = "[VoiceOver]";
+            state.selectedEntryIndex = -1;
+            state.mergedEntries.clear();
+            state.filteredEntryIndices.clear();
+            state.lastContentFilter.clear();
+            for (size_t i = 0; i < state.voiceOverFiles.size(); i++) {
+                CachedEntry ce;
+                size_t lastSlash = state.voiceOverFiles[i].find_last_of("/\\");
+                ce.name = (lastSlash != std::string::npos) ? state.voiceOverFiles[i].substr(lastSlash + 1) : state.voiceOverFiles[i];
+                ce.erfIdx = i;
+                ce.entryIdx = 0;
+                state.mergedEntries.push_back(ce);
+            }
+            state.statusMessage = std::to_string(state.voiceOverFiles.size()) + " voice over files";
+        }
+    }
+    ImGui::Separator();
     for (const auto& [filename, indices] : state.erfsByName) {
         bool isSelected = (state.selectedErfName == filename);
         if (ImGui::Selectable(filename.c_str(), isSelected)) {
@@ -739,6 +1209,7 @@ static void drawBrowserWindow(AppState& state) {
     ImGui::NextColumn();
     if (!state.selectedErfName.empty() && !state.mergedEntries.empty()) {
         bool hasTextures = false, hasModels = false;
+        bool isAudioCategory = (state.selectedErfName == "[Audio]" || state.selectedErfName == "[VoiceOver]");
         for (const auto& ce : state.mergedEntries) {
             if (ce.name.size() > 4 && ce.name.substr(ce.name.size() - 4) == ".dds") hasTextures = true;
             if (isModelFile(ce.name)) hasModels = true;
@@ -747,6 +1218,53 @@ static void drawBrowserWindow(AppState& state) {
         ImGui::Text("Contents (%zu)", state.mergedEntries.size());
         ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
         ImGui::InputText("##contentSearch", state.contentFilter, sizeof(state.contentFilter));
+        if (isAudioCategory) {
+            if (ImGui::Button("Convert All to MP3")) {
+                IGFD::FileDialogConfig config;
+                #ifdef _WIN32
+                char* userProfile = getenv("USERPROFILE");
+                if (userProfile) config.path = std::string(userProfile) + "\\Documents";
+                else config.path = ".";
+                #else
+                char* home = getenv("HOME");
+                if (home) config.path = std::string(home) + "/Documents";
+                else config.path = ".";
+                #endif
+                ImGuiFileDialog::Instance()->OpenDialog("ConvertAllAudio", "Select Output Folder", nullptr, config);
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("Convert Selected")) {
+                if (state.selectedEntryIndex >= 0) {
+                    IGFD::FileDialogConfig config;
+                    #ifdef _WIN32
+                    char* userProfile = getenv("USERPROFILE");
+                    if (userProfile) config.path = std::string(userProfile) + "\\Documents";
+                    else config.path = ".";
+                    #else
+                    char* home = getenv("HOME");
+                    if (home) config.path = std::string(home) + "/Documents";
+                    else config.path = ".";
+                    #endif
+                    std::string defaultName = state.mergedEntries[state.selectedEntryIndex].name;
+                    size_t dotPos = defaultName.rfind('.');
+                    if (dotPos != std::string::npos) defaultName = defaultName.substr(0, dotPos);
+                    defaultName += ".mp3";
+                    config.fileName = defaultName;
+                    ImGuiFileDialog::Instance()->OpenDialog("ConvertSelectedAudio", "Save MP3", ".mp3", config);
+                }
+            }
+            if (state.audioPlaying || state.showAudioPlayer) {
+                ImGui::SameLine();
+                if (ImGui::Button("Stop")) {
+                    stopAudio();
+                    state.audioPlaying = false;
+                    state.showAudioPlayer = false;
+                }
+                ImGui::SameLine();
+                ImGui::TextColored(ImVec4(0.5f, 1.0f, 0.5f, 1.0f), "Playing: %s", state.currentAudioName.c_str());
+            }
+            ImGui::TextDisabled("Double-click to play audio");
+        }
         if (hasTextures && ImGui::Button("Dump Textures")) {
             IGFD::FileDialogConfig config;
             #ifdef _WIN32
@@ -805,10 +1323,12 @@ static void drawBrowserWindow(AppState& state) {
                 const CachedEntry& ce = state.mergedEntries[i];
                 bool isModel = isModelFile(ce.name), isMao = isMaoFile(ce.name), isPhy = isPhyFile(ce.name);
                 bool isTexture = ce.name.size() > 4 && ce.name.substr(ce.name.size() - 4) == ".dds";
+                bool isAudioFile = ce.name.size() > 4 && (ce.name.substr(ce.name.size() - 4) == ".fsb" );
                 if (isModel) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.4f, 1.0f, 0.4f, 1.0f));
                 else if (isMao) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.8f, 0.4f, 1.0f));
                 else if (isPhy) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.4f, 1.0f, 1.0f));
                 else if (isTexture) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.4f, 0.8f, 1.0f, 1.0f));
+                else if (isAudioFile) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.6f, 0.2f, 1.0f));
                 char label[256]; snprintf(label, sizeof(label), "%s##%d", ce.name.c_str(), i);
                 if (ImGui::Selectable(label, i == state.selectedEntryIndex, ImGuiSelectableFlags_AllowDoubleClick)) {
                     state.selectedEntryIndex = i;
@@ -874,6 +1394,54 @@ static void drawBrowserWindow(AppState& state) {
                         }
                     }
                 }
+                bool isAudio = (state.selectedErfName == "[Audio]" || state.selectedErfName == "[VoiceOver]") &&
+                               (ce.name.size() > 4 && (ce.name.substr(ce.name.size() - 4) == ".fsb" ));
+                if (isAudio && ImGui::IsMouseDoubleClicked(0) && i == state.selectedEntryIndex) {
+                    std::string fullPath;
+                    if (state.selectedErfName == "[Audio]" && ce.erfIdx < state.audioFiles.size()) {
+                        fullPath = state.audioFiles[ce.erfIdx];
+                    } else if (state.selectedErfName == "[VoiceOver]" && ce.erfIdx < state.voiceOverFiles.size()) {
+                        fullPath = state.voiceOverFiles[ce.erfIdx];
+                    }
+                    if (!fullPath.empty()) {
+                        stopAudio();
+                        state.audioPlaying = false;
+                        auto mp3Data = extractFSB4toMP3Data(fullPath);
+                        if (!mp3Data.empty()) {
+                            state.currentAudioName = ce.name;
+                            if (playAudioFromMemory(mp3Data)) {
+                                state.audioPlaying = true;
+                                state.showAudioPlayer = true;
+                                state.statusMessage = "Playing: " + ce.name;
+                            } else {
+                                state.statusMessage = "Failed to play audio";
+                            }
+                        } else {
+                            state.statusMessage = "Unsupported format (multi-sample or non-MP3 FSB)";
+                        }
+                    }
+                }
+                if (isAudio && ImGui::BeginPopupContextItem()) {
+                    if (ImGui::MenuItem("Convert to MP3...")) {
+                        IGFD::FileDialogConfig config;
+                        #ifdef _WIN32
+                        char* userProfile = getenv("USERPROFILE");
+                        if (userProfile) config.path = std::string(userProfile) + "\\Documents";
+                        else config.path = ".";
+                        #else
+                        char* home = getenv("HOME");
+                        if (home) config.path = std::string(home) + "/Documents";
+                        else config.path = ".";
+                        #endif
+                        std::string defaultName = ce.name;
+                        size_t dotPos = defaultName.rfind('.');
+                        if (dotPos != std::string::npos) defaultName = defaultName.substr(0, dotPos);
+                        defaultName += ".mp3";
+                        config.fileName = defaultName;
+                        ImGuiFileDialog::Instance()->OpenDialog("ConvertSelectedAudio", "Save MP3", ".mp3", config);
+                    }
+                    ImGui::EndPopup();
+                }
                 if (isModel && ImGui::BeginPopupContextItem()) {
                     if (ImGui::MenuItem("Export as GLB...")) {
                         state.pendingExportEntry = ce;
@@ -936,7 +1504,7 @@ static void drawBrowserWindow(AppState& state) {
                     }
                     ImGui::EndPopup();
                 }
-                if (isModel || isMao || isPhy || isTexture) ImGui::PopStyleColor();
+                if (isModel || isMao || isPhy || isTexture || isAudioFile) ImGui::PopStyleColor();
             }
         }
         ImGui::EndChild();
@@ -1130,10 +1698,100 @@ static void drawMaoViewer(AppState& state) {
     ImGui::EndChild();
     ImGui::End();
 }
+static void drawAudioPlayer(AppState& state) {
+    ImGui::SetNextWindowSize(ImVec2(400, 120), ImGuiCond_FirstUseEver);
+    ImGui::Begin("Audio Player", &state.showAudioPlayer, ImGuiWindowFlags_NoCollapse);
+
+    ImGui::Text("%s", state.currentAudioName.c_str());
+    ImGui::Separator();
+
+    int length = getAudioLength();
+    int pos = getAudioPosition();
+    bool playing = isAudioPlaying();
+
+    if (!playing && state.audioPlaying && pos >= length - 100) {
+        state.audioPlaying = false;
+    }
+
+    float progress = (length > 0) ? (float)pos / (float)length : 0.0f;
+
+    int totalSec = length / 1000;
+    int curSec = pos / 1000;
+    char timeStr[64];
+    snprintf(timeStr, sizeof(timeStr), "%d:%02d / %d:%02d", curSec / 60, curSec % 60, totalSec / 60, totalSec % 60);
+
+    ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+    if (ImGui::SliderFloat("##Progress", &progress, 0.0f, 1.0f, timeStr)) {
+        setAudioPosition((int)(progress * length));
+    }
+
+    if (state.audioPlaying && playing) {
+        if (ImGui::Button("Pause")) {
+            pauseAudio();
+            state.audioPlaying = false;
+        }
+    } else {
+        if (ImGui::Button("Play")) {
+            if (pos >= length - 100) {
+                setAudioPosition(0);
+            } else {
+                resumeAudio();
+            }
+            state.audioPlaying = true;
+        }
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Stop")) {
+        stopAudio();
+        state.audioPlaying = false;
+    }
+
+    ImGui::End();
+
+    if (!state.showAudioPlayer) {
+        stopAudio();
+        state.audioPlaying = false;
+    }
+}
 static void drawTexturePreview(AppState& state) {
     std::string title = "Texture Preview - " + state.previewTextureName;
     ImGui::SetNextWindowSize(ImVec2(520, 580), ImGuiCond_FirstUseEver);
     ImGui::Begin(title.c_str(), &state.showTexturePreview);
+    if (ImGui::Button("Extract DDS")) {
+        IGFD::FileDialogConfig config;
+        #ifdef _WIN32
+        char* userProfile = getenv("USERPROFILE");
+        if (userProfile) config.path = std::string(userProfile) + "\\Documents";
+        else config.path = ".";
+        #else
+        char* home = getenv("HOME");
+        if (home) config.path = std::string(home) + "/Documents";
+        else config.path = ".";
+        #endif
+        std::string defaultName = state.previewTextureName;
+        config.fileName = defaultName;
+        ImGuiFileDialog::Instance()->OpenDialog("ExtractTexture", "Extract Texture", ".dds", config);
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Extract PNG")) {
+        IGFD::FileDialogConfig config;
+        #ifdef _WIN32
+        char* userProfile = getenv("USERPROFILE");
+        if (userProfile) config.path = std::string(userProfile) + "\\Documents";
+        else config.path = ".";
+        #else
+        char* home = getenv("HOME");
+        if (home) config.path = std::string(home) + "/Documents";
+        else config.path = ".";
+        #endif
+        std::string defaultName = state.previewTextureName;
+        size_t dotPos = defaultName.rfind('.');
+        if (dotPos != std::string::npos) defaultName = defaultName.substr(0, dotPos);
+        defaultName += ".png";
+        config.fileName = defaultName;
+        ImGuiFileDialog::Instance()->OpenDialog("ExtractTexturePNG", "Extract Texture as PNG", ".png", config);
+    }
+    ImGui::SameLine();
     ImGui::Checkbox("Show UV Overlay", &state.showUvOverlay);
     ImGui::Separator();
     ImVec2 avail = ImGui::GetContentRegionAvail();
@@ -1875,187 +2533,7 @@ static void drawCharacterDesigner(AppState& state, ImGuiIO& io) {
             }
             ImGui::EndTabItem();
         }
-        if (ImGui::BeginTabItem("Animations")) {
-            if (state.availableAnimFiles.empty()) {
-                ImGui::TextDisabled("No animations found");
-                ImGui::TextDisabled("(Load armor to populate list)");
-            } else {
-                if (state.animPlaying && state.currentAnim.duration > 0) {
-                    ImGui::TextColored(ImVec4(0.5f, 1.0f, 0.5f, 1.0f), "Playing: %s", state.currentAnim.name.c_str());
-                    ImGui::ProgressBar(state.animTime / state.currentAnim.duration);
-                    if (ImGui::Button("Stop")) {
-                        state.animPlaying = false;
-                        state.animTime = 0.0f;
-                        state.currentModel.skeleton.bones = state.basePoseBones;
-                    }
-                    ImGui::SameLine();
-                    ImGui::SliderFloat("Speed", &state.animSpeed, 0.1f, 3.0f);
-                    ImGui::Separator();
-                }
-                ImGui::Text("%d animations", (int)state.availableAnimFiles.size());
-                ImGui::InputText("Filter", state.animFilter, sizeof(state.animFilter));
-                ImGui::BeginChild("AnimList", ImVec2(0, 180), true);
-                std::string filterLower = state.animFilter;
-                std::transform(filterLower.begin(), filterLower.end(), filterLower.begin(), ::tolower);
-                for (int i = 0; i < (int)state.availableAnimFiles.size(); i++) {
-                    const auto& animFile = state.availableAnimFiles[i];
-                    std::string nameLower = animFile.first;
-                    std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), ::tolower);
-                    if (!filterLower.empty() && nameLower.find(filterLower) == std::string::npos) {
-                        continue;
-                    }
-                    bool selected = (state.selectedAnimIndex == i);
-                    if (ImGui::Selectable(animFile.first.c_str(), selected, ImGuiSelectableFlags_AllowDoubleClick)) {
-                        state.selectedAnimIndex = i;
-                        if (ImGui::IsMouseDoubleClicked(0)) {
-                            ERFFile animErf;
-                            if (animErf.open(animFile.second)) {
-                                for (const auto& entry : animErf.entries()) {
-                                    if (entry.name == animFile.first) {
-                                        std::vector<uint8_t> animData = animErf.readEntry(entry);
-                                        if (!animData.empty()) {
-                                            state.currentAnim = loadANI(animData, animFile.first);
-                                            auto normalize = [](const std::string& s) {
-                                                std::string result;
-                                                for (char c : s) {
-                                                    if (c != '_') result += std::tolower(c);
-                                                }
-                                                return result;
-                                            };
-                                            int matched = 0;
-                                            for (auto& track : state.currentAnim.tracks) {
-                                                track.boneIndex = state.currentModel.skeleton.findBone(track.boneName);
-                                                if (track.boneIndex >= 0) {
-                                                    matched++;
-                                                    continue;
-                                                }
-                                                std::string trackNorm = normalize(track.boneName);
-                                                for (size_t bi = 0; bi < state.currentModel.skeleton.bones.size(); bi++) {
-                                                    std::string boneNorm = normalize(state.currentModel.skeleton.bones[bi].name);
-                                                    if (trackNorm == boneNorm) {
-                                                        track.boneIndex = (int)bi;
-                                                        matched++;
-                                                        break;
-                                                    }
-                                                }
-                                            }
-                                            if (matched > 0) {
-                                                state.animPlaying = true;
-                                                state.animTime = 0.0f;
-                                            }
-                                        }
-                                        break;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                ImGui::EndChild();
-                ImGui::TextDisabled("Double-click to play animation");
-            }
-            ImGui::EndTabItem();
-        }
         ImGui::EndTabBar();
-    }
-    ImGui::Separator();
-    ImGui::Checkbox("Show Skeleton", &state.renderSettings.showSkeleton);
-    ImGui::End();
-    ImGui::SetNextWindowSize(ImVec2(320, 400), ImGuiCond_FirstUseEver);
-    ImGui::Begin("Materials & Textures", nullptr, ImGuiWindowFlags_NoCollapse);
-    if (state.currentModel.materials.empty()) {
-        ImGui::TextDisabled("No materials loaded");
-    } else {
-        ImGui::Text("%d materials", (int)state.currentModel.materials.size());
-        ImGui::Separator();
-        for (int i = 0; i < (int)state.currentModel.materials.size(); i++) {
-            auto& mat = state.currentModel.materials[i];
-            bool open = ImGui::TreeNode((void*)(intptr_t)i, "%s", mat.name.c_str());
-            if (open) {
-                if (!mat.maoSource.empty()) {
-                    ImGui::TextDisabled("MAO: %s", mat.maoSource.c_str());
-                }
-                if (!mat.diffuseMap.empty()) {
-                    ImGui::Text("Diffuse: %s", mat.diffuseMap.c_str());
-                    if (mat.diffuseTexId != 0) {
-                        ImGui::SameLine();
-                        if (ImGui::SmallButton(("View##diff" + std::to_string(i)).c_str())) {
-                            state.previewTextureId = mat.diffuseTexId;
-                            state.previewTextureName = mat.diffuseMap;
-                            state.showTexturePreview = true;
-                        }
-                        ImGui::Image((ImTextureID)(intptr_t)mat.diffuseTexId, ImVec2(64, 64));
-                    }
-                }
-                if (!mat.normalMap.empty()) {
-                    ImGui::Text("Normal: %s", mat.normalMap.c_str());
-                    if (mat.normalTexId != 0) {
-                        ImGui::SameLine();
-                        if (ImGui::SmallButton(("View##norm" + std::to_string(i)).c_str())) {
-                            state.previewTextureId = mat.normalTexId;
-                            state.previewTextureName = mat.normalMap;
-                            state.showTexturePreview = true;
-                        }
-                    }
-                }
-                if (!mat.specularMap.empty()) {
-                    ImGui::Text("Specular: %s", mat.specularMap.c_str());
-                    if (mat.specularTexId != 0) {
-                        ImGui::SameLine();
-                        if (ImGui::SmallButton(("View##spec" + std::to_string(i)).c_str())) {
-                            state.previewTextureId = mat.specularTexId;
-                            state.previewTextureName = mat.specularMap;
-                            state.showTexturePreview = true;
-                        }
-                    }
-                }
-                if (!mat.tintMap.empty()) {
-                    ImGui::Text("Tint: %s", mat.tintMap.c_str());
-                    if (mat.tintTexId != 0) {
-                        ImGui::SameLine();
-                        if (ImGui::SmallButton(("View##tint" + std::to_string(i)).c_str())) {
-                            state.previewTextureId = mat.tintTexId;
-                            state.previewTextureName = mat.tintMap;
-                            state.showTexturePreview = true;
-                        }
-                    }
-                }
-                if (!mat.ageDiffuseMap.empty()) {
-                    ImGui::Text("Age Diffuse: %s", mat.ageDiffuseMap.c_str());
-                    if (mat.ageDiffuseTexId != 0) {
-                        ImGui::SameLine();
-                        if (ImGui::SmallButton(("View##aged" + std::to_string(i)).c_str())) {
-                            state.previewTextureId = mat.ageDiffuseTexId;
-                            state.previewTextureName = mat.ageDiffuseMap;
-                            state.showTexturePreview = true;
-                        }
-                    }
-                }
-                if (!mat.ageNormalMap.empty()) {
-                    ImGui::Text("Age Normal: %s", mat.ageNormalMap.c_str());
-                    if (mat.ageNormalTexId != 0) {
-                        ImGui::SameLine();
-                        if (ImGui::SmallButton(("View##agen" + std::to_string(i)).c_str())) {
-                            state.previewTextureId = mat.ageNormalTexId;
-                            state.previewTextureName = mat.ageNormalMap;
-                            state.showTexturePreview = true;
-                        }
-                    }
-                }
-                if (!mat.tattooMap.empty()) {
-                    ImGui::Text("Tattoo: %s", mat.tattooMap.c_str());
-                    if (mat.tattooTexId != 0) {
-                        ImGui::SameLine();
-                        if (ImGui::SmallButton(("View##tat" + std::to_string(i)).c_str())) {
-                            state.previewTextureId = mat.tattooTexId;
-                            state.previewTextureName = mat.tattooMap;
-                            state.showTexturePreview = true;
-                        }
-                    }
-                }
-                ImGui::TreePop();
-            }
-        }
     }
     ImGui::End();
     if (state.animPlaying && state.currentAnim.duration > 0) {
@@ -2215,6 +2693,7 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
                 state.erfFiles = scanForERFFiles(state.selectedFolder);
                 filterEncryptedErfs(state);
                 preloadErfs(state);
+                scanAudioFiles(state);
                 state.statusMessage = "Found " + std::to_string(state.filteredErfIndices.size()) + " ERF files";
                 saveSettings(state);
                 showSplash = false;
@@ -2230,6 +2709,7 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
             state.erfFiles = scanForERFFiles(state.selectedFolder);
             filterEncryptedErfs(state);
             preloadErfs(state);
+            scanAudioFiles(state);
             state.selectedErfName.clear();
             state.mergedEntries.clear();
             state.filteredEntryIndices.clear();
@@ -2405,6 +2885,80 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
         }
         ImGuiFileDialog::Instance()->Close();
     }
+    if (ImGuiFileDialog::Instance()->Display("ExtractTexture", ImGuiWindowFlags_NoCollapse, ImVec2(600, 400))) {
+        if (ImGuiFileDialog::Instance()->IsOk()) {
+            std::string exportPath = ImGuiFileDialog::Instance()->GetFilePathName();
+            std::string texName = state.previewTextureName;
+            std::transform(texName.begin(), texName.end(), texName.begin(), ::tolower);
+            auto it = state.textureCache.find(texName);
+            if (it != state.textureCache.end()) {
+                std::ofstream out(exportPath, std::ios::binary);
+                out.write(reinterpret_cast<const char*>(it->second.data()), it->second.size());
+                state.statusMessage = "Extracted: " + exportPath;
+            } else {
+                for (const auto& erfPath : state.erfFiles) {
+                    ERFFile erf;
+                    if (erf.open(erfPath)) {
+                        for (const auto& entry : erf.entries()) {
+                            std::string entryLower = entry.name;
+                            std::transform(entryLower.begin(), entryLower.end(), entryLower.begin(), ::tolower);
+                            if (entryLower == texName) {
+                                auto data = erf.readEntry(entry);
+                                if (!data.empty()) {
+                                    std::ofstream out(exportPath, std::ios::binary);
+                                    out.write(reinterpret_cast<const char*>(data.data()), data.size());
+                                    state.statusMessage = "Extracted: " + exportPath;
+                                }
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        ImGuiFileDialog::Instance()->Close();
+    }
+    if (ImGuiFileDialog::Instance()->Display("ExtractTexturePNG", ImGuiWindowFlags_NoCollapse, ImVec2(600, 400))) {
+        if (ImGuiFileDialog::Instance()->IsOk()) {
+            std::string exportPath = ImGuiFileDialog::Instance()->GetFilePathName();
+            std::string texName = state.previewTextureName;
+            std::transform(texName.begin(), texName.end(), texName.begin(), ::tolower);
+            std::vector<uint8_t> ddsData;
+            auto it = state.textureCache.find(texName);
+            if (it != state.textureCache.end()) {
+                ddsData = it->second;
+            } else {
+                for (const auto& erfPath : state.erfFiles) {
+                    ERFFile erf;
+                    if (erf.open(erfPath)) {
+                        for (const auto& entry : erf.entries()) {
+                            std::string entryLower = entry.name;
+                            std::transform(entryLower.begin(), entryLower.end(), entryLower.begin(), ::tolower);
+                            if (entryLower == texName) {
+                                ddsData = erf.readEntry(entry);
+                                break;
+                            }
+                        }
+                    }
+                    if (!ddsData.empty()) break;
+                }
+            }
+            if (!ddsData.empty()) {
+                std::vector<uint8_t> rgba;
+                int w, h;
+                if (decodeDDSToRGBA(ddsData, rgba, w, h)) {
+                    std::vector<uint8_t> png;
+                    encodePNG(rgba, w, h, png);
+                    std::ofstream out(exportPath, std::ios::binary);
+                    out.write(reinterpret_cast<const char*>(png.data()), png.size());
+                    state.statusMessage = "Extracted: " + exportPath;
+                } else {
+                    state.statusMessage = "Failed to decode texture";
+                }
+            }
+        }
+        ImGuiFileDialog::Instance()->Close();
+    }
     if (ImGuiFileDialog::Instance()->Display("DumpTextures", ImGuiWindowFlags_NoCollapse, ImVec2(600, 400))) {
         if (ImGuiFileDialog::Instance()->IsOk()) {
             std::string outDir = ImGuiFileDialog::Instance()->GetCurrentPath();
@@ -2514,6 +3068,49 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
         }
         ImGuiFileDialog::Instance()->Close();
     }
+    if (ImGuiFileDialog::Instance()->Display("ConvertAllAudio", ImGuiWindowFlags_NoCollapse, ImVec2(600, 400))) {
+        if (ImGuiFileDialog::Instance()->IsOk()) {
+            std::string outDir = ImGuiFileDialog::Instance()->GetCurrentPath();
+            int converted = 0;
+            const std::vector<std::string>& files = (state.selectedErfName == "[Audio]") ? state.audioFiles : state.voiceOverFiles;
+            for (const auto& fsbPath : files) {
+                std::string ext = fsbPath.substr(fsbPath.size() - 4);
+                std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
+                if (ext != ".fsb") continue;
+                size_t lastSlash = fsbPath.find_last_of("/\\");
+                std::string filename = (lastSlash != std::string::npos) ? fsbPath.substr(lastSlash + 1) : fsbPath;
+                size_t dotPos = filename.rfind('.');
+                if (dotPos != std::string::npos) filename = filename.substr(0, dotPos);
+                filename += ".mp3";
+                std::string outPath = outDir + "/" + filename;
+                if (extractFSB4toMP3(fsbPath, outPath)) {
+                    converted++;
+                }
+            }
+            state.statusMessage = "Converted " + std::to_string(converted) + " audio files to " + outDir;
+        }
+        ImGuiFileDialog::Instance()->Close();
+    }
+    if (ImGuiFileDialog::Instance()->Display("ConvertSelectedAudio", ImGuiWindowFlags_NoCollapse, ImVec2(600, 400))) {
+        if (ImGuiFileDialog::Instance()->IsOk() && state.selectedEntryIndex >= 0) {
+            std::string outPath = ImGuiFileDialog::Instance()->GetFilePathName();
+            const CachedEntry& ce = state.mergedEntries[state.selectedEntryIndex];
+            std::string fullPath;
+            if (state.selectedErfName == "[Audio]" && ce.erfIdx < state.audioFiles.size()) {
+                fullPath = state.audioFiles[ce.erfIdx];
+            } else if (state.selectedErfName == "[VoiceOver]" && ce.erfIdx < state.voiceOverFiles.size()) {
+                fullPath = state.voiceOverFiles[ce.erfIdx];
+            }
+            if (!fullPath.empty()) {
+                if (extractFSB4toMP3(fullPath, outPath)) {
+                    state.statusMessage = "Converted: " + outPath;
+                } else {
+                    state.statusMessage = "Failed to convert: " + ce.name;
+                }
+            }
+        }
+        ImGuiFileDialog::Instance()->Close();
+    }
     if (ImGui::BeginMainMenuBar()) {
         ImGui::Text("Mode:");
         ImGui::SameLine();
@@ -2522,6 +3119,8 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
         if (ImGui::RadioButton("Character Designer", state.mainTab == 1)) {
             if (state.mainTab != 1) {
                 state.renderSettings.showSkeleton = false;
+                state.renderSettings.showAxes = false;
+                state.renderSettings.showGrid = false;
                 state.hasModel = false;
                 state.currentModel = Model();
                 state.currentAnim = Animation();
@@ -2576,6 +3175,7 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
     if (state.showTexturePreview && state.previewTextureId != 0) drawTexturePreview(state);
     if (state.showUvViewer && state.hasModel && state.selectedMeshForUv >= 0 && state.selectedMeshForUv < (int)state.currentModel.meshes.size()) drawUvViewer(state);
     if (state.showAnimWindow && state.hasModel) drawAnimWindow(state, io);
+    if (state.showAudioPlayer) drawAudioPlayer(state);
     if (state.showHeadSelector) {
         ImGui::SetNextWindowSize(ImVec2(300, 0), ImGuiCond_FirstUseEver);
         ImGui::Begin("Select Head", &state.showHeadSelector, ImGuiWindowFlags_AlwaysAutoResize);

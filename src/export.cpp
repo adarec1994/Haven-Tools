@@ -262,12 +262,13 @@ bool exportToGLB(const Model& model, const std::vector<Animation>& animations, c
             if (boneIdx < 0) continue;
             if (track.keyframes.empty()) continue;
 
+            // Check if this is GOD/GOB bone - skip translation for these
             std::string boneNameLower = model.skeleton.bones[boneIdx].name;
             std::transform(boneNameLower.begin(), boneNameLower.end(), boneNameLower.begin(), ::tolower);
             bool isGodBone = (boneNameLower == "god" || boneNameLower == "gob");
 
             if (track.isTranslation && isGodBone) {
-                continue;
+                continue; // Skip GOD/GOB translation
             }
 
             size_t timeOff = binBuffer.size();
@@ -302,10 +303,12 @@ bool exportToGLB(const Model& model, const std::vector<Animation>& animations, c
                 ae.samplerIndices.push_back(samplerIdx);
                 ae.channels.push_back({boneIdx, "rotation"});
             } else if (track.isTranslation) {
+                // Get bind pose offset for this bone
                 const Bone& bone = model.skeleton.bones[boneIdx];
                 float baseX = bone.posX, baseY = bone.posY, baseZ = bone.posZ;
 
                 for (const auto& kf : track.keyframes) {
+                    // Animation translation is additive to bind pose
                     writeFloat(binBuffer, baseX + kf.x);
                     writeFloat(binBuffer, baseY + kf.y);
                     writeFloat(binBuffer, baseZ + kf.z);
@@ -339,6 +342,21 @@ bool exportToGLB(const Model& model, const std::vector<Animation>& animations, c
 
             int w = mat.diffuseWidth, h = mat.diffuseHeight;
             std::vector<uint8_t> png;
+
+            std::string matNameLower = mat.name;
+            std::transform(matNameLower.begin(), matNameLower.end(), matNameLower.begin(), ::tolower);
+            bool isHairMaterial = (matNameLower.find("_har_") != std::string::npos ||
+                                   matNameLower.find("hair") != std::string::npos ||
+                                   matNameLower.find("_ubm_") != std::string::npos ||
+                                   matNameLower.find("_ulm_") != std::string::npos) &&
+                                  matNameLower.find("bld") == std::string::npos;
+
+            std::vector<uint8_t> exportData = mat.diffuseData;
+            if (isHairMaterial) {
+                for (size_t i = 3; i < exportData.size(); i += 4) {
+                    exportData[i] = 255;
+                }
+            }
 
             uint32_t crc_table[256];
             for (int n = 0; n < 256; n++) {
@@ -375,7 +393,7 @@ bool exportToGLB(const Model& model, const std::vector<Animation>& animations, c
             std::vector<uint8_t> raw;
             for (int y = 0; y < h; y++) {
                 raw.push_back(0);
-                raw.insert(raw.end(), mat.diffuseData.begin() + y * w * 4, mat.diffuseData.begin() + (y + 1) * w * 4);
+                raw.insert(raw.end(), exportData.begin() + y * w * 4, exportData.begin() + (y + 1) * w * 4);
             }
 
             std::vector<uint8_t> deflated;

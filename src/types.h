@@ -156,6 +156,13 @@ struct AppState {
     bool pendingExport = false;
     CachedEntry pendingExportEntry;
     MeshBrowserState meshBrowser;
+    std::vector<std::string> audioFiles;
+    std::vector<std::string> voiceOverFiles;
+    bool audioFilesLoaded = false;
+    bool audioPlaying = false;
+    std::string currentAudioPath;
+    std::string currentAudioName;
+    bool showAudioPlayer = false;
     bool showHeadSelector = false;
     std::vector<std::string> availableHeads;
     std::vector<std::string> availableHeadNames;
