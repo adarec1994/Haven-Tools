@@ -58,12 +58,10 @@ add_library(imguifiledialog_lib STATIC
 target_include_directories(imguifiledialog_lib PUBLIC ${imguifiledialog_SOURCE_DIR})
 target_link_libraries(imguifiledialog_lib PUBLIC imgui_lib)
 
-# Embed model_names.csv into the executable
-file(READ "${CMAKE_SOURCE_DIR}/model_names.csv" CSV_CONTENT HEX)
+file(READ "${CMAKE_SOURCE_DIR}/src/model_names.csv" CSV_CONTENT HEX)
 string(LENGTH "${CSV_CONTENT}" CSV_HEX_LENGTH)
 math(EXPR CSV_LENGTH "${CSV_HEX_LENGTH} / 2")
 
-# Convert hex to C array
 string(REGEX REPLACE "([0-9a-f][0-9a-f])" "0x\\1," CSV_ARRAY "${CSV_CONTENT}")
 string(REGEX REPLACE ",$" "" CSV_ARRAY "${CSV_ARRAY}")
 
@@ -76,34 +74,38 @@ unsigned int model_names_csv_len = ${CSV_LENGTH};
 ")
 
 add_executable(HavenTools
-        main.cpp
-        types.cpp
-        types.h
-        erf.cpp
-        erf.h
-        fnv.cpp
-        fnv.h
-        Gff.cpp
-        Gff.h
-        Mesh.h
-        model_loader.cpp
-        model_loader.h
-        dds_loader.cpp
-        dds_loader.h
-        animation.cpp
-        animation.h
-        mmh_loader.cpp
-        mmh_loader.h
-        phy_loader.cpp
-        renderer.cpp
-        renderer.h
-        ui.cpp
-        ui.h
-        export.cpp
-        export.h
+        src/main.cpp
+        src/types.cpp
+        src/types.h
+        src/erf.cpp
+        src/erf.h
+        src/fnv.cpp
+        src/fnv.h
+        src/Gff.cpp
+        src/Gff.h
+        src/Mesh.h
+        src/model_loader.cpp
+        src/model_loader.h
+        src/dds_loader.cpp
+        src/dds_loader.h
+        src/animation.cpp
+        src/animation.h
+        src/mmh_loader.cpp
+        src/mmh_loader.h
+        src/phy_loader.cpp
+        src/renderer.cpp
+        src/renderer.h
+        src/ui.cpp
+        src/ui.h
+        src/export.cpp
+        src/export.h
 )
 
-target_include_directories(HavenTools PRIVATE ${CMAKE_SOURCE_DIR} ${CMAKE_BINARY_DIR})
+target_include_directories(HavenTools PRIVATE
+        ${CMAKE_SOURCE_DIR}/src
+        ${CMAKE_BINARY_DIR}
+)
+
 target_link_libraries(HavenTools PRIVATE imgui_lib imguifiledialog_lib)
 
 if(WIN32)
