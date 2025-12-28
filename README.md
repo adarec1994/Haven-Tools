@@ -30,4 +30,4 @@ Usage:
 
 Browse to your DAO installation and select the .exe. 
 
-Browse without bloating your pc with a bunch of files, preview, and export as you wish! 
+Explore without bloating your pc with a bunch of files, preview, and export as you wish! 
