@@ -27,11 +27,9 @@
 
 namespace fs = std::filesystem;
 
-// Settings (ui_settings.cpp)
 void saveSettings(const AppState& state);
 void loadSettings(AppState& state);
 
-// Audio (ui_audio.cpp)
 void scanAudioFiles(AppState& state);
 bool extractFSB4toMP3(const std::string& fsbPath, const std::string& outPath);
 std::vector<uint8_t> extractFSB4toMP3Data(const std::string& fsbPath);
@@ -50,24 +48,29 @@ void setAudioPosition(int ms);
 void pauseAudio();
 void resumeAudio();
 
-// Helpers (ui_helpers.cpp)
-void loadMeshDatabase(AppState& state);
+bool isModelFile(const std::string& name);
+bool isMaoFile(const std::string& name);
+bool isPhyFile(const std::string& name);
 std::vector<std::pair<std::string, std::string>> findAssociatedHeads(AppState& state, const std::string& bodyMsh);
 std::vector<std::pair<std::string, std::string>> findAssociatedEyes(AppState& state, const std::string& bodyMsh);
-std::vector<uint8_t> readFromCache(AppState& state, const std::string& name, const std::string& ext);
+void loadMeshDatabase(AppState& state);
+bool loadModelFromEntry(AppState& state, const ERFEntry& entry);
 std::vector<uint8_t> readFromErfs(const std::vector<std::unique_ptr<ERFFile>>& erfs, const std::string& name);
-uint32_t loadTexByNameCached(AppState& state, const std::string& texName, 
+
+std::vector<uint8_t> readFromCache(AppState& state, const std::string& name, const std::string& ext);
+
+uint32_t loadTexByNameCached(AppState& state, const std::string& texName,
                              std::vector<uint8_t>* rgbaOut = nullptr, int* wOut = nullptr, int* hOut = nullptr);
-uint32_t loadTexByName(AppState& state, const std::string& texName, 
+uint32_t loadTexByName(AppState& state, const std::string& texName,
                        std::vector<uint8_t>* rgbaOut = nullptr, int* wOut = nullptr, int* hOut = nullptr);
 std::vector<uint8_t> loadTextureData(AppState& state, const std::string& texName);
 void loadAndMergeHead(AppState& state, const std::string& headMshFile);
 
-// Browser windows (ui_browser.cpp)
+void drawVirtualList(int itemCount, std::function<void(int)> renderItem);
+
 void drawMeshBrowserWindow(AppState& state);
 void drawBrowserWindow(AppState& state);
 
-// UI Windows (ui_windows.cpp)
 void drawRenderSettingsWindow(AppState& state);
 void drawMaoViewer(AppState& state);
 void drawAudioPlayer(AppState& state);
@@ -76,15 +79,7 @@ void drawUvViewer(AppState& state);
 void drawAnimWindow(AppState& state, ImGuiIO& io);
 void drawFSBBrowserWindow(AppState& state);
 
-// Character Designer (ui_character.cpp)
 void filterEncryptedErfs(AppState& state);
 void buildCharacterLists(AppState& state);
 void loadCharacterModel(AppState& state);
 void drawCharacterDesigner(AppState& state, ImGuiIO& io);
-
-// Main UI (ui_main.cpp)
-void drawSplashScreen(AppState& state, int displayW, int displayH);
-void preloadErfs(AppState& state);
-
-// Splash state
-extern bool showSplash;

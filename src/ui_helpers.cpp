@@ -310,6 +310,16 @@ std::vector<uint8_t> loadTextureData(AppState& state, const std::string& texName
     return {};
 }
 
+void drawVirtualList(int itemCount, std::function<void(int)> renderItem) {
+    ImGuiListClipper clipper;
+    clipper.Begin(itemCount);
+    while (clipper.Step()) {
+        for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; i++) {
+            renderItem(i);
+        }
+    }
+}
+
 void loadAndMergeHead(AppState& state, const std::string& headMshFile) {
     if (!state.hasModel) {
         return;

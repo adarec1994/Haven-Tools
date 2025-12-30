@@ -146,20 +146,23 @@ void drawBrowserWindow(AppState& state) {
     if (ImGui::BeginMenuBar()) {
         if (ImGui::Button("Open Folder")) {
             IGFD::FileDialogConfig config;
-            config.path = state.lastDialogPath.empty() ? 
+            config.path = state.lastDialogPath.empty() ?
                 (state.selectedFolder.empty() ? "." : state.selectedFolder) : state.lastDialogPath;
             ImGuiFileDialog::Instance()->OpenDialog("ChooseFolder", "Choose Folder", nullptr, config);
         }
         if (!state.statusMessage.empty()) { ImGui::SameLine(); ImGui::Text("%s", state.statusMessage.c_str()); }
         ImGui::EndMenuBar();
     }
+
     ImGui::Columns(2, "browser_columns");
     ImGui::Text("Files");
     ImGui::Separator();
+
     ImGui::BeginChild("ERFList", ImVec2(0, 0), true);
     if (!state.audioFilesLoaded && !state.selectedFolder.empty()) {
         scanAudioFiles(state);
     }
+
     bool audioSelected = (state.selectedErfName == "[Audio]");
     if (ImGui::Selectable("Audio - Sound Effects", audioSelected)) {
         if (!audioSelected) {
@@ -183,6 +186,7 @@ void drawBrowserWindow(AppState& state) {
             state.statusMessage = std::to_string(state.audioFiles.size()) + " audio files";
         }
     }
+
     bool voSelected = (state.selectedErfName == "[VoiceOver]");
     if (ImGui::Selectable("Audio - Voice Over", voSelected)) {
         if (!voSelected) {
@@ -206,7 +210,9 @@ void drawBrowserWindow(AppState& state) {
             state.statusMessage = std::to_string(state.voiceOverFiles.size()) + " voice over files";
         }
     }
+
     ImGui::Separator();
+
     for (const auto& [filename, indices] : state.erfsByName) {
         bool isSelected = (state.selectedErfName == filename);
         if (ImGui::Selectable(filename.c_str(), isSelected)) {
@@ -238,19 +244,24 @@ void drawBrowserWindow(AppState& state) {
         }
     }
     ImGui::EndChild();
+
     ImGui::NextColumn();
+
     if (!state.selectedErfName.empty() && !state.mergedEntries.empty()) {
         bool hasTextures = false, hasModels = false;
         bool isAudioCategory = (state.selectedErfName == "[Audio]" || state.selectedErfName == "[VoiceOver]");
+
         for (const auto& ce : state.mergedEntries) {
             if (ce.name.find("__HEADER__") == 0) continue;
             if (ce.name.size() > 4 && ce.name.substr(ce.name.size() - 4) == ".dds") hasTextures = true;
             if (isModelFile(ce.name)) hasModels = true;
             if (hasTextures && hasModels) break;
         }
+
         ImGui::Text("Contents (%zu)", state.mergedEntries.size());
         ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
         ImGui::InputText("##contentSearch", state.contentFilter, sizeof(state.contentFilter));
+
         if (isAudioCategory) {
             if (ImGui::Button("Convert All to MP3")) {
                 IGFD::FileDialogConfig config;
@@ -266,28 +277,7 @@ void drawBrowserWindow(AppState& state) {
                 ImGuiFileDialog::Instance()->OpenDialog("ConvertAllAudio", "Select Output Folder", nullptr, config);
             }
             ImGui::SameLine();
-            if (ImGui::Button("Convert Selected")) {
-                if (state.selectedEntryIndex >= 0) {
-                    IGFD::FileDialogConfig config;
-                    #ifdef _WIN32
-                    char* userProfile = getenv("USERPROFILE");
-                    if (userProfile) config.path = std::string(userProfile) + "\\Documents";
-                    else config.path = ".";
-                    #else
-                    char* home = getenv("HOME");
-                    if (home) config.path = std::string(home) + "/Documents";
-                    else config.path = ".";
-                    #endif
-                    std::string defaultName = state.mergedEntries[state.selectedEntryIndex].name;
-                    size_t dotPos = defaultName.rfind('.');
-                    if (dotPos != std::string::npos) defaultName = defaultName.substr(0, dotPos);
-                    defaultName += ".mp3";
-                    config.fileName = defaultName;
-                    ImGuiFileDialog::Instance()->OpenDialog("ConvertSelectedAudio", "Save MP3", ".mp3", config);
-                }
-            }
             if (state.audioPlaying || state.showAudioPlayer) {
-                ImGui::SameLine();
                 if (ImGui::Button("Stop")) {
                     stopAudio();
                     state.audioPlaying = false;
@@ -296,24 +286,8 @@ void drawBrowserWindow(AppState& state) {
                 ImGui::SameLine();
                 ImGui::TextColored(ImVec4(0.5f, 1.0f, 0.5f, 1.0f), "Playing: %s", state.currentAudioName.c_str());
             }
-            ImGui::TextDisabled("Double-click to play audio");
-        }
-        if (hasTextures && ImGui::Button("Dump Textures")) {
-            IGFD::FileDialogConfig config;
-            #ifdef _WIN32
-            char* userProfile = getenv("USERPROFILE");
-            if (userProfile) config.path = std::string(userProfile) + "\\Documents";
-            else config.path = ".";
-            #else
-            char* home = getenv("HOME");
-            if (home) config.path = std::string(home) + "/Documents";
-            else config.path = ".";
-            #endif
-            ImGuiFileDialog::Instance()->OpenDialog("DumpTextures", "Select Output Folder", nullptr, config);
-        }
-        if (hasModels) {
-            if (hasTextures) ImGui::SameLine();
-            if (ImGui::Button("Dump Models")) {
+        } else {
+            if (ImGui::Button("Dump all files")) {
                 IGFD::FileDialogConfig config;
                 #ifdef _WIN32
                 char* userProfile = getenv("USERPROFILE");
@@ -324,10 +298,45 @@ void drawBrowserWindow(AppState& state) {
                 if (home) config.path = std::string(home) + "/Documents";
                 else config.path = ".";
                 #endif
-                ImGuiFileDialog::Instance()->OpenDialog("DumpModels", "Select Output Folder", nullptr, config);
+                ImGuiFileDialog::Instance()->OpenDialog("DumpAllFiles", "Select Output Folder", nullptr, config);
+            }
+
+            if (hasTextures) {
+                ImGui::SameLine();
+                if (ImGui::Button("Dump Textures")) {
+                    IGFD::FileDialogConfig config;
+                    #ifdef _WIN32
+                    char* userProfile = getenv("USERPROFILE");
+                    if (userProfile) config.path = std::string(userProfile) + "\\Documents";
+                    else config.path = ".";
+                    #else
+                    char* home = getenv("HOME");
+                    if (home) config.path = std::string(home) + "/Documents";
+                    else config.path = ".";
+                    #endif
+                    ImGuiFileDialog::Instance()->OpenDialog("DumpTextures", "Select Output Folder", nullptr, config);
+                }
+            }
+            if (hasModels) {
+                ImGui::SameLine();
+                if (ImGui::Button("Dump Models")) {
+                    IGFD::FileDialogConfig config;
+                    #ifdef _WIN32
+                    char* userProfile = getenv("USERPROFILE");
+                    if (userProfile) config.path = std::string(userProfile) + "\\Documents";
+                    else config.path = ".";
+                    #else
+                    char* home = getenv("HOME");
+                    if (home) config.path = std::string(home) + "/Documents";
+                    else config.path = ".";
+                    #endif
+                    ImGuiFileDialog::Instance()->OpenDialog("DumpModels", "Select Output Folder", nullptr, config);
+                }
             }
         }
+
         ImGui::Separator();
+
         std::string currentFilter = state.contentFilter;
         if (currentFilter != state.lastContentFilter || state.filteredEntryIndices.empty()) {
             state.lastContentFilter = currentFilter;
@@ -340,7 +349,6 @@ void drawBrowserWindow(AppState& state) {
                     state.filteredEntryIndices.push_back(i);
                     continue;
                 }
-
                 if (filterLower.empty()) {
                     state.filteredEntryIndices.push_back(i);
                 } else {
@@ -355,27 +363,31 @@ void drawBrowserWindow(AppState& state) {
 
         ImGui::BeginChild("EntryList", ImVec2(0, 0), true);
 
-        for (int i : state.filteredEntryIndices) {
-            const CachedEntry& ce = state.mergedEntries[i];
+        drawVirtualList((int)state.filteredEntryIndices.size(), [&](int i) {
+            int idx = state.filteredEntryIndices[i];
+            const CachedEntry& ce = state.mergedEntries[idx];
 
             if (ce.name.find("__HEADER__") == 0) {
-                ImGui::Separator();
                 std::string headerTitle = ce.name.substr(10);
-                ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "%s", headerTitle.c_str());
-                continue;
+                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.0f, 0.0f, 1.0f));
+                ImGui::Selectable(headerTitle.c_str(), false, ImGuiSelectableFlags_Disabled);
+                ImGui::PopStyleColor();
+                return;
             }
 
             bool isModel = isModelFile(ce.name), isMao = isMaoFile(ce.name), isPhy = isPhyFile(ce.name);
             bool isTexture = ce.name.size() > 4 && ce.name.substr(ce.name.size() - 4) == ".dds";
             bool isAudioFile = ce.name.size() > 4 && (ce.name.substr(ce.name.size() - 4) == ".fsb" );
+
             if (isModel) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.4f, 1.0f, 0.4f, 1.0f));
             else if (isMao) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.8f, 0.4f, 1.0f));
             else if (isPhy) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.4f, 1.0f, 1.0f));
             else if (isTexture) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.4f, 0.8f, 1.0f, 1.0f));
             else if (isAudioFile) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.6f, 0.2f, 1.0f));
-            char label[256]; snprintf(label, sizeof(label), "%s##%d", ce.name.c_str(), i);
-            if (ImGui::Selectable(label, i == state.selectedEntryIndex, ImGuiSelectableFlags_AllowDoubleClick)) {
-                state.selectedEntryIndex = i;
+
+            char label[256]; snprintf(label, sizeof(label), "%s##%d", ce.name.c_str(), idx);
+            if (ImGui::Selectable(label, idx == state.selectedEntryIndex, ImGuiSelectableFlags_AllowDoubleClick)) {
+                state.selectedEntryIndex = idx;
                 if (ImGui::IsMouseDoubleClicked(0)) {
                     ERFFile erf;
                     if (erf.open(state.erfFiles[ce.erfIdx])) {
@@ -438,9 +450,11 @@ void drawBrowserWindow(AppState& state) {
                     }
                 }
             }
+
             bool isAudio = (state.selectedErfName == "[Audio]" || state.selectedErfName == "[VoiceOver]") &&
                            (ce.name.size() > 4 && (ce.name.substr(ce.name.size() - 4) == ".fsb" ));
-            if (isAudio && ImGui::IsMouseDoubleClicked(0) && i == state.selectedEntryIndex) {
+
+            if (isAudio && ImGui::IsMouseDoubleClicked(0) && idx == state.selectedEntryIndex) {
                 std::string fullPath;
                 if (state.selectedErfName == "[Audio]" && ce.erfIdx < state.audioFiles.size()) {
                     fullPath = state.audioFiles[ce.erfIdx];
@@ -570,9 +584,40 @@ void drawBrowserWindow(AppState& state) {
                 ImGui::EndPopup();
             }
             if (isModel || isMao || isPhy || isTexture || isAudioFile) ImGui::PopStyleColor();
-        }
+        });
+
         ImGui::EndChild();
     } else ImGui::Text("Select an ERF file");
     ImGui::Columns(1);
     ImGui::End();
+
+    if (ImGuiFileDialog::Instance()->Display("DumpAllFiles", ImGuiWindowFlags_NoCollapse, ImVec2(500, 400))) {
+        if (ImGuiFileDialog::Instance()->IsOk()) {
+            std::string outDir = ImGuiFileDialog::Instance()->GetCurrentPath();
+            int count = 0;
+            std::map<size_t, std::vector<size_t>> entriesByErf;
+            for(const auto& ce : state.mergedEntries) {
+                 if (ce.name.find("__HEADER__") == 0) continue;
+                 entriesByErf[ce.erfIdx].push_back(ce.entryIdx);
+            }
+            for(const auto& [erfIdx, entryIndices] : entriesByErf) {
+                if(erfIdx >= state.erfFiles.size()) continue;
+                ERFFile erf;
+                if(erf.open(state.erfFiles[erfIdx])) {
+                    for(size_t entryIdx : entryIndices) {
+                        if(entryIdx < erf.entries().size()) {
+                            const auto& entry = erf.entries()[entryIdx];
+                            std::string outPath = outDir + "/" + entry.name;
+                            if(erf.extractEntry(entry, outPath)) {
+                                count++;
+                            }
+                        }
+                    }
+                    erf.close();
+                }
+            }
+            state.statusMessage = "Dumped " + std::to_string(count) + " files.";
+        }
+        ImGuiFileDialog::Instance()->Close();
+    }
 }
