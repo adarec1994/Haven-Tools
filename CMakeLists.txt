@@ -4,10 +4,6 @@ project(HavenTools)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-if(MSVC)
-    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
-endif()
-
 include(FetchContent)
 
 FetchContent_Declare(
@@ -18,7 +14,6 @@ FetchContent_Declare(
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-set(GLFW_USE_HYBRID_HPG OFF CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(glfw)
 
 FetchContent_Declare(
@@ -63,10 +58,12 @@ add_library(imguifiledialog_lib STATIC
 target_include_directories(imguifiledialog_lib PUBLIC ${imguifiledialog_SOURCE_DIR})
 target_link_libraries(imguifiledialog_lib PUBLIC imgui_lib)
 
+# Embed model_names.csv into the executable
 file(READ "${CMAKE_SOURCE_DIR}/src/model_names.csv" CSV_CONTENT HEX)
 string(LENGTH "${CSV_CONTENT}" CSV_HEX_LENGTH)
 math(EXPR CSV_LENGTH "${CSV_HEX_LENGTH} / 2")
 
+# Convert hex to C array
 string(REGEX REPLACE "([0-9a-f][0-9a-f])" "0x\\1," CSV_ARRAY "${CSV_CONTENT}")
 string(REGEX REPLACE ",$" "" CSV_ARRAY "${CSV_ARRAY}")
 
@@ -100,17 +97,20 @@ add_executable(HavenTools
         src/phy_loader.cpp
         src/renderer.cpp
         src/renderer.h
-        src/ui.cpp
         src/ui.h
+        src/ui_internal.h
+        src/ui_settings.cpp
+        src/ui_audio.cpp
+        src/ui_helpers.cpp
+        src/ui_browser.cpp
+        src/ui_windows.cpp
+        src/ui_character.cpp
+        src/ui_main.cpp
         src/export.cpp
         src/export.h
 )
 
-target_include_directories(HavenTools PRIVATE
-        ${CMAKE_SOURCE_DIR}/src
-        ${CMAKE_BINARY_DIR}
-)
-
+target_include_directories(HavenTools PRIVATE ${CMAKE_SOURCE_DIR}/src ${CMAKE_BINARY_DIR})
 target_link_libraries(HavenTools PRIVATE imgui_lib imguifiledialog_lib)
 
 if(WIN32)
