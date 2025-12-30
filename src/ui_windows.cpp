@@ -1,6 +1,9 @@
 #include "ui_internal.h"
+
 void drawRenderSettingsWindow(AppState& state) {
+    ImGui::SetNextWindowPos(ImVec2(20, 40), ImGuiCond_FirstUseEver);
     ImGui::SetNextWindowSizeConstraints(ImVec2(300, 100), ImVec2(500, 800));
+
     ImGui::Begin("Render Settings", &state.showRenderSettings, ImGuiWindowFlags_AlwaysAutoResize);
     ImGui::Checkbox("Wireframe", &state.renderSettings.wireframe);
     ImGui::Checkbox("Show Axes", &state.renderSettings.showAxes);
@@ -175,8 +178,11 @@ void drawRenderSettingsWindow(AppState& state) {
     }
     ImGui::End();
 }
+
 void drawMaoViewer(AppState& state) {
+    ImGui::SetNextWindowPos(ImVec2(600, 200), ImGuiCond_FirstUseEver);
     ImGui::SetNextWindowSize(ImVec2(500, 400), ImGuiCond_FirstUseEver);
+
     ImGui::Begin(("MAO Viewer - " + state.maoFileName).c_str(), &state.showMaoViewer);
     if (ImGui::Button("Copy to Clipboard")) ImGui::SetClipboardText(state.maoContent.c_str());
     ImGui::Separator();
@@ -185,33 +191,36 @@ void drawMaoViewer(AppState& state) {
     ImGui::EndChild();
     ImGui::End();
 }
+
 void drawAudioPlayer(AppState& state) {
+    ImGui::SetNextWindowPos(ImVec2(20, 600), ImGuiCond_FirstUseEver);
     ImGui::SetNextWindowSize(ImVec2(400, 120), ImGuiCond_FirstUseEver);
+
     ImGui::Begin("Audio Player", &state.showAudioPlayer, ImGuiWindowFlags_NoCollapse);
-    
+
     ImGui::Text("%s", state.currentAudioName.c_str());
     ImGui::Separator();
-    
+
     int length = getAudioLength();
     int pos = getAudioPosition();
     bool playing = isAudioPlaying();
-    
+
     if (!playing && state.audioPlaying && pos >= length - 100) {
         state.audioPlaying = false;
     }
-    
+
     float progress = (length > 0) ? (float)pos / (float)length : 0.0f;
-    
+
     int totalSec = length / 1000;
     int curSec = pos / 1000;
     char timeStr[64];
     snprintf(timeStr, sizeof(timeStr), "%d:%02d / %d:%02d", curSec / 60, curSec % 60, totalSec / 60, totalSec % 60);
-    
+
     ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
     if (ImGui::SliderFloat("##Progress", &progress, 0.0f, 1.0f, timeStr)) {
         setAudioPosition((int)(progress * length));
     }
-    
+
     if (state.audioPlaying && playing) {
         if (ImGui::Button("Pause")) {
             pauseAudio();
@@ -232,17 +241,20 @@ void drawAudioPlayer(AppState& state) {
         stopAudio();
         state.audioPlaying = false;
     }
-    
+
     ImGui::End();
-    
+
     if (!state.showAudioPlayer) {
         stopAudio();
         state.audioPlaying = false;
     }
 }
+
 void drawTexturePreview(AppState& state) {
-    std::string title = "Texture Preview - " + state.previewTextureName;
+    ImGui::SetNextWindowPos(ImVec2(550, 40), ImGuiCond_FirstUseEver);
     ImGui::SetNextWindowSize(ImVec2(520, 580), ImGuiCond_FirstUseEver);
+
+    std::string title = "Texture Preview - " + state.previewTextureName;
     ImGui::Begin(title.c_str(), &state.showTexturePreview);
     if (ImGui::Button("Extract DDS")) {
         IGFD::FileDialogConfig config;
@@ -295,7 +307,7 @@ void drawTexturePreview(AppState& state) {
             ImVec2(0, 0), ImVec2(1, 1)
         );
     }
-    if (state.showUvOverlay && state.previewMeshIndex >= 0 && 
+    if (state.showUvOverlay && state.previewMeshIndex >= 0 &&
         state.previewMeshIndex < (int)state.currentModel.meshes.size()) {
         const auto& mesh = state.currentModel.meshes[state.previewMeshIndex];
         for (size_t i = 0; i + 2 < mesh.indices.size(); i += 3) {
@@ -311,10 +323,14 @@ void drawTexturePreview(AppState& state) {
     ImGui::Dummy(ImVec2(size, size));
     ImGui::End();
 }
+
 void drawUvViewer(AppState& state) {
+    ImGui::SetNextWindowPos(ImVec2(550, 600), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(400, 400), ImGuiCond_FirstUseEver);
+
     const auto& mesh = state.currentModel.meshes[state.selectedMeshForUv];
     std::string title = "UV Viewer - " + (mesh.name.empty() ? "Mesh " + std::to_string(state.selectedMeshForUv) : mesh.name);
-    ImGui::SetNextWindowSize(ImVec2(400, 400), ImGuiCond_FirstUseEver);
+
     ImGui::Begin(title.c_str(), &state.showUvViewer);
     ImVec2 canvasSize = ImGui::GetContentRegionAvail();
     float size = std::min(canvasSize.x, canvasSize.y - 20);
@@ -341,8 +357,11 @@ void drawUvViewer(AppState& state) {
     ImGui::Text("Triangles: %zu", mesh.indices.size() / 3);
     ImGui::End();
 }
+
 void drawAnimWindow(AppState& state, ImGuiIO& io) {
+    ImGui::SetNextWindowPos(ImVec2(1000, 40), ImGuiCond_FirstUseEver);
     ImGui::SetNextWindowSize(ImVec2(300, 400), ImGuiCond_FirstUseEver);
+
     ImGui::Begin("Animations", &state.showAnimWindow);
     std::vector<size_t> filteredAnims;
     for (size_t ii = 0; ii < state.availableAnimFiles.size(); ii++) {
@@ -434,22 +453,24 @@ void drawAnimWindow(AppState& state, ImGuiIO& io) {
 
 void drawFSBBrowserWindow(AppState& state) {
     if (!state.showFSBBrowser) return;
-    
+
+    ImGui::SetNextWindowPos(ImVec2(400, 200), ImGuiCond_FirstUseEver);
     ImGui::SetNextWindowSize(ImVec2(500, 400), ImGuiCond_FirstUseEver);
+
     if (!ImGui::Begin("Sound Bank Browser", &state.showFSBBrowser)) {
         ImGui::End();
         return;
     }
-    
+
     std::string filename = fs::path(state.currentFSBPath).filename().string();
     ImGui::Text("File: %s", filename.c_str());
     ImGui::Text("Samples: %zu", state.currentFSBSamples.size());
     ImGui::Separator();
-    
+
     ImGui::InputText("Filter", state.fsbSampleFilter, sizeof(state.fsbSampleFilter));
     std::string filterLower = state.fsbSampleFilter;
     std::transform(filterLower.begin(), filterLower.end(), filterLower.begin(), ::tolower);
-    
+
     if (ImGui::Button("Export All to WAV")) {
         IGFD::FileDialogConfig config;
         #ifdef _WIN32
@@ -482,33 +503,33 @@ void drawFSBBrowserWindow(AppState& state) {
         config.fileName = defaultName;
         ImGuiFileDialog::Instance()->OpenDialog("ExportFSBSample", "Save WAV", ".wav", config);
     }
-    
+
     if (isAudioPlaying()) {
         ImGui::SameLine();
         if (ImGui::Button("Stop")) {
             stopAudio();
         }
     }
-    
+
     ImGui::Separator();
     ImGui::Text("Double-click to play, right-click to export");
     ImGui::BeginChild("SampleList", ImVec2(0, 0), true);
-    
+
     for (int i = 0; i < (int)state.currentFSBSamples.size(); i++) {
         const auto& sample = state.currentFSBSamples[i];
-        
+
         if (!filterLower.empty()) {
             std::string nameLower = sample.name;
             std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), ::tolower);
             if (nameLower.find(filterLower) == std::string::npos) continue;
         }
-        
+
         char label[512];
         int mins = (int)(sample.duration / 60);
         int secs = (int)(sample.duration) % 60;
-        snprintf(label, sizeof(label), "%s [%d:%02d] %dHz##%d", 
+        snprintf(label, sizeof(label), "%s [%d:%02d] %dHz##%d",
                  sample.name.c_str(), mins, secs, sample.sampleRate, i);
-        
+
         bool selected = (state.selectedFSBSample == i);
         if (ImGui::Selectable(label, selected, ImGuiSelectableFlags_AllowDoubleClick)) {
             state.selectedFSBSample = i;
@@ -522,7 +543,7 @@ void drawFSBBrowserWindow(AppState& state) {
                 }
             }
         }
-        
+
         if (ImGui::BeginPopupContextItem()) {
             if (ImGui::MenuItem("Play")) {
                 auto wavData = extractFSB4SampleToWav(state.currentFSBPath, i);
@@ -554,11 +575,10 @@ void drawFSBBrowserWindow(AppState& state) {
             ImGui::EndPopup();
         }
     }
-    
+
     ImGui::EndChild();
     ImGui::End();
-    
-    // Handle export dialogs
+
     if (ImGuiFileDialog::Instance()->Display("ExportFSBSample", ImGuiWindowFlags_NoCollapse, ImVec2(500, 400))) {
         if (ImGuiFileDialog::Instance()->IsOk() && state.selectedFSBSample >= 0) {
             std::string outPath = ImGuiFileDialog::Instance()->GetFilePathName();
@@ -568,7 +588,7 @@ void drawFSBBrowserWindow(AppState& state) {
         }
         ImGuiFileDialog::Instance()->Close();
     }
-    
+
     if (ImGuiFileDialog::Instance()->Display("ExportAllFSBSamples", ImGuiWindowFlags_NoCollapse, ImVec2(500, 400))) {
         if (ImGuiFileDialog::Instance()->IsOk()) {
             std::string outDir = ImGuiFileDialog::Instance()->GetCurrentPath();

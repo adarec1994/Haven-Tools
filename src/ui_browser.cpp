@@ -170,8 +170,12 @@ void drawBrowserWindow(AppState& state) {
             state.lastContentFilter.clear();
             for (size_t i = 0; i < state.audioFiles.size(); i++) {
                 CachedEntry ce;
-                size_t lastSlash = state.audioFiles[i].find_last_of("/\\");
-                ce.name = (lastSlash != std::string::npos) ? state.audioFiles[i].substr(lastSlash + 1) : state.audioFiles[i];
+                if (state.audioFiles[i].find("__HEADER__") == 0) {
+                    ce.name = state.audioFiles[i];
+                } else {
+                    size_t lastSlash = state.audioFiles[i].find_last_of("/\\");
+                    ce.name = (lastSlash != std::string::npos) ? state.audioFiles[i].substr(lastSlash + 1) : state.audioFiles[i];
+                }
                 ce.erfIdx = i;
                 ce.entryIdx = 0;
                 state.mergedEntries.push_back(ce);
@@ -189,8 +193,12 @@ void drawBrowserWindow(AppState& state) {
             state.lastContentFilter.clear();
             for (size_t i = 0; i < state.voiceOverFiles.size(); i++) {
                 CachedEntry ce;
-                size_t lastSlash = state.voiceOverFiles[i].find_last_of("/\\");
-                ce.name = (lastSlash != std::string::npos) ? state.voiceOverFiles[i].substr(lastSlash + 1) : state.voiceOverFiles[i];
+                if (state.voiceOverFiles[i].find("__HEADER__") == 0) {
+                    ce.name = state.voiceOverFiles[i];
+                } else {
+                    size_t lastSlash = state.voiceOverFiles[i].find_last_of("/\\");
+                    ce.name = (lastSlash != std::string::npos) ? state.voiceOverFiles[i].substr(lastSlash + 1) : state.voiceOverFiles[i];
+                }
                 ce.erfIdx = i;
                 ce.entryIdx = 0;
                 state.mergedEntries.push_back(ce);
@@ -235,6 +243,7 @@ void drawBrowserWindow(AppState& state) {
         bool hasTextures = false, hasModels = false;
         bool isAudioCategory = (state.selectedErfName == "[Audio]" || state.selectedErfName == "[VoiceOver]");
         for (const auto& ce : state.mergedEntries) {
+            if (ce.name.find("__HEADER__") == 0) continue;
             if (ce.name.size() > 4 && ce.name.substr(ce.name.size() - 4) == ".dds") hasTextures = true;
             if (isModelFile(ce.name)) hasModels = true;
             if (hasTextures && hasModels) break;
@@ -327,6 +336,11 @@ void drawBrowserWindow(AppState& state) {
             std::string filterLower = currentFilter;
             std::transform(filterLower.begin(), filterLower.end(), filterLower.begin(), ::tolower);
             for (int i = 0; i < (int)state.mergedEntries.size(); i++) {
+                if (state.mergedEntries[i].name.find("__HEADER__") == 0) {
+                    state.filteredEntryIndices.push_back(i);
+                    continue;
+                }
+
                 if (filterLower.empty()) {
                     state.filteredEntryIndices.push_back(i);
                 } else {
@@ -338,222 +352,224 @@ void drawBrowserWindow(AppState& state) {
                 }
             }
         }
+
         ImGui::BeginChild("EntryList", ImVec2(0, 0), true);
-        ImGuiListClipper entryClipper;
-        entryClipper.Begin(static_cast<int>(state.filteredEntryIndices.size()));
-        while (entryClipper.Step()) {
-            for (int fi = entryClipper.DisplayStart; fi < entryClipper.DisplayEnd; fi++) {
-                int i = state.filteredEntryIndices[fi];
-                const CachedEntry& ce = state.mergedEntries[i];
-                bool isModel = isModelFile(ce.name), isMao = isMaoFile(ce.name), isPhy = isPhyFile(ce.name);
-                bool isTexture = ce.name.size() > 4 && ce.name.substr(ce.name.size() - 4) == ".dds";
-                bool isAudioFile = ce.name.size() > 4 && (ce.name.substr(ce.name.size() - 4) == ".fsb" );
-                if (isModel) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.4f, 1.0f, 0.4f, 1.0f));
-                else if (isMao) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.8f, 0.4f, 1.0f));
-                else if (isPhy) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.4f, 1.0f, 1.0f));
-                else if (isTexture) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.4f, 0.8f, 1.0f, 1.0f));
-                else if (isAudioFile) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.6f, 0.2f, 1.0f));
-                char label[256]; snprintf(label, sizeof(label), "%s##%d", ce.name.c_str(), i);
-                if (ImGui::Selectable(label, i == state.selectedEntryIndex, ImGuiSelectableFlags_AllowDoubleClick)) {
-                    state.selectedEntryIndex = i;
-                    if (ImGui::IsMouseDoubleClicked(0)) {
-                        ERFFile erf;
-                        if (erf.open(state.erfFiles[ce.erfIdx])) {
-                            if (ce.entryIdx < erf.entries().size()) {
-                                const auto& entry = erf.entries()[ce.entryIdx];
-                                if (isModel) {
-                                    if (state.showHeadSelector && state.pendingBodyMsh != ce.name) {
-                                        state.showHeadSelector = false;
+
+        for (int i : state.filteredEntryIndices) {
+            const CachedEntry& ce = state.mergedEntries[i];
+
+            if (ce.name.find("__HEADER__") == 0) {
+                ImGui::Separator();
+                std::string headerTitle = ce.name.substr(10);
+                ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "%s", headerTitle.c_str());
+                continue;
+            }
+
+            bool isModel = isModelFile(ce.name), isMao = isMaoFile(ce.name), isPhy = isPhyFile(ce.name);
+            bool isTexture = ce.name.size() > 4 && ce.name.substr(ce.name.size() - 4) == ".dds";
+            bool isAudioFile = ce.name.size() > 4 && (ce.name.substr(ce.name.size() - 4) == ".fsb" );
+            if (isModel) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.4f, 1.0f, 0.4f, 1.0f));
+            else if (isMao) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.8f, 0.4f, 1.0f));
+            else if (isPhy) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.4f, 1.0f, 1.0f));
+            else if (isTexture) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.4f, 0.8f, 1.0f, 1.0f));
+            else if (isAudioFile) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.6f, 0.2f, 1.0f));
+            char label[256]; snprintf(label, sizeof(label), "%s##%d", ce.name.c_str(), i);
+            if (ImGui::Selectable(label, i == state.selectedEntryIndex, ImGuiSelectableFlags_AllowDoubleClick)) {
+                state.selectedEntryIndex = i;
+                if (ImGui::IsMouseDoubleClicked(0)) {
+                    ERFFile erf;
+                    if (erf.open(state.erfFiles[ce.erfIdx])) {
+                        if (ce.entryIdx < erf.entries().size()) {
+                            const auto& entry = erf.entries()[ce.entryIdx];
+                            if (isModel) {
+                                if (state.showHeadSelector && state.pendingBodyMsh != ce.name) {
+                                    state.showHeadSelector = false;
+                                }
+                                auto heads = findAssociatedHeads(state, ce.name);
+                                auto eyes = findAssociatedEyes(state, ce.name);
+                                state.currentErf = std::make_unique<ERFFile>();
+                                state.currentErf->open(state.erfFiles[ce.erfIdx]);
+                                state.currentModelAnimations.clear();
+                                loadMeshDatabase(state);
+                                std::string mshLower = ce.name;
+                                std::transform(mshLower.begin(), mshLower.end(), mshLower.begin(), ::tolower);
+                                for (const auto& me : state.meshBrowser.allMeshes) {
+                                    std::string dbLower = me.mshFile;
+                                    std::transform(dbLower.begin(), dbLower.end(), dbLower.begin(), ::tolower);
+                                    if (dbLower == mshLower) {
+                                        state.currentModelAnimations = me.animations;
+                                        break;
                                     }
-                                    auto heads = findAssociatedHeads(state, ce.name);
-                                    auto eyes = findAssociatedEyes(state, ce.name);
-                                    state.currentErf = std::make_unique<ERFFile>();
-                                    state.currentErf->open(state.erfFiles[ce.erfIdx]);
-                                    state.currentModelAnimations.clear();
-                                    loadMeshDatabase(state);
-                                    std::string mshLower = ce.name;
-                                    std::transform(mshLower.begin(), mshLower.end(), mshLower.begin(), ::tolower);
-                                    for (const auto& me : state.meshBrowser.allMeshes) {
-                                        std::string dbLower = me.mshFile;
-                                        std::transform(dbLower.begin(), dbLower.end(), dbLower.begin(), ::tolower);
-                                        if (dbLower == mshLower) {
-                                            state.currentModelAnimations = me.animations;
-                                            break;
-                                        }
-                                    }
-                                    if (loadModelFromEntry(state, entry)) {
-                                        state.statusMessage = "Loaded: " + ce.name;
-                                        if (!heads.empty()) {
-                                            loadAndMergeHead(state, heads[0].first);
-                                            state.statusMessage += " + " + heads[0].second;
-                                            if (heads.size() > 1) {
-                                                state.availableHeads.clear();
-                                                state.availableHeadNames.clear();
-                                                for (const auto& h : heads) {
-                                                    state.availableHeads.push_back(h.first);
-                                                    state.availableHeadNames.push_back(h.second);
-                                                }
-                                                state.pendingBodyMsh = ce.name;
-                                                state.pendingBodyEntry = ce;
-                                                state.selectedHeadIndex = 0;
-                                                state.showHeadSelector = true;
+                                }
+                                if (loadModelFromEntry(state, entry)) {
+                                    state.statusMessage = "Loaded: " + ce.name;
+                                    if (!heads.empty()) {
+                                        loadAndMergeHead(state, heads[0].first);
+                                        state.statusMessage += " + " + heads[0].second;
+                                        if (heads.size() > 1) {
+                                            state.availableHeads.clear();
+                                            state.availableHeadNames.clear();
+                                            for (const auto& h : heads) {
+                                                state.availableHeads.push_back(h.first);
+                                                state.availableHeadNames.push_back(h.second);
                                             }
-                                        }
-                                        if (!eyes.empty()) {
-                                            loadAndMergeHead(state, eyes[0].first); 
-                                            state.statusMessage += " + " + eyes[0].second;
+                                            state.pendingBodyMsh = ce.name;
+                                            state.pendingBodyEntry = ce;
+                                            state.selectedHeadIndex = 0;
+                                            state.showHeadSelector = true;
                                         }
                                     }
-                                    else state.statusMessage = "Failed to parse: " + ce.name;
-                                    state.showRenderSettings = true;
-                                } else if (isMao) {
-                                    auto data = erf.readEntry(entry);
-                                    if (!data.empty()) {
-                                        state.maoContent = std::string(data.begin(), data.end());
-                                        state.maoFileName = ce.name;
-                                        state.showMaoViewer = true;
+                                    if (!eyes.empty()) {
+                                        loadAndMergeHead(state, eyes[0].first);
+                                        state.statusMessage += " + " + eyes[0].second;
                                     }
+                                }
+                                else state.statusMessage = "Failed to parse: " + ce.name;
+                                state.showRenderSettings = true;
+                            } else if (isMao) {
+                                auto data = erf.readEntry(entry);
+                                if (!data.empty()) {
+                                    state.maoContent = std::string(data.begin(), data.end());
+                                    state.maoFileName = ce.name;
+                                    state.showMaoViewer = true;
                                 }
                             }
                         }
                     }
                 }
-                bool isAudio = (state.selectedErfName == "[Audio]" || state.selectedErfName == "[VoiceOver]") && 
-                               (ce.name.size() > 4 && (ce.name.substr(ce.name.size() - 4) == ".fsb" ));
-                if (isAudio && ImGui::IsMouseDoubleClicked(0) && i == state.selectedEntryIndex) {
-                    std::string fullPath;
-                    if (state.selectedErfName == "[Audio]" && ce.erfIdx < state.audioFiles.size()) {
-                        fullPath = state.audioFiles[ce.erfIdx];
-                    } else if (state.selectedErfName == "[VoiceOver]" && ce.erfIdx < state.voiceOverFiles.size()) {
-                        fullPath = state.voiceOverFiles[ce.erfIdx];
-                    }
-                    if (!fullPath.empty()) {
-                        auto samples = parseFSB4Samples(fullPath);
-                        state.statusMessage = "Parsed FSB: " + std::to_string(samples.size()) + " samples";
+            }
+            bool isAudio = (state.selectedErfName == "[Audio]" || state.selectedErfName == "[VoiceOver]") &&
+                           (ce.name.size() > 4 && (ce.name.substr(ce.name.size() - 4) == ".fsb" ));
+            if (isAudio && ImGui::IsMouseDoubleClicked(0) && i == state.selectedEntryIndex) {
+                std::string fullPath;
+                if (state.selectedErfName == "[Audio]" && ce.erfIdx < state.audioFiles.size()) {
+                    fullPath = state.audioFiles[ce.erfIdx];
+                } else if (state.selectedErfName == "[VoiceOver]" && ce.erfIdx < state.voiceOverFiles.size()) {
+                    fullPath = state.voiceOverFiles[ce.erfIdx];
+                }
+                if (!fullPath.empty()) {
+                    auto samples = parseFSB4Samples(fullPath);
+                    state.statusMessage = "Parsed FSB: " + std::to_string(samples.size()) + " samples";
+                    if (samples.size() >= 1) {
+                        state.currentFSBPath = fullPath;
+                        state.currentFSBSamples = samples;
+                        state.selectedFSBSample = -1;
+                        state.fsbSampleFilter[0] = '\0';
+                        state.showFSBBrowser = true;
+                        state.statusMessage = "Sound bank: " + std::to_string(samples.size()) + " samples";
 
-                        // CHANGED: Open Browser for ANY valid FSB (Single or Multi)
-                        if (samples.size() >= 1) {
-                            state.currentFSBPath = fullPath;
-                            state.currentFSBSamples = samples;
-                            state.selectedFSBSample = -1;
-                            state.fsbSampleFilter[0] = '\0';
-                            state.showFSBBrowser = true;
-                            state.statusMessage = "Sound bank: " + std::to_string(samples.size()) + " samples";
-
-                             // Optional: Still auto-play if it's a single sample
-                             if (samples.size() == 1) {
-                                stopAudio();
-                                state.audioPlaying = false;
-                                auto mp3Data = extractFSB4toMP3Data(fullPath);
-                                if (!mp3Data.empty()) {
+                         if (samples.size() == 1) {
+                            stopAudio();
+                            state.audioPlaying = false;
+                            auto mp3Data = extractFSB4toMP3Data(fullPath);
+                            if (!mp3Data.empty()) {
+                                state.currentAudioName = ce.name;
+                                if (playAudioFromMemory(mp3Data)) {
+                                    state.audioPlaying = true;
+                                    state.showAudioPlayer = true;
+                                    state.statusMessage = "Playing: " + ce.name;
+                                }
+                            } else {
+                                auto wavData = extractFSB4SampleToWav(fullPath, 0);
+                                if (!wavData.empty()) {
                                     state.currentAudioName = ce.name;
-                                    if (playAudioFromMemory(mp3Data)) {
+                                    if (playWavFromMemory(wavData)) {
                                         state.audioPlaying = true;
                                         state.showAudioPlayer = true;
                                         state.statusMessage = "Playing: " + ce.name;
                                     }
-                                } else {
-                                    auto wavData = extractFSB4SampleToWav(fullPath, 0);
-                                    if (!wavData.empty()) {
-                                        state.currentAudioName = ce.name;
-                                        if (playWavFromMemory(wavData)) {
-                                            state.audioPlaying = true;
-                                            state.showAudioPlayer = true;
-                                            state.statusMessage = "Playing: " + ce.name;
-                                        }
-                                    }
                                 }
-                             }
-                        } else {
-                            state.statusMessage = "Failed to parse FSB file";
-                        }
+                            }
+                         }
+                    } else {
+                        state.statusMessage = "Failed to parse FSB file";
                     }
                 }
-                if (isAudio && ImGui::BeginPopupContextItem()) {
-                    if (ImGui::MenuItem("Convert to MP3...")) {
-                        IGFD::FileDialogConfig config;
-                        #ifdef _WIN32
-                        char* userProfile = getenv("USERPROFILE");
-                        if (userProfile) config.path = std::string(userProfile) + "\\Documents";
-                        else config.path = ".";
-                        #else
-                        char* home = getenv("HOME");
-                        if (home) config.path = std::string(home) + "/Documents";
-                        else config.path = ".";
-                        #endif
-                        std::string defaultName = ce.name;
-                        size_t dotPos = defaultName.rfind('.');
-                        if (dotPos != std::string::npos) defaultName = defaultName.substr(0, dotPos);
-                        defaultName += ".mp3";
-                        config.fileName = defaultName;
-                        ImGuiFileDialog::Instance()->OpenDialog("ConvertSelectedAudio", "Save MP3", ".mp3", config);
-                    }
-                    ImGui::EndPopup();
-                }
-                if (isModel && ImGui::BeginPopupContextItem()) {
-                    if (ImGui::MenuItem("Export as GLB...")) {
-                        state.pendingExportEntry = ce;
-                        state.pendingExport = true;
-                        IGFD::FileDialogConfig config;
-                        #ifdef _WIN32
-                        char* userProfile = getenv("USERPROFILE");
-                        if (userProfile) config.path = std::string(userProfile) + "\\Documents";
-                        else config.path = ".";
-                        #else
-                        char* home = getenv("HOME");
-                        if (home) config.path = std::string(home) + "/Documents";
-                        else config.path = ".";
-                        #endif
-                        std::string defaultName = ce.name;
-                        size_t dotPos = defaultName.rfind('.');
-                        if (dotPos != std::string::npos) defaultName = defaultName.substr(0, dotPos);
-                        defaultName += ".glb";
-                        config.fileName = defaultName;
-                        ImGuiFileDialog::Instance()->OpenDialog("ExportGLB", "Export as GLB", ".glb", config);
-                    }
-                    ImGui::EndPopup();
-                }
-                if (isTexture && ImGui::BeginPopupContextItem()) {
-                    if (ImGui::MenuItem("Export as DDS...")) {
-                        state.pendingTextureExport = ce;
-                        state.pendingTexExportDds = true;
-                        IGFD::FileDialogConfig config;
-                        #ifdef _WIN32
-                        char* userProfile = getenv("USERPROFILE");
-                        if (userProfile) config.path = std::string(userProfile) + "\\Documents";
-                        else config.path = ".";
-                        #else
-                        char* home = getenv("HOME");
-                        if (home) config.path = std::string(home) + "/Documents";
-                        else config.path = ".";
-                        #endif
-                        config.fileName = ce.name;
-                        ImGuiFileDialog::Instance()->OpenDialog("ExportTexDDS", "Export as DDS", ".dds", config);
-                    }
-                    if (ImGui::MenuItem("Export as PNG...")) {
-                        state.pendingTextureExport = ce;
-                        state.pendingTexExportPng = true;
-                        IGFD::FileDialogConfig config;
-                        #ifdef _WIN32
-                        char* userProfile = getenv("USERPROFILE");
-                        if (userProfile) config.path = std::string(userProfile) + "\\Documents";
-                        else config.path = ".";
-                        #else
-                        char* home = getenv("HOME");
-                        if (home) config.path = std::string(home) + "/Documents";
-                        else config.path = ".";
-                        #endif
-                        std::string defaultName = ce.name;
-                        size_t dotPos = defaultName.rfind('.');
-                        if (dotPos != std::string::npos) defaultName = defaultName.substr(0, dotPos);
-                        defaultName += ".png";
-                        config.fileName = defaultName;
-                        ImGuiFileDialog::Instance()->OpenDialog("ExportTexPNG", "Export as PNG", ".png", config);
-                    }
-                    ImGui::EndPopup();
-                }
-                if (isModel || isMao || isPhy || isTexture || isAudioFile) ImGui::PopStyleColor();
             }
+            if (isAudio && ImGui::BeginPopupContextItem()) {
+                if (ImGui::MenuItem("Convert to MP3...")) {
+                    IGFD::FileDialogConfig config;
+                    #ifdef _WIN32
+                    char* userProfile = getenv("USERPROFILE");
+                    if (userProfile) config.path = std::string(userProfile) + "\\Documents";
+                    else config.path = ".";
+                    #else
+                    char* home = getenv("HOME");
+                    if (home) config.path = std::string(home) + "/Documents";
+                    else config.path = ".";
+                    #endif
+                    std::string defaultName = ce.name;
+                    size_t dotPos = defaultName.rfind('.');
+                    if (dotPos != std::string::npos) defaultName = defaultName.substr(0, dotPos);
+                    defaultName += ".mp3";
+                    config.fileName = defaultName;
+                    ImGuiFileDialog::Instance()->OpenDialog("ConvertSelectedAudio", "Save MP3", ".mp3", config);
+                }
+                ImGui::EndPopup();
+            }
+            if (isModel && ImGui::BeginPopupContextItem()) {
+                if (ImGui::MenuItem("Export as GLB...")) {
+                    state.pendingExportEntry = ce;
+                    state.pendingExport = true;
+                    IGFD::FileDialogConfig config;
+                    #ifdef _WIN32
+                    char* userProfile = getenv("USERPROFILE");
+                    if (userProfile) config.path = std::string(userProfile) + "\\Documents";
+                    else config.path = ".";
+                    #else
+                    char* home = getenv("HOME");
+                    if (home) config.path = std::string(home) + "/Documents";
+                    else config.path = ".";
+                    #endif
+                    std::string defaultName = ce.name;
+                    size_t dotPos = defaultName.rfind('.');
+                    if (dotPos != std::string::npos) defaultName = defaultName.substr(0, dotPos);
+                    defaultName += ".glb";
+                    config.fileName = defaultName;
+                    ImGuiFileDialog::Instance()->OpenDialog("ExportGLB", "Export as GLB", ".glb", config);
+                }
+                ImGui::EndPopup();
+            }
+            if (isTexture && ImGui::BeginPopupContextItem()) {
+                if (ImGui::MenuItem("Export as DDS...")) {
+                    state.pendingTextureExport = ce;
+                    state.pendingTexExportDds = true;
+                    IGFD::FileDialogConfig config;
+                    #ifdef _WIN32
+                    char* userProfile = getenv("USERPROFILE");
+                    if (userProfile) config.path = std::string(userProfile) + "\\Documents";
+                    else config.path = ".";
+                    #else
+                    char* home = getenv("HOME");
+                    if (home) config.path = std::string(home) + "/Documents";
+                    else config.path = ".";
+                    #endif
+                    config.fileName = ce.name;
+                    ImGuiFileDialog::Instance()->OpenDialog("ExportTexDDS", "Export as DDS", ".dds", config);
+                }
+                if (ImGui::MenuItem("Export as PNG...")) {
+                    state.pendingTextureExport = ce;
+                    state.pendingTexExportPng = true;
+                    IGFD::FileDialogConfig config;
+                    #ifdef _WIN32
+                    char* userProfile = getenv("USERPROFILE");
+                    if (userProfile) config.path = std::string(userProfile) + "\\Documents";
+                    else config.path = ".";
+                    #else
+                    char* home = getenv("HOME");
+                    if (home) config.path = std::string(home) + "/Documents";
+                    else config.path = ".";
+                    #endif
+                    std::string defaultName = ce.name;
+                    size_t dotPos = defaultName.rfind('.');
+                    if (dotPos != std::string::npos) defaultName = defaultName.substr(0, dotPos);
+                    defaultName += ".png";
+                    config.fileName = defaultName;
+                    ImGuiFileDialog::Instance()->OpenDialog("ExportTexPNG", "Export as PNG", ".png", config);
+                }
+                ImGui::EndPopup();
+            }
+            if (isModel || isMao || isPhy || isTexture || isAudioFile) ImGui::PopStyleColor();
         }
         ImGui::EndChild();
     } else ImGui::Text("Select an ERF file");

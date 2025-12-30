@@ -11,7 +11,6 @@
 #pragma comment(lib, "mfuuid.lib")
 #endif
 
-// IMA ADPCM decoding tables
 static const int ima_step_table[89] = {
     7, 8, 9, 10, 11, 12, 13, 14, 16, 17,
     19, 21, 23, 25, 28, 31, 34, 37, 41, 45,
@@ -29,369 +28,305 @@ static const int ima_index_table[16] = {
     -1, -1, -1, -1, 2, 4, 6, 8
 };
 
+#ifdef _WIN32
+bool decodeAudioToPCM(const std::vector<uint8_t>& inputData, std::vector<uint8_t>& outputPCM, uint32_t& channels, uint32_t& sampleRate, uint32_t& bitsPerSample);
+#endif
+
 void scanAudioFiles(AppState& state) {
     state.audioFiles.clear();
     state.voiceOverFiles.clear();
     if (state.selectedFolder.empty()) return;
-    
+
     fs::path basePath = fs::path(state.selectedFolder);
-    
-    fs::path audioPath = basePath / "modules" / "single player" / "audio" / "sound";
-    if (fs::exists(audioPath)) {
-        for (const auto& entry : fs::recursive_directory_iterator(audioPath)) {
+
+    state.audioFiles.push_back("__HEADER__Core");
+
+    fs::path coreSoundPath = basePath / "modules" / "single player" / "audio" / "sound";
+    if (fs::exists(coreSoundPath)) {
+        for (const auto& entry : fs::recursive_directory_iterator(coreSoundPath)) {
             if (entry.is_regular_file()) {
                 std::string ext = entry.path().extension().string();
                 std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
-                if (ext == ".fsb") {
-                    state.audioFiles.push_back(entry.path().string());
-                }
+                if (ext == ".fsb") state.audioFiles.push_back(entry.path().string());
             }
         }
     }
-    
-    fs::path voPath = basePath / "modules" / "single player" / "audio" / "vo" / "en-us" / "vo";
-    if (fs::exists(voPath)) {
-        for (const auto& entry : fs::recursive_directory_iterator(voPath)) {
+    fs::path pkgCoreSoundPath = basePath / "packages" / "core" / "audio" / "sound";
+    if (fs::exists(pkgCoreSoundPath)) {
+        for (const auto& entry : fs::recursive_directory_iterator(pkgCoreSoundPath)) {
             if (entry.is_regular_file()) {
                 std::string ext = entry.path().extension().string();
                 std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
-                if (ext == ".fsb") {
-                    state.voiceOverFiles.push_back(entry.path().string());
-                }
+                if (ext == ".fsb") state.audioFiles.push_back(entry.path().string());
             }
         }
     }
-    
+
+    state.audioFiles.push_back("__HEADER__Awakening");
+    fs::path awakSoundPath = basePath / "packages" / "core_ep1" / "audio" / "sound";
+    if (fs::exists(awakSoundPath)) {
+        for (const auto& entry : fs::recursive_directory_iterator(awakSoundPath)) {
+            if (entry.is_regular_file()) {
+                std::string ext = entry.path().extension().string();
+                std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
+                if (ext == ".fsb") state.audioFiles.push_back(entry.path().string());
+            }
+        }
+    }
+
+    state.voiceOverFiles.push_back("__HEADER__Core");
+    fs::path coreVoPath = basePath / "modules" / "single player" / "audio" / "vo" / "en-us" / "vo";
+    if (fs::exists(coreVoPath)) {
+        for (const auto& entry : fs::recursive_directory_iterator(coreVoPath)) {
+            if (entry.is_regular_file()) {
+                std::string ext = entry.path().extension().string();
+                std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
+                if (ext == ".fsb") state.voiceOverFiles.push_back(entry.path().string());
+            }
+        }
+    }
+    fs::path pkgCoreVoPath = basePath / "packages" / "core" / "audio" / "vo" / "en-us" / "vo";
+    if (fs::exists(pkgCoreVoPath)) {
+        for (const auto& entry : fs::recursive_directory_iterator(pkgCoreVoPath)) {
+            if (entry.is_regular_file()) {
+                std::string ext = entry.path().extension().string();
+                std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
+                if (ext == ".fsb") state.voiceOverFiles.push_back(entry.path().string());
+            }
+        }
+    }
+
+    state.voiceOverFiles.push_back("__HEADER__Awakening");
+    fs::path awakVoPath = basePath / "packages" / "core_ep1" / "audio" / "vo" / "en-us" / "vo";
+    if (fs::exists(awakVoPath)) {
+        for (const auto& entry : fs::recursive_directory_iterator(awakVoPath)) {
+            if (entry.is_regular_file()) {
+                std::string ext = entry.path().extension().string();
+                std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
+                if (ext == ".fsb") state.voiceOverFiles.push_back(entry.path().string());
+            }
+        }
+    }
+
     state.audioFilesLoaded = true;
 }
 
-// Decode Xbox-style IMA ADPCM (36-byte blocks -> 64 samples)
 static std::vector<int16_t> decodeXboxImaAdpcm(const uint8_t* data, size_t dataLen, uint32_t numSamples) {
     std::vector<int16_t> output;
     output.reserve(numSamples);
-    
+
     size_t offset = 0;
     uint32_t samplesDecoded = 0;
-    
+
     while (samplesDecoded < numSamples && offset < dataLen) {
         if (offset + 4 > dataLen) break;
-        
-        // Block header: 2 bytes predictor (little-endian), 1 byte step index, 1 byte reserved
         int16_t predictor = (int16_t)(data[offset] | (data[offset + 1] << 8));
         int stepIndex = data[offset + 2];
         offset += 4;
-        
+
         stepIndex = std::max(0, std::min(88, stepIndex));
-        
-        // Each block has 32 bytes of nibble data = 64 samples
         size_t nibbleBytes = std::min((size_t)32, dataLen - offset);
-        
+
         for (size_t i = 0; i < nibbleBytes && samplesDecoded < numSamples; i++) {
             uint8_t byte = data[offset + i];
-            
             for (int nibbleIdx = 0; nibbleIdx < 2 && samplesDecoded < numSamples; nibbleIdx++) {
                 int nibble = (nibbleIdx == 0) ? (byte & 0x0F) : ((byte >> 4) & 0x0F);
-                
                 int step = ima_step_table[stepIndex];
-                
                 int diff = step >> 3;
                 if (nibble & 1) diff += step >> 2;
                 if (nibble & 2) diff += step >> 1;
                 if (nibble & 4) diff += step;
                 if (nibble & 8) diff = -diff;
-                
+
                 predictor += diff;
                 predictor = std::max((int16_t)-32768, std::min((int16_t)32767, predictor));
-                
                 output.push_back(predictor);
                 samplesDecoded++;
-                
                 stepIndex += ima_index_table[nibble];
                 stepIndex = std::max(0, std::min(88, stepIndex));
             }
         }
-        
         offset += nibbleBytes;
     }
-    
     return output;
 }
 
-// Parse FSB4 file and get sample info
 std::vector<FSBSampleInfo> parseFSB4Samples(const std::string& fsbPath) {
     std::vector<FSBSampleInfo> samples;
-    
     std::ifstream f(fsbPath, std::ios::binary);
     if (!f) return samples;
-    
+
     f.seekg(0, std::ios::end);
     size_t fileSize = f.tellg();
     f.seekg(0, std::ios::beg);
-    
+
     if (fileSize < 0x30) return samples;
-    
     std::vector<uint8_t> data(fileSize);
     f.read(reinterpret_cast<char*>(data.data()), fileSize);
-    
-    // Check FSB4 magic
-    if (data[0] != 'F' || data[1] != 'S' || data[2] != 'B' || data[3] != '4') {
-        return samples;
-    }
-    
+
+    if (data[0] != 'F' || data[1] != 'S' || data[2] != 'B' || data[3] != '4') return samples;
+
     uint32_t numSamples = *reinterpret_cast<uint32_t*>(&data[4]);
     uint32_t sampleHeadersSize = *reinterpret_cast<uint32_t*>(&data[8]);
-    
+    uint32_t dataSize = *reinterpret_cast<uint32_t*>(&data[12]);
+
     const size_t FSB_HEADER_SIZE = 0x30;
-    const size_t SAMPLE_HEADER_SIZE = 0x50;
+
+    size_t headerSizePerSample = (numSamples > 0) ? (sampleHeadersSize / numSamples) : 0;
+    if (headerSizePerSample < 0x40) headerSizePerSample = 0x50;
+
     size_t dataStart = FSB_HEADER_SIZE + sampleHeadersSize;
-    
-    // Calculate data offsets for each sample
     size_t currentDataOffset = dataStart;
-    
+
     for (uint32_t i = 0; i < numSamples; i++) {
-        size_t headerOffset = FSB_HEADER_SIZE + i * SAMPLE_HEADER_SIZE;
-        if (headerOffset + SAMPLE_HEADER_SIZE > fileSize) break;
-        
+        size_t headerOffset = FSB_HEADER_SIZE + (i * headerSizePerSample);
+        if (headerOffset + 0x40 > fileSize) break;
+
         FSBSampleInfo info;
-        
-        // Parse name (30 chars starting at offset 2)
         char name[31] = {0};
         memcpy(name, &data[headerOffset + 2], 30);
         info.name = name;
-        
+
         info.numSamples = *reinterpret_cast<uint32_t*>(&data[headerOffset + 0x20]);
         info.compressedSize = *reinterpret_cast<uint32_t*>(&data[headerOffset + 0x24]);
         info.mode = *reinterpret_cast<uint32_t*>(&data[headerOffset + 0x30]);
         info.sampleRate = *reinterpret_cast<uint32_t*>(&data[headerOffset + 0x34]);
         info.numChannels = *reinterpret_cast<uint16_t*>(&data[headerOffset + 0x3E]);
+
         info.dataOffset = currentDataOffset;
-        
-        // Calculate duration in seconds
-        if (info.sampleRate > 0) {
-            info.duration = (float)info.numSamples / info.sampleRate;
-        } else {
-            info.duration = 0.0f;
-        }
-        
-        samples.push_back(info);
         currentDataOffset += info.compressedSize;
+
+        if (info.sampleRate > 0) info.duration = (float)info.numSamples / info.sampleRate;
+        else info.duration = 0.0f;
+
+        samples.push_back(info);
     }
-    
     return samples;
-}
-
-// Extract a single sample from FSB4 to WAV data
-std::vector<uint8_t> extractFSB4SampleToWav(const std::string& fsbPath, int sampleIndex) {
-    std::vector<uint8_t> wavData;
-    
-    std::ifstream f(fsbPath, std::ios::binary);
-    if (!f) return wavData;
-    
-    f.seekg(0, std::ios::end);
-    size_t fileSize = f.tellg();
-    f.seekg(0, std::ios::beg);
-    
-    std::vector<uint8_t> data(fileSize);
-    f.read(reinterpret_cast<char*>(data.data()), fileSize);
-    
-    auto samples = parseFSB4Samples(fsbPath);
-    if (sampleIndex < 0 || sampleIndex >= (int)samples.size()) return wavData;
-    
-    const auto& info = samples[sampleIndex];
-    
-    // Check codec from per-sample mode flags
-    // FSOUND_IMAADPCM = 0x00400000
-    // FSOUND_DELTA = 0x00000200 (indicates MPEG in FSB4)
-    // FSOUND_MPEG = 0x00040000
-    bool isImaAdpcm = (info.mode & 0x00400000) != 0;
-    bool isMp3 = (info.mode & 0x00000200) || (info.mode & 0x00040000);
-    
-    std::vector<int16_t> pcmData;
-    
-    if (isImaAdpcm) {
-        // Decode IMA ADPCM
-        const uint8_t* sampleData = &data[info.dataOffset];
-        pcmData = decodeXboxImaAdpcm(sampleData, info.compressedSize, info.numSamples);
-    } else if (isMp3) {
-        // For MP3, we'd need to decode - for now return empty
-        // Could use Media Foundation on Windows
-        return wavData;
-    } else {
-        return wavData;
-    }
-    
-    if (pcmData.empty()) return wavData;
-    
-    // Build WAV file
-    uint32_t dataSize = pcmData.size() * 2;
-    uint32_t filesize = 36 + dataSize;
-    uint16_t numChannels = info.numChannels > 0 ? info.numChannels : 1;
-    uint32_t sampleRate = info.sampleRate;
-    uint16_t bitsPerSample = 16;
-    uint32_t byteRate = sampleRate * numChannels * bitsPerSample / 8;
-    uint16_t blockAlign = numChannels * bitsPerSample / 8;
-    
-    wavData.resize(44 + dataSize);
-    uint8_t* wav = wavData.data();
-    
-    // RIFF header
-    memcpy(wav, "RIFF", 4);
-    *reinterpret_cast<uint32_t*>(wav + 4) = filesize;
-    memcpy(wav + 8, "WAVE", 4);
-    
-    // fmt chunk
-    memcpy(wav + 12, "fmt ", 4);
-    *reinterpret_cast<uint32_t*>(wav + 16) = 16; // chunk size
-    *reinterpret_cast<uint16_t*>(wav + 20) = 1;  // PCM format
-    *reinterpret_cast<uint16_t*>(wav + 22) = numChannels;
-    *reinterpret_cast<uint32_t*>(wav + 24) = sampleRate;
-    *reinterpret_cast<uint32_t*>(wav + 28) = byteRate;
-    *reinterpret_cast<uint16_t*>(wav + 32) = blockAlign;
-    *reinterpret_cast<uint16_t*>(wav + 34) = bitsPerSample;
-    
-    // data chunk
-    memcpy(wav + 36, "data", 4);
-    *reinterpret_cast<uint32_t*>(wav + 40) = dataSize;
-    memcpy(wav + 44, pcmData.data(), dataSize);
-    
-    return wavData;
-}
-
-// Save WAV data to file
-bool saveFSB4SampleToWav(const std::string& fsbPath, int sampleIndex, const std::string& outPath) {
-    auto wavData = extractFSB4SampleToWav(fsbPath, sampleIndex);
-    if (wavData.empty()) return false;
-    
-    std::ofstream out(outPath, std::ios::binary);
-    if (!out) return false;
-    
-    out.write(reinterpret_cast<char*>(wavData.data()), wavData.size());
-    return true;
-}
-
-bool extractFSB4toMP3(const std::string& fsbPath, const std::string& outPath) {
-    std::ifstream f(fsbPath, std::ios::binary);
-    if (!f) return false;
-    
-    f.seekg(0, std::ios::end);
-    size_t fileSize = f.tellg();
-    f.seekg(0, std::ios::beg);
-    
-    if (fileSize < 0x80) return false;
-    
-    std::vector<uint8_t> data(fileSize);
-    f.read(reinterpret_cast<char*>(data.data()), fileSize);
-    
-    if (data[0] != 'F' || data[1] != 'S' || data[2] != 'B' || data[3] != '4') {
-        return false;
-    }
-    
-    uint32_t numSamples = *reinterpret_cast<uint32_t*>(&data[4]);
-    uint32_t headerSize = *reinterpret_cast<uint32_t*>(&data[8]);
-    uint32_t dataSize = *reinterpret_cast<uint32_t*>(&data[12]);
-    
-    if (numSamples != 1) {
-        return false;
-    }
-    
-    // Check PER-SAMPLE mode at offset 0x30 (FSB header) + 0x30 (offset in sample header)
-    uint32_t sampleMode = *reinterpret_cast<uint32_t*>(&data[0x30 + 0x30]);
-    
-    // FSOUND_DELTA (0x200) or FSOUND_MPEG (0x40000) indicates MP3
-    bool isMpeg = (sampleMode & 0x00000200) || (sampleMode & 0x00040000);
-    if (!isMpeg) {
-        return false;
-    }
-    
-    size_t mp3Start = 0x30 + headerSize;
-    if (mp3Start + 2 > fileSize) return false;
-    
-    // Verify MP3 sync bytes
-    if (data[mp3Start] != 0xFF || (data[mp3Start + 1] & 0xE0) != 0xE0) {
-        return false;
-    }
-    
-    if (mp3Start + dataSize > fileSize) {
-        dataSize = fileSize - mp3Start;
-    }
-    
-    std::ofstream out(outPath, std::ios::binary);
-    if (!out) return false;
-    
-    out.write(reinterpret_cast<char*>(&data[mp3Start]), dataSize);
-    return true;
 }
 
 std::vector<uint8_t> extractFSB4toMP3Data(const std::string& fsbPath) {
     std::vector<uint8_t> result;
+    auto samples = parseFSB4Samples(fsbPath);
+    if (samples.empty()) return result;
+
+    const auto& info = samples[0];
+
+    bool isMpeg = (info.mode & 0x00040000) || (info.mode & 0x00000200);
+    if (!isMpeg) return result;
+
     std::ifstream f(fsbPath, std::ios::binary);
     if (!f) return result;
-    
+
     f.seekg(0, std::ios::end);
     size_t fileSize = f.tellg();
     f.seekg(0, std::ios::beg);
-    
-    if (fileSize < 0x80) return result;
-    
-    std::vector<uint8_t> data(fileSize);
-    f.read(reinterpret_cast<char*>(data.data()), fileSize);
-    
-    if (data[0] != 'F' || data[1] != 'S' || data[2] != 'B' || data[3] != '4') {
-        return result;
-    }
-    
-    uint32_t numSamples = *reinterpret_cast<uint32_t*>(&data[4]);
-    uint32_t headerSize = *reinterpret_cast<uint32_t*>(&data[8]);
-    uint32_t dataSize = *reinterpret_cast<uint32_t*>(&data[12]);
-    
-    if (numSamples != 1) {
-        return result;
-    }
-    
-    // Check PER-SAMPLE mode at offset 0x30 (FSB header) + 0x30 (offset in sample header)
-    uint32_t sampleMode = *reinterpret_cast<uint32_t*>(&data[0x30 + 0x30]);
-    
-    // FSOUND_DELTA (0x200) or FSOUND_MPEG (0x40000) indicates MP3
-    bool isMpeg = (sampleMode & 0x00000200) || (sampleMode & 0x00040000);
-    if (!isMpeg) {
-        return result;
-    }
-    
-    size_t mp3Start = 0x30 + headerSize;
-    if (mp3Start + 2 > fileSize) return result;
-    
-    // Verify MP3 sync bytes
-    if (data[mp3Start] != 0xFF || (data[mp3Start + 1] & 0xE0) != 0xE0) {
-        return result;
-    }
-    
-    if (mp3Start + dataSize > fileSize) {
-        dataSize = fileSize - mp3Start;
-    }
-    
-    result.assign(data.begin() + mp3Start, data.begin() + mp3Start + dataSize);
+
+    if (info.dataOffset + info.compressedSize > fileSize) return result;
+
+    result.resize(info.compressedSize);
+    f.seekg(info.dataOffset);
+    f.read(reinterpret_cast<char*>(result.data()), info.compressedSize);
+
     return result;
 }
 
-std::string getFSB4SampleName(const std::string& fsbPath) {
+bool extractFSB4toMP3(const std::string& fsbPath, const std::string& outPath) {
+    auto data = extractFSB4toMP3Data(fsbPath);
+    if (data.empty()) return false;
+
+    std::ofstream out(outPath, std::ios::binary);
+    if (!out) return false;
+
+    out.write(reinterpret_cast<char*>(data.data()), data.size());
+    return true;
+}
+
+std::vector<uint8_t> extractFSB4SampleToWav(const std::string& fsbPath, int sampleIndex) {
+    std::vector<uint8_t> wavData;
+
+    auto samples = parseFSB4Samples(fsbPath);
+    if (sampleIndex < 0 || sampleIndex >= (int)samples.size()) return wavData;
+    const auto& info = samples[sampleIndex];
+
     std::ifstream f(fsbPath, std::ios::binary);
-    if (!f) return "";
-    
-    std::vector<uint8_t> header(0x60);
-    f.read(reinterpret_cast<char*>(header.data()), 0x60);
-    
-    if (header[0] != 'F' || header[1] != 'S' || header[2] != 'B' || header[3] != '4') {
-        return "";
+    if (!f) return wavData;
+    f.seekg(0, std::ios::end);
+    size_t fileSize = f.tellg();
+
+    if (info.dataOffset + info.compressedSize > fileSize) return wavData;
+    std::vector<uint8_t> rawData(info.compressedSize);
+    f.seekg(info.dataOffset);
+    f.read(reinterpret_cast<char*>(rawData.data()), info.compressedSize);
+
+    bool isImaAdpcm = (info.mode & 0x00400000) != 0;
+    bool isMp3 = (info.mode & 0x00040000) || (info.mode & 0x00000200);
+
+    std::vector<int16_t> pcmData;
+    uint32_t finalSampleRate = info.sampleRate;
+    uint32_t finalChannels = info.numChannels;
+
+    if (isImaAdpcm) {
+        pcmData = decodeXboxImaAdpcm(rawData.data(), rawData.size(), info.numSamples);
+    } else if (isMp3) {
+        #ifdef _WIN32
+        std::vector<uint8_t> pcmBytes;
+        uint32_t decCh = 0, decRate = 0, decBits = 0;
+        if (decodeAudioToPCM(rawData, pcmBytes, decCh, decRate, decBits)) {
+            finalChannels = decCh;
+            finalSampleRate = decRate;
+            pcmData.resize(pcmBytes.size() / 2);
+            memcpy(pcmData.data(), pcmBytes.data(), pcmBytes.size());
+        }
+        #endif
     }
-    
-    std::string name;
-    for (int i = 0x32; i < 0x60 && header[i] != 0; i++) {
-        name += (char)header[i];
-    }
-    return name;
+
+    if (pcmData.empty()) return wavData;
+
+    uint32_t dataSize = pcmData.size() * 2;
+    uint32_t filesize = 36 + dataSize;
+    uint16_t numChannels = finalChannels > 0 ? finalChannels : 1;
+    uint16_t bitsPerSample = 16;
+    uint32_t byteRate = finalSampleRate * numChannels * bitsPerSample / 8;
+    uint16_t blockAlign = numChannels * bitsPerSample / 8;
+
+    wavData.resize(44 + dataSize);
+    uint8_t* wav = wavData.data();
+
+    memcpy(wav, "RIFF", 4);
+    *reinterpret_cast<uint32_t*>(wav + 4) = filesize;
+    memcpy(wav + 8, "WAVE", 4);
+    memcpy(wav + 12, "fmt ", 4);
+    *reinterpret_cast<uint32_t*>(wav + 16) = 16;
+    *reinterpret_cast<uint16_t*>(wav + 20) = 1;
+    *reinterpret_cast<uint16_t*>(wav + 22) = numChannels;
+    *reinterpret_cast<uint32_t*>(wav + 24) = finalSampleRate;
+    *reinterpret_cast<uint32_t*>(wav + 28) = byteRate;
+    *reinterpret_cast<uint16_t*>(wav + 32) = blockAlign;
+    *reinterpret_cast<uint16_t*>(wav + 34) = bitsPerSample;
+    memcpy(wav + 36, "data", 4);
+    *reinterpret_cast<uint32_t*>(wav + 40) = dataSize;
+    memcpy(wav + 44, pcmData.data(), dataSize);
+
+    return wavData;
+}
+
+bool saveFSB4SampleToWav(const std::string& fsbPath, int sampleIndex, const std::string& outPath) {
+    auto wavData = extractFSB4SampleToWav(fsbPath, sampleIndex);
+    if (wavData.empty()) return false;
+    std::ofstream out(outPath, std::ios::binary);
+    if (!out) return false;
+    out.write(reinterpret_cast<char*>(wavData.data()), wavData.size());
+    return true;
+}
+
+std::string getFSB4SampleName(const std::string& fsbPath) {
+    auto samples = parseFSB4Samples(fsbPath);
+    if (!samples.empty()) return samples[0].name;
+    return "";
 }
 
 #ifdef _WIN32
+
 static IMFSourceReader* g_pReader = nullptr;
 static std::vector<uint8_t> g_audioBuffer;
 static size_t g_audioBufferPos = 0;
@@ -408,7 +343,6 @@ static size_t g_playStartOffset = 0;
 class MemoryStream : public IStream {
 public:
     MemoryStream(const uint8_t* data, size_t size) : m_data(data), m_size(size), m_pos(0), m_ref(1) {}
-    
     HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void** ppv) override {
         if (riid == IID_IUnknown || riid == IID_IStream || riid == IID_ISequentialStream) {
             *ppv = static_cast<IStream*>(this);
@@ -462,36 +396,13 @@ private:
     LONG m_ref;
 };
 
-void stopAudio() {
-    if (g_hWaveOut) {
-        waveOutReset(g_hWaveOut);
-        waveOutUnprepareHeader(g_hWaveOut, &g_waveHdr, sizeof(g_waveHdr));
-        waveOutClose(g_hWaveOut);
-        g_hWaveOut = nullptr;
-    }
-    if (g_pReader) {
-        g_pReader->Release();
-        g_pReader = nullptr;
-    }
-    g_audioPlaying = false;
-    g_audioPaused = false;
-    g_audioBuffer.clear();
-    g_playStartOffset = 0; // Reset offset on stop
-}
-
-bool playAudioFromMemory(const std::vector<uint8_t>& mp3Data) {
-    stopAudio();
-    g_playStartOffset = 0; // Start from beginning
-
+bool decodeAudioToPCM(const std::vector<uint8_t>& inputData, std::vector<uint8_t>& outputPCM, uint32_t& channels, uint32_t& sampleRate, uint32_t& bitsPerSample) {
     if (!g_mfInitialized) {
         if (FAILED(MFStartup(MF_VERSION))) return false;
         g_mfInitialized = true;
     }
 
-    // ... [Rest of function remains same until waveOutOpen] ...
-    g_currentMP3Data = mp3Data;
-
-    MemoryStream* pStream = new MemoryStream(g_currentMP3Data.data(), g_currentMP3Data.size());
+    MemoryStream* pStream = new MemoryStream(inputData.data(), inputData.size());
     IMFByteStream* pByteStream = nullptr;
     if (FAILED(MFCreateMFByteStreamOnStream(pStream, &pByteStream))) {
         pStream->Release();
@@ -501,8 +412,9 @@ bool playAudioFromMemory(const std::vector<uint8_t>& mp3Data) {
 
     IMFAttributes* pAttrs = nullptr;
     MFCreateAttributes(&pAttrs, 1);
+    IMFSourceReader* reader = nullptr;
 
-    if (FAILED(MFCreateSourceReaderFromByteStream(pByteStream, pAttrs, &g_pReader))) {
+    if (FAILED(MFCreateSourceReaderFromByteStream(pByteStream, pAttrs, &reader))) {
         pByteStream->Release();
         if (pAttrs) pAttrs->Release();
         return false;
@@ -514,30 +426,27 @@ bool playAudioFromMemory(const std::vector<uint8_t>& mp3Data) {
     MFCreateMediaType(&pPartialType);
     pPartialType->SetGUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio);
     pPartialType->SetGUID(MF_MT_SUBTYPE, MFAudioFormat_PCM);
-    g_pReader->SetCurrentMediaType(MF_SOURCE_READER_FIRST_AUDIO_STREAM, nullptr, pPartialType);
+    reader->SetCurrentMediaType(MF_SOURCE_READER_FIRST_AUDIO_STREAM, nullptr, pPartialType);
     pPartialType->Release();
 
     IMFMediaType* pUncompType = nullptr;
-    g_pReader->GetCurrentMediaType(MF_SOURCE_READER_FIRST_AUDIO_STREAM, &pUncompType);
+    reader->GetCurrentMediaType(MF_SOURCE_READER_FIRST_AUDIO_STREAM, &pUncompType);
 
-    UINT32 channels = 0, sampleRate = 0, bitsPerSample = 0;
-    pUncompType->GetUINT32(MF_MT_AUDIO_NUM_CHANNELS, &channels);
-    pUncompType->GetUINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, &sampleRate);
-    pUncompType->GetUINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, &bitsPerSample);
+    UINT32 ch = 0, rate = 0, bits = 0;
+    pUncompType->GetUINT32(MF_MT_AUDIO_NUM_CHANNELS, &ch);
+    pUncompType->GetUINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, &rate);
+    pUncompType->GetUINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, &bits);
     pUncompType->Release();
 
-    PROPVARIANT var;
-    PropVariantInit(&var);
-    if (SUCCEEDED(g_pReader->GetPresentationAttribute(MF_SOURCE_READER_MEDIASOURCE, MF_PD_DURATION, &var))) {
-        g_audioDurationMs = (int)(var.uhVal.QuadPart / 10000);
-        PropVariantClear(&var);
-    }
+    channels = ch;
+    sampleRate = rate;
+    bitsPerSample = bits;
 
-    g_audioBuffer.clear();
+    outputPCM.clear();
     while (true) {
         IMFSample* pSample = nullptr;
         DWORD flags = 0;
-        HRESULT hr = g_pReader->ReadSample(MF_SOURCE_READER_FIRST_AUDIO_STREAM, 0, nullptr, &flags, nullptr, &pSample);
+        HRESULT hr = reader->ReadSample(MF_SOURCE_READER_FIRST_AUDIO_STREAM, 0, nullptr, &flags, nullptr, &pSample);
         if (FAILED(hr) || (flags & MF_SOURCE_READERF_ENDOFSTREAM)) {
             if (pSample) pSample->Release();
             break;
@@ -548,24 +457,42 @@ bool playAudioFromMemory(const std::vector<uint8_t>& mp3Data) {
             BYTE* pData = nullptr;
             DWORD cbData = 0;
             pBuffer->Lock(&pData, nullptr, &cbData);
-            size_t oldSize = g_audioBuffer.size();
-            g_audioBuffer.resize(oldSize + cbData);
-            memcpy(g_audioBuffer.data() + oldSize, pData, cbData);
+            size_t oldSize = outputPCM.size();
+            outputPCM.resize(oldSize + cbData);
+            memcpy(outputPCM.data() + oldSize, pData, cbData);
             pBuffer->Unlock();
             pBuffer->Release();
             pSample->Release();
         }
     }
+    reader->Release();
+    return !outputPCM.empty();
+}
 
-    g_pReader->Release();
-    g_pReader = nullptr;
+void stopAudio() {
+    if (g_hWaveOut) {
+        waveOutReset(g_hWaveOut);
+        waveOutUnprepareHeader(g_hWaveOut, &g_waveHdr, sizeof(g_waveHdr));
+        waveOutClose(g_hWaveOut);
+        g_hWaveOut = nullptr;
+    }
+    g_audioPlaying = false;
+    g_audioPaused = false;
+    g_audioBuffer.clear();
+    g_playStartOffset = 0;
+}
 
-    if (g_audioBuffer.empty()) return false;
+bool playAudioFromMemory(const std::vector<uint8_t>& mp3Data) {
+    stopAudio();
+    uint32_t ch, rate, bits;
+    if (!decodeAudioToPCM(mp3Data, g_audioBuffer, ch, rate, bits)) return false;
+
+    g_audioDurationMs = (int)((double)g_audioBuffer.size() / (rate * ch * (bits/8)) * 1000.0);
 
     g_waveFormat.wFormatTag = WAVE_FORMAT_PCM;
-    g_waveFormat.nChannels = (WORD)channels;
-    g_waveFormat.nSamplesPerSec = sampleRate;
-    g_waveFormat.wBitsPerSample = (WORD)bitsPerSample;
+    g_waveFormat.nChannels = (WORD)ch;
+    g_waveFormat.nSamplesPerSec = rate;
+    g_waveFormat.wBitsPerSample = (WORD)bits;
     g_waveFormat.nBlockAlign = g_waveFormat.nChannels * g_waveFormat.wBitsPerSample / 8;
     g_waveFormat.nAvgBytesPerSec = g_waveFormat.nSamplesPerSec * g_waveFormat.nBlockAlign;
     g_waveFormat.cbSize = 0;
@@ -581,34 +508,27 @@ bool playAudioFromMemory(const std::vector<uint8_t>& mp3Data) {
     waveOutWrite(g_hWaveOut, &g_waveHdr, sizeof(g_waveHdr));
 
     g_audioPlaying = true;
-    g_audioPaused = false;
-
     return true;
 }
 
 bool playWavFromMemory(const std::vector<uint8_t>& wavData) {
     stopAudio();
-    g_playStartOffset = 0; // Start from beginning
-
     if (wavData.size() < 44) return false;
-    
-    // Parse WAV header
+
     if (memcmp(wavData.data(), "RIFF", 4) != 0) return false;
-    if (memcmp(wavData.data() + 8, "WAVE", 4) != 0) return false;
-    
-    // Find fmt chunk
+
     size_t pos = 12;
     uint16_t numChannels = 1;
     uint32_t sampleRate = 22050;
     uint16_t bitsPerSample = 16;
     size_t dataOffset = 0;
     size_t dataSize = 0;
-    
+
     while (pos + 8 < wavData.size()) {
         char chunkId[5] = {0};
         memcpy(chunkId, &wavData[pos], 4);
         uint32_t chunkSize = *reinterpret_cast<const uint32_t*>(&wavData[pos + 4]);
-        
+
         if (strcmp(chunkId, "fmt ") == 0) {
             numChannels = *reinterpret_cast<const uint16_t*>(&wavData[pos + 10]);
             sampleRate = *reinterpret_cast<const uint32_t*>(&wavData[pos + 12]);
@@ -618,15 +538,14 @@ bool playWavFromMemory(const std::vector<uint8_t>& wavData) {
             dataSize = chunkSize;
             break;
         }
-        
         pos += 8 + chunkSize;
     }
-    
+
     if (dataOffset == 0 || dataSize == 0) return false;
-    
+
     g_audioBuffer.assign(wavData.begin() + dataOffset, wavData.begin() + dataOffset + dataSize);
     g_audioDurationMs = (int)((dataSize * 1000) / (sampleRate * numChannels * (bitsPerSample / 8)));
-    
+
     g_waveFormat.wFormatTag = WAVE_FORMAT_PCM;
     g_waveFormat.nChannels = numChannels;
     g_waveFormat.nSamplesPerSec = sampleRate;
@@ -634,20 +553,18 @@ bool playWavFromMemory(const std::vector<uint8_t>& wavData) {
     g_waveFormat.nBlockAlign = numChannels * bitsPerSample / 8;
     g_waveFormat.nAvgBytesPerSec = sampleRate * g_waveFormat.nBlockAlign;
     g_waveFormat.cbSize = 0;
-    
+
     if (waveOutOpen(&g_hWaveOut, WAVE_MAPPER, &g_waveFormat, 0, 0, CALLBACK_NULL) != MMSYSERR_NOERROR) {
         return false;
     }
-    
+
     memset(&g_waveHdr, 0, sizeof(g_waveHdr));
     g_waveHdr.lpData = (LPSTR)g_audioBuffer.data();
     g_waveHdr.dwBufferLength = (DWORD)g_audioBuffer.size();
     waveOutPrepareHeader(g_hWaveOut, &g_waveHdr, sizeof(g_waveHdr));
     waveOutWrite(g_hWaveOut, &g_waveHdr, sizeof(g_waveHdr));
-    
+
     g_audioPlaying = true;
-    g_audioPaused = false;
-    
     return true;
 }
 
@@ -657,24 +574,18 @@ bool isAudioPlaying() {
     return (g_waveHdr.dwFlags & WHDR_DONE) == 0;
 }
 
-int getAudioLength() {
-    return g_audioDurationMs;
-}
+int getAudioLength() { return g_audioDurationMs; }
 
 int getAudioPosition() {
     if (!g_hWaveOut || !g_audioPlaying) return 0;
-
-    // If paused, return the frozen position
     if (g_audioPaused) {
         if (g_waveFormat.nAvgBytesPerSec > 0)
             return (int)((double)g_audioBufferPos / g_waveFormat.nAvgBytesPerSec * 1000.0);
         return 0;
     }
-
     MMTIME mmt;
     mmt.wType = TIME_BYTES;
     if (waveOutGetPosition(g_hWaveOut, &mmt, sizeof(mmt)) == MMSYSERR_NOERROR) {
-        // Add offset to current hardware position
         size_t totalBytes = mmt.u.cb + g_playStartOffset;
         if (g_waveFormat.nAvgBytesPerSec > 0) {
             return (int)((double)totalBytes / g_waveFormat.nAvgBytesPerSec * 1000.0);
@@ -686,31 +597,18 @@ int getAudioPosition() {
 void setAudioPosition(int ms) {
     if (!g_hWaveOut || ms < 0 || ms >= g_audioDurationMs) return;
     if (g_waveFormat.nAvgBytesPerSec == 0) return;
-
-    // Calculate new byte offset
     size_t newBytePos = (size_t)((double)ms / 1000.0 * g_waveFormat.nAvgBytesPerSec);
-
-    // Align to block boundary (critical for 16-bit/stereo audio)
-    if (g_waveFormat.nBlockAlign > 0) {
-        newBytePos -= (newBytePos % g_waveFormat.nBlockAlign);
-    }
+    if (g_waveFormat.nBlockAlign > 0) newBytePos -= (newBytePos % g_waveFormat.nBlockAlign);
 
     if (newBytePos < g_audioBuffer.size()) {
         waveOutReset(g_hWaveOut);
-
         g_waveHdr.lpData = (LPSTR)(g_audioBuffer.data() + newBytePos);
         g_waveHdr.dwBufferLength = (DWORD)(g_audioBuffer.size() - newBytePos);
-
-        // Track the offset
         g_playStartOffset = newBytePos;
-        g_audioBufferPos = newBytePos; // Sync for pause logic
-
+        g_audioBufferPos = newBytePos;
         waveOutPrepareHeader(g_hWaveOut, &g_waveHdr, sizeof(g_waveHdr));
         waveOutWrite(g_hWaveOut, &g_waveHdr, sizeof(g_waveHdr));
-
-        if (g_audioPaused) {
-            waveOutPause(g_hWaveOut);
-        }
+        if (g_audioPaused) waveOutPause(g_hWaveOut);
     }
 }
 

@@ -45,6 +45,7 @@ target_include_directories(imgui_lib PUBLIC
 )
 target_link_libraries(imgui_lib PUBLIC glfw)
 
+
 if(WIN32)
     target_link_libraries(imgui_lib PUBLIC opengl32)
 else()
@@ -115,6 +116,7 @@ target_link_libraries(HavenTools PRIVATE imgui_lib imguifiledialog_lib)
 
 if(WIN32)
     target_compile_definitions(HavenTools PRIVATE _CRT_SECURE_NO_WARNINGS)
+    target_link_libraries(HavenTools PRIVATE winmm)
 endif()
 
 if(UNIX AND NOT APPLE)
