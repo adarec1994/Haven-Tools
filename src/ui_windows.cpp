@@ -431,3 +431,159 @@ void drawAnimWindow(AppState& state, ImGuiIO& io) {
         if (state.animTime > state.currentAnim.duration) state.animTime = 0.0f;
     }
 }
+
+void drawFSBBrowserWindow(AppState& state) {
+    if (!state.showFSBBrowser) return;
+    
+    ImGui::SetNextWindowSize(ImVec2(500, 400), ImGuiCond_FirstUseEver);
+    if (!ImGui::Begin("Sound Bank Browser", &state.showFSBBrowser)) {
+        ImGui::End();
+        return;
+    }
+    
+    std::string filename = fs::path(state.currentFSBPath).filename().string();
+    ImGui::Text("File: %s", filename.c_str());
+    ImGui::Text("Samples: %zu", state.currentFSBSamples.size());
+    ImGui::Separator();
+    
+    ImGui::InputText("Filter", state.fsbSampleFilter, sizeof(state.fsbSampleFilter));
+    std::string filterLower = state.fsbSampleFilter;
+    std::transform(filterLower.begin(), filterLower.end(), filterLower.begin(), ::tolower);
+    
+    if (ImGui::Button("Export All to WAV")) {
+        IGFD::FileDialogConfig config;
+        #ifdef _WIN32
+        char* userProfile = getenv("USERPROFILE");
+        if (userProfile) config.path = std::string(userProfile) + "\\Documents";
+        else config.path = ".";
+        #else
+        char* home = getenv("HOME");
+        if (home) config.path = std::string(home) + "/Documents";
+        else config.path = ".";
+        #endif
+        ImGuiFileDialog::Instance()->OpenDialog("ExportAllFSBSamples", "Select Output Folder", nullptr, config);
+    }
+    ImGui::SameLine();
+    if (state.selectedFSBSample >= 0 && ImGui::Button("Export Selected")) {
+        IGFD::FileDialogConfig config;
+        #ifdef _WIN32
+        char* userProfile = getenv("USERPROFILE");
+        if (userProfile) config.path = std::string(userProfile) + "\\Documents";
+        else config.path = ".";
+        #else
+        char* home = getenv("HOME");
+        if (home) config.path = std::string(home) + "/Documents";
+        else config.path = ".";
+        #endif
+        std::string defaultName = state.currentFSBSamples[state.selectedFSBSample].name;
+        size_t dotPos = defaultName.rfind('.');
+        if (dotPos != std::string::npos) defaultName = defaultName.substr(0, dotPos);
+        defaultName += ".wav";
+        config.fileName = defaultName;
+        ImGuiFileDialog::Instance()->OpenDialog("ExportFSBSample", "Save WAV", ".wav", config);
+    }
+    
+    if (isAudioPlaying()) {
+        ImGui::SameLine();
+        if (ImGui::Button("Stop")) {
+            stopAudio();
+        }
+    }
+    
+    ImGui::Separator();
+    ImGui::Text("Double-click to play, right-click to export");
+    ImGui::BeginChild("SampleList", ImVec2(0, 0), true);
+    
+    for (int i = 0; i < (int)state.currentFSBSamples.size(); i++) {
+        const auto& sample = state.currentFSBSamples[i];
+        
+        if (!filterLower.empty()) {
+            std::string nameLower = sample.name;
+            std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), ::tolower);
+            if (nameLower.find(filterLower) == std::string::npos) continue;
+        }
+        
+        char label[512];
+        int mins = (int)(sample.duration / 60);
+        int secs = (int)(sample.duration) % 60;
+        snprintf(label, sizeof(label), "%s [%d:%02d] %dHz##%d", 
+                 sample.name.c_str(), mins, secs, sample.sampleRate, i);
+        
+        bool selected = (state.selectedFSBSample == i);
+        if (ImGui::Selectable(label, selected, ImGuiSelectableFlags_AllowDoubleClick)) {
+            state.selectedFSBSample = i;
+            if (ImGui::IsMouseDoubleClicked(0)) {
+                auto wavData = extractFSB4SampleToWav(state.currentFSBPath, i);
+                if (!wavData.empty()) {
+                    playWavFromMemory(wavData);
+                    state.currentAudioName = sample.name;
+                    state.audioPlaying = true;
+                    state.showAudioPlayer = true;
+                }
+            }
+        }
+        
+        if (ImGui::BeginPopupContextItem()) {
+            if (ImGui::MenuItem("Play")) {
+                auto wavData = extractFSB4SampleToWav(state.currentFSBPath, i);
+                if (!wavData.empty()) {
+                    playWavFromMemory(wavData);
+                    state.currentAudioName = sample.name;
+                    state.audioPlaying = true;
+                }
+            }
+            if (ImGui::MenuItem("Export to WAV...")) {
+                state.selectedFSBSample = i;
+                IGFD::FileDialogConfig config;
+                #ifdef _WIN32
+                char* userProfile = getenv("USERPROFILE");
+                if (userProfile) config.path = std::string(userProfile) + "\\Documents";
+                else config.path = ".";
+                #else
+                char* home = getenv("HOME");
+                if (home) config.path = std::string(home) + "/Documents";
+                else config.path = ".";
+                #endif
+                std::string defaultName = sample.name;
+                size_t dotPos = defaultName.rfind('.');
+                if (dotPos != std::string::npos) defaultName = defaultName.substr(0, dotPos);
+                defaultName += ".wav";
+                config.fileName = defaultName;
+                ImGuiFileDialog::Instance()->OpenDialog("ExportFSBSample", "Save WAV", ".wav", config);
+            }
+            ImGui::EndPopup();
+        }
+    }
+    
+    ImGui::EndChild();
+    ImGui::End();
+    
+    // Handle export dialogs
+    if (ImGuiFileDialog::Instance()->Display("ExportFSBSample", ImGuiWindowFlags_NoCollapse, ImVec2(500, 400))) {
+        if (ImGuiFileDialog::Instance()->IsOk() && state.selectedFSBSample >= 0) {
+            std::string outPath = ImGuiFileDialog::Instance()->GetFilePathName();
+            if (saveFSB4SampleToWav(state.currentFSBPath, state.selectedFSBSample, outPath)) {
+                state.statusMessage = "Exported: " + state.currentFSBSamples[state.selectedFSBSample].name;
+            }
+        }
+        ImGuiFileDialog::Instance()->Close();
+    }
+    
+    if (ImGuiFileDialog::Instance()->Display("ExportAllFSBSamples", ImGuiWindowFlags_NoCollapse, ImVec2(500, 400))) {
+        if (ImGuiFileDialog::Instance()->IsOk()) {
+            std::string outDir = ImGuiFileDialog::Instance()->GetCurrentPath();
+            int exported = 0;
+            for (int i = 0; i < (int)state.currentFSBSamples.size(); i++) {
+                std::string name = state.currentFSBSamples[i].name;
+                size_t dotPos = name.rfind('.');
+                if (dotPos != std::string::npos) name = name.substr(0, dotPos);
+                std::string outPath = outDir + "/" + name + ".wav";
+                if (saveFSB4SampleToWav(state.currentFSBPath, i, outPath)) {
+                    exported++;
+                }
+            }
+            state.statusMessage = "Exported " + std::to_string(exported) + " samples";
+        }
+        ImGuiFileDialog::Instance()->Close();
+    }
+}

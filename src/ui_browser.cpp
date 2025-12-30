@@ -428,20 +428,44 @@ void drawBrowserWindow(AppState& state) {
                         fullPath = state.voiceOverFiles[ce.erfIdx];
                     }
                     if (!fullPath.empty()) {
-                        stopAudio();
-                        state.audioPlaying = false;
-                        auto mp3Data = extractFSB4toMP3Data(fullPath);
-                        if (!mp3Data.empty()) {
-                            state.currentAudioName = ce.name;
-                            if (playAudioFromMemory(mp3Data)) {
-                                state.audioPlaying = true;
-                                state.showAudioPlayer = true;
-                                state.statusMessage = "Playing: " + ce.name;
-                            } else {
-                                state.statusMessage = "Failed to play audio";
-                            }
+                        auto samples = parseFSB4Samples(fullPath);
+                        state.statusMessage = "Parsed FSB: " + std::to_string(samples.size()) + " samples";
+
+                        // CHANGED: Open Browser for ANY valid FSB (Single or Multi)
+                        if (samples.size() >= 1) {
+                            state.currentFSBPath = fullPath;
+                            state.currentFSBSamples = samples;
+                            state.selectedFSBSample = -1;
+                            state.fsbSampleFilter[0] = '\0';
+                            state.showFSBBrowser = true;
+                            state.statusMessage = "Sound bank: " + std::to_string(samples.size()) + " samples";
+
+                             // Optional: Still auto-play if it's a single sample
+                             if (samples.size() == 1) {
+                                stopAudio();
+                                state.audioPlaying = false;
+                                auto mp3Data = extractFSB4toMP3Data(fullPath);
+                                if (!mp3Data.empty()) {
+                                    state.currentAudioName = ce.name;
+                                    if (playAudioFromMemory(mp3Data)) {
+                                        state.audioPlaying = true;
+                                        state.showAudioPlayer = true;
+                                        state.statusMessage = "Playing: " + ce.name;
+                                    }
+                                } else {
+                                    auto wavData = extractFSB4SampleToWav(fullPath, 0);
+                                    if (!wavData.empty()) {
+                                        state.currentAudioName = ce.name;
+                                        if (playWavFromMemory(wavData)) {
+                                            state.audioPlaying = true;
+                                            state.showAudioPlayer = true;
+                                            state.statusMessage = "Playing: " + ce.name;
+                                        }
+                                    }
+                                }
+                             }
                         } else {
-                            state.statusMessage = "Unsupported format (multi-sample or non-MP3 FSB)";
+                            state.statusMessage = "Failed to parse FSB file";
                         }
                     }
                 }
