@@ -3,6 +3,7 @@
 #include <iostream>
 #include <algorithm>
 
+// Helper to read float
 static float readFloat(const uint8_t* data, size_t offset) {
     float val;
     memcpy(&val, &data[offset], 4);
@@ -10,33 +11,40 @@ static float readFloat(const uint8_t* data, size_t offset) {
 }
 
 TintColor TintData::getPrimaryColor() const {
-    if (numColors >= 10) {
-        const TintColor& c9 = colors[9];
-        if (c9.r > 0.01f && c9.g > 0.01f && c9.b > 0.01f &&
-            (c9.r < 0.99f || c9.g < 0.99f || c9.b < 0.99f)) {
-            return c9;
-        }
-    }
-    if (numColors >= 3) {
-        const TintColor& c2 = colors[2];
-        if (c2.r > 0.01f || c2.g > 0.01f || c2.b > 0.01f) {
-            if (c2.r < 0.99f || c2.g < 0.99f || c2.b < 0.99f) {
-                return c2;
-            }
-        }
-    }
+    // Check index 8 first - skin tints use this
     if (numColors >= 9) {
         const TintColor& c8 = colors[8];
-        if (c8.r > 0.01f || c8.g > 0.01f || c8.b > 0.01f) {
-            if (c8.r < 0.99f || c8.g < 0.99f || c8.b < 0.99f) {
-                return c8;
-            }
+        bool isBlack = (c8.r < 0.01f && c8.g < 0.01f && c8.b < 0.01f);
+        bool isWhite = (c8.r > 0.99f && c8.g > 0.99f && c8.b > 0.99f);
+        if (!isBlack && !isWhite) {
+            return c8;
         }
     }
+
+    // Check index 2 - hair tints use this
+    if (numColors >= 3) {
+        const TintColor& c2 = colors[2];
+        bool isWhite = (c2.r > 0.99f && c2.g > 0.99f && c2.b > 0.99f);
+        if (!isWhite) {
+            return c2;
+        }
+    }
+
+    // Fallback: find the first non-white color
+    for (int i = 0; i < numColors; i++) {
+        const TintColor& c = colors[i];
+        bool isWhite = (c.r > 0.99f && c.g > 0.99f && c.b > 0.99f);
+        if (!isWhite) {
+            return c;
+        }
+    }
+
+    // Default to white
     return TintColor();
 }
 
 TintColor TintData::getSecondaryColor() const {
+    // Secondary is usually the shadow/darker color at index 8
     if (numColors >= 9) {
         return colors[8];
     }
@@ -50,10 +58,16 @@ bool loadTNT(const std::vector<uint8_t>& data, TintData& outTint) {
         std::cout << "[TNT] File too small: " << data.size() << " bytes" << std::endl;
         return false;
     }
+
+    // Check GFF V4.0 signature
     if (memcmp(data.data(), "GFF V4.0", 8) != 0) {
         std::cout << "[TNT] Not a GFF V4.0 file" << std::endl;
         return false;
     }
+
+    // TNT files have color data starting at offset 0xB0
+    // Each color is 4 floats (RGBA) = 16 bytes
+    // There are typically 10 color entries
     
     const uint8_t* ptr = data.data();
     size_t colorStart = 0xB0;

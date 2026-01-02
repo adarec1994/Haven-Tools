@@ -211,6 +211,7 @@ struct AppState {
         int selectedHair = 0;
         int selectedBeard = -1;
         int selectedArmor = 0;
+        int selectedClothes = 0;
         int selectedBoots = 0;
         int selectedGloves = 0;
         int selectedHelmet = -1;
@@ -218,12 +219,17 @@ struct AppState {
         int rememberedHair = 0;
         float ageAmount = 0.0f;
         int selectedTattoo = -1;
+        int armorStyle = 0;      // Style variant (a, b, c, etc.)
+        int clothesStyle = 0;
+        int bootsStyle = 0;
+        int glovesStyle = 0;
         float hairColor[3] = {0.3f, 0.2f, 0.1f};
         float skinColor[3] = {0.9f, 0.7f, 0.6f};
         std::vector<std::pair<std::string, std::string>> heads;
         std::vector<std::pair<std::string, std::string>> hairs;
         std::vector<std::pair<std::string, std::string>> beards;
         std::vector<std::pair<std::string, std::string>> armors;
+        std::vector<std::pair<std::string, std::string>> clothes;
         std::vector<std::pair<std::string, std::string>> boots;
         std::vector<std::pair<std::string, std::string>> gloves;
         std::vector<std::pair<std::string, std::string>> helmets;
@@ -231,6 +237,7 @@ struct AppState {
         std::vector<std::pair<std::string, std::string>> tattoos;
         std::unordered_map<std::string, Model> partCache;
         std::string currentArmorPart;
+        std::string currentClothesPart;
         std::string currentBootsPart;
         std::string currentGlovesPart;
         std::string currentHeadPart;
@@ -243,7 +250,7 @@ struct AppState {
         bool listsBuilt = false;
         std::string currentPrefix;
         std::vector<MorphPresetEntry> availableMorphPresets;
-        int selectedMorphPreset = 0;
+        int selectedMorphPreset = -1;  // -1 = Default (no preset)
         MorphData morphData;
         bool morphLoaded = false;
         float faceMorphAmount = 1.0f;
