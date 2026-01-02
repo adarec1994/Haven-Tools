@@ -2,6 +2,7 @@
 #include <vector>
 #include <string>
 #include <map>
+#include <cstdint>
 
 struct MorphVertex {
     float x = 0.0f;
@@ -22,12 +23,27 @@ struct MorphData {
     std::vector<std::string> modelRefs;
     std::vector<std::string> textureSlots;
     std::vector<MorphMeshTarget> meshTargets;
+
+    std::string hairModel;
+    std::string beardModel;
+    std::string skinTexture;
+    std::string hairTexture;
+    std::string eyeTexture;
+
     const MorphMeshTarget* findTarget(const std::string& name) const;
     MorphMeshTarget* findTarget(const std::string& name);
+
     const MorphMeshTarget* getFaceTarget() const;
+
     const MorphMeshTarget* getEyesTarget() const;
+
     const MorphMeshTarget* getLashesTarget() const;
+
     bool hasVertexData() const { return !meshTargets.empty() && !meshTargets[0].vertices.empty(); }
+
+    int getHairStyleIndex() const;
+
+    int getBeardStyleIndex() const;
 };
 
 struct MorphPresetEntry {

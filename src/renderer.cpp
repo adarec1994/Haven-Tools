@@ -300,12 +300,27 @@ void renderModel(Model& model, const Camera& camera, const RenderSettings& setti
                                    matNameLower.find("har") != std::string::npos ||
                                    meshNameLower.find("brd") != std::string::npos ||
                                    matNameLower.find("brd") != std::string::npos);
+                bool isSkinMesh = isBald ||
+                                  meshNameLower.find("hed") != std::string::npos ||
+                                  meshNameLower.find("uhm") != std::string::npos ||
+                                  meshNameLower.find("uem") != std::string::npos ||
+                                  meshNameLower.find("ulm") != std::string::npos ||
+                                  meshNameLower.find("face") != std::string::npos ||
+                                  matNameLower.find("_skn") != std::string::npos ||
+                                  matNameLower.find("skn_") != std::string::npos ||
+                                  matNameLower.find("skin") != std::string::npos ||
+                                  meshNameLower.find("_skn") != std::string::npos ||
+                                  meshNameLower.find("arm_skin") != std::string::npos ||
+                                  meshNameLower.find("hand_skin") != std::string::npos ||
+                                  meshNameLower.find("neck_skin") != std::string::npos;
                 if (texId != 0) {
                     glEnable(GL_TEXTURE_2D);
                     glBindTexture(GL_TEXTURE_2D, texId);
                     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
                     if (isHairMesh) {
                         glColor4f(settings.hairColor[0], settings.hairColor[1], settings.hairColor[2], 1.0f);
+                    } else if (isSkinMesh) {
+                        glColor4f(settings.skinColor[0], settings.skinColor[1], settings.skinColor[2], 1.0f);
                     } else {
                         glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
                     }
@@ -314,6 +329,8 @@ void renderModel(Model& model, const Camera& camera, const RenderSettings& setti
                     if (!settings.wireframe) {
                         if (isHairMesh) {
                             glColor4f(settings.hairColor[0], settings.hairColor[1], settings.hairColor[2], 1.0f);
+                        } else if (isSkinMesh) {
+                            glColor4f(settings.skinColor[0], settings.skinColor[1], settings.skinColor[2], 1.0f);
                         } else {
                             glColor4f(0.7f, 0.7f, 0.7f, 1.0f);
                         }

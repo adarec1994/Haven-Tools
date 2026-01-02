@@ -8,6 +8,7 @@
 #include "Mesh.h"
 #include "erf.h"
 #include "mor_loader.h"
+#include "tnt_loader.h"
 
 class ERFFile;
 struct Camera {
@@ -74,6 +75,7 @@ struct RenderSettings {
     bool showTextures = true;
     std::vector<uint8_t> meshVisible;
     float hairColor[3] = {0.4f, 0.25f, 0.15f};
+    float skinColor[3] = {1.0f, 1.0f, 1.0f};
     float ageAmount = 0.0f;
     int selectedTattoo = -1;
     void initMeshVisibility(size_t count) {
@@ -194,6 +196,8 @@ struct AppState {
     std::map<std::string, std::vector<uint8_t>> mmhCache;
     std::map<std::string, std::vector<uint8_t>> maoCache;
     std::map<std::string, std::vector<uint8_t>> textureCache;
+    TintCache tintCache;
+    bool tintCacheLoaded = false;
     bool cacheBuilt = false;
     bool isPreloading = false;
     float preloadProgress = 0.0f;
@@ -238,14 +242,11 @@ struct AppState {
         bool needsRebuild = true;
         bool listsBuilt = false;
         std::string currentPrefix;
-
         std::vector<MorphPresetEntry> availableMorphPresets;
         int selectedMorphPreset = 0;
         MorphData morphData;
         bool morphLoaded = false;
-
         float faceMorphAmount = 1.0f;
-
         std::vector<Vertex> baseHeadVertices;
         int headMeshIndex = -1;
     } charDesigner;
