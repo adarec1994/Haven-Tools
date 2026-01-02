@@ -17,7 +17,6 @@ TintColor TintData::getPrimaryColor() const {
             return c9;
         }
     }
-
     if (numColors >= 3) {
         const TintColor& c2 = colors[2];
         if (c2.r > 0.01f || c2.g > 0.01f || c2.b > 0.01f) {
@@ -26,7 +25,6 @@ TintColor TintData::getPrimaryColor() const {
             }
         }
     }
-
     if (numColors >= 9) {
         const TintColor& c8 = colors[8];
         if (c8.r > 0.01f || c8.g > 0.01f || c8.b > 0.01f) {
@@ -35,7 +33,6 @@ TintColor TintData::getPrimaryColor() const {
             }
         }
     }
-
     return TintColor();
 }
 
@@ -48,12 +45,11 @@ TintColor TintData::getSecondaryColor() const {
 
 bool loadTNT(const std::vector<uint8_t>& data, TintData& outTint) {
     outTint = TintData();
-    
+
     if (data.size() < 0xC0) {
         std::cout << "[TNT] File too small: " << data.size() << " bytes" << std::endl;
         return false;
     }
-
     if (memcmp(data.data(), "GFF V4.0", 8) != 0) {
         std::cout << "[TNT] Not a GFF V4.0 file" << std::endl;
         return false;

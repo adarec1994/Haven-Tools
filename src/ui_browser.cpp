@@ -445,6 +445,18 @@ void drawBrowserWindow(AppState& state) {
                                     state.maoFileName = ce.name;
                                     state.showMaoViewer = true;
                                 }
+                            } else if (isTexture) {
+                                auto data = erf.readEntry(entry);
+                                if (!data.empty()) {
+                                    std::string nameLower = ce.name;
+                                    std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), ::tolower);
+                                    state.textureCache[nameLower] = data;
+                                    state.previewTextureId = loadDDSTexture(data);
+                                    state.previewTextureName = ce.name;
+                                    state.showTexturePreview = true;
+                                    state.previewMeshIndex = -1;
+                                    state.statusMessage = "Previewing: " + ce.name;
+                                }
                             }
                         }
                     }

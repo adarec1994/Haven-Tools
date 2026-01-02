@@ -286,9 +286,11 @@ bool loadMOR(const std::vector<uint8_t>& data, MorphData& outMorph) {
 
         if (vertexStart + 4 < size) {
             uint32_t floatCount = readU32(ptr, vertexStart);
+
             if (floatCount > 0 && floatCount < 50000 && floatCount % 4 == 0) {
                 size_t vertexCount = floatCount / 4;
                 size_t dataStart = vertexStart + 4;
+
                 if (dataStart + floatCount * 4 <= size) {
                     MorphMeshTarget target;
                     target.name = name;
@@ -339,6 +341,7 @@ bool loadMOR(const std::vector<uint8_t>& data, MorphData& outMorph) {
                 if (!found) {
                     outMorph.modelRefs.push_back(s);
                     std::cout << "[MOR] Found model ref: " << s << std::endl;
+
                     if (sLower.find("_har_") != std::string::npos && sLower.find("bld") == std::string::npos) {
                         outMorph.hairModel = s;
                     }
@@ -347,6 +350,7 @@ bool loadMOR(const std::vector<uint8_t>& data, MorphData& outMorph) {
                     }
                 }
             }
+
             if (sLower.find("_pcc_") != std::string::npos ||
                 sLower.find("_orz") != std::string::npos ||
                 sLower.find("_den") != std::string::npos ||
@@ -354,6 +358,7 @@ bool loadMOR(const std::vector<uint8_t>& data, MorphData& outMorph) {
                 outMorph.name = s;
             }
         }
+
         if (strLen >= 8 && strLen <= 15) {
             std::string s = readUTF16(ptr, size, pos + 4, strLen);
             if (s.empty()) continue;
