@@ -113,6 +113,8 @@ add_executable(HavenTools
         src/ui_main.cpp
         src/export.cpp
         src/export.h
+        src/mor_loader.cpp
+        src/mor_loader.h
 )
 
 target_include_directories(HavenTools PRIVATE ${CMAKE_SOURCE_DIR}/src ${CMAKE_BINARY_DIR})

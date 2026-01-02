@@ -277,6 +277,8 @@ void renderModel(Model& model, const Camera& camera, const RenderSettings& setti
                                matNameLower.find("bld") != std::string::npos);
                 bool isAlphaMesh = !isBald && (meshNameLower.find("har") != std::string::npos ||
                                     matNameLower.find("har") != std::string::npos ||
+                                    meshNameLower.find("brd") != std::string::npos ||
+                                    matNameLower.find("brd") != std::string::npos ||
                                     meshNameLower.find("lash") != std::string::npos ||
                                     meshNameLower.find("brow") != std::string::npos);
                 if ((pass == 0 && isAlphaMesh) || (pass == 1 && !isAlphaMesh)) continue;
@@ -295,7 +297,9 @@ void renderModel(Model& model, const Camera& camera, const RenderSettings& setti
                     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
                 }
                 bool isHairMesh = !isBald && (meshNameLower.find("har") != std::string::npos ||
-                                   matNameLower.find("har") != std::string::npos);
+                                   matNameLower.find("har") != std::string::npos ||
+                                   meshNameLower.find("brd") != std::string::npos ||
+                                   matNameLower.find("brd") != std::string::npos);
                 if (texId != 0) {
                     glEnable(GL_TEXTURE_2D);
                     glBindTexture(GL_TEXTURE_2D, texId);
