@@ -3,6 +3,7 @@
 #include "types.h"
 #include <vector>
 #include <string>
+#include <cstdint>
 
 Material parseMAO(const std::string& maoContent, const std::string& materialName);
 
