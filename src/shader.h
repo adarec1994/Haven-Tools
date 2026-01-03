@@ -2,15 +2,18 @@
 #include <string>
 #include <cstdint>
 
+// OpenGL function pointers for shader operations
 #ifdef _WIN32
 #define NOMINMAX
 #include <windows.h>
 #include <GL/gl.h>
 
+// GL types
 typedef char GLchar;
 typedef ptrdiff_t GLsizeiptr;
 typedef ptrdiff_t GLintptr;
 
+// Shader functions
 typedef GLuint (APIENTRY *PFNGLCREATESHADERPROC)(GLenum type);
 typedef void (APIENTRY *PFNGLSHADERSOURCEPROC)(GLuint shader, GLsizei count, const GLchar *const*string, const GLint *length);
 typedef void (APIENTRY *PFNGLCOMPILESHADERPROC)(GLuint shader);
@@ -44,6 +47,7 @@ typedef void (APIENTRY *PFNGLBINDVERTEXARRAYPROC)(GLuint array);
 typedef void (APIENTRY *PFNGLDELETEVERTEXARRAYSPROC)(GLsizei n, const GLuint *arrays);
 typedef void (APIENTRY *PFNGLVERTEXATTRIB3FPROC)(GLuint index, GLfloat x, GLfloat y, GLfloat z);
 
+// GL constants
 #define GL_FRAGMENT_SHADER 0x8B30
 #define GL_VERTEX_SHADER 0x8B31
 #define GL_COMPILE_STATUS 0x8B81
@@ -54,6 +58,9 @@ typedef void (APIENTRY *PFNGLVERTEXATTRIB3FPROC)(GLuint index, GLfloat x, GLfloa
 #define GL_TEXTURE2 0x84C2
 #define GL_TEXTURE3 0x84C3
 #define GL_TEXTURE4 0x84C4
+#define GL_TEXTURE5 0x84C5
+#define GL_TEXTURE6 0x84C6
+#define GL_TEXTURE7 0x84C7
 #define GL_ARRAY_BUFFER 0x8892
 #define GL_ELEMENT_ARRAY_BUFFER 0x8893
 #define GL_STATIC_DRAW 0x88E4
@@ -98,6 +105,7 @@ extern PFNGLVERTEXATTRIB3FPROC glVertexAttrib3f;
 #include <GL/glext.h>
 #endif
 
+// Shader program wrapper
 struct ShaderProgram {
     uint32_t id = 0;
 
@@ -111,6 +119,10 @@ struct ShaderProgram {
     int uNormalTex = -1;
     int uSpecularTex = -1;
     int uTintTex = -1;
+    int uAgeDiffuseTex = -1;
+    int uAgeNormalTex = -1;
+    int uStubbleTex = -1;
+    int uStubbleNormalTex = -1;
 
     int uTintColor = -1;
     int uTintZone1 = -1;
@@ -118,28 +130,42 @@ struct ShaderProgram {
     int uTintZone3 = -1;
     int uSpecularPower = -1;
     int uAmbientStrength = -1;
+    int uAgeAmount = -1;
+    int uStubbleAmount = -1;
 
     int uUseDiffuse = -1;
     int uUseNormal = -1;
     int uUseSpecular = -1;
     int uUseTint = -1;
     int uUseAlphaTest = -1;
-    
+    int uIsEyeMesh = -1;
+    int uIsFaceMesh = -1;
+    int uUseAge = -1;
+    int uUseStubble = -1;
+
     bool valid = false;
 };
 
+// Initialize shader extensions
 bool initShaderExtensions();
 
+// Compile a shader from source
 uint32_t compileShader(GLenum type, const char* source);
 
+// Create shader program from vertex and fragment shader sources
 ShaderProgram createShaderProgram(const char* vertexSrc, const char* fragmentSrc);
 
+// Delete a shader program
 void deleteShaderProgram(ShaderProgram& program);
 
+// Get the main model shader
 ShaderProgram& getModelShader();
 
+// Initialize the shader system
 bool initShaderSystem();
 
+// Cleanup shader system
 void cleanupShaderSystem();
 
+// Check if shaders are available
 bool shadersAvailable();

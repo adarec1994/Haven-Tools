@@ -345,8 +345,19 @@ static void loadSelectedMorphPreset(AppState& state) {
                         }
                     }
 
-                    // Apply makeup colors from tint files
-                    // Lips (zone 1)
+                    if (!cd.morphData.eyeTexture.empty()) {
+                        std::string eyeTintName = cd.morphData.eyeTexture;
+                        std::transform(eyeTintName.begin(), eyeTintName.end(), eyeTintName.begin(), ::tolower);
+
+                        const TintData* eyeTint = state.tintCache.getTint(eyeTintName);
+                        if (eyeTint) {
+                            TintColor color = eyeTint->getPrimaryColor();
+                            cd.eyeColor[0] = color.r;
+                            cd.eyeColor[1] = color.g;
+                            cd.eyeColor[2] = color.b;
+                        }
+                    }
+
                     if (!cd.morphData.lipsTint.empty()) {
                         std::string lipsTintName = cd.morphData.lipsTint;
                         std::transform(lipsTintName.begin(), lipsTintName.end(), lipsTintName.begin(), ::tolower);
@@ -359,13 +370,11 @@ static void loadSelectedMorphPreset(AppState& state) {
                             cd.headTintZone1[2] = color.b;
                         }
                     } else {
-                        // Reset to white if no lips tint
                         cd.headTintZone1[0] = 1.0f;
                         cd.headTintZone1[1] = 1.0f;
                         cd.headTintZone1[2] = 1.0f;
                     }
 
-                    // Eyeshadow (zone 2)
                     if (!cd.morphData.eyeshadowTint.empty()) {
                         std::string eyesTintName = cd.morphData.eyeshadowTint;
                         std::transform(eyesTintName.begin(), eyesTintName.end(), eyesTintName.begin(), ::tolower);
@@ -383,7 +392,6 @@ static void loadSelectedMorphPreset(AppState& state) {
                         cd.headTintZone2[2] = 1.0f;
                     }
 
-                    // Blush (zone 3)
                     if (!cd.morphData.blushTint.empty()) {
                         std::string blushTintName = cd.morphData.blushTint;
                         std::transform(blushTintName.begin(), blushTintName.end(), blushTintName.begin(), ::tolower);
@@ -408,8 +416,6 @@ static void loadSelectedMorphPreset(AppState& state) {
     }
 }
 
-// Apply morph to a mesh by replacing/blending vertex positions
-// Returns true if morph was applied
 static bool applyMorphToMesh(Mesh& mesh, const MorphMeshTarget* target, float amount,
                              const std::vector<Vertex>& baseVertices) {
     if (!target || target->vertices.empty()) return false;
@@ -423,7 +429,6 @@ static bool applyMorphToMesh(Mesh& mesh, const MorphMeshTarget* target, float am
     float invAmount = 1.0f - amount;
 
     for (size_t i = 0; i < mesh.vertices.size(); i++) {
-        // Blend between base and morph positions
         mesh.vertices[i].x = baseVertices[i].x * invAmount + target->vertices[i].x * amount;
         mesh.vertices[i].y = baseVertices[i].y * invAmount + target->vertices[i].y * amount;
         mesh.vertices[i].z = baseVertices[i].z * invAmount + target->vertices[i].z * amount;
@@ -698,6 +703,12 @@ static Model* getOrLoadPart(AppState& state, const std::string& partFile) {
         }
         if (!mat.ageNormalMap.empty() && mat.ageNormalTexId == 0) {
             mat.ageNormalTexId = loadTexByName(state, mat.ageNormalMap);
+        }
+        if (!mat.browStubbleMap.empty() && mat.browStubbleTexId == 0) {
+            mat.browStubbleTexId = loadTexByName(state, mat.browStubbleMap);
+        }
+        if (!mat.browStubbleNormalMap.empty() && mat.browStubbleNormalTexId == 0) {
+            mat.browStubbleNormalTexId = loadTexByName(state, mat.browStubbleNormalMap);
         }
         if (!mat.tattooMap.empty() && mat.tattooTexId == 0) {
             mat.tattooTexId = loadTexByName(state, mat.tattooMap);
@@ -1070,7 +1081,9 @@ void loadCharacterModel(AppState& state) {
 void drawCharacterDesigner(AppState& state, ImGuiIO& io) {
     auto& cd = state.charDesigner;
 
-    // Sync zone colors from CharacterDesigner to RenderSettings
+    memcpy(state.renderSettings.eyeColor, cd.eyeColor, sizeof(float) * 3);
+    state.renderSettings.ageAmount = cd.ageAmount;
+    state.renderSettings.stubbleAmount = cd.stubbleAmount;
     memcpy(state.renderSettings.headZone1, cd.headTintZone1, sizeof(float) * 3);
     memcpy(state.renderSettings.headZone2, cd.headTintZone2, sizeof(float) * 3);
     memcpy(state.renderSettings.headZone3, cd.headTintZone3, sizeof(float) * 3);
@@ -1226,9 +1239,13 @@ void drawCharacterDesigner(AppState& state, ImGuiIO& io) {
             ImGui::Separator();
 
             ImGui::ColorEdit3("Hair Color", state.renderSettings.hairColor, ImGuiColorEditFlags_NoInputs);
+            ImGui::ColorEdit3("Eye Color", cd.eyeColor, ImGuiColorEditFlags_NoInputs);
             ImGui::Separator();
 
-            // Head tint zones (for makeup)
+            ImGui::SliderFloat("Age", &cd.ageAmount, 0.0f, 1.0f);
+            ImGui::SliderFloat("Stubble", &cd.stubbleAmount, 0.0f, 1.0f);
+            ImGui::Separator();
+
             ImGui::Text("Makeup:");
             ImGui::ColorEdit3("Lips", cd.headTintZone1, ImGuiColorEditFlags_NoInputs);
             ImGui::ColorEdit3("Eyeshadow", cd.headTintZone2, ImGuiColorEditFlags_NoInputs);

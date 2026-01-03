@@ -209,6 +209,7 @@ void drawSolidCapsule(float radius, float height, int slices, int stacks) {
     }
 }
 
+// Matrix multiplication helper
 static void multiplyMatrix4(const float* a, const float* b, float* result) {
     for (int i = 0; i < 4; i++) {
         for (int j = 0; j < 4; j++) {
@@ -220,15 +221,18 @@ static void multiplyMatrix4(const float* a, const float* b, float* result) {
     }
 }
 
+// Extract 3x3 normal matrix from 4x4 modelview (transpose of inverse)
 static void extractNormalMatrix(const float* mv, float* nm) {
+    // For orthogonal matrices, normal matrix is just the upper-left 3x3
     nm[0] = mv[0]; nm[1] = mv[1]; nm[2] = mv[2];
     nm[3] = mv[4]; nm[4] = mv[5]; nm[5] = mv[6];
     nm[6] = mv[8]; nm[7] = mv[9]; nm[8] = mv[10];
 }
 
+// Render a mesh with shaders
 static void renderMeshShader(Mesh& mesh, const Model& model, const RenderSettings& settings,
                              const float* modelViewProj, const float* modelView, const float* normalMatrix,
-                             const float* viewPos, bool animating, bool isHairMesh, bool isSkinMesh, bool useAlphaTest,
+                             const float* viewPos, bool animating, bool isHairMesh, bool isSkinMesh, bool isEyeMesh, bool isFaceMesh, bool useAlphaTest,
                              const float* zone1, const float* zone2, const float* zone3) {
     if (!shadersAvailable()) return;
 
@@ -239,6 +243,7 @@ static void renderMeshShader(Mesh& mesh, const Model& model, const RenderSetting
 
     if (shader.uSpecularPower >= 0) glUniform1f(shader.uSpecularPower, 32.0f);
     if (shader.uAmbientStrength >= 0) glUniform1f(shader.uAmbientStrength, 0.35f);
+
     const Material* mat = nullptr;
     if (mesh.materialIndex >= 0 && mesh.materialIndex < (int)model.materials.size()) {
         mat = &model.materials[mesh.materialIndex];
@@ -247,6 +252,8 @@ static void renderMeshShader(Mesh& mesh, const Model& model, const RenderSetting
     if (shader.uTintColor >= 0) {
         if (isHairMesh) {
             glUniform4f(shader.uTintColor, settings.hairColor[0], settings.hairColor[1], settings.hairColor[2], 1.0f);
+        } else if (isEyeMesh) {
+            glUniform4f(shader.uTintColor, settings.eyeColor[0], settings.eyeColor[1], settings.eyeColor[2], 1.0f);
         } else if (isSkinMesh) {
             glUniform4f(shader.uTintColor, settings.skinColor[0], settings.skinColor[1], settings.skinColor[2], 1.0f);
         } else {
@@ -258,16 +265,25 @@ static void renderMeshShader(Mesh& mesh, const Model& model, const RenderSetting
     if (shader.uTintZone2 >= 0) glUniform3f(shader.uTintZone2, zone2[0], zone2[1], zone2[2]);
     if (shader.uTintZone3 >= 0) glUniform3f(shader.uTintZone3, zone3[0], zone3[1], zone3[2]);
 
+    if (shader.uAgeAmount >= 0) glUniform1f(shader.uAgeAmount, settings.ageAmount);
+    if (shader.uStubbleAmount >= 0) glUniform1f(shader.uStubbleAmount, settings.stubbleAmount);
+
     bool hasDiffuse = mat && mat->diffuseTexId != 0 && settings.showTextures;
     bool hasNormal = mat && mat->normalTexId != 0 && settings.useNormalMaps;
     bool hasSpecular = mat && mat->specularTexId != 0 && settings.useSpecularMaps;
     bool hasTint = mat && mat->tintTexId != 0 && settings.useTintMaps;
+    bool hasAge = mat && mat->ageDiffuseTexId != 0 && mat->ageNormalTexId != 0;
+    bool hasStubble = mat && mat->browStubbleTexId != 0 && mat->browStubbleNormalTexId != 0;
 
     if (shader.uUseDiffuse >= 0) glUniform1i(shader.uUseDiffuse, hasDiffuse ? 1 : 0);
     if (shader.uUseNormal >= 0) glUniform1i(shader.uUseNormal, hasNormal ? 1 : 0);
     if (shader.uUseSpecular >= 0) glUniform1i(shader.uUseSpecular, hasSpecular ? 1 : 0);
     if (shader.uUseTint >= 0) glUniform1i(shader.uUseTint, hasTint ? 1 : 0);
     if (shader.uUseAlphaTest >= 0) glUniform1i(shader.uUseAlphaTest, useAlphaTest ? 1 : 0);
+    if (shader.uIsEyeMesh >= 0) glUniform1i(shader.uIsEyeMesh, isEyeMesh ? 1 : 0);
+    if (shader.uIsFaceMesh >= 0) glUniform1i(shader.uIsFaceMesh, isFaceMesh ? 1 : 0);
+    if (shader.uUseAge >= 0) glUniform1i(shader.uUseAge, hasAge ? 1 : 0);
+    if (shader.uUseStubble >= 0) glUniform1i(shader.uUseStubble, hasStubble ? 1 : 0);
 
     glActiveTexture(GL_TEXTURE0);
     if (hasDiffuse) {
@@ -277,6 +293,7 @@ static void renderMeshShader(Mesh& mesh, const Model& model, const RenderSetting
     }
     if (shader.uDiffuseTex >= 0) glUniform1i(shader.uDiffuseTex, 0);
 
+    // Bind normal texture to unit 1
     glActiveTexture(GL_TEXTURE1);
     if (hasNormal) {
         glBindTexture(GL_TEXTURE_2D, mat->normalTexId);
@@ -285,6 +302,7 @@ static void renderMeshShader(Mesh& mesh, const Model& model, const RenderSetting
     }
     if (shader.uNormalTex >= 0) glUniform1i(shader.uNormalTex, 1);
 
+    // Bind specular texture to unit 2
     glActiveTexture(GL_TEXTURE2);
     if (hasSpecular) {
         glBindTexture(GL_TEXTURE_2D, mat->specularTexId);
@@ -300,6 +318,38 @@ static void renderMeshShader(Mesh& mesh, const Model& model, const RenderSetting
         glBindTexture(GL_TEXTURE_2D, 0);
     }
     if (shader.uTintTex >= 0) glUniform1i(shader.uTintTex, 3);
+
+    glActiveTexture(GL_TEXTURE4);
+    if (hasAge && mat->ageDiffuseTexId != 0) {
+        glBindTexture(GL_TEXTURE_2D, mat->ageDiffuseTexId);
+    } else {
+        glBindTexture(GL_TEXTURE_2D, 0);
+    }
+    if (shader.uAgeDiffuseTex >= 0) glUniform1i(shader.uAgeDiffuseTex, 4);
+
+    glActiveTexture(GL_TEXTURE5);
+    if (hasAge && mat->ageNormalTexId != 0) {
+        glBindTexture(GL_TEXTURE_2D, mat->ageNormalTexId);
+    } else {
+        glBindTexture(GL_TEXTURE_2D, 0);
+    }
+    if (shader.uAgeNormalTex >= 0) glUniform1i(shader.uAgeNormalTex, 5);
+
+    glActiveTexture(GL_TEXTURE6);
+    if (hasStubble && mat->browStubbleTexId != 0) {
+        glBindTexture(GL_TEXTURE_2D, mat->browStubbleTexId);
+    } else {
+        glBindTexture(GL_TEXTURE_2D, 0);
+    }
+    if (shader.uStubbleTex >= 0) glUniform1i(shader.uStubbleTex, 6);
+
+    glActiveTexture(GL_TEXTURE7);
+    if (hasStubble && mat->browStubbleNormalTexId != 0) {
+        glBindTexture(GL_TEXTURE_2D, mat->browStubbleNormalTexId);
+    } else {
+        glBindTexture(GL_TEXTURE_2D, 0);
+    }
+    if (shader.uStubbleNormalTex >= 0) glUniform1i(shader.uStubbleNormalTex, 7);
 
     glBegin(GL_TRIANGLES);
     for (size_t i = 0; i < mesh.indices.size(); i += 3) {
@@ -320,6 +370,14 @@ static void renderMeshShader(Mesh& mesh, const Model& model, const RenderSetting
     }
     glEnd();
 
+    glActiveTexture(GL_TEXTURE7);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glActiveTexture(GL_TEXTURE6);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glActiveTexture(GL_TEXTURE5);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glActiveTexture(GL_TEXTURE4);
+    glBindTexture(GL_TEXTURE_2D, 0);
     glActiveTexture(GL_TEXTURE3);
     glBindTexture(GL_TEXTURE_2D, 0);
     glActiveTexture(GL_TEXTURE2);
@@ -333,6 +391,7 @@ static void renderMeshShader(Mesh& mesh, const Model& model, const RenderSetting
 
 void renderModel(Model& model, const Camera& camera, const RenderSettings& settings,
                  int width, int height, bool animating, int selectedBone) {
+    // Initialize shaders on first call
     static bool shaderInitAttempted = false;
     if (!shaderInitAttempted) {
         initShaderSystem();
@@ -357,12 +416,14 @@ void renderModel(Model& model, const Camera& camera, const RenderSettings& setti
     glRotatef(-90.0f, 1, 0, 0);
     glRotatef(180.0f, 0, 0, 1);
 
+    // Capture matrices for shader rendering
     float projMatrix[16], modelViewMatrix[16], mvpMatrix[16];
     glGetFloatv(GL_PROJECTION_MATRIX, projMatrix);
     glGetFloatv(GL_MODELVIEW_MATRIX, modelViewMatrix);
     multiplyMatrix4(projMatrix, modelViewMatrix, mvpMatrix);
     float viewPos[3] = { camera.x, camera.y, camera.z };
 
+    // Check if we should use shader rendering
     static bool shaderDebugDone = false;
     bool useShaders = shadersAvailable() && !settings.wireframe && settings.showTextures;
     if (useShaders && !shaderDebugDone) {
@@ -444,10 +505,16 @@ void renderModel(Model& model, const Camera& camera, const RenderSettings& setti
                                    matNameLower.find("har") != std::string::npos ||
                                    meshNameLower.find("brd") != std::string::npos ||
                                    matNameLower.find("brd") != std::string::npos);
-                bool isSkinMesh = isBald ||
+                bool isEyeMesh = meshNameLower.find("uem") != std::string::npos ||
+                                 matNameLower.find("_eye") != std::string::npos ||
+                                 matNameLower.find("eye_") != std::string::npos;
+                bool isFaceMesh = meshNameLower.find("uhm") != std::string::npos ||
+                                  matNameLower.find("_hed_") != std::string::npos ||
+                                  matNameLower.find("hed_fem") != std::string::npos ||
+                                  matNameLower.find("hed_mal") != std::string::npos;
+                bool isSkinMesh = !isEyeMesh && (isBald ||
                                   meshNameLower.find("hed") != std::string::npos ||
                                   meshNameLower.find("uhm") != std::string::npos ||
-                                  meshNameLower.find("uem") != std::string::npos ||
                                   meshNameLower.find("ulm") != std::string::npos ||
                                   meshNameLower.find("face") != std::string::npos ||
                                   matNameLower.find("_skn") != std::string::npos ||
@@ -456,8 +523,9 @@ void renderModel(Model& model, const Camera& camera, const RenderSettings& setti
                                   meshNameLower.find("_skn") != std::string::npos ||
                                   meshNameLower.find("arm_skin") != std::string::npos ||
                                   meshNameLower.find("hand_skin") != std::string::npos ||
-                                  meshNameLower.find("neck_skin") != std::string::npos;
+                                  meshNameLower.find("neck_skin") != std::string::npos);
 
+                // Use shader rendering if available and enabled
                 if (useShaders) {
                     if (isAlphaMesh) {
                         glEnable(GL_ALPHA_TEST);
@@ -467,10 +535,12 @@ void renderModel(Model& model, const Camera& camera, const RenderSettings& setti
                     }
                     glDisable(GL_LIGHTING);
 
+                    // Determine part type and select appropriate zone colors
                     const float* zone1 = settings.tintZone1;
                     const float* zone2 = settings.tintZone2;
                     const float* zone3 = settings.tintZone3;
 
+                    // Head parts (face, bald, eyes, etc.)
                     if (meshNameLower.find("hed") != std::string::npos ||
                         meshNameLower.find("uhm") != std::string::npos ||
                         meshNameLower.find("uem") != std::string::npos ||
@@ -481,6 +551,7 @@ void renderModel(Model& model, const Camera& camera, const RenderSettings& setti
                         zone2 = settings.headZone2;
                         zone3 = settings.headZone3;
                     }
+                    // Armor parts
                     else if (matNameLower.find("_arm_") != std::string::npos ||
                              matNameLower.find("_mas") != std::string::npos ||
                              matNameLower.find("_med") != std::string::npos ||
@@ -490,24 +561,28 @@ void renderModel(Model& model, const Camera& camera, const RenderSettings& setti
                         zone2 = settings.armorZone2;
                         zone3 = settings.armorZone3;
                     }
+                    // Clothes parts
                     else if (matNameLower.find("_cth_") != std::string::npos ||
                              matNameLower.find("_clo") != std::string::npos) {
                         zone1 = settings.clothesZone1;
                         zone2 = settings.clothesZone2;
                         zone3 = settings.clothesZone3;
                     }
+                    // Boots parts
                     else if (matNameLower.find("_boo_") != std::string::npos ||
                              matNameLower.find("_boot") != std::string::npos) {
                         zone1 = settings.bootsZone1;
                         zone2 = settings.bootsZone2;
                         zone3 = settings.bootsZone3;
                     }
+                    // Gloves parts
                     else if (matNameLower.find("_glv_") != std::string::npos ||
                              matNameLower.find("_glove") != std::string::npos) {
                         zone1 = settings.glovesZone1;
                         zone2 = settings.glovesZone2;
                         zone3 = settings.glovesZone3;
                     }
+                    // Helmet parts
                     else if (matNameLower.find("_hlm_") != std::string::npos ||
                              matNameLower.find("_helm") != std::string::npos ||
                              meshNameLower.find("helmet") != std::string::npos) {
@@ -516,7 +591,7 @@ void renderModel(Model& model, const Camera& camera, const RenderSettings& setti
                         zone3 = settings.helmetZone3;
                     }
 
-                    renderMeshShader(mesh, model, settings, mvpMatrix, modelViewMatrix, nullptr, viewPos, animating, isHairMesh, isSkinMesh, isAlphaMesh, zone1, zone2, zone3);
+                    renderMeshShader(mesh, model, settings, mvpMatrix, modelViewMatrix, nullptr, viewPos, animating, isHairMesh, isSkinMesh, isEyeMesh, isFaceMesh, isAlphaMesh, zone1, zone2, zone3);
                     if (isAlphaMesh) {
                         glDisable(GL_ALPHA_TEST);
                         glDisable(GL_BLEND);
@@ -564,7 +639,7 @@ void renderModel(Model& model, const Camera& camera, const RenderSettings& setti
                     }
                 }
                 glEnd();
-                bool isFaceMesh = (meshNameLower.find("hed") != std::string::npos ||
+                isFaceMesh = (meshNameLower.find("hed") != std::string::npos ||
                                    meshNameLower.find("uhm") != std::string::npos ||
                                    meshNameLower.find("face") != std::string::npos);
                 if (isFaceMesh && settings.ageAmount > 0.001f && mesh.materialIndex >= 0 &&

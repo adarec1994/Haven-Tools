@@ -29,6 +29,7 @@ struct Material {
     std::string ageNormalMap;
     std::string tattooMap;
     std::string browStubbleMap;
+    std::string browStubbleNormalMap;
 
     float specularPower = 50.0f;
     float opacity = 1.0f;
@@ -39,6 +40,8 @@ struct Material {
     uint32_t ageDiffuseTexId = 0;
     uint32_t ageNormalTexId = 0;
     uint32_t tattooTexId = 0;
+    uint32_t browStubbleTexId = 0;
+    uint32_t browStubbleNormalTexId = 0;
 
     std::vector<uint8_t> diffuseData;
     int diffuseWidth = 0, diffuseHeight = 0;

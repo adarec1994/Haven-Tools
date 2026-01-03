@@ -79,6 +79,9 @@ struct RenderSettings {
     std::vector<uint8_t> meshVisible;
     float hairColor[3] = {0.4f, 0.25f, 0.15f};
     float skinColor[3] = {1.0f, 1.0f, 1.0f};
+    float eyeColor[3] = {0.4f, 0.3f, 0.2f};
+    float ageAmount = 0.0f;
+    float stubbleAmount = 0.0f;
     float headZone1[3] = {1.0f, 1.0f, 1.0f};
     float headZone2[3] = {1.0f, 1.0f, 1.0f};
     float headZone3[3] = {1.0f, 1.0f, 1.0f};
@@ -97,10 +100,10 @@ struct RenderSettings {
     float helmetZone1[3] = {1.0f, 1.0f, 1.0f};
     float helmetZone2[3] = {1.0f, 1.0f, 1.0f};
     float helmetZone3[3] = {1.0f, 1.0f, 1.0f};
+    // Fallback for unrecognized parts
     float tintZone1[3] = {1.0f, 1.0f, 1.0f};
     float tintZone2[3] = {1.0f, 1.0f, 1.0f};
     float tintZone3[3] = {1.0f, 1.0f, 1.0f};
-    float ageAmount = 0.0f;
     int selectedTattoo = -1;
     void initMeshVisibility(size_t count) {
         meshVisible.assign(count, 1);
@@ -241,7 +244,6 @@ struct AppState {
         int selectedHelmet = -1;
         int selectedRobe = -1;
         int rememberedHair = 0;
-        float ageAmount = 0.0f;
         int selectedTattoo = -1;
         int armorStyle = 0;
         int clothesStyle = 0;
@@ -249,27 +251,27 @@ struct AppState {
         int glovesStyle = 0;
         float hairColor[3] = {0.3f, 0.2f, 0.1f};
         float skinColor[3] = {0.9f, 0.7f, 0.6f};
-
+        float eyeColor[3] = {0.4f, 0.3f, 0.2f};
+        float stubbleAmount = 0.0f;
         float headTintZone1[3] = {1.0f, 1.0f, 1.0f};
         float headTintZone2[3] = {1.0f, 1.0f, 1.0f};
         float headTintZone3[3] = {1.0f, 1.0f, 1.0f};
-
         float armorTintZone1[3] = {1.0f, 1.0f, 1.0f};
         float armorTintZone2[3] = {1.0f, 1.0f, 1.0f};
         float armorTintZone3[3] = {1.0f, 1.0f, 1.0f};
-
+        // Clothes zones
         float clothesTintZone1[3] = {1.0f, 1.0f, 1.0f};
         float clothesTintZone2[3] = {1.0f, 1.0f, 1.0f};
         float clothesTintZone3[3] = {1.0f, 1.0f, 1.0f};
-
+        // Boots zones
         float bootsTintZone1[3] = {1.0f, 1.0f, 1.0f};
         float bootsTintZone2[3] = {1.0f, 1.0f, 1.0f};
         float bootsTintZone3[3] = {1.0f, 1.0f, 1.0f};
-
+        // Gloves zones
         float glovesTintZone1[3] = {1.0f, 1.0f, 1.0f};
         float glovesTintZone2[3] = {1.0f, 1.0f, 1.0f};
         float glovesTintZone3[3] = {1.0f, 1.0f, 1.0f};
-
+        // Helmet zones
         float helmetTintZone1[3] = {1.0f, 1.0f, 1.0f};
         float helmetTintZone2[3] = {1.0f, 1.0f, 1.0f};
         float helmetTintZone3[3] = {1.0f, 1.0f, 1.0f};
@@ -298,7 +300,7 @@ struct AppState {
         bool listsBuilt = false;
         std::string currentPrefix;
         std::vector<MorphPresetEntry> availableMorphPresets;
-        int selectedMorphPreset = -1;
+        int selectedMorphPreset = -1;  // -1 = Default (no preset)
         MorphData morphData;
         bool morphLoaded = false;
         float faceMorphAmount = 1.0f;
@@ -308,6 +310,7 @@ struct AppState {
         int headMeshIndex = -1;
         int eyesMeshIndex = -1;
         int lashesMeshIndex = -1;
+        float ageAmount = 0.0f;
     } charDesigner;
 
     bool showFSBBrowser = false;

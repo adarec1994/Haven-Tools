@@ -58,42 +58,46 @@ Material parseMAO(const std::string& maoContent, const std::string& materialName
             std::string resNameLower = resName;
             std::transform(resNameLower.begin(), resNameLower.end(), resNameLower.begin(), ::tolower);
 
-            // Face-specific textures (check these first as they're more specific)
             if (texNameLower.find("agediffuse") != std::string::npos ||
-                texNameLower.find("age_diffuse") != std::string::npos) {
+                texNameLower.find("age_diffuse") != std::string::npos ||
+                texNameLower.find("agediffusemap") != std::string::npos) {
                 mat.ageDiffuseMap = resName;
             } else if (texNameLower.find("agenormal") != std::string::npos ||
-                       texNameLower.find("age_normal") != std::string::npos) {
+                       texNameLower.find("age_normal") != std::string::npos ||
+                       texNameLower.find("agenormalmap") != std::string::npos) {
                 mat.ageNormalMap = resName;
             } else if (texNameLower.find("tattoo") != std::string::npos) {
                 mat.tattooMap = resName;
-            } else if (texNameLower.find("browstubble") != std::string::npos &&
-                       texNameLower.find("normal") == std::string::npos) {
+            } else if (texNameLower.find("browstubblenormal") != std::string::npos) {
+                mat.browStubbleNormalMap = resName;
+            } else if (texNameLower.find("browstubble") != std::string::npos) {
                 mat.browStubbleMap = resName;
-            }
-            // Standard textures
-            else if (texNameLower.find("diffuse") != std::string::npos ||
-                texNameLower.find("packedtexture") != std::string::npos ||
-                texNameLower.find("_d") != std::string::npos) {
+            } else if (texNameLower.find("corneanormal") != std::string::npos ||
+                       texNameLower.find("lightmap") != std::string::npos ||
+                       texNameLower.find("emotionsmask") != std::string::npos ||
+                       texNameLower.find("emotionsnormal") != std::string::npos) {
+            } else if (texNameLower.find("diffuse") != std::string::npos ||
+                       texNameLower.find("packedtexture") != std::string::npos) {
                 mat.diffuseMap = resName;
-            } else if (texNameLower.find("normal") != std::string::npos ||
-                       texNameLower.find("_n") != std::string::npos) {
-                mat.normalMap = resName;
-            } else if (texNameLower.find("specular") != std::string::npos ||
-                       texNameLower.find("_s") != std::string::npos) {
+            } else if (texNameLower.find("normalmap") != std::string::npos) {
+                if (mat.normalMap.empty()) {
+                    mat.normalMap = resName;
+                }
+            } else if (texNameLower.find("specular") != std::string::npos) {
                 mat.specularMap = resName;
             } else if (texNameLower.find("tintmask") != std::string::npos ||
                        texNameLower.find("tint") != std::string::npos) {
                 mat.tintMap = resName;
             } else if (mat.diffuseMap.empty()) {
-                // Fallback: check ResName for hints (e.g., _0d.dds = diffuse)
                 if (resNameLower.find("_d.") != std::string::npos ||
                     resNameLower.find("0d.") != std::string::npos ||
                     resNameLower.find("_d_") != std::string::npos) {
                     mat.diffuseMap = resName;
                 } else if (resNameLower.find("_n.") != std::string::npos ||
                            resNameLower.find("0n.") != std::string::npos) {
-                    mat.normalMap = resName;
+                    if (mat.normalMap.empty()) {
+                        mat.normalMap = resName;
+                    }
                 } else if (resNameLower.find("_s.") != std::string::npos ||
                            resNameLower.find("0s.") != std::string::npos) {
                     mat.specularMap = resName;

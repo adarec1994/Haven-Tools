@@ -4,6 +4,7 @@
 #include <cstring>
 
 #ifdef _WIN32
+// Define function pointers
 PFNGLCREATESHADERPROC glCreateShader = nullptr;
 PFNGLSHADERSOURCEPROC glShaderSource = nullptr;
 PFNGLCOMPILESHADERPROC glCompileShader = nullptr;
@@ -42,6 +43,7 @@ static bool s_shadersInitialized = false;
 static bool s_shadersAvailable = false;
 static ShaderProgram s_modelShader;
 
+// Vertex shader for model rendering - uses built-in attributes for compatibility
 static const char* MODEL_VERTEX_SHADER = R"(
 #version 120
 
@@ -51,14 +53,22 @@ varying vec2 vTexCoord;
 varying vec3 vEyePos;
 
 void main() {
+    // Use standard fixed-function transform
     gl_Position = ftransform();
+
+    // Transform to eye space for lighting
     vEyePos = (gl_ModelViewMatrix * gl_Vertex).xyz;
     vWorldPos = gl_Vertex.xyz;
+
+    // Transform normal to eye space
     vNormal = normalize(gl_NormalMatrix * gl_Normal);
+
+    // Pass through texture coordinates
     vTexCoord = gl_MultiTexCoord0.xy;
 }
 )";
 
+// Fragment shader with normal mapping, specular, and tint support
 static const char* MODEL_FRAGMENT_SHADER = R"(
 #version 120
 
@@ -71,6 +81,10 @@ uniform sampler2D uDiffuseTex;
 uniform sampler2D uNormalTex;
 uniform sampler2D uSpecularTex;
 uniform sampler2D uTintTex;
+uniform sampler2D uAgeDiffuseTex;
+uniform sampler2D uAgeNormalTex;
+uniform sampler2D uStubbleTex;
+uniform sampler2D uStubbleNormalTex;
 
 uniform vec4 uTintColor;
 uniform vec3 uTintZone1;
@@ -78,12 +92,18 @@ uniform vec3 uTintZone2;
 uniform vec3 uTintZone3;
 uniform float uSpecularPower;
 uniform float uAmbientStrength;
+uniform float uAgeAmount;
+uniform float uStubbleAmount;
 
 uniform int uUseDiffuse;
 uniform int uUseNormal;
 uniform int uUseSpecular;
 uniform int uUseTint;
 uniform int uUseAlphaTest;
+uniform int uIsEyeMesh;
+uniform int uIsFaceMesh;
+uniform int uUseAge;
+uniform int uUseStubble;
 
 void main() {
     vec4 diffuseColor;
@@ -94,29 +114,66 @@ void main() {
         diffuseColor = vec4(0.7, 0.7, 0.7, 1.0);
     }
 
-    diffuseColor.rgb *= uTintColor.rgb;
+    vec3 baseNormal = vec3(0.0, 0.0, 1.0);
+    if (uUseNormal != 0) {
+        baseNormal = texture2D(uNormalTex, vTexCoord).rgb * 2.0 - 1.0;
+    }
 
-    if (uUseTint != 0) {
+    if (uIsFaceMesh != 0) {
+        if (uUseAge != 0 && uAgeAmount > 0.0) {
+            vec4 ageDiffuse = texture2D(uAgeDiffuseTex, vTexCoord);
+            diffuseColor.rgb = mix(diffuseColor.rgb, ageDiffuse.rgb, uAgeAmount);
+            vec3 ageNormal = texture2D(uAgeNormalTex, vTexCoord).rgb * 2.0 - 1.0;
+            baseNormal = mix(baseNormal, ageNormal, uAgeAmount);
+        }
+        if (uUseStubble != 0 && uStubbleAmount > 0.0) {
+            vec4 stubbleTint = texture2D(uStubbleTex, vTexCoord);
+            float stubbleMask = stubbleTint.r;
+            diffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb * 0.3, stubbleMask * uStubbleAmount);
+            vec3 stubbleNormal = texture2D(uStubbleNormalTex, vTexCoord).rgb * 2.0 - 1.0;
+            baseNormal = mix(baseNormal, stubbleNormal, stubbleMask * uStubbleAmount);
+        }
+    }
+
+    if (uIsEyeMesh != 0 && uUseTint != 0) {
         vec4 tintMask = texture2D(uTintTex, vTexCoord);
-        vec3 zoneColor = diffuseColor.rgb;
-        zoneColor = mix(zoneColor, zoneColor * uTintZone1, tintMask.r);
-        zoneColor = mix(zoneColor, zoneColor * uTintZone2, tintMask.g);
-        zoneColor = mix(zoneColor, zoneColor * uTintZone3, tintMask.b);
-        diffuseColor.rgb = zoneColor;
+        float irisAmount = tintMask.r;
+        vec3 irisColor = uTintColor.rgb * (0.5 + diffuseColor.rgb * 0.5);
+        diffuseColor.rgb = mix(diffuseColor.rgb, irisColor, irisAmount);
+    } else {
+        diffuseColor.rgb *= uTintColor.rgb;
+
+        if (uUseTint != 0) {
+            vec4 tintMask = texture2D(uTintTex, vTexCoord);
+            vec3 zoneColor = diffuseColor.rgb;
+            zoneColor = mix(zoneColor, zoneColor * uTintZone1, tintMask.r);
+            zoneColor = mix(zoneColor, zoneColor * uTintZone2, tintMask.g);
+            zoneColor = mix(zoneColor, zoneColor * uTintZone3, tintMask.b);
+            diffuseColor.rgb = zoneColor;
+        }
     }
 
     vec3 N = normalize(vNormal);
-    if (uUseNormal != 0) {
-        vec3 normalMap = texture2D(uNormalTex, vTexCoord).rgb;
-        normalMap = normalMap * 2.0 - 1.0;
-        N = normalize(N + normalMap * 0.3);
+    if (uUseNormal != 0 || (uIsFaceMesh != 0 && (uUseAge != 0 || uUseStubble != 0))) {
+        N = normalize(N + baseNormal * 0.3);
     }
 
+    // Light direction in eye space (fixed light from camera direction)
     vec3 L = normalize(vec3(0.3, 0.5, 1.0));
+
+    // View direction (in eye space, camera is at origin)
     vec3 V = normalize(-vEyePos);
+
+    // Diffuse lighting
     float NdotL = max(dot(N, L), 0.0);
+
+    // Ambient
     vec3 ambient = uAmbientStrength * diffuseColor.rgb;
+
+    // Diffuse
     vec3 diffuse = NdotL * diffuseColor.rgb;
+
+    // Specular (Blinn-Phong)
     vec3 specular = vec3(0.0);
     if (uUseSpecular != 0 && NdotL > 0.0) {
         vec3 H = normalize(L + V);
@@ -127,6 +184,8 @@ void main() {
     }
 
     vec3 finalColor = ambient + diffuse + specular;
+
+    // For non-alpha meshes, force full opacity
     float finalAlpha = (uUseAlphaTest != 0) ? diffuseColor.a : 1.0;
     gl_FragColor = vec4(finalColor, finalAlpha);
 }
@@ -166,6 +225,8 @@ bool initShaderExtensions() {
     glBindVertexArray = (PFNGLBINDVERTEXARRAYPROC)wglGetProcAddress("glBindVertexArray");
     glDeleteVertexArrays = (PFNGLDELETEVERTEXARRAYSPROC)wglGetProcAddress("glDeleteVertexArrays");
     glVertexAttrib3f = (PFNGLVERTEXATTRIB3FPROC)wglGetProcAddress("glVertexAttrib3f");
+
+    // Check required functions
     if (!glCreateShader || !glShaderSource || !glCompileShader || !glCreateProgram ||
         !glAttachShader || !glLinkProgram || !glUseProgram || !glGetUniformLocation ||
         !glUniform1i || !glUniform1f || !glUniform3f || !glUniform4f || !glUniformMatrix4fv ||
@@ -177,7 +238,7 @@ bool initShaderExtensions() {
     std::cout << "[SHADER] OpenGL extensions loaded successfully" << std::endl;
     return true;
 #else
-    return true;
+    return true; // Linux has GL extensions available
 #endif
 }
 
@@ -233,6 +294,7 @@ ShaderProgram createShaderProgram(const char* vertexSrc, const char* fragmentSrc
         return program;
     }
 
+    // Clean up shaders (they're linked into the program now)
     glDeleteShader(vs);
     glDeleteShader(fs);
 
@@ -246,6 +308,10 @@ ShaderProgram createShaderProgram(const char* vertexSrc, const char* fragmentSrc
     program.uNormalTex = glGetUniformLocation(program.id, "uNormalTex");
     program.uSpecularTex = glGetUniformLocation(program.id, "uSpecularTex");
     program.uTintTex = glGetUniformLocation(program.id, "uTintTex");
+    program.uAgeDiffuseTex = glGetUniformLocation(program.id, "uAgeDiffuseTex");
+    program.uAgeNormalTex = glGetUniformLocation(program.id, "uAgeNormalTex");
+    program.uStubbleTex = glGetUniformLocation(program.id, "uStubbleTex");
+    program.uStubbleNormalTex = glGetUniformLocation(program.id, "uStubbleNormalTex");
 
     program.uTintColor = glGetUniformLocation(program.id, "uTintColor");
     program.uTintZone1 = glGetUniformLocation(program.id, "uTintZone1");
@@ -253,12 +319,18 @@ ShaderProgram createShaderProgram(const char* vertexSrc, const char* fragmentSrc
     program.uTintZone3 = glGetUniformLocation(program.id, "uTintZone3");
     program.uSpecularPower = glGetUniformLocation(program.id, "uSpecularPower");
     program.uAmbientStrength = glGetUniformLocation(program.id, "uAmbientStrength");
+    program.uAgeAmount = glGetUniformLocation(program.id, "uAgeAmount");
+    program.uStubbleAmount = glGetUniformLocation(program.id, "uStubbleAmount");
 
     program.uUseDiffuse = glGetUniformLocation(program.id, "uUseDiffuse");
     program.uUseNormal = glGetUniformLocation(program.id, "uUseNormal");
     program.uUseSpecular = glGetUniformLocation(program.id, "uUseSpecular");
     program.uUseTint = glGetUniformLocation(program.id, "uUseTint");
     program.uUseAlphaTest = glGetUniformLocation(program.id, "uUseAlphaTest");
+    program.uIsEyeMesh = glGetUniformLocation(program.id, "uIsEyeMesh");
+    program.uIsFaceMesh = glGetUniformLocation(program.id, "uIsFaceMesh");
+    program.uUseAge = glGetUniformLocation(program.id, "uUseAge");
+    program.uUseStubble = glGetUniformLocation(program.id, "uUseStubble");
 
     program.valid = true;
     std::cout << "[SHADER] Program created successfully (id=" << program.id << ")" << std::endl;
