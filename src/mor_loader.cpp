@@ -65,9 +65,9 @@ int MorphData::getHairStyleIndex() const {
     std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
     size_t harPos = lower.find("_har_");
     if (harPos == std::string::npos) return -1;
-    size_t start = harPos + 5;  // After "_har_"
+    size_t start = harPos + 5;
     if (start + 2 >= lower.size()) return -1;
-    if (lower.substr(start, 3) == "bld") return 0;  // Bald
+    if (lower.substr(start, 3) == "bld") return 0;
     if (lower[start] == 'h' && lower[start + 1] == 'a') {
         char c = lower[start + 2];
         if (c >= '0' && c <= '9') return c - '0';
@@ -80,7 +80,7 @@ int MorphData::getBeardStyleIndex() const {
     std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
     size_t brdPos = lower.find("_brd_");
     if (brdPos == std::string::npos) return -1;
-    size_t start = brdPos + 5;  // After "_brd_"
+    size_t start = brdPos + 5;
     if (start + 2 >= lower.size()) return -1;
     if (lower[start] == 'b' && lower[start + 1] == 'r') {
         char c = lower[start + 2];
@@ -208,7 +208,7 @@ bool loadMOR(const std::vector<uint8_t>& data, MorphData& outMorph) {
                 if (pos + sp.patternLen + 2 < size &&
                     ptr[pos + sp.patternLen] == 0 && ptr[pos + sp.patternLen + 1] == 0) {
                     targetPositions.push_back({pos, sp.name});
-                    break;  // Only find first occurrence
+                    break;
                 }
             }
         }
@@ -222,7 +222,7 @@ bool loadMOR(const std::vector<uint8_t>& data, MorphData& outMorph) {
         while (nameEnd + 2 < size && (ptr[nameEnd] != 0 || ptr[nameEnd + 1] != 0)) {
             nameEnd += 2;
         }
-        nameEnd += 2;  // Skip null terminator
+        nameEnd += 2;
         size_t vertexStart = nameEnd;
         while (vertexStart + 2 < size && ptr[vertexStart] == 0xFF && ptr[vertexStart + 1] == 0xFF) {
             vertexStart += 2;
@@ -238,7 +238,7 @@ bool loadMOR(const std::vector<uint8_t>& data, MorphData& outMorph) {
                     parseTargetName(name, target.category, target.index);
                     target.vertices.resize(vertexCount);
                     for (size_t v = 0; v < vertexCount; v++) {
-                        size_t offset = dataStart + v * 16;  // 4 floats per vertex
+                        size_t offset = dataStart + v * 16;
                         target.vertices[v].x = readFloat(ptr, offset);
                         target.vertices[v].y = readFloat(ptr, offset + 4);
                         target.vertices[v].z = readFloat(ptr, offset + 8);
@@ -337,5 +337,5 @@ bool loadMOR(const std::vector<uint8_t>& data, MorphData& outMorph) {
             std::cout << "[MOR]   - " << t << std::endl;
         }
     }
-    return true;  // Return true even without vertex data - we may have hair/skin info
+    return true;
 }

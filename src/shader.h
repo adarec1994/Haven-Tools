@@ -2,18 +2,15 @@
 #include <string>
 #include <cstdint>
 
-// OpenGL function pointers for shader operations
 #ifdef _WIN32
 #define NOMINMAX
 #include <windows.h>
 #include <GL/gl.h>
 
-// GL types
 typedef char GLchar;
 typedef ptrdiff_t GLsizeiptr;
 typedef ptrdiff_t GLintptr;
 
-// Shader functions
 typedef GLuint (APIENTRY *PFNGLCREATESHADERPROC)(GLenum type);
 typedef void (APIENTRY *PFNGLSHADERSOURCEPROC)(GLuint shader, GLsizei count, const GLchar *const*string, const GLint *length);
 typedef void (APIENTRY *PFNGLCOMPILESHADERPROC)(GLuint shader);
@@ -47,7 +44,6 @@ typedef void (APIENTRY *PFNGLBINDVERTEXARRAYPROC)(GLuint array);
 typedef void (APIENTRY *PFNGLDELETEVERTEXARRAYSPROC)(GLsizei n, const GLuint *arrays);
 typedef void (APIENTRY *PFNGLVERTEXATTRIB3FPROC)(GLuint index, GLfloat x, GLfloat y, GLfloat z);
 
-// GL constants
 #define GL_FRAGMENT_SHADER 0x8B30
 #define GL_VERTEX_SHADER 0x8B31
 #define GL_COMPILE_STATUS 0x8B81
@@ -105,7 +101,6 @@ extern PFNGLVERTEXATTRIB3FPROC glVertexAttrib3f;
 #include <GL/glext.h>
 #endif
 
-// Shader program wrapper
 struct ShaderProgram {
     uint32_t id = 0;
 
@@ -146,26 +141,18 @@ struct ShaderProgram {
     bool valid = false;
 };
 
-// Initialize shader extensions
 bool initShaderExtensions();
 
-// Compile a shader from source
 uint32_t compileShader(GLenum type, const char* source);
 
-// Create shader program from vertex and fragment shader sources
 ShaderProgram createShaderProgram(const char* vertexSrc, const char* fragmentSrc);
 
-// Delete a shader program
 void deleteShaderProgram(ShaderProgram& program);
 
-// Get the main model shader
 ShaderProgram& getModelShader();
 
-// Initialize the shader system
 bool initShaderSystem();
 
-// Cleanup shader system
 void cleanupShaderSystem();
 
-// Check if shaders are available
 bool shadersAvailable();

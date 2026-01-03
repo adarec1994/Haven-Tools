@@ -113,7 +113,6 @@ Material parseMAO(const std::string& maoContent, const std::string& materialName
     return mat;
 }
 
-// Quaternion helpers
 static void quatMulWorld(float ax, float ay, float az, float aw,
                          float bx, float by, float bz, float bw,
                          float& rx, float& ry, float& rz, float& rw) {

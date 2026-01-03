@@ -4,7 +4,6 @@
 #include <cstring>
 
 #ifdef _WIN32
-// Define function pointers
 PFNGLCREATESHADERPROC glCreateShader = nullptr;
 PFNGLSHADERSOURCEPROC glShaderSource = nullptr;
 PFNGLCOMPILESHADERPROC glCompileShader = nullptr;
@@ -43,7 +42,6 @@ static bool s_shadersInitialized = false;
 static bool s_shadersAvailable = false;
 static ShaderProgram s_modelShader;
 
-// Vertex shader for model rendering - uses built-in attributes for compatibility
 static const char* MODEL_VERTEX_SHADER = R"(
 #version 120
 
@@ -53,22 +51,14 @@ varying vec2 vTexCoord;
 varying vec3 vEyePos;
 
 void main() {
-    // Use standard fixed-function transform
     gl_Position = ftransform();
-
-    // Transform to eye space for lighting
     vEyePos = (gl_ModelViewMatrix * gl_Vertex).xyz;
     vWorldPos = gl_Vertex.xyz;
-
-    // Transform normal to eye space
     vNormal = normalize(gl_NormalMatrix * gl_Normal);
-
-    // Pass through texture coordinates
     vTexCoord = gl_MultiTexCoord0.xy;
 }
 )";
 
-// Fragment shader with normal mapping, specular, and tint support
 static const char* MODEL_FRAGMENT_SHADER = R"(
 #version 120
 
@@ -158,22 +148,11 @@ void main() {
         N = normalize(N + baseNormal * 0.3);
     }
 
-    // Light direction in eye space (fixed light from camera direction)
     vec3 L = normalize(vec3(0.3, 0.5, 1.0));
-
-    // View direction (in eye space, camera is at origin)
     vec3 V = normalize(-vEyePos);
-
-    // Diffuse lighting
     float NdotL = max(dot(N, L), 0.0);
-
-    // Ambient
     vec3 ambient = uAmbientStrength * diffuseColor.rgb;
-
-    // Diffuse
     vec3 diffuse = NdotL * diffuseColor.rgb;
-
-    // Specular (Blinn-Phong)
     vec3 specular = vec3(0.0);
     if (uUseSpecular != 0 && NdotL > 0.0) {
         vec3 H = normalize(L + V);
@@ -184,8 +163,6 @@ void main() {
     }
 
     vec3 finalColor = ambient + diffuse + specular;
-
-    // For non-alpha meshes, force full opacity
     float finalAlpha = (uUseAlphaTest != 0) ? diffuseColor.a : 1.0;
     gl_FragColor = vec4(finalColor, finalAlpha);
 }
@@ -226,7 +203,6 @@ bool initShaderExtensions() {
     glDeleteVertexArrays = (PFNGLDELETEVERTEXARRAYSPROC)wglGetProcAddress("glDeleteVertexArrays");
     glVertexAttrib3f = (PFNGLVERTEXATTRIB3FPROC)wglGetProcAddress("glVertexAttrib3f");
 
-    // Check required functions
     if (!glCreateShader || !glShaderSource || !glCompileShader || !glCreateProgram ||
         !glAttachShader || !glLinkProgram || !glUseProgram || !glGetUniformLocation ||
         !glUniform1i || !glUniform1f || !glUniform3f || !glUniform4f || !glUniformMatrix4fv ||
@@ -238,7 +214,7 @@ bool initShaderExtensions() {
     std::cout << "[SHADER] OpenGL extensions loaded successfully" << std::endl;
     return true;
 #else
-    return true; // Linux has GL extensions available
+    return true;
 #endif
 }
 
@@ -294,7 +270,6 @@ ShaderProgram createShaderProgram(const char* vertexSrc, const char* fragmentSrc
         return program;
     }
 
-    // Clean up shaders (they're linked into the program now)
     glDeleteShader(vs);
     glDeleteShader(fs);
 
