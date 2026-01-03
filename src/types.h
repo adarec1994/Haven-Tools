@@ -299,7 +299,7 @@ struct AppState {
         bool listsBuilt = false;
         std::string currentPrefix;
         std::vector<MorphPresetEntry> availableMorphPresets;
-        int selectedMorphPreset = -1;  
+        int selectedMorphPreset = -1;
         MorphData morphData;
         bool morphLoaded = false;
         float faceMorphAmount = 1.0f;

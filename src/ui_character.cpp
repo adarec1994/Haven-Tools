@@ -1162,6 +1162,7 @@ void drawCharacterDesigner(AppState& state, ImGuiIO& io) {
                     cd.needsRebuild = true;
                 }
             }
+            ImGui::ColorEdit3("Hair Color", state.renderSettings.hairColor, ImGuiColorEditFlags_NoInputs);
 
             if (cd.isMale && !cd.beards.empty()) {
                 ImGui::Separator();
@@ -1179,7 +1180,6 @@ void drawCharacterDesigner(AppState& state, ImGuiIO& io) {
             }
             ImGui::Separator();
 
-            ImGui::ColorEdit3("Hair Color", state.renderSettings.hairColor, ImGuiColorEditFlags_NoInputs);
             ImGui::ColorEdit3("Eye Color", cd.eyeColor, ImGuiColorEditFlags_NoInputs);
             ImGui::Separator();
 
