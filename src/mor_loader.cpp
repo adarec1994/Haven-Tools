@@ -257,7 +257,7 @@ bool loadMOR(const std::vector<uint8_t>& data, MorphData& outMorph) {
                 if (pos + sp.patternLen + 2 < size &&
                     ptr[pos + sp.patternLen] == 0 && ptr[pos + sp.patternLen + 1] == 0) {
                     targetPositions.push_back({pos, sp.name});
-                    break; 
+                    break;
                 }
             }
         }

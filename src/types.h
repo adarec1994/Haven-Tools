@@ -249,21 +249,27 @@ struct AppState {
         int glovesStyle = 0;
         float hairColor[3] = {0.3f, 0.2f, 0.1f};
         float skinColor[3] = {0.9f, 0.7f, 0.6f};
+
         float headTintZone1[3] = {1.0f, 1.0f, 1.0f};
         float headTintZone2[3] = {1.0f, 1.0f, 1.0f};
         float headTintZone3[3] = {1.0f, 1.0f, 1.0f};
+
         float armorTintZone1[3] = {1.0f, 1.0f, 1.0f};
         float armorTintZone2[3] = {1.0f, 1.0f, 1.0f};
         float armorTintZone3[3] = {1.0f, 1.0f, 1.0f};
+
         float clothesTintZone1[3] = {1.0f, 1.0f, 1.0f};
         float clothesTintZone2[3] = {1.0f, 1.0f, 1.0f};
         float clothesTintZone3[3] = {1.0f, 1.0f, 1.0f};
+
         float bootsTintZone1[3] = {1.0f, 1.0f, 1.0f};
         float bootsTintZone2[3] = {1.0f, 1.0f, 1.0f};
         float bootsTintZone3[3] = {1.0f, 1.0f, 1.0f};
+
         float glovesTintZone1[3] = {1.0f, 1.0f, 1.0f};
         float glovesTintZone2[3] = {1.0f, 1.0f, 1.0f};
         float glovesTintZone3[3] = {1.0f, 1.0f, 1.0f};
+
         float helmetTintZone1[3] = {1.0f, 1.0f, 1.0f};
         float helmetTintZone2[3] = {1.0f, 1.0f, 1.0f};
         float helmetTintZone3[3] = {1.0f, 1.0f, 1.0f};
@@ -297,7 +303,11 @@ struct AppState {
         bool morphLoaded = false;
         float faceMorphAmount = 1.0f;
         std::vector<Vertex> baseHeadVertices;
+        std::vector<Vertex> baseEyesVertices;
+        std::vector<Vertex> baseLashesVertices;
         int headMeshIndex = -1;
+        int eyesMeshIndex = -1;
+        int lashesMeshIndex = -1;
     } charDesigner;
 
     bool showFSBBrowser = false;
