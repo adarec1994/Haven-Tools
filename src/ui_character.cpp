@@ -828,6 +828,25 @@ void loadCharacterModel(AppState& state) {
         applyMaterialStyle(state, state.currentModel, cd.glovesStyle, "glv");
     }
 
+    if (cd.selectedTattoo > 0 && cd.selectedTattoo < (int)cd.tattoos.size()) {
+        std::string tattooTexName = cd.tattoos[cd.selectedTattoo].first;
+        if (!tattooTexName.empty()) {
+            uint32_t tattooTexId = loadTexByName(state, tattooTexName);
+            if (tattooTexId != 0) {
+                for (auto& mat : state.currentModel.materials) {
+                    std::string matLower = mat.name;
+                    std::transform(matLower.begin(), matLower.end(), matLower.begin(), ::tolower);
+                    if (matLower.find("_hed_") != std::string::npos ||
+                        matLower.find("hed_fem") != std::string::npos ||
+                        matLower.find("hed_mal") != std::string::npos) {
+                        mat.tattooTexId = tattooTexId;
+                        mat.tattooMap = tattooTexName;
+                    }
+                }
+            }
+        }
+    }
+
     for (auto& mesh : state.currentModel.meshes) {
         if (!mesh.materialName.empty()) {
             mesh.materialIndex = state.currentModel.findMaterial(mesh.materialName);
@@ -1029,7 +1048,11 @@ void drawCharacterDesigner(AppState& state, ImGuiIO& io) {
 
     memcpy(state.renderSettings.eyeColor, cd.eyeColor, sizeof(float) * 3);
     state.renderSettings.ageAmount = cd.ageAmount;
-    state.renderSettings.stubbleAmount = cd.stubbleAmount;
+    memcpy(state.renderSettings.stubbleAmount, cd.stubbleAmount, sizeof(float) * 4);
+    memcpy(state.renderSettings.tattooAmount, cd.tattooAmount, sizeof(float) * 3);
+    memcpy(state.renderSettings.tattooColor1, cd.tattooColor1, sizeof(float) * 3);
+    memcpy(state.renderSettings.tattooColor2, cd.tattooColor2, sizeof(float) * 3);
+    memcpy(state.renderSettings.tattooColor3, cd.tattooColor3, sizeof(float) * 3);
     memcpy(state.renderSettings.headZone1, cd.headTintZone1, sizeof(float) * 3);
     memcpy(state.renderSettings.headZone2, cd.headTintZone2, sizeof(float) * 3);
     memcpy(state.renderSettings.headZone3, cd.headTintZone3, sizeof(float) * 3);
@@ -1177,6 +1200,11 @@ void drawCharacterDesigner(AppState& state, ImGuiIO& io) {
                     cd.selectedHelmet = -1;
                     cd.needsRebuild = true;
                 }
+                ImGui::Text("Stubble:");
+                ImGui::SliderFloat("Style 1##stubble", &cd.stubbleAmount[0], 0.0f, 1.0f);
+                ImGui::SliderFloat("Style 2##stubble", &cd.stubbleAmount[1], 0.0f, 1.0f);
+                ImGui::SliderFloat("Style 3##stubble", &cd.stubbleAmount[2], 0.0f, 1.0f);
+                ImGui::SliderFloat("Style 4##stubble", &cd.stubbleAmount[3], 0.0f, 1.0f);
             }
             ImGui::Separator();
 
@@ -1184,20 +1212,13 @@ void drawCharacterDesigner(AppState& state, ImGuiIO& io) {
             ImGui::Separator();
 
             ImGui::SliderFloat("Age", &cd.ageAmount, 0.0f, 1.0f);
-            ImGui::SliderFloat("Stubble", &cd.stubbleAmount, 0.0f, 1.0f);
             ImGui::Separator();
 
-            ImGui::Text("Makeup:");
-            ImGui::ColorEdit3("Lips", cd.headTintZone1, ImGuiColorEditFlags_NoInputs);
-            ImGui::ColorEdit3("Eyeshadow", cd.headTintZone2, ImGuiColorEditFlags_NoInputs);
-            ImGui::ColorEdit3("Blush", cd.headTintZone3, ImGuiColorEditFlags_NoInputs);
-            ImGui::Separator();
-
+            ImGui::Text("Tattoo:");
             if (!cd.tattoos.empty()) {
-                ImGui::Text("Tattoo:");
                 std::string currentTattoo = (cd.selectedTattoo < 0) ? "None" :
                     (cd.selectedTattoo < (int)cd.tattoos.size() ? cd.tattoos[cd.selectedTattoo].second : "None");
-                if (ImGui::BeginCombo("##tattoo", currentTattoo.c_str())) {
+                if (ImGui::BeginCombo("##tattooselect", currentTattoo.c_str())) {
                     for (int i = 0; i < (int)cd.tattoos.size(); i++) {
                         bool selected = (cd.selectedTattoo == i) || (i == 0 && cd.selectedTattoo < 0);
                         if (ImGui::Selectable(cd.tattoos[i].second.c_str(), selected)) {
@@ -1210,6 +1231,18 @@ void drawCharacterDesigner(AppState& state, ImGuiIO& io) {
                     ImGui::EndCombo();
                 }
             }
+            ImGui::SliderFloat("Style 1##tattoo", &cd.tattooAmount[0], 0.0f, 1.0f);
+            ImGui::ColorEdit3("Color 1##tattoo", cd.tattooColor1, ImGuiColorEditFlags_NoInputs);
+            ImGui::SliderFloat("Style 2##tattoo", &cd.tattooAmount[1], 0.0f, 1.0f);
+            ImGui::ColorEdit3("Color 2##tattoo", cd.tattooColor2, ImGuiColorEditFlags_NoInputs);
+            ImGui::SliderFloat("Style 3##tattoo", &cd.tattooAmount[2], 0.0f, 1.0f);
+            ImGui::ColorEdit3("Color 3##tattoo", cd.tattooColor3, ImGuiColorEditFlags_NoInputs);
+            ImGui::Separator();
+
+            ImGui::Text("Makeup:");
+            ImGui::ColorEdit3("Lips", cd.headTintZone1, ImGuiColorEditFlags_NoInputs);
+            ImGui::ColorEdit3("Eyeshadow", cd.headTintZone2, ImGuiColorEditFlags_NoInputs);
+            ImGui::ColorEdit3("Blush", cd.headTintZone3, ImGuiColorEditFlags_NoInputs);
             ImGui::EndTabItem();
         }
 

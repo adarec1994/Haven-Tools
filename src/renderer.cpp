@@ -221,7 +221,6 @@ static void multiplyMatrix4(const float* a, const float* b, float* result) {
 }
 
 static void extractNormalMatrix(const float* mv, float* nm) {
-
     nm[0] = mv[0]; nm[1] = mv[1]; nm[2] = mv[2];
     nm[3] = mv[4]; nm[4] = mv[5]; nm[5] = mv[6];
     nm[6] = mv[8]; nm[7] = mv[9]; nm[8] = mv[10];
@@ -263,7 +262,11 @@ static void renderMeshShader(Mesh& mesh, const Model& model, const RenderSetting
     if (shader.uTintZone3 >= 0) glUniform3f(shader.uTintZone3, zone3[0], zone3[1], zone3[2]);
 
     if (shader.uAgeAmount >= 0) glUniform1f(shader.uAgeAmount, settings.ageAmount);
-    if (shader.uStubbleAmount >= 0) glUniform1f(shader.uStubbleAmount, settings.stubbleAmount);
+    if (shader.uStubbleAmount >= 0) glUniform4f(shader.uStubbleAmount, settings.stubbleAmount[0], settings.stubbleAmount[1], settings.stubbleAmount[2], settings.stubbleAmount[3]);
+    if (shader.uTattooAmount >= 0) glUniform3f(shader.uTattooAmount, settings.tattooAmount[0], settings.tattooAmount[1], settings.tattooAmount[2]);
+    if (shader.uTattooColor1 >= 0) glUniform3f(shader.uTattooColor1, settings.tattooColor1[0], settings.tattooColor1[1], settings.tattooColor1[2]);
+    if (shader.uTattooColor2 >= 0) glUniform3f(shader.uTattooColor2, settings.tattooColor2[0], settings.tattooColor2[1], settings.tattooColor2[2]);
+    if (shader.uTattooColor3 >= 0) glUniform3f(shader.uTattooColor3, settings.tattooColor3[0], settings.tattooColor3[1], settings.tattooColor3[2]);
 
     bool hasDiffuse = mat && mat->diffuseTexId != 0 && settings.showTextures;
     bool hasNormal = mat && mat->normalTexId != 0 && settings.useNormalMaps;
@@ -271,6 +274,7 @@ static void renderMeshShader(Mesh& mesh, const Model& model, const RenderSetting
     bool hasTint = mat && mat->tintTexId != 0 && settings.useTintMaps;
     bool hasAge = mat && mat->ageDiffuseTexId != 0 && mat->ageNormalTexId != 0;
     bool hasStubble = mat && mat->browStubbleTexId != 0 && mat->browStubbleNormalTexId != 0;
+    bool hasTattoo = mat && mat->tattooTexId != 0;
 
     if (shader.uUseDiffuse >= 0) glUniform1i(shader.uUseDiffuse, hasDiffuse ? 1 : 0);
     if (shader.uUseNormal >= 0) glUniform1i(shader.uUseNormal, hasNormal ? 1 : 0);
@@ -281,6 +285,7 @@ static void renderMeshShader(Mesh& mesh, const Model& model, const RenderSetting
     if (shader.uIsFaceMesh >= 0) glUniform1i(shader.uIsFaceMesh, isFaceMesh ? 1 : 0);
     if (shader.uUseAge >= 0) glUniform1i(shader.uUseAge, hasAge ? 1 : 0);
     if (shader.uUseStubble >= 0) glUniform1i(shader.uUseStubble, hasStubble ? 1 : 0);
+    if (shader.uUseTattoo >= 0) glUniform1i(shader.uUseTattoo, hasTattoo ? 1 : 0);
 
     glActiveTexture(GL_TEXTURE0);
     if (hasDiffuse) {
@@ -346,6 +351,14 @@ static void renderMeshShader(Mesh& mesh, const Model& model, const RenderSetting
     }
     if (shader.uStubbleNormalTex >= 0) glUniform1i(shader.uStubbleNormalTex, 7);
 
+    glActiveTexture(GL_TEXTURE0 + 8);
+    if (hasTattoo && mat->tattooTexId != 0) {
+        glBindTexture(GL_TEXTURE_2D, mat->tattooTexId);
+    } else {
+        glBindTexture(GL_TEXTURE_2D, 0);
+    }
+    if (shader.uTattooTex >= 0) glUniform1i(shader.uTattooTex, 8);
+
     glBegin(GL_TRIANGLES);
     for (size_t i = 0; i < mesh.indices.size(); i += 3) {
         for (int j = 0; j < 3; j++) {
@@ -365,6 +378,8 @@ static void renderMeshShader(Mesh& mesh, const Model& model, const RenderSetting
     }
     glEnd();
 
+    glActiveTexture(GL_TEXTURE0 + 8);
+    glBindTexture(GL_TEXTURE_2D, 0);
     glActiveTexture(GL_TEXTURE7);
     glBindTexture(GL_TEXTURE_2D, 0);
     glActiveTexture(GL_TEXTURE6);
@@ -628,9 +643,6 @@ void renderModel(Model& model, const Camera& camera, const RenderSettings& setti
                     }
                 }
                 glEnd();
-                isFaceMesh = (meshNameLower.find("hed") != std::string::npos ||
-                                   meshNameLower.find("uhm") != std::string::npos ||
-                                   meshNameLower.find("face") != std::string::npos);
                 if (isFaceMesh && settings.ageAmount > 0.001f && mesh.materialIndex >= 0 &&
                     mesh.materialIndex < (int)model.materials.size()) {
                     const auto& mat = model.materials[mesh.materialIndex];

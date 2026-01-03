@@ -75,6 +75,7 @@ uniform sampler2D uAgeDiffuseTex;
 uniform sampler2D uAgeNormalTex;
 uniform sampler2D uStubbleTex;
 uniform sampler2D uStubbleNormalTex;
+uniform sampler2D uTattooTex;
 
 uniform vec4 uTintColor;
 uniform vec3 uTintZone1;
@@ -83,7 +84,11 @@ uniform vec3 uTintZone3;
 uniform float uSpecularPower;
 uniform float uAmbientStrength;
 uniform float uAgeAmount;
-uniform float uStubbleAmount;
+uniform vec4 uStubbleAmount;
+uniform vec3 uTattooAmount;
+uniform vec3 uTattooColor1;
+uniform vec3 uTattooColor2;
+uniform vec3 uTattooColor3;
 
 uniform int uUseDiffuse;
 uniform int uUseNormal;
@@ -94,6 +99,7 @@ uniform int uIsEyeMesh;
 uniform int uIsFaceMesh;
 uniform int uUseAge;
 uniform int uUseStubble;
+uniform int uUseTattoo;
 
 void main() {
     vec4 diffuseColor;
@@ -116,12 +122,30 @@ void main() {
             vec3 ageNormal = texture2D(uAgeNormalTex, vTexCoord).rgb * 2.0 - 1.0;
             baseNormal = mix(baseNormal, ageNormal, uAgeAmount);
         }
-        if (uUseStubble != 0 && uStubbleAmount > 0.0) {
-            vec4 stubbleTint = texture2D(uStubbleTex, vTexCoord);
-            float stubbleMask = stubbleTint.r;
-            diffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb * 0.3, stubbleMask * uStubbleAmount);
-            vec3 stubbleNormal = texture2D(uStubbleNormalTex, vTexCoord).rgb * 2.0 - 1.0;
-            baseNormal = mix(baseNormal, stubbleNormal, stubbleMask * uStubbleAmount);
+        if (uUseStubble != 0) {
+            vec4 stubbleMask = texture2D(uStubbleTex, vTexCoord);
+            float stubbleR = stubbleMask.r * uStubbleAmount.r;
+            float stubbleG = stubbleMask.g * uStubbleAmount.g;
+            float stubbleB = stubbleMask.b * uStubbleAmount.b;
+            float stubbleA = stubbleMask.a * uStubbleAmount.a;
+            float totalStubble = max(stubbleR, max(stubbleG, max(stubbleB, stubbleA)));
+            if (totalStubble > 0.0) {
+                diffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb * 0.3, totalStubble);
+                vec3 stubbleNormal = texture2D(uStubbleNormalTex, vTexCoord).rgb * 2.0 - 1.0;
+                baseNormal = mix(baseNormal, stubbleNormal, totalStubble);
+            }
+        }
+        if (uUseTattoo != 0) {
+            vec4 tattooMask = texture2D(uTattooTex, vTexCoord);
+            if (tattooMask.r > 0.01 && uTattooAmount.r > 0.0) {
+                diffuseColor.rgb = mix(diffuseColor.rgb, uTattooColor1, tattooMask.r * uTattooAmount.r);
+            }
+            if (tattooMask.g > 0.01 && uTattooAmount.g > 0.0) {
+                diffuseColor.rgb = mix(diffuseColor.rgb, uTattooColor2, tattooMask.g * uTattooAmount.g);
+            }
+            if (tattooMask.b > 0.01 && uTattooAmount.b > 0.0) {
+                diffuseColor.rgb = mix(diffuseColor.rgb, uTattooColor3, tattooMask.b * uTattooAmount.b);
+            }
         }
     }
 
@@ -147,7 +171,6 @@ void main() {
     if (uUseNormal != 0 || (uIsFaceMesh != 0 && (uUseAge != 0 || uUseStubble != 0))) {
         N = normalize(N + baseNormal * 0.3);
     }
-
     vec3 L = normalize(vec3(0.3, 0.5, 1.0));
     vec3 V = normalize(-vEyePos);
     float NdotL = max(dot(N, L), 0.0);
@@ -287,6 +310,7 @@ ShaderProgram createShaderProgram(const char* vertexSrc, const char* fragmentSrc
     program.uAgeNormalTex = glGetUniformLocation(program.id, "uAgeNormalTex");
     program.uStubbleTex = glGetUniformLocation(program.id, "uStubbleTex");
     program.uStubbleNormalTex = glGetUniformLocation(program.id, "uStubbleNormalTex");
+    program.uTattooTex = glGetUniformLocation(program.id, "uTattooTex");
 
     program.uTintColor = glGetUniformLocation(program.id, "uTintColor");
     program.uTintZone1 = glGetUniformLocation(program.id, "uTintZone1");
@@ -296,6 +320,10 @@ ShaderProgram createShaderProgram(const char* vertexSrc, const char* fragmentSrc
     program.uAmbientStrength = glGetUniformLocation(program.id, "uAmbientStrength");
     program.uAgeAmount = glGetUniformLocation(program.id, "uAgeAmount");
     program.uStubbleAmount = glGetUniformLocation(program.id, "uStubbleAmount");
+    program.uTattooAmount = glGetUniformLocation(program.id, "uTattooAmount");
+    program.uTattooColor1 = glGetUniformLocation(program.id, "uTattooColor1");
+    program.uTattooColor2 = glGetUniformLocation(program.id, "uTattooColor2");
+    program.uTattooColor3 = glGetUniformLocation(program.id, "uTattooColor3");
 
     program.uUseDiffuse = glGetUniformLocation(program.id, "uUseDiffuse");
     program.uUseNormal = glGetUniformLocation(program.id, "uUseNormal");
@@ -306,6 +334,7 @@ ShaderProgram createShaderProgram(const char* vertexSrc, const char* fragmentSrc
     program.uIsFaceMesh = glGetUniformLocation(program.id, "uIsFaceMesh");
     program.uUseAge = glGetUniformLocation(program.id, "uUseAge");
     program.uUseStubble = glGetUniformLocation(program.id, "uUseStubble");
+    program.uUseTattoo = glGetUniformLocation(program.id, "uUseTattoo");
 
     program.valid = true;
     std::cout << "[SHADER] Program created successfully (id=" << program.id << ")" << std::endl;

@@ -81,7 +81,11 @@ struct RenderSettings {
     float skinColor[3] = {1.0f, 1.0f, 1.0f};
     float eyeColor[3] = {0.4f, 0.3f, 0.2f};
     float ageAmount = 0.0f;
-    float stubbleAmount = 0.0f;
+    float stubbleAmount[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+    float tattooAmount[3] = {0.0f, 0.0f, 0.0f};
+    float tattooColor1[3] = {0.0f, 0.0f, 0.0f};
+    float tattooColor2[3] = {0.0f, 0.0f, 0.0f};
+    float tattooColor3[3] = {0.0f, 0.0f, 0.0f};
     float headZone1[3] = {1.0f, 1.0f, 1.0f};
     float headZone2[3] = {1.0f, 1.0f, 1.0f};
     float headZone3[3] = {1.0f, 1.0f, 1.0f};
@@ -243,6 +247,7 @@ struct AppState {
         int selectedHelmet = -1;
         int selectedRobe = -1;
         int rememberedHair = 0;
+        float ageAmount = 0.0f;
         int selectedTattoo = -1;
         int armorStyle = 0;
         int clothesStyle = 0;
@@ -251,26 +256,26 @@ struct AppState {
         float hairColor[3] = {0.3f, 0.2f, 0.1f};
         float skinColor[3] = {0.9f, 0.7f, 0.6f};
         float eyeColor[3] = {0.4f, 0.3f, 0.2f};
-        float stubbleAmount = 0.0f;
+        float stubbleAmount[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+        float tattooAmount[3] = {0.0f, 0.0f, 0.0f};
+        float tattooColor1[3] = {0.0f, 0.0f, 0.0f};
+        float tattooColor2[3] = {0.0f, 0.0f, 0.0f};
+        float tattooColor3[3] = {0.0f, 0.0f, 0.0f};
         float headTintZone1[3] = {1.0f, 1.0f, 1.0f};
         float headTintZone2[3] = {1.0f, 1.0f, 1.0f};
         float headTintZone3[3] = {1.0f, 1.0f, 1.0f};
         float armorTintZone1[3] = {1.0f, 1.0f, 1.0f};
         float armorTintZone2[3] = {1.0f, 1.0f, 1.0f};
         float armorTintZone3[3] = {1.0f, 1.0f, 1.0f};
-
         float clothesTintZone1[3] = {1.0f, 1.0f, 1.0f};
         float clothesTintZone2[3] = {1.0f, 1.0f, 1.0f};
         float clothesTintZone3[3] = {1.0f, 1.0f, 1.0f};
-
         float bootsTintZone1[3] = {1.0f, 1.0f, 1.0f};
         float bootsTintZone2[3] = {1.0f, 1.0f, 1.0f};
         float bootsTintZone3[3] = {1.0f, 1.0f, 1.0f};
-
         float glovesTintZone1[3] = {1.0f, 1.0f, 1.0f};
         float glovesTintZone2[3] = {1.0f, 1.0f, 1.0f};
         float glovesTintZone3[3] = {1.0f, 1.0f, 1.0f};
-
         float helmetTintZone1[3] = {1.0f, 1.0f, 1.0f};
         float helmetTintZone2[3] = {1.0f, 1.0f, 1.0f};
         float helmetTintZone3[3] = {1.0f, 1.0f, 1.0f};
@@ -309,7 +314,6 @@ struct AppState {
         int headMeshIndex = -1;
         int eyesMeshIndex = -1;
         int lashesMeshIndex = -1;
-        float ageAmount = 0.0f;
     } charDesigner;
 
     bool showFSBBrowser = false;

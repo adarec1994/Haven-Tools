@@ -118,6 +118,7 @@ struct ShaderProgram {
     int uAgeNormalTex = -1;
     int uStubbleTex = -1;
     int uStubbleNormalTex = -1;
+    int uTattooTex = -1;
 
     int uTintColor = -1;
     int uTintZone1 = -1;
@@ -127,6 +128,10 @@ struct ShaderProgram {
     int uAmbientStrength = -1;
     int uAgeAmount = -1;
     int uStubbleAmount = -1;
+    int uTattooAmount = -1;
+    int uTattooColor1 = -1;
+    int uTattooColor2 = -1;
+    int uTattooColor3 = -1;
 
     int uUseDiffuse = -1;
     int uUseNormal = -1;
@@ -137,6 +142,7 @@ struct ShaderProgram {
     int uIsFaceMesh = -1;
     int uUseAge = -1;
     int uUseStubble = -1;
+    int uUseTattoo = -1;
 
     bool valid = false;
 };
