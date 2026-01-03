@@ -1,4 +1,5 @@
 #include "renderer.h"
+#include "shader.h"
 #include <cmath>
 #include <iostream>
 #include <cstring>
@@ -207,8 +208,159 @@ void drawSolidCapsule(float radius, float height, int slices, int stacks) {
         glEnd();
     }
 }
+
+// Matrix multiplication helper
+static void multiplyMatrix4(const float* a, const float* b, float* result) {
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+            result[i * 4 + j] = 0;
+            for (int k = 0; k < 4; k++) {
+                result[i * 4 + j] += a[i * 4 + k] * b[k * 4 + j];
+            }
+        }
+    }
+}
+
+// Extract 3x3 normal matrix from 4x4 modelview (transpose of inverse)
+static void extractNormalMatrix(const float* mv, float* nm) {
+    // For orthogonal matrices, normal matrix is just the upper-left 3x3
+    nm[0] = mv[0]; nm[1] = mv[1]; nm[2] = mv[2];
+    nm[3] = mv[4]; nm[4] = mv[5]; nm[5] = mv[6];
+    nm[6] = mv[8]; nm[7] = mv[9]; nm[8] = mv[10];
+}
+
+// Render a mesh with shaders
+static void renderMeshShader(Mesh& mesh, const Model& model, const RenderSettings& settings,
+                             const float* modelViewProj, const float* modelView, const float* normalMatrix,
+                             const float* viewPos, bool animating, bool isHairMesh, bool isSkinMesh) {
+    if (!shadersAvailable()) return;
+
+    ShaderProgram& shader = getModelShader();
+    if (!shader.valid) return;
+
+    glUseProgram(shader.id);
+
+    // Set matrices
+    if (shader.uModelViewProj >= 0) glUniformMatrix4fv(shader.uModelViewProj, 1, GL_FALSE, modelViewProj);
+    if (shader.uModelView >= 0) glUniformMatrix4fv(shader.uModelView, 1, GL_FALSE, modelView);
+
+    // Light direction (in eye space after rotation)
+    if (shader.uLightDir >= 0) glUniform3f(shader.uLightDir, 0.3f, 0.3f, 1.0f);
+    if (shader.uViewPos >= 0) glUniform3f(shader.uViewPos, viewPos[0], viewPos[1], viewPos[2]);
+
+    // Material properties
+    if (shader.uSpecularPower >= 0) glUniform1f(shader.uSpecularPower, 32.0f);
+    if (shader.uAmbientStrength >= 0) glUniform1f(shader.uAmbientStrength, 0.4f);
+
+    // Get material
+    const Material* mat = nullptr;
+    if (mesh.materialIndex >= 0 && mesh.materialIndex < (int)model.materials.size()) {
+        mat = &model.materials[mesh.materialIndex];
+    }
+
+    // Tint color based on mesh type
+    if (shader.uTintColor >= 0) {
+        if (isHairMesh) {
+            glUniform4f(shader.uTintColor, settings.hairColor[0], settings.hairColor[1], settings.hairColor[2], 1.0f);
+        } else if (isSkinMesh) {
+            glUniform4f(shader.uTintColor, settings.skinColor[0], settings.skinColor[1], settings.skinColor[2], 1.0f);
+        } else {
+            glUniform4f(shader.uTintColor, 1.0f, 1.0f, 1.0f, 1.0f);
+        }
+    }
+
+    // Bind textures
+    bool hasDiffuse = mat && mat->diffuseTexId != 0 && settings.showTextures;
+    bool hasNormal = mat && mat->normalTexId != 0 && settings.useNormalMaps;
+    bool hasSpecular = mat && mat->specularTexId != 0 && settings.useSpecularMaps;
+    bool hasTint = mat && mat->tintTexId != 0 && settings.useTintMaps;
+
+    if (shader.uUseDiffuse >= 0) glUniform1i(shader.uUseDiffuse, hasDiffuse ? 1 : 0);
+    if (shader.uUseNormal >= 0) glUniform1i(shader.uUseNormal, hasNormal ? 1 : 0);
+    if (shader.uUseSpecular >= 0) glUniform1i(shader.uUseSpecular, hasSpecular ? 1 : 0);
+    if (shader.uUseTint >= 0) glUniform1i(shader.uUseTint, hasTint ? 1 : 0);
+
+    // Bind diffuse texture to unit 0
+    glActiveTexture(GL_TEXTURE0);
+    if (hasDiffuse) {
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, mat->diffuseTexId);
+    } else {
+        glBindTexture(GL_TEXTURE_2D, 0);
+    }
+    if (shader.uDiffuseTex >= 0) glUniform1i(shader.uDiffuseTex, 0);
+
+    // Bind normal texture to unit 1
+    glActiveTexture(GL_TEXTURE1);
+    if (hasNormal) {
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, mat->normalTexId);
+    } else {
+        glBindTexture(GL_TEXTURE_2D, 0);
+    }
+    if (shader.uNormalTex >= 0) glUniform1i(shader.uNormalTex, 1);
+
+    // Bind specular texture to unit 2
+    glActiveTexture(GL_TEXTURE2);
+    if (hasSpecular) {
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, mat->specularTexId);
+    } else {
+        glBindTexture(GL_TEXTURE_2D, 0);
+    }
+    if (shader.uSpecularTex >= 0) glUniform1i(shader.uSpecularTex, 2);
+
+    // Bind tint texture to unit 3
+    glActiveTexture(GL_TEXTURE3);
+    if (hasTint) {
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, mat->tintTexId);
+    } else {
+        glBindTexture(GL_TEXTURE_2D, 0);
+    }
+    if (shader.uTintTex >= 0) glUniform1i(shader.uTintTex, 3);
+
+    // Render using immediate mode - shader uses gl_Vertex, gl_Normal, gl_MultiTexCoord0
+    glBegin(GL_TRIANGLES);
+    for (size_t i = 0; i < mesh.indices.size(); i += 3) {
+        for (int j = 0; j < 3; j++) {
+            const Vertex& v = mesh.vertices[mesh.indices[i + j]];
+
+            float px = v.x, py = v.y, pz = v.z;
+            float nx = v.nx, ny = v.ny, nz = v.nz;
+
+            if (animating && mesh.hasSkinning) {
+                transformVertexBySkeleton(v, mesh, model, px, py, pz, nx, ny, nz);
+            }
+
+            glTexCoord2f(v.u, 1.0f - v.v);
+            glNormal3f(nx, ny, nz);
+            glVertex3f(px, py, pz);
+        }
+    }
+    glEnd();
+
+    // Reset state
+    glActiveTexture(GL_TEXTURE3);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glActiveTexture(GL_TEXTURE0);
+
+    glUseProgram(0);
+}
+
 void renderModel(Model& model, const Camera& camera, const RenderSettings& settings,
                  int width, int height, bool animating, int selectedBone) {
+    // Initialize shaders on first call
+    static bool shaderInitAttempted = false;
+    if (!shaderInitAttempted) {
+        initShaderSystem();
+        shaderInitAttempted = true;
+    }
+
     glEnable(GL_DEPTH_TEST);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
@@ -226,6 +378,18 @@ void renderModel(Model& model, const Camera& camera, const RenderSettings& setti
     glTranslatef(-camera.x, -camera.y, -camera.z);
     glRotatef(-90.0f, 1, 0, 0);
     glRotatef(180.0f, 0, 0, 1);
+
+    // Capture matrices for shader rendering
+    float projMatrix[16], modelViewMatrix[16], mvpMatrix[16];
+    glGetFloatv(GL_PROJECTION_MATRIX, projMatrix);
+    glGetFloatv(GL_MODELVIEW_MATRIX, modelViewMatrix);
+    multiplyMatrix4(projMatrix, modelViewMatrix, mvpMatrix);
+    float viewPos[3] = { camera.x, camera.y, camera.z };
+
+    // Check if we should use shader rendering
+    // Temporarily disabled - shader has issues with textures
+    bool useShaders = false; // shadersAvailable() && !settings.wireframe && settings.showTextures;
+
     if (settings.showGrid) {
         glLineWidth(1.0f);
         glBegin(GL_LINES);
@@ -313,6 +477,25 @@ void renderModel(Model& model, const Camera& camera, const RenderSettings& setti
                                   meshNameLower.find("arm_skin") != std::string::npos ||
                                   meshNameLower.find("hand_skin") != std::string::npos ||
                                   meshNameLower.find("neck_skin") != std::string::npos;
+
+                // Use shader rendering if available and enabled
+                if (useShaders) {
+                    if (isAlphaMesh) {
+                        glEnable(GL_ALPHA_TEST);
+                        glAlphaFunc(GL_GREATER, 0.1f);
+                        glEnable(GL_BLEND);
+                        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                    }
+                    glDisable(GL_LIGHTING);
+                    renderMeshShader(mesh, model, settings, mvpMatrix, modelViewMatrix, nullptr, viewPos, animating, isHairMesh, isSkinMesh);
+                    if (isAlphaMesh) {
+                        glDisable(GL_ALPHA_TEST);
+                        glDisable(GL_BLEND);
+                    }
+                    continue;
+                }
+
+                // Fallback to fixed-function rendering
                 if (texId != 0) {
                     glEnable(GL_TEXTURE_2D);
                     glBindTexture(GL_TEXTURE_2D, texId);

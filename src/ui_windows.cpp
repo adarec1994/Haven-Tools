@@ -12,6 +12,13 @@ void drawRenderSettingsWindow(AppState& state) {
     if (state.renderSettings.showCollision) { ImGui::SameLine(); ImGui::Checkbox("Wireframe##coll", &state.renderSettings.collisionWireframe); }
     ImGui::Checkbox("Show Skeleton", &state.renderSettings.showSkeleton);
     ImGui::Checkbox("Show Textures", &state.renderSettings.showTextures);
+    if (state.renderSettings.showTextures) {
+        ImGui::Indent();
+        ImGui::Checkbox("Normal Maps", &state.renderSettings.useNormalMaps);
+        ImGui::Checkbox("Specular Maps", &state.renderSettings.useSpecularMaps);
+        ImGui::Checkbox("Tint Maps", &state.renderSettings.useTintMaps);
+        ImGui::Unindent();
+    }
     ImGui::Separator();
     ImGui::Text("Camera Speed: %.1f", state.camera.moveSpeed);
     ImGui::SliderFloat("##speed", &state.camera.moveSpeed, 0.1f, 100.0f, "%.1f");

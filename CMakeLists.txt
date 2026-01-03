@@ -117,6 +117,8 @@ add_executable(HavenTools
         src/mor_loader.h
         src/tnt_loader.cpp
         src/tnt_loader.h
+        src/shader.cpp
+        src/shader.h
 )
 
 target_include_directories(HavenTools PRIVATE ${CMAKE_SOURCE_DIR}/src ${CMAKE_BINARY_DIR})

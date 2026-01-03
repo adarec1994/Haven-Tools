@@ -73,6 +73,9 @@ struct RenderSettings {
     bool showSkeleton = true;
     bool showBoneNames = false;
     bool showTextures = true;
+    bool useNormalMaps = true;
+    bool useSpecularMaps = true;
+    bool useTintMaps = true;
     std::vector<uint8_t> meshVisible;
     float hairColor[3] = {0.4f, 0.25f, 0.15f};
     float skinColor[3] = {1.0f, 1.0f, 1.0f};
