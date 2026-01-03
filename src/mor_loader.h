@@ -59,23 +59,22 @@ struct MorphData {
     std::string hairTexture;
     std::string eyeTexture;
 
+    std::string lipsTint;
+    std::string eyeshadowTint;
+    std::string blushTint;
+
     const MorphMeshTarget* findTarget(const std::string& name) const;
     MorphMeshTarget* findTarget(const std::string& name);
-
     const MorphMeshTarget* getFaceTarget() const;
-
     const MorphMeshTarget* getEyesTarget() const;
-
     const MorphMeshTarget* getLashesTarget() const;
 
     bool hasVertexData() const { return !meshTargets.empty() && !meshTargets[0].vertices.empty(); }
 
     int getHairStyleIndex() const;
-
     int getBeardStyleIndex() const;
 
     bool getSkinColor(float& r, float& g, float& b) const;
-
     bool getHairColor(float& r, float& g, float& b) const;
 };
 
@@ -86,7 +85,6 @@ struct MorphPresetEntry {
 };
 
 bool loadMOR(const std::vector<uint8_t>& data, MorphData& outMorph);
-
 void debugPrintMorph(const MorphData& morph);
 
 void applyMorphBlend(

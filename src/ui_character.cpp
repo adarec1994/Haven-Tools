@@ -3,7 +3,6 @@
 #include <iostream>
 #include <set>
 
-// Cached list of materials from materialobjects.erf
 static std::set<std::string> s_materialCache;
 static bool s_materialCacheBuilt = false;
 
@@ -12,7 +11,6 @@ static void buildMaterialCache(AppState& state) {
 
     int totalMats = 0;
 
-    // Scan ALL ERFs named materialobjects.erf (there can be multiple)
     for (const auto& erfPath : state.erfFiles) {
         std::string filename = fs::path(erfPath).filename().string();
         std::string filenameLower = filename;
@@ -28,7 +26,6 @@ static void buildMaterialCache(AppState& state) {
                 std::string entryLower = entry.name;
                 std::transform(entryLower.begin(), entryLower.end(), entryLower.begin(), ::tolower);
 
-                // Remove .mao extension
                 if (entryLower.size() > 4 && entryLower.substr(entryLower.size() - 4) == ".mao") {
                     std::string matName = entryLower.substr(0, entryLower.size() - 4);
                     s_materialCache.insert(matName);
@@ -42,7 +39,6 @@ static void buildMaterialCache(AppState& state) {
     s_materialCacheBuilt = true;
 }
 
-// Check if a material exists in materialobjects.erf
 static bool materialExists(AppState& state, const std::string& matName) {
     buildMaterialCache(state);
 
@@ -52,7 +48,6 @@ static bool materialExists(AppState& state, const std::string& matName) {
     return s_materialCache.find(matLower) != s_materialCache.end();
 }
 
-// Get max style variant for a base material name (e.g., "hm_arm_mas" -> checks masa, masb, masc...)
 static int getMaxStyleVariant(AppState& state, const std::string& baseName) {
     std::string baseLower = baseName;
     std::transform(baseLower.begin(), baseLower.end(), baseLower.begin(), ::tolower);
@@ -80,7 +75,6 @@ void filterEncryptedErfs(AppState& state) {
     }
 }
 
-// Load all tints from any ERF that has them
 static void loadTintCache(AppState& state) {
     if (state.tintCacheLoaded && state.tintCache.getTintNames().size() > 0) {
         return;
@@ -100,7 +94,6 @@ static void loadTintCache(AppState& state) {
             std::transform(entryLower.begin(), entryLower.end(), entryLower.begin(), ::tolower);
 
             if (entryLower.size() > 4 && entryLower.substr(entryLower.size() - 4) == ".tnt") {
-                // Skip if already cached
                 std::string name = entryLower.substr(0, entryLower.size() - 4);
                 if (state.tintCache.hasTint(name)) continue;
 
@@ -112,7 +105,6 @@ static void loadTintCache(AppState& state) {
                     state.tintCache.addTint(name, tint);
                     totalLoaded++;
 
-                    // Debug skin tints
                     if (name.find("skn") != std::string::npos) {
                         TintColor c = tint.getPrimaryColor();
                         std::cout << "[TINT] " << name << ": RGB("
@@ -127,7 +119,6 @@ static void loadTintCache(AppState& state) {
     state.tintCacheLoaded = true;
 }
 
-// Scan face.erf and build list of available morph presets for current race/gender
 static void buildMorphPresetList(AppState& state) {
     auto& cd = state.charDesigner;
     cd.availableMorphPresets.clear();
@@ -135,7 +126,6 @@ static void buildMorphPresetList(AppState& state) {
     cd.morphLoaded = false;
     cd.morphData = MorphData();
 
-    // Build prefix based on race/gender
     std::string prefix;
     switch (cd.race) {
         case 0: prefix = cd.isMale ? "hm_" : "hf_"; break;
@@ -144,20 +134,15 @@ static void buildMorphPresetList(AppState& state) {
         default: return;
     }
 
-    // Scan for morph files
-
-    // Scan all ERFs for morph files
     for (const auto& erfPath : state.erfFiles) {
         std::string erfName = fs::path(erfPath).filename().string();
         std::string erfNameLower = erfName;
         std::transform(erfNameLower.begin(), erfNameLower.end(), erfNameLower.begin(), ::tolower);
 
-        // Check face.erf, morph ERFs, and any other ERFs that might have morphs
         bool isFaceErf = (erfNameLower.find("face") != std::string::npos);
         bool isMorphErf = (erfNameLower.find("morph") != std::string::npos);
         bool isModuleErf = (erfNameLower.find("module") != std::string::npos);
 
-        // For now scan all ERFs to find morphs
         ERFFile erf;
         if (!erf.open(erfPath)) continue;
 
@@ -165,11 +150,9 @@ static void buildMorphPresetList(AppState& state) {
             std::string entryLower = entry.name;
             std::transform(entryLower.begin(), entryLower.end(), entryLower.begin(), ::tolower);
 
-            // Check if this is a morph file for our race/gender (prefix_*.mor)
             if (entryLower.find(prefix) == 0 && entryLower.size() > 4 &&
                 entryLower.substr(entryLower.size() - 4) == ".mor") {
 
-                // Check if already in list
                 bool found = false;
                 for (const auto& existing : cd.availableMorphPresets) {
                     if (existing.filename == entryLower) {
@@ -182,9 +165,6 @@ static void buildMorphPresetList(AppState& state) {
                     MorphPresetEntry preset;
                     preset.filename = entryLower;
 
-                    // Create display name from filename
-                    // e.g., "df_pcc_b02.mor" -> "pcc_b02"
-                    // e.g., "df_orz200_dagna.mor" -> "orz200_dagna"
                     std::string baseName = entryLower.substr(prefix.size());
                     size_t dotPos = baseName.rfind('.');
                     if (dotPos != std::string::npos) {
@@ -192,11 +172,10 @@ static void buildMorphPresetList(AppState& state) {
                     }
                     preset.displayName = baseName;
 
-                    // Try to extract a sort number for pcc presets
                     if (baseName.find("pcc_b") == 0 && baseName.size() > 5) {
                         preset.presetNumber = std::atoi(baseName.c_str() + 5);
                     } else {
-                        preset.presetNumber = 1000; // Sort NPCs after player presets
+                        preset.presetNumber = 1000;
                     }
 
                     cd.availableMorphPresets.push_back(preset);
@@ -205,23 +184,16 @@ static void buildMorphPresetList(AppState& state) {
         }
     }
 
-    // Sort: pcc presets first (by number), then others alphabetically
     std::sort(cd.availableMorphPresets.begin(), cd.availableMorphPresets.end(),
         [](const MorphPresetEntry& a, const MorphPresetEntry& b) {
-            // Both are pcc presets - sort by number
             if (a.presetNumber < 1000 && b.presetNumber < 1000) {
                 return a.presetNumber < b.presetNumber;
             }
-            // One is pcc, one is NPC - pcc first
             if (a.presetNumber < 1000) return true;
             if (b.presetNumber < 1000) return false;
-            // Both are NPCs - sort alphabetically
             return a.displayName < b.displayName;
         });
 
-    // Sort presets
-
-    // Auto-select first preset with vertex data (prefer b02+ over b01)
     for (size_t i = 0; i < cd.availableMorphPresets.size(); i++) {
         if (cd.availableMorphPresets[i].presetNumber >= 2 && cd.availableMorphPresets[i].presetNumber < 1000) {
             cd.selectedMorphPreset = (int)i;
@@ -230,7 +202,6 @@ static void buildMorphPresetList(AppState& state) {
     }
 }
 
-// Load the currently selected morph preset
 static void loadSelectedMorphPreset(AppState& state) {
     auto& cd = state.charDesigner;
     cd.morphLoaded = false;
@@ -242,9 +213,7 @@ static void loadSelectedMorphPreset(AppState& state) {
     }
 
     const std::string& targetFile = cd.availableMorphPresets[cd.selectedMorphPreset].filename;
-    // Load morph file
 
-    // Search all ERFs for the file
     for (const auto& erfPath : state.erfFiles) {
         ERFFile erf;
         if (!erf.open(erfPath)) continue;
@@ -260,27 +229,24 @@ static void loadSelectedMorphPreset(AppState& state) {
                     cd.morphLoaded = true;
                     cd.morphData.name = targetFile;
                     cd.morphData.displayName = cd.availableMorphPresets[cd.selectedMorphPreset].displayName;
-                    cd.faceMorphAmount = 1.0f;  // Always fully apply the preset
+                    cd.faceMorphAmount = 1.0f;
 
                     debugPrintMorph(cd.morphData);
 
-                    // Apply hair style from morph
                     if (!cd.morphData.hairModel.empty()) {
                         std::string hairLower = cd.morphData.hairModel;
                         std::transform(hairLower.begin(), hairLower.end(), hairLower.begin(), ::tolower);
 
-                        // Extract the hair code (e.g., "ha3" from "df_har_ha3a_0")
                         std::string hairCode;
                         size_t harPos = hairLower.find("_har_");
                         if (harPos != std::string::npos && harPos + 8 < hairLower.size()) {
-                            hairCode = hairLower.substr(harPos + 5, 3);  // e.g., "ha3" or "bld"
+                            hairCode = hairLower.substr(harPos + 5, 3);
                         }
 
                         for (int i = 0; i < (int)cd.hairs.size(); i++) {
                             std::string hLower = cd.hairs[i].first;
                             std::transform(hLower.begin(), hLower.end(), hLower.begin(), ::tolower);
 
-                            // Match by hair code in the filename
                             if (!hairCode.empty() && hLower.find("_" + hairCode) != std::string::npos) {
                                 cd.selectedHair = i;
                                 break;
@@ -288,16 +254,14 @@ static void loadSelectedMorphPreset(AppState& state) {
                         }
                     }
 
-                    // Apply beard style from morph
                     if (!cd.morphData.beardModel.empty() && cd.isMale) {
                         std::string beardLower = cd.morphData.beardModel;
                         std::transform(beardLower.begin(), beardLower.end(), beardLower.begin(), ::tolower);
 
-                        // Extract beard code (e.g., "br1" from "hm_brd_br1a_0")
                         std::string beardCode;
                         size_t brdPos = beardLower.find("_brd_");
                         if (brdPos != std::string::npos && brdPos + 8 < beardLower.size()) {
-                            beardCode = beardLower.substr(brdPos + 5, 3);  // e.g., "br1"
+                            beardCode = beardLower.substr(brdPos + 5, 3);
                         }
 
                         for (int i = 0; i < (int)cd.beards.size(); i++) {
@@ -310,18 +274,15 @@ static void loadSelectedMorphPreset(AppState& state) {
                             }
                         }
                     } else {
-                        cd.selectedBeard = -1;  // No beard
+                        cd.selectedBeard = -1;
                     }
 
-                    // Load tints if not loaded yet
                     loadTintCache(state);
 
-                    // Apply skin color from tint file
                     if (!cd.morphData.skinTexture.empty()) {
                         std::string skinTintName = cd.morphData.skinTexture;
                         std::transform(skinTintName.begin(), skinTintName.end(), skinTintName.begin(), ::tolower);
 
-                        // Look up tint in cache
                         const TintData* skinTint = state.tintCache.getTint(skinTintName);
                         if (skinTint) {
                             TintColor color = skinTint->getPrimaryColor();
@@ -331,7 +292,6 @@ static void loadSelectedMorphPreset(AppState& state) {
                         }
                     }
 
-                    // Apply hair color from tint file
                     if (!cd.morphData.hairTexture.empty()) {
                         std::string hairTintName = cd.morphData.hairTexture;
                         std::transform(hairTintName.begin(), hairTintName.end(), hairTintName.begin(), ::tolower);
@@ -345,6 +305,57 @@ static void loadSelectedMorphPreset(AppState& state) {
                         }
                     }
 
+                    if (!cd.morphData.lipsTint.empty()) {
+                        std::string lipsTintName = cd.morphData.lipsTint;
+                        std::transform(lipsTintName.begin(), lipsTintName.end(), lipsTintName.begin(), ::tolower);
+
+                        const TintData* lipsTint = state.tintCache.getTint(lipsTintName);
+                        if (lipsTint) {
+                            TintColor color = lipsTint->getPrimaryColor();
+                            cd.headTintZone1[0] = color.r;
+                            cd.headTintZone1[1] = color.g;
+                            cd.headTintZone1[2] = color.b;
+                        }
+                    } else {
+                        cd.headTintZone1[0] = 1.0f;
+                        cd.headTintZone1[1] = 1.0f;
+                        cd.headTintZone1[2] = 1.0f;
+                    }
+
+                    if (!cd.morphData.eyeshadowTint.empty()) {
+                        std::string eyesTintName = cd.morphData.eyeshadowTint;
+                        std::transform(eyesTintName.begin(), eyesTintName.end(), eyesTintName.begin(), ::tolower);
+
+                        const TintData* eyesTint = state.tintCache.getTint(eyesTintName);
+                        if (eyesTint) {
+                            TintColor color = eyesTint->getPrimaryColor();
+                            cd.headTintZone2[0] = color.r;
+                            cd.headTintZone2[1] = color.g;
+                            cd.headTintZone2[2] = color.b;
+                        }
+                    } else {
+                        cd.headTintZone2[0] = 1.0f;
+                        cd.headTintZone2[1] = 1.0f;
+                        cd.headTintZone2[2] = 1.0f;
+                    }
+
+                    if (!cd.morphData.blushTint.empty()) {
+                        std::string blushTintName = cd.morphData.blushTint;
+                        std::transform(blushTintName.begin(), blushTintName.end(), blushTintName.begin(), ::tolower);
+
+                        const TintData* blushTint = state.tintCache.getTint(blushTintName);
+                        if (blushTint) {
+                            TintColor color = blushTint->getPrimaryColor();
+                            cd.headTintZone3[0] = color.r;
+                            cd.headTintZone3[1] = color.g;
+                            cd.headTintZone3[2] = color.b;
+                        }
+                    } else {
+                        cd.headTintZone3[0] = 1.0f;
+                        cd.headTintZone3[1] = 1.0f;
+                        cd.headTintZone3[2] = 1.0f;
+                    }
+
                     return;
                 }
             }
@@ -352,8 +363,6 @@ static void loadSelectedMorphPreset(AppState& state) {
     }
 }
 
-// Apply morph to a mesh by replacing/blending vertex positions
-// Returns true if morph was applied
 static bool applyMorphToMesh(Mesh& mesh, const MorphMeshTarget* target, float amount,
                              const std::vector<Vertex>& baseVertices) {
     if (!target || target->vertices.empty()) return false;
@@ -367,7 +376,6 @@ static bool applyMorphToMesh(Mesh& mesh, const MorphMeshTarget* target, float am
     float invAmount = 1.0f - amount;
 
     for (size_t i = 0; i < mesh.vertices.size(); i++) {
-        // Blend between base and morph positions
         mesh.vertices[i].x = baseVertices[i].x * invAmount + target->vertices[i].x * amount;
         mesh.vertices[i].y = baseVertices[i].y * invAmount + target->vertices[i].y * amount;
         mesh.vertices[i].z = baseVertices[i].z * invAmount + target->vertices[i].z * amount;
@@ -443,7 +451,6 @@ void buildCharacterLists(AppState& state) {
         }
     }
 
-    // Build morph preset list and load default
     buildMorphPresetList(state);
     if (!cd.availableMorphPresets.empty()) {
         loadSelectedMorphPreset(state);
@@ -452,7 +459,6 @@ void buildCharacterLists(AppState& state) {
     cd.listsBuilt = true;
 }
 
-// Count max style for a material base name (e.g., "pn_arm_mas" -> checks masa, masb, masc...)
 static int getMaxMaterialStyle(AppState& state, const std::string& baseName) {
     buildMaterialCache(state);
 
@@ -466,7 +472,6 @@ static int getMaxMaterialStyle(AppState& state, const std::string& baseName) {
     return maxStyle;
 }
 
-// Apply style to materials in a model for a specific part type
 static void applyMaterialStyle(AppState& state, Model& model, int styleOffset, const std::string& partType) {
     if (styleOffset == 0) return;
 
@@ -476,7 +481,6 @@ static void applyMaterialStyle(AppState& state, Model& model, int styleOffset, c
         std::string matLower = mat.name;
         std::transform(matLower.begin(), matLower.end(), matLower.begin(), ::tolower);
 
-        // Check if this material matches the part type
         bool isMatch = false;
         if (partType == "arm") {
             if (matLower.find("_arm_") != std::string::npos ||
@@ -502,16 +506,13 @@ static void applyMaterialStyle(AppState& state, Model& model, int styleOffset, c
 
         if (!isMatch) continue;
 
-        // Check if material ends with 'a' (default style)
         if (matLower.back() != 'a') continue;
 
         std::string baseName = matLower.substr(0, matLower.size() - 1);
         char newStyle = 'a' + styleOffset;
         std::string newMatName = baseName + newStyle;
 
-        // Check if new material exists
         if (materialExists(state, newMatName)) {
-            // Load new material from ERF
             std::vector<uint8_t> maoData = readFromErfs(state.materialErfs, newMatName + ".mao");
             if (!maoData.empty()) {
                 std::string maoContent(maoData.begin(), maoData.end());
@@ -519,18 +520,12 @@ static void applyMaterialStyle(AppState& state, Model& model, int styleOffset, c
                 newMat.maoSource = newMatName + ".mao";
                 newMat.maoContent = maoContent;
 
-                std::cout << "[STYLE] " << mat.name << " -> " << newMatName
-                          << " diffuse: " << newMat.diffuseMap << std::endl;
-
-                // Keep old name for mesh reference
                 std::string oldName = mat.name;
                 mat = newMat;
                 mat.name = oldName;
 
-                // Load textures immediately
                 if (!mat.diffuseMap.empty()) {
                     mat.diffuseTexId = loadTexByName(state, mat.diffuseMap, &mat.diffuseData, &mat.diffuseWidth, &mat.diffuseHeight);
-                    std::cout << "[STYLE] Loaded diffuse texId=" << mat.diffuseTexId << std::endl;
                 }
                 if (!mat.normalMap.empty()) {
                     mat.normalTexId = loadTexByName(state, mat.normalMap);
@@ -607,7 +602,6 @@ static Model* getOrLoadPart(AppState& state, const std::string& partFile) {
             mesh.materialIndex = partModel.findMaterial(mesh.materialName);
         }
     }
-    // Check if this part is hair or beard based on filename
     bool isHairPart = (partLower.find("_har_") != std::string::npos ||
                        partLower.find("_brd_") != std::string::npos);
     bool isBaldPart = (partLower.find("_bld") != std::string::npos ||
@@ -680,11 +674,9 @@ void loadCharacterModel(AppState& state) {
         partsToLoad.push_back(cd.robes[cd.selectedRobe].first);
     } else if (cd.selectedClothes >= 0 && cd.selectedClothes < (int)cd.clothes.size()) {
         partsToLoad.push_back(cd.clothes[cd.selectedClothes].first);
-        // Clothes typically covers boots and gloves, so don't load them
     } else if (cd.selectedArmor >= 0 && cd.selectedArmor < (int)cd.armors.size()) {
         partsToLoad.push_back(cd.armors[cd.selectedArmor].first);
     }
-    // Only load boots/gloves if not wearing clothes
     if (cd.selectedClothes < 0) {
         if (cd.selectedBoots >= 0 && cd.selectedBoots < (int)cd.boots.size()) {
             partsToLoad.push_back(cd.boots[cd.selectedBoots].first);
@@ -708,7 +700,6 @@ void loadCharacterModel(AppState& state) {
             partsToLoad.push_back(cd.hairs[cd.selectedHair].first);
         }
     }
-    // Add beard (only for male, and not hidden by helmet)
     if (!hasHelmet && cd.isMale && cd.selectedBeard >= 0 && cd.selectedBeard < (int)cd.beards.size()) {
         partsToLoad.push_back(cd.beards[cd.selectedBeard].first);
     }
@@ -720,7 +711,6 @@ void loadCharacterModel(AppState& state) {
         Model* partModel = getOrLoadPart(state, partFile);
         if (!partModel) continue;
 
-        // Check if this is the head mesh (uhm_bas)
         std::string partLower = partFile;
         std::transform(partLower.begin(), partLower.end(), partLower.begin(), ::tolower);
         bool isHeadMesh = (partLower.find("uhm_bas") != std::string::npos);
@@ -735,10 +725,8 @@ void loadCharacterModel(AppState& state) {
                 Mesh meshCopy = mesh;
                 meshCopy.skinningCacheBuilt = false;
 
-                // Track head mesh for morphing
                 if (isHeadMesh && cd.headMeshIndex < 0) {
                     cd.headMeshIndex = (int)state.currentModel.meshes.size();
-                    // Save base vertices for morphing
                     cd.baseHeadVertices = mesh.vertices;
                 }
 
@@ -763,7 +751,6 @@ void loadCharacterModel(AppState& state) {
                 meshCopy.bonesUsed = newBonesUsed;
                 meshCopy.skinningCacheBuilt = false;
 
-                // Track head mesh
                 if (isHeadMesh && cd.headMeshIndex < 0) {
                     cd.headMeshIndex = (int)state.currentModel.meshes.size();
                     cd.baseHeadVertices = mesh.vertices;
@@ -787,7 +774,6 @@ void loadCharacterModel(AppState& state) {
         return;
     }
 
-    // Apply material style variants
     if (cd.armorStyle > 0 && cd.selectedArmor >= 0 && cd.selectedRobe < 0 && cd.selectedClothes < 0) {
         applyMaterialStyle(state, state.currentModel, cd.armorStyle, "arm");
     }
@@ -818,7 +804,6 @@ void loadCharacterModel(AppState& state) {
         }
     }
 
-    // Apply face morph if loaded
     if (cd.morphLoaded && cd.headMeshIndex >= 0 && !cd.baseHeadVertices.empty()) {
         const MorphMeshTarget* faceTarget = cd.morphData.getFaceTarget();
         if (faceTarget) {
@@ -984,6 +969,26 @@ void loadCharacterModel(AppState& state) {
 
 void drawCharacterDesigner(AppState& state, ImGuiIO& io) {
     auto& cd = state.charDesigner;
+
+    memcpy(state.renderSettings.headZone1, cd.headTintZone1, sizeof(float) * 3);
+    memcpy(state.renderSettings.headZone2, cd.headTintZone2, sizeof(float) * 3);
+    memcpy(state.renderSettings.headZone3, cd.headTintZone3, sizeof(float) * 3);
+    memcpy(state.renderSettings.armorZone1, cd.armorTintZone1, sizeof(float) * 3);
+    memcpy(state.renderSettings.armorZone2, cd.armorTintZone2, sizeof(float) * 3);
+    memcpy(state.renderSettings.armorZone3, cd.armorTintZone3, sizeof(float) * 3);
+    memcpy(state.renderSettings.clothesZone1, cd.clothesTintZone1, sizeof(float) * 3);
+    memcpy(state.renderSettings.clothesZone2, cd.clothesTintZone2, sizeof(float) * 3);
+    memcpy(state.renderSettings.clothesZone3, cd.clothesTintZone3, sizeof(float) * 3);
+    memcpy(state.renderSettings.bootsZone1, cd.bootsTintZone1, sizeof(float) * 3);
+    memcpy(state.renderSettings.bootsZone2, cd.bootsTintZone2, sizeof(float) * 3);
+    memcpy(state.renderSettings.bootsZone3, cd.bootsTintZone3, sizeof(float) * 3);
+    memcpy(state.renderSettings.glovesZone1, cd.glovesTintZone1, sizeof(float) * 3);
+    memcpy(state.renderSettings.glovesZone2, cd.glovesTintZone2, sizeof(float) * 3);
+    memcpy(state.renderSettings.glovesZone3, cd.glovesTintZone3, sizeof(float) * 3);
+    memcpy(state.renderSettings.helmetZone1, cd.helmetTintZone1, sizeof(float) * 3);
+    memcpy(state.renderSettings.helmetZone2, cd.helmetTintZone2, sizeof(float) * 3);
+    memcpy(state.renderSettings.helmetZone3, cd.helmetTintZone3, sizeof(float) * 3);
+
     ImGui::SetNextWindowSize(ImVec2(350, 550), ImGuiCond_FirstUseEver);
     ImGui::Begin("Character Designer", nullptr, ImGuiWindowFlags_NoCollapse);
 
@@ -1030,15 +1035,12 @@ void drawCharacterDesigner(AppState& state, ImGuiIO& io) {
             if (!cd.availableMorphPresets.empty()) {
                 ImGui::Text("Face Presets:");
 
-                // Current preset name (-1 = Default, 0+ = preset index)
                 std::string currentPreset = (cd.selectedMorphPreset < 0) ? "Default" :
                     (cd.selectedMorphPreset < (int)cd.availableMorphPresets.size()
                         ? cd.availableMorphPresets[cd.selectedMorphPreset].displayName : "Default");
 
-                // Dropdown
                 ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x - 30);
                 if (ImGui::BeginCombo("##morphpreset", currentPreset.c_str())) {
-                    // Default option first
                     bool defaultSelected = (cd.selectedMorphPreset < 0);
                     if (ImGui::Selectable("Default", defaultSelected)) {
                         cd.selectedMorphPreset = -1;
@@ -1051,7 +1053,6 @@ void drawCharacterDesigner(AppState& state, ImGuiIO& io) {
 
                     ImGui::Separator();
 
-                    // Preset options
                     for (int i = 0; i < (int)cd.availableMorphPresets.size(); i++) {
                         bool selected = (cd.selectedMorphPreset == i);
                         if (ImGui::Selectable(cd.availableMorphPresets[i].displayName.c_str(), selected)) {
@@ -1064,7 +1065,6 @@ void drawCharacterDesigner(AppState& state, ImGuiIO& io) {
                     ImGui::EndCombo();
                 }
 
-                // Reset button
                 ImGui::SameLine();
                 if (ImGui::Button("X##resetpreset")) {
                     cd.selectedMorphPreset = -1;
@@ -1112,6 +1112,12 @@ void drawCharacterDesigner(AppState& state, ImGuiIO& io) {
             ImGui::Separator();
 
             ImGui::ColorEdit3("Hair Color", state.renderSettings.hairColor, ImGuiColorEditFlags_NoInputs);
+            ImGui::Separator();
+
+            ImGui::Text("Makeup:");
+            ImGui::ColorEdit3("Lips", cd.headTintZone1, ImGuiColorEditFlags_NoInputs);
+            ImGui::ColorEdit3("Eyeshadow", cd.headTintZone2, ImGuiColorEditFlags_NoInputs);
+            ImGui::ColorEdit3("Blush", cd.headTintZone3, ImGuiColorEditFlags_NoInputs);
             ImGui::Separator();
 
             if (!cd.tattoos.empty()) {
@@ -1162,13 +1168,11 @@ void drawCharacterDesigner(AppState& state, ImGuiIO& io) {
                 }
             }
 
-            // Style slider at bottom - only for armor (not robes)
             if (state.hasModel && cd.selectedArmor >= 0 && cd.selectedRobe < 0 && cd.selectedClothes < 0) {
                 for (const auto& mat : state.currentModel.materials) {
                     std::string matLower = mat.name;
                     std::transform(matLower.begin(), matLower.end(), matLower.begin(), ::tolower);
 
-                    // Only check armor materials
                     if (matLower.find("_arm_") == std::string::npos &&
                         matLower.find("_mas") == std::string::npos &&
                         matLower.find("_med") == std::string::npos &&
@@ -1196,6 +1200,13 @@ void drawCharacterDesigner(AppState& state, ImGuiIO& io) {
                     }
                 }
             }
+
+            ImGui::Separator();
+            ImGui::Text("Colors:");
+            ImGui::ColorEdit3("Color 1##armor", cd.armorTintZone1, ImGuiColorEditFlags_NoInputs);
+            ImGui::ColorEdit3("Color 2##armor", cd.armorTintZone2, ImGuiColorEditFlags_NoInputs);
+            ImGui::ColorEdit3("Color 3##armor", cd.armorTintZone3, ImGuiColorEditFlags_NoInputs);
+
             ImGui::EndTabItem();
         }
 
@@ -1216,7 +1227,6 @@ void drawCharacterDesigner(AppState& state, ImGuiIO& io) {
                     }
                 }
 
-                // Style slider for clothes
                 if (state.hasModel && cd.selectedClothes >= 0) {
                     for (const auto& mat : state.currentModel.materials) {
                         std::string matName = mat.name;
@@ -1243,12 +1253,17 @@ void drawCharacterDesigner(AppState& state, ImGuiIO& io) {
                         }
                     }
                 }
+
+                ImGui::Separator();
+                ImGui::Text("Colors:");
+                ImGui::ColorEdit3("Color 1##clothes", cd.clothesTintZone1, ImGuiColorEditFlags_NoInputs);
+                ImGui::ColorEdit3("Color 2##clothes", cd.clothesTintZone2, ImGuiColorEditFlags_NoInputs);
+                ImGui::ColorEdit3("Color 3##clothes", cd.clothesTintZone3, ImGuiColorEditFlags_NoInputs);
             }
             ImGui::EndTabItem();
         }
 
         if (ImGui::BeginTabItem("Boots")) {
-            // None option
             bool noneSelected = (cd.selectedBoots < 0);
             if (ImGui::Selectable("None", noneSelected)) {
                 cd.selectedBoots = -1;
@@ -1263,7 +1278,6 @@ void drawCharacterDesigner(AppState& state, ImGuiIO& io) {
                 }
             }
 
-            // Style slider for boots
             if (state.hasModel && cd.selectedBoots >= 0) {
                 for (const auto& mat : state.currentModel.materials) {
                     std::string matName = mat.name;
@@ -1290,11 +1304,17 @@ void drawCharacterDesigner(AppState& state, ImGuiIO& io) {
                     }
                 }
             }
+
+            ImGui::Separator();
+            ImGui::Text("Colors:");
+            ImGui::ColorEdit3("Color 1##boots", cd.bootsTintZone1, ImGuiColorEditFlags_NoInputs);
+            ImGui::ColorEdit3("Color 2##boots", cd.bootsTintZone2, ImGuiColorEditFlags_NoInputs);
+            ImGui::ColorEdit3("Color 3##boots", cd.bootsTintZone3, ImGuiColorEditFlags_NoInputs);
+
             ImGui::EndTabItem();
         }
 
         if (ImGui::BeginTabItem("Gloves")) {
-            // None option
             bool noneSelected = (cd.selectedGloves < 0);
             if (ImGui::Selectable("None", noneSelected)) {
                 cd.selectedGloves = -1;
@@ -1309,7 +1329,6 @@ void drawCharacterDesigner(AppState& state, ImGuiIO& io) {
                 }
             }
 
-            // Style slider for gloves
             if (state.hasModel && cd.selectedGloves >= 0) {
                 for (const auto& mat : state.currentModel.materials) {
                     std::string matName = mat.name;
@@ -1336,6 +1355,13 @@ void drawCharacterDesigner(AppState& state, ImGuiIO& io) {
                     }
                 }
             }
+
+            ImGui::Separator();
+            ImGui::Text("Colors:");
+            ImGui::ColorEdit3("Color 1##gloves", cd.glovesTintZone1, ImGuiColorEditFlags_NoInputs);
+            ImGui::ColorEdit3("Color 2##gloves", cd.glovesTintZone2, ImGuiColorEditFlags_NoInputs);
+            ImGui::ColorEdit3("Color 3##gloves", cd.glovesTintZone3, ImGuiColorEditFlags_NoInputs);
+
             ImGui::EndTabItem();
         }
 
@@ -1361,6 +1387,13 @@ void drawCharacterDesigner(AppState& state, ImGuiIO& io) {
                     }
                 }
             }
+
+            ImGui::Separator();
+            ImGui::Text("Colors:");
+            ImGui::ColorEdit3("Color 1##helmet", cd.helmetTintZone1, ImGuiColorEditFlags_NoInputs);
+            ImGui::ColorEdit3("Color 2##helmet", cd.helmetTintZone2, ImGuiColorEditFlags_NoInputs);
+            ImGui::ColorEdit3("Color 3##helmet", cd.helmetTintZone3, ImGuiColorEditFlags_NoInputs);
+
             ImGui::EndTabItem();
         }
 
