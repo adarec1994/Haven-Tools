@@ -99,7 +99,7 @@ struct RenderSettings {
     float glovesZone3[3] = {1.0f, 1.0f, 1.0f};
     float helmetZone1[3] = {1.0f, 1.0f, 1.0f};
     float helmetZone2[3] = {1.0f, 1.0f, 1.0f};
-    float helmetZone3[3] = {1.0f, 1.0f, 1.0f}
+    float helmetZone3[3] = {1.0f, 1.0f, 1.0f};
     float tintZone1[3] = {1.0f, 1.0f, 1.0f};
     float tintZone2[3] = {1.0f, 1.0f, 1.0f};
     float tintZone3[3] = {1.0f, 1.0f, 1.0f};
@@ -299,7 +299,7 @@ struct AppState {
         bool listsBuilt = false;
         std::string currentPrefix;
         std::vector<MorphPresetEntry> availableMorphPresets;
-        int selectedMorphPreset = -1;
+        int selectedMorphPreset = -1;  
         MorphData morphData;
         bool morphLoaded = false;
         float faceMorphAmount = 1.0f;
