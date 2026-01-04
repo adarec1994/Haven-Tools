@@ -3,6 +3,8 @@
 #include "renderer.h"
 #include "animation.h"
 #include "ui.h"
+#include "version.h"
+#include "update/update.h"
 #include <GLFW/glfw3.h>
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
@@ -10,7 +12,9 @@
 
 namespace fs = std::filesystem;
 
-int main() {
+int main(int argc, char** argv) {
+    if (Update::HandleUpdaterMode(argc, argv)) return 0;
+
     if (!glfwInit()) return -1;
 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 2);

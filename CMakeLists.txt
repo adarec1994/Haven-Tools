@@ -49,7 +49,6 @@ target_include_directories(imgui_lib PUBLIC
 )
 target_link_libraries(imgui_lib PUBLIC glfw)
 
-
 if(WIN32)
     target_link_libraries(imgui_lib PUBLIC opengl32)
 else()
@@ -119,6 +118,10 @@ add_executable(HavenTools
         src/tnt_loader.h
         src/shader.cpp
         src/shader.h
+        src/version.h
+        src/update/app.rc
+        src/update/update.cpp
+        src/update/update.h
 )
 
 target_include_directories(HavenTools PRIVATE ${CMAKE_SOURCE_DIR}/src ${CMAKE_BINARY_DIR})
