@@ -1,6 +1,29 @@
 #include "update.h"
 #include "../version.h"
 
+#ifndef _WIN32
+
+bool Update::IsBusy() { return false; }
+bool Update::HadError() { return false; }
+float Update::GetProgress() { return 0.0f; }
+const char* Update::GetStatusText() { return "Updater not supported on Linux"; }
+
+bool Update::HandleUpdaterMode(int argc, char** argv) { return false; }
+bool Update::DownloadAndApplyLatest() { return false; }
+
+const char* Update::GetInstalledVersionText() { return APP_VERSION; }
+void Update::StartCheckForUpdates() {}
+
+bool Update::IsCheckDone() { return true; }
+bool Update::IsUpdateAvailable() { return false; }
+
+const char* Update::GetLatestVersionText() { return ""; }
+void Update::DismissUpdatePrompt() {}
+bool Update::WasUpdatePromptDismissed() { return true; }
+void Update::StartAutoCheckAndUpdate() {}
+
+#else
+
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <winhttp.h>
@@ -581,3 +604,5 @@ void Update::StartAutoCheckAndUpdate()
     if (!once.compare_exchange_strong(expected, true)) return;
     StartCheckForUpdates();
 }
+
+#endif
