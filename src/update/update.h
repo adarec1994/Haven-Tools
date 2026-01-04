@@ -1,9 +1,12 @@
 #pragma once
-#include <string>
 
 namespace Update
 {
     bool HandleUpdaterMode(int argc, char** argv);
 
-    bool DownloadAndApplyLatest();
+    void StartDownloadAndApplyLatest();
+    bool IsBusy();
+    float GetProgress();
+    const char* GetStatusText();
+    bool HadError();
 }

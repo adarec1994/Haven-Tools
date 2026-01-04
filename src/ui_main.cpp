@@ -1,4 +1,5 @@
 #include "ui_internal.h"
+#include "update/update.h"
 #include <thread>
 
 bool showSplash = true;
@@ -778,6 +779,14 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
             ImGui::MenuItem("Animation", nullptr, &state.showAnimWindow);
             ImGui::EndMenu();
         }
+        ImGui::SameLine();
+        if (!Update::IsBusy()) {
+            if (ImGui::Button("Update")) {
+                Update::StartDownloadAndApplyLatest();
+            }
+        } else {
+            ImGui::TextUnformatted("Updating...");
+        }
         if (state.hasModel) {
             if (ImGui::Button("Export GLB")) {
                 IGFD::FileDialogConfig config;
@@ -859,18 +868,28 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
         ImGui::End();
     }
 
-    if (t_active) {
+    if (t_active || Update::IsBusy() || Update::HadError()) {
+        float alpha = Update::IsBusy() ? 1.0f : t_alpha;
         ImGui::SetNextWindowPos(ImVec2(10, displayH - 60), ImGuiCond_Always);
-        ImGui::SetNextWindowBgAlpha(t_alpha);
-        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, t_alpha);
+        ImGui::SetNextWindowBgAlpha(alpha);
+        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, alpha);
         ImGui::Begin("##TabTransition", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoInputs);
-        ImGui::Text("Loading...");
 
-        float p;
-        if (t_isLoadingContent) {
-            p = state.preloadProgress;
+        float p = 0.0f;
+
+        if (Update::IsBusy()) {
+            ImGui::TextUnformatted(Update::GetStatusText());
+            p = Update::GetProgress();
+        } else if (Update::HadError()) {
+            ImGui::TextUnformatted("Update failed");
+            p = 0.0f;
         } else {
-            p = (t_phase == 1) ? t_alpha * 0.5f : 1.0f;
+            ImGui::Text("Loading...");
+            if (t_isLoadingContent) {
+                p = state.preloadProgress;
+            } else {
+                p = (t_phase == 1) ? t_alpha * 0.5f : 1.0f;
+            }
         }
 
         ImGui::ProgressBar(p, ImVec2(200, 20));

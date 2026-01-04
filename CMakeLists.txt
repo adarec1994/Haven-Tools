@@ -62,12 +62,10 @@ add_library(imguifiledialog_lib STATIC
 target_include_directories(imguifiledialog_lib PUBLIC ${imguifiledialog_SOURCE_DIR})
 target_link_libraries(imguifiledialog_lib PUBLIC imgui_lib)
 
-# Embed model_names.csv into the executable
 file(READ "${CMAKE_SOURCE_DIR}/src/model_names.csv" CSV_CONTENT HEX)
 string(LENGTH "${CSV_CONTENT}" CSV_HEX_LENGTH)
 math(EXPR CSV_LENGTH "${CSV_HEX_LENGTH} / 2")
 
-# Convert hex to C array
 string(REGEX REPLACE "([0-9a-f][0-9a-f])" "0x\\1," CSV_ARRAY "${CSV_CONTENT}")
 string(REGEX REPLACE ",$" "" CSV_ARRAY "${CSV_ARRAY}")
 
@@ -129,7 +127,7 @@ target_link_libraries(HavenTools PRIVATE imgui_lib imguifiledialog_lib)
 
 if(WIN32)
     target_compile_definitions(HavenTools PRIVATE _CRT_SECURE_NO_WARNINGS)
-    target_link_libraries(HavenTools PRIVATE winmm)
+    target_link_libraries(HavenTools PRIVATE winmm winhttp)
 endif()
 
 if(UNIX AND NOT APPLE)
