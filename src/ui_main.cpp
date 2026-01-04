@@ -1,6 +1,137 @@
 #include "ui_internal.h"
+#include <thread>
 
 bool showSplash = true;
+
+void runLoadingTask(AppState* statePtr) {
+    AppState& state = *statePtr;
+
+    state.preloadStatus = "Scanning game folders...";
+    state.preloadProgress = 0.0f;
+    state.erfFiles = scanForERFFiles(state.selectedFolder);
+
+    state.preloadStatus = "Filtering encrypted files...";
+    state.preloadProgress = 0.05f;
+    filterEncryptedErfs(state);
+
+    state.meshCache.clear();
+    state.mmhCache.clear();
+    state.maoCache.clear();
+    state.textureCache.clear();
+    state.modelErfs.clear();
+    state.modelErfPaths.clear();
+    state.materialErfs.clear();
+    state.materialErfPaths.clear();
+    state.textureErfs.clear();
+    state.textureErfPaths.clear();
+
+    std::vector<std::string> charPrefixes = {"df_", "dm_", "hf_", "hm_", "ef_", "em_", "cn_"};
+    std::vector<std::string> erfPaths;
+    for (size_t i : state.filteredErfIndices) {
+        erfPaths.push_back(state.erfFiles[i]);
+    }
+
+    size_t totalErfs = erfPaths.size();
+    size_t processed = 0;
+
+    for (const auto& erfPath : erfPaths) {
+        std::string filename = fs::path(erfPath).filename().string();
+        state.preloadStatus = filename;
+
+        ERFFile erf;
+        if (!erf.open(erfPath)) {
+            processed++;
+            state.preloadProgress = 0.1f + ((float)processed / (float)totalErfs) * 0.8f;
+            continue;
+        }
+
+        std::string pathLower = erfPath;
+        std::transform(pathLower.begin(), pathLower.end(), pathLower.begin(), ::tolower);
+        bool isModel = pathLower.find("model") != std::string::npos ||
+                       pathLower.find("morph") != std::string::npos ||
+                       pathLower.find("face") != std::string::npos ||
+                       pathLower.find("chargen") != std::string::npos;
+        bool isMaterial = pathLower.find("material") != std::string::npos;
+        bool isTexture = pathLower.find("texture") != std::string::npos;
+
+        for (const auto& entry : erf.entries()) {
+            std::string nameLower = entry.name;
+            std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), ::tolower);
+            if (isModel) {
+                bool isCharFile = false;
+                for (const auto& prefix : charPrefixes) {
+                    if (nameLower.find(prefix) == 0) {
+                        isCharFile = true;
+                        break;
+                    }
+                }
+                if (isCharFile && nameLower.size() > 4) {
+                    std::string ext = nameLower.substr(nameLower.size() - 4);
+                    if (ext == ".msh" && state.meshCache.find(nameLower) == state.meshCache.end()) {
+                        state.meshCache[nameLower] = erf.readEntry(entry);
+                    } else if (ext == ".mmh" && state.mmhCache.find(nameLower) == state.mmhCache.end()) {
+                        state.mmhCache[nameLower] = erf.readEntry(entry);
+                    }
+                }
+            }
+            if (isMaterial) {
+                if (nameLower.size() > 4 && nameLower.substr(nameLower.size() - 4) == ".mao") {
+                    if (state.maoCache.find(nameLower) == state.maoCache.end()) {
+                        state.maoCache[nameLower] = erf.readEntry(entry);
+                    }
+                }
+            }
+            if (isTexture) {
+                if (nameLower.size() > 4 && nameLower.substr(nameLower.size() - 4) == ".dds") {
+                    if (state.textureCache.find(nameLower) == state.textureCache.end()) {
+                        state.textureCache[nameLower] = erf.readEntry(entry);
+                    }
+                }
+            }
+        }
+
+        if (isModel) {
+            auto erfPtr = std::make_unique<ERFFile>();
+            if (erfPtr->open(erfPath)) {
+                state.modelErfs.push_back(std::move(erfPtr));
+                state.modelErfPaths.push_back(erfPath);
+            }
+        }
+        if (isMaterial) {
+            auto erfPtr = std::make_unique<ERFFile>();
+            if (erfPtr->open(erfPath)) {
+                state.materialErfs.push_back(std::move(erfPtr));
+                state.materialErfPaths.push_back(erfPath);
+            }
+        }
+        if (isTexture) {
+            auto erfPtr = std::make_unique<ERFFile>();
+            if (erfPtr->open(erfPath)) {
+                state.textureErfs.push_back(std::move(erfPtr));
+                state.textureErfPaths.push_back(erfPath);
+            }
+        }
+
+        processed++;
+        state.preloadProgress = 0.1f + ((float)processed / (float)totalErfs) * 0.8f;
+    }
+
+    state.modelErfsLoaded = true;
+    state.materialErfsLoaded = true;
+    state.textureErfsLoaded = true;
+    state.cacheBuilt = true;
+
+    state.preloadStatus = "Scanning audio files...";
+    state.preloadProgress = 0.95f;
+    scanAudioFiles(state);
+
+    state.preloadProgress = 1.0f;
+    state.statusMessage = "Ready";
+    saveSettings(state);
+
+    state.isPreloading = false;
+    showSplash = false;
+}
 
 void handleInput(AppState& state, GLFWwindow* window, ImGuiIO& io) {
     static bool settingsLoaded = false;
@@ -112,174 +243,62 @@ void drawSplashScreen(AppState& state, int displayW, int displayH) {
     ImGui::Begin("##Splash", nullptr,
         ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
         ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings);
+
     float centerX = displayW * 0.5f;
     float centerY = displayH * 0.5f;
-    const char* title = "Haven Tools";
-    ImVec2 titleSize = ImGui::CalcTextSize(title);
-    ImGui::SetCursorPos(ImVec2(centerX - titleSize.x * 0.5f, centerY - 60));
-    ImGui::Text("%s", title);
-    const char* subtitle = "Dragon Age: Origins Model Browser";
-    ImVec2 subSize = ImGui::CalcTextSize(subtitle);
-    ImGui::SetCursorPos(ImVec2(centerX - subSize.x * 0.5f, centerY - 30));
-    ImGui::TextDisabled("%s", subtitle);
-    ImVec2 buttonSize(250, 40);
-    ImGui::SetCursorPos(ImVec2(centerX - buttonSize.x * 0.5f, centerY + 10));
-    if (ImGui::Button("Browse to DAOriginsLauncher.exe", buttonSize)) {
-        IGFD::FileDialogConfig config;
-        config.path = state.lastDialogPath.empty() ? "." : state.lastDialogPath;
-        ImGuiFileDialog::Instance()->OpenDialog("ChooseLauncher", "Select DAOriginsLauncher.exe", ".exe", config);
-    }
-    if (state.isPreloading) {
-        ImGui::SetCursorPos(ImVec2(centerX - 150, centerY + 70));
+
+    if (!state.isPreloading) {
+        ImVec2 buttonSize(250, 40);
+        ImGui::SetCursorPos(ImVec2(centerX - buttonSize.x * 0.5f, centerY));
+        if (ImGui::Button("Browse to DAOriginsLauncher.exe", buttonSize)) {
+            IGFD::FileDialogConfig config;
+            config.path = state.lastDialogPath.empty() ? "." : state.lastDialogPath;
+            ImGuiFileDialog::Instance()->OpenDialog("ChooseLauncher", "Select DAOriginsLauncher.exe", ".exe", config);
+        }
+    } else {
+        ImGui::SetCursorPos(ImVec2(centerX - 150, centerY));
         ImGui::ProgressBar(state.preloadProgress, ImVec2(300, 20));
-        ImGui::SetCursorPos(ImVec2(centerX - 150, centerY + 95));
+        ImGui::SetCursorPos(ImVec2(centerX - 150, centerY + 25));
+        ImVec2 txtSize = ImGui::CalcTextSize(state.preloadStatus.c_str());
+        ImGui::SetCursorPosX(centerX - txtSize.x * 0.5f);
         ImGui::TextWrapped("%s", state.preloadStatus.c_str());
     }
     ImGui::End();
 }
+
 void preloadErfs(AppState& state) {
-    state.isPreloading = true;
-    state.preloadProgress = 0.0f;
-    state.meshCache.clear();
-    state.mmhCache.clear();
-    state.maoCache.clear();
-    state.textureCache.clear();
-    state.modelErfs.clear();
-    state.modelErfPaths.clear();
-    state.materialErfs.clear();
-    state.materialErfPaths.clear();
-    state.textureErfs.clear();
-    state.textureErfPaths.clear();
-    std::vector<std::string> charPrefixes = {"df_", "dm_", "hf_", "hm_", "ef_", "em_", "cn_"};
-    std::vector<std::string> erfPaths;
-    for (size_t i : state.filteredErfIndices) {
-        erfPaths.push_back(state.erfFiles[i]);
-    }
-    size_t totalErfs = erfPaths.size();
-    size_t processed = 0;
-    for (const auto& erfPath : erfPaths) {
-        std::string filename = fs::path(erfPath).filename().string();
-        state.preloadStatus = "Caching: " + filename;
-        ERFFile erf;
-        if (!erf.open(erfPath)) {
-            processed++;
-            state.preloadProgress = (float)processed / (float)totalErfs;
-            continue;
-        }
-        std::string pathLower = erfPath;
-        std::transform(pathLower.begin(), pathLower.end(), pathLower.begin(), ::tolower);
-        bool isModel = pathLower.find("model") != std::string::npos ||
-                       pathLower.find("morph") != std::string::npos ||
-                       pathLower.find("face") != std::string::npos ||
-                       pathLower.find("chargen") != std::string::npos;
-        bool isMaterial = pathLower.find("material") != std::string::npos;
-        bool isTexture = pathLower.find("texture") != std::string::npos;
-        for (const auto& entry : erf.entries()) {
-            std::string nameLower = entry.name;
-            std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), ::tolower);
-            if (isModel) {
-                bool isCharFile = false;
-                for (const auto& prefix : charPrefixes) {
-                    if (nameLower.find(prefix) == 0) {
-                        isCharFile = true;
-                        break;
-                    }
-                }
-                if (isCharFile && nameLower.size() > 4) {
-                    std::string ext = nameLower.substr(nameLower.size() - 4);
-                    if (ext == ".msh" && state.meshCache.find(nameLower) == state.meshCache.end()) {
-                        state.meshCache[nameLower] = erf.readEntry(entry);
-                    } else if (ext == ".mmh" && state.mmhCache.find(nameLower) == state.mmhCache.end()) {
-                        state.mmhCache[nameLower] = erf.readEntry(entry);
-                    }
-                }
-            }
-            if (isMaterial) {
-                if (nameLower.size() > 4 && nameLower.substr(nameLower.size() - 4) == ".mao") {
-                    if (state.maoCache.find(nameLower) == state.maoCache.end()) {
-                        state.maoCache[nameLower] = erf.readEntry(entry);
-                    }
-                }
-            }
-            if (isTexture) {
-                if (nameLower.size() > 4 && nameLower.substr(nameLower.size() - 4) == ".dds") {
-                    if (state.textureCache.find(nameLower) == state.textureCache.end()) {
-                        state.textureCache[nameLower] = erf.readEntry(entry);
-                    }
-                }
-            }
-        }
-        if (isModel) {
-            auto erfPtr = std::make_unique<ERFFile>();
-            if (erfPtr->open(erfPath)) {
-                state.modelErfs.push_back(std::move(erfPtr));
-                state.modelErfPaths.push_back(erfPath);
-            }
-        }
-        if (isMaterial) {
-            auto erfPtr = std::make_unique<ERFFile>();
-            if (erfPtr->open(erfPath)) {
-                state.materialErfs.push_back(std::move(erfPtr));
-                state.materialErfPaths.push_back(erfPath);
-            }
-        }
-        if (isTexture) {
-            auto erfPtr = std::make_unique<ERFFile>();
-            if (erfPtr->open(erfPath)) {
-                state.textureErfs.push_back(std::move(erfPtr));
-                state.textureErfPaths.push_back(erfPath);
-            }
-        }
-        processed++;
-        state.preloadProgress = (float)processed / (float)totalErfs;
-    }
-    state.modelErfsLoaded = true;
-    state.materialErfsLoaded = true;
-    state.textureErfsLoaded = true;
-    state.cacheBuilt = true;
-    state.preloadStatus = "Cached: " + std::to_string(state.meshCache.size()) + " meshes, " +
-                          std::to_string(state.maoCache.size()) + " materials, " +
-                          std::to_string(state.textureCache.size()) + " textures";
-    state.isPreloading = false;
+    runLoadingTask(&state);
 }
 
 void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
     int displayW, displayH;
     glfwGetFramebufferSize(window, &displayW, &displayH);
+
     if (showSplash) {
         drawSplashScreen(state, displayW, displayH);
-        if (ImGuiFileDialog::Instance()->Display("ChooseLauncher", ImGuiWindowFlags_NoCollapse, ImVec2(700, 450))) {
-            if (ImGuiFileDialog::Instance()->IsOk()) {
-                std::string filePath = ImGuiFileDialog::Instance()->GetFilePathName();
-                state.selectedFolder = fs::path(filePath).parent_path().string();
-                state.lastDialogPath = state.selectedFolder;
-                state.erfFiles = scanForERFFiles(state.selectedFolder);
-                filterEncryptedErfs(state);
-                preloadErfs(state);
-                scanAudioFiles(state);
-                state.statusMessage = "Found " + std::to_string(state.filteredErfIndices.size()) + " ERF files";
-                saveSettings(state);
-                showSplash = false;
+
+        if (!state.isPreloading) {
+            if (ImGuiFileDialog::Instance()->Display("ChooseLauncher", ImGuiWindowFlags_NoCollapse, ImVec2(700, 450))) {
+                if (ImGuiFileDialog::Instance()->IsOk()) {
+                    std::string filePath = ImGuiFileDialog::Instance()->GetFilePathName();
+                    state.selectedFolder = fs::path(filePath).parent_path().string();
+                    state.lastDialogPath = state.selectedFolder;
+                    state.isPreloading = true;
+                    std::thread(runLoadingTask, &state).detach();
+                }
+                ImGuiFileDialog::Instance()->Close();
             }
-            ImGuiFileDialog::Instance()->Close();
         }
         return;
     }
+
     if (ImGuiFileDialog::Instance()->Display("ChooseFolder", ImGuiWindowFlags_NoCollapse, ImVec2(600, 400))) {
         if (ImGuiFileDialog::Instance()->IsOk()) {
             state.selectedFolder = ImGuiFileDialog::Instance()->GetCurrentPath();
             state.lastDialogPath = state.selectedFolder;
-            state.erfFiles = scanForERFFiles(state.selectedFolder);
-            filterEncryptedErfs(state);
-            preloadErfs(state);
-            scanAudioFiles(state);
-            state.selectedErfName.clear();
-            state.mergedEntries.clear();
-            state.filteredEntryIndices.clear();
-            state.lastContentFilter.clear();
-            state.selectedEntryIndex = -1;
-            state.statusMessage = "Found " + std::to_string(state.erfsByName.size()) + " ERF files";
-            saveSettings(state);
+            state.isPreloading = true;
+            showSplash = true;
+            std::thread(runLoadingTask, &state).detach();
         }
         ImGuiFileDialog::Instance()->Close();
     }
@@ -572,13 +591,6 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
                                     }
                                 }
                                 std::vector<Animation> exportAnims;
-                                auto normalize = [](const std::string& s) {
-                                    std::string result;
-                                    for (char c : s) {
-                                        if (c != '_') result += std::tolower(c);
-                                    }
-                                    return result;
-                                };
                                 for (const auto& animFile : state.availableAnimFiles) {
                                     std::string animName = animFile.first;
                                     size_t dotPos = animName.rfind('.');
@@ -595,6 +607,13 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
                                                 auto aniData = animErf.readEntry(animEntry);
                                                 if (!aniData.empty()) {
                                                     Animation anim = loadANI(aniData, animEntry.name);
+                                                    auto normalize = [](const std::string& s) {
+                                                        std::string result;
+                                                        for (char c : s) {
+                                                            if (c != '_') result += std::tolower(c);
+                                                        }
+                                                        return result;
+                                                    };
                                                     for (auto& track : anim.tracks) {
                                                         track.boneIndex = state.currentModel.skeleton.findBone(track.boneName);
                                                         if (track.boneIndex < 0) {
