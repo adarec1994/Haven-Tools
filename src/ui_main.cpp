@@ -291,8 +291,46 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
     int displayW, displayH;
     glfwGetFramebufferSize(window, &displayW, &displayH);
 
+    static bool s_startedUpdateCheck = false;
+    static bool s_openUpdatePopup = false;
+    static bool s_dismissedUpdatePopup = false;
+
     if (showSplash) {
         drawSplashScreen(state, displayW, displayH);
+
+        if (!s_startedUpdateCheck) {
+            s_startedUpdateCheck = true;
+            Update::StartCheckForUpdates();
+        }
+
+        if (Update::IsCheckDone() && Update::IsUpdateAvailable() && !s_dismissedUpdatePopup && !s_openUpdatePopup && !Update::IsBusy()) {
+            s_openUpdatePopup = true;
+            ImGui::OpenPopup("Update Available");
+        }
+
+        if (ImGui::BeginPopupModal("Update Available", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+            const char* latest = Update::GetLatestVersionText();
+            if (!latest) latest = "?";
+
+            ImGui::Text("An update to version %s is available.", latest);
+            ImGui::TextUnformatted("Do you want to update?");
+            ImGui::Spacing();
+
+            if (ImGui::Button("Yes", ImVec2(120, 0))) {
+                Update::DownloadAndApplyLatest();
+                s_dismissedUpdatePopup = true;
+                s_openUpdatePopup = false;
+                ImGui::CloseCurrentPopup();
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("No", ImVec2(120, 0))) {
+                s_dismissedUpdatePopup = true;
+                s_openUpdatePopup = false;
+                ImGui::CloseCurrentPopup();
+            }
+
+            ImGui::EndPopup();
+        }
 
         if (!state.isPreloading) {
             if (ImGuiFileDialog::Instance()->Display("ChooseLauncher", ImGuiWindowFlags_NoCollapse, ImVec2(700, 450))) {
@@ -779,14 +817,7 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
             ImGui::MenuItem("Animation", nullptr, &state.showAnimWindow);
             ImGui::EndMenu();
         }
-        ImGui::SameLine();
-        if (!Update::IsBusy()) {
-            if (ImGui::Button("Update")) {
-                Update::StartDownloadAndApplyLatest();
-            }
-        } else {
-            ImGui::TextUnformatted("Updating...");
-        }
+
         if (state.hasModel) {
             if (ImGui::Button("Export GLB")) {
                 IGFD::FileDialogConfig config;
@@ -809,8 +840,17 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
             ImGui::SameLine();
             ImGui::Text("| %s | RMB: Look | WASD: Move", state.currentModel.name.c_str());
         }
+
+        const char* ver = Update::GetInstalledVersionText();
+        float verW = ImGui::CalcTextSize(ver).x;
+        float right = ImGui::GetWindowContentRegionMax().x;
+        ImGui::SameLine();
+        ImGui::SetCursorPosX(right - verW - ImGui::GetStyle().ItemSpacing.x);
+        ImGui::TextUnformatted(ver);
+
         ImGui::EndMainMenuBar();
     }
+
     if (state.mainTab == 0) {
         if (state.showBrowser) drawBrowserWindow(state);
         if (state.showMeshBrowser) drawMeshBrowserWindow(state);

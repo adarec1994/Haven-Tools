@@ -127,7 +127,7 @@ target_link_libraries(HavenTools PRIVATE imgui_lib imguifiledialog_lib)
 
 if(WIN32)
     target_compile_definitions(HavenTools PRIVATE _CRT_SECURE_NO_WARNINGS)
-    target_link_libraries(HavenTools PRIVATE winmm winhttp)
+    target_link_libraries(HavenTools PRIVATE winmm winhttp version)
 endif()
 
 if(UNIX AND NOT APPLE)

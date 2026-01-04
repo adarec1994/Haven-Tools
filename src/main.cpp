@@ -39,6 +39,8 @@ int main(int argc, char** argv) {
     AppState state;
     state.extractPath = (fs::path(getExeDir()) / "extracted").string();
 
+    Update::StartAutoCheckAndUpdate();
+
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
         handleInput(state, window, io);
