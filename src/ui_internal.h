@@ -36,6 +36,8 @@ std::vector<uint8_t> extractFSB4toMP3Data(const std::string& fsbPath);
 std::string getFSB4SampleName(const std::string& fsbPath);
 std::vector<FSBSampleInfo> parseFSB4Samples(const std::string& fsbPath);
 std::vector<uint8_t> extractFSB4SampleToWav(const std::string& fsbPath, int sampleIndex);
+
+void buildMaterialCache(AppState& state, float startProgress = 0.0f, float endProgress = 1.0f);
 bool saveFSB4SampleToWav(const std::string& fsbPath, int sampleIndex, const std::string& outPath);
 void stopAudio();
 bool playAudioFromMemory(const std::vector<uint8_t>& mp3Data);
@@ -83,3 +85,4 @@ void filterEncryptedErfs(AppState& state);
 void buildCharacterLists(AppState& state);
 void loadCharacterModel(AppState& state);
 void drawCharacterDesigner(AppState& state, ImGuiIO& io);
+void preloadCharacterData(AppState& state);

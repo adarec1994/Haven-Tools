@@ -6,12 +6,21 @@
 static std::set<std::string> s_materialCache;
 static bool s_materialCacheBuilt = false;
 
-static void buildMaterialCache(AppState& state) {
-    if (s_materialCacheBuilt) return;
+void buildMaterialCache(AppState& state, float startProgress, float endProgress) {
+    if (s_materialCacheBuilt) {
+        state.preloadProgress = endProgress;
+        return;
+    }
 
     int totalMats = 0;
+    size_t total = state.erfFiles.size();
+    size_t processed = 0;
 
     for (const auto& erfPath : state.erfFiles) {
+        processed++;
+        float ratio = (float)processed / (float)total;
+        state.preloadProgress = startProgress + ratio * (endProgress - startProgress);
+
         std::string filename = fs::path(erfPath).filename().string();
         std::string filenameLower = filename;
         std::transform(filenameLower.begin(), filenameLower.end(), filenameLower.begin(), ::tolower);
@@ -35,8 +44,9 @@ static void buildMaterialCache(AppState& state) {
         }
     }
 
-    std::cout << "[MAT] Cached " << s_materialCache.size() << " unique materials from " << totalMats << " total entries" << std::endl;
+    std::cout << "[MAT] Cached " << totalMats << " materials." << std::endl;
     s_materialCacheBuilt = true;
+    state.preloadProgress = endProgress;
 }
 
 static bool materialExists(AppState& state, const std::string& matName) {
@@ -75,17 +85,24 @@ void filterEncryptedErfs(AppState& state) {
     }
 }
 
-static void loadTintCache(AppState& state) {
+static void loadTintCache(AppState& state, float startProgress = 0.0f, float endProgress = 1.0f) {
     if (state.tintCacheLoaded && state.tintCache.getTintNames().size() > 0) {
+        state.preloadProgress = endProgress;
         return;
     }
 
     state.tintCache.clear();
     int totalLoaded = 0;
+    size_t total = state.erfFiles.size();
+    size_t processed = 0;
 
     std::cout << "[TINT] Scanning " << state.erfFiles.size() << " ERFs for .tnt files" << std::endl;
 
     for (const auto& erfPath : state.erfFiles) {
+        processed++;
+        float ratio = (float)processed / (float)total;
+        state.preloadProgress = startProgress + ratio * (endProgress - startProgress);
+
         ERFFile erf;
         if (!erf.open(erfPath)) continue;
 
@@ -117,6 +134,17 @@ static void loadTintCache(AppState& state) {
 
     std::cout << "[TINT] Loaded " << totalLoaded << " tints total" << std::endl;
     state.tintCacheLoaded = true;
+    state.preloadProgress = endProgress;
+}
+
+void preloadCharacterData(AppState& state) {
+    buildMaterialCache(state, 0.0f, 0.4f);
+
+    loadTintCache(state, 0.4f, 0.8f);
+    state.preloadProgress = 0.8f;
+    buildCharacterLists(state);
+
+    state.preloadProgress = 1.0f;
 }
 
 static void buildMorphPresetList(AppState& state) {
@@ -1044,6 +1072,10 @@ void loadCharacterModel(AppState& state) {
 }
 
 void drawCharacterDesigner(AppState& state, ImGuiIO& io) {
+    if (!s_materialCacheBuilt) {
+        buildMaterialCache(state);
+    }
+
     auto& cd = state.charDesigner;
 
     memcpy(state.renderSettings.eyeColor, cd.eyeColor, sizeof(float) * 3);

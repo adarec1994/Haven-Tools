@@ -3,6 +3,12 @@
 
 bool showSplash = true;
 
+static bool t_active = false;
+static float t_alpha = 0.0f;
+static int t_targetTab = 0;
+static int t_phase = 0;
+static bool t_isLoadingContent = false;
+
 void runLoadingTask(AppState* statePtr) {
     AppState& state = *statePtr;
 
@@ -131,6 +137,16 @@ void runLoadingTask(AppState* statePtr) {
 
     state.isPreloading = false;
     showSplash = false;
+}
+
+void runCharDesignerLoading(AppState* statePtr) {
+    t_isLoadingContent = true;
+    statePtr->preloadProgress = 0.0f;
+
+    preloadCharacterData(*statePtr);
+
+    statePtr->preloadProgress = 1.0f;
+    t_isLoadingContent = false;
 }
 
 void handleInput(AppState& state, GLFWwindow* window, ImGuiIO& io) {
@@ -290,6 +306,38 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
             }
         }
         return;
+    }
+
+    if (t_active) {
+        float dt = io.DeltaTime;
+        if (t_phase == 1) {
+            t_alpha += dt * 5.0f;
+            if (t_alpha >= 1.0f) {
+                t_alpha = 1.0f;
+                if (!t_isLoadingContent) {
+                    t_phase = 2;
+                }
+            }
+        } else if (t_phase == 2) {
+            if (t_targetTab == 1 && state.mainTab != 1) {
+                state.renderSettings.showSkeleton = false;
+                state.renderSettings.showAxes = false;
+                state.renderSettings.showGrid = false;
+                state.hasModel = false;
+                state.currentModel = Model();
+                state.currentAnim = Animation();
+                state.animPlaying = false;
+            }
+            state.mainTab = t_targetTab;
+            t_phase = 3;
+        } else if (t_phase == 3) {
+            t_alpha -= dt * 1.5f;
+            if (t_alpha <= 0.0f) {
+                t_alpha = 0.0f;
+                t_active = false;
+                t_phase = 0;
+            }
+        }
     }
 
     if (ImGuiFileDialog::Instance()->Display("ChooseFolder", ImGuiWindowFlags_NoCollapse, ImVec2(600, 400))) {
@@ -696,19 +744,27 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
     if (ImGui::BeginMainMenuBar()) {
         ImGui::Text("Mode:");
         ImGui::SameLine();
-        if (ImGui::RadioButton("Browser", state.mainTab == 0)) state.mainTab = 0;
-        ImGui::SameLine();
-        if (ImGui::RadioButton("Character Designer", state.mainTab == 1)) {
-            if (state.mainTab != 1) {
-                state.renderSettings.showSkeleton = false;
-                state.renderSettings.showAxes = false;
-                state.renderSettings.showGrid = false;
-                state.hasModel = false;
-                state.currentModel = Model();
-                state.currentAnim = Animation();
-                state.animPlaying = false;
+
+        bool browserSelected = (state.mainTab == 0);
+        if (ImGui::RadioButton("Browser", browserSelected)) {
+            if (state.mainTab != 0 && !t_active) {
+                t_active = true;
+                t_targetTab = 0;
+                t_phase = 1;
+                t_alpha = 0.0f;
             }
-            state.mainTab = 1;
+        }
+        ImGui::SameLine();
+
+        bool charSelected = (state.mainTab == 1);
+        if (ImGui::RadioButton("Character Designer", charSelected)) {
+            if (state.mainTab != 1 && !t_active) {
+                t_active = true;
+                t_targetTab = 1;
+                t_phase = 1;
+                t_alpha = 0.0f;
+                std::thread(runCharDesignerLoading, &state).detach();
+            }
         }
         ImGui::SameLine();
         ImGui::Text(" | ");
@@ -801,5 +857,24 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
             }
         }
         ImGui::End();
+    }
+
+    if (t_active) {
+        ImGui::SetNextWindowPos(ImVec2(10, displayH - 60), ImGuiCond_Always);
+        ImGui::SetNextWindowBgAlpha(t_alpha);
+        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, t_alpha);
+        ImGui::Begin("##TabTransition", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoInputs);
+        ImGui::Text("Loading...");
+
+        float p;
+        if (t_isLoadingContent) {
+            p = state.preloadProgress;
+        } else {
+            p = (t_phase == 1) ? t_alpha * 0.5f : 1.0f;
+        }
+
+        ImGui::ProgressBar(p, ImVec2(200, 20));
+        ImGui::End();
+        ImGui::PopStyleVar();
     }
 }
