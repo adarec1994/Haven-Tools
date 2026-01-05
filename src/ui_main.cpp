@@ -816,51 +816,23 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
     }
 
     // Handle GLB Selection Dialog for Import
-    // ui_main.cpp
-
-    // ... inside drawUI function ...
-
-    // 1. Handle GLB Selection and Execute IMMEDIATELY
     if (ImGuiFileDialog::Instance()->Display("ImportGLB", ImGuiWindowFlags_NoCollapse, ImVec2(600, 400))) {
         if (ImGuiFileDialog::Instance()->IsOk()) {
             std::string glbPath = ImGuiFileDialog::Instance()->GetFilePathName();
 
-            // Use the currently open folder as the destination
             DAOImporter importer;
+            // Use the currently open folder as the search root
             if (importer.ImportToDirectory(glbPath, state.selectedFolder)) {
                 state.statusMessage = "Successfully imported " + fs::path(glbPath).filename().string();
 
-                // Optional: Refresh the browser so the new files appear
-                state.erfFiles = scanForERFFiles(state.selectedFolder);
-                filterEncryptedErfs(state);
+                // === FORCE REFRESH ===
+                state.isPreloading = true;
+                showSplash = true;
+                std::thread(runLoadingTask, &state).detach();
+                // =====================
+
             } else {
-                state.statusMessage = "Import failed! Check if 3 target ERFs exist in folder.";
-            }
-        }
-        ImGuiFileDialog::Instance()->Close();
-    }
-
-    // 2. DELETE the entire 'ImportTargetERF' block below
-    /*
-    if (ImGuiFileDialog::Instance()->Display("ImportTargetERF", ...)) {
-        ... DELETE THIS BLOCK ...
-    }
-    */
-
-    // ... rest of code
-
-    // Handle ERF Selection Dialog and Execute Import
-    if (ImGuiFileDialog::Instance()->Display("ImportTargetERF", ImGuiWindowFlags_NoCollapse, ImVec2(600, 400))) {
-        if (ImGuiFileDialog::Instance()->IsOk()) {
-            std::string erfPath = ImGuiFileDialog::Instance()->GetFilePathName();
-
-            DAOImporter importer;
-            if (importer.ConvertAndAddToERF(s_importGlbPath, erfPath)) {
-                state.statusMessage =
-                    "Successfully imported " + fs::path(s_importGlbPath).filename().string() +
-                    " into " + fs::path(erfPath).filename().string();
-            } else {
-                state.statusMessage = "Failed to import " + fs::path(s_importGlbPath).filename().string();
+                state.statusMessage = "Import failed! Check console for missing ERFs.";
             }
         }
         ImGuiFileDialog::Instance()->Close();
@@ -870,13 +842,9 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
         if (ImGui::BeginMenu("File")) {
             if (ImGui::BeginMenu("Import")) {
                 if (ImGui::MenuItem("GLB to ERF...")) {
-                    IGFD::FileDialogConfig cfg;          // FIX: use config, not string
-                    cfg.path = state.selectedFolder;     // FIX
-                    ImGuiFileDialog::Instance()->OpenDialog(
-                        "ImportGLB",
-                        "Choose GLB File",
-                        ".glb",
-                        cfg);                            // FIX
+                    IGFD::FileDialogConfig cfg;
+                    cfg.path = state.selectedFolder;
+                    ImGuiFileDialog::Instance()->OpenDialog("ImportGLB", "Choose GLB File", ".glb", cfg);
                 }
                 ImGui::EndMenu();
             }
