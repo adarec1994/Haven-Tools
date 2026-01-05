@@ -1,6 +1,7 @@
 #include "ui_internal.h"
 #include "update/update.h"
 #include <thread>
+#include <import.h>
 
 #include "update/about_text.h"
 #include "update/changelog_text.h"
@@ -316,6 +317,7 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
     static bool s_startedUpdateCheck = false;
     static bool s_openUpdatePopup = false;
     static bool s_dismissedUpdatePopup = false;
+    static std::string s_importGlbPath; // Added for Import functionality
 
     if (showSplash) {
         drawSplashScreen(state, displayW, displayH);
@@ -411,6 +413,7 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
         }
         ImGuiFileDialog::Instance()->Close();
     }
+
     if (ImGuiFileDialog::Instance()->Display("ExportCurrentGLB", ImGuiWindowFlags_NoCollapse, ImVec2(600, 400))) {
         if (ImGuiFileDialog::Instance()->IsOk() && state.hasModel) {
             std::string exportPath = ImGuiFileDialog::Instance()->GetFilePathName();
@@ -467,6 +470,7 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
         }
         ImGuiFileDialog::Instance()->Close();
     }
+
     if (ImGuiFileDialog::Instance()->Display("ExportGLB", ImGuiWindowFlags_NoCollapse, ImVec2(600, 400))) {
         if (ImGuiFileDialog::Instance()->IsOk() && state.pendingExport) {
             std::string exportPath = ImGuiFileDialog::Instance()->GetFilePathName();
@@ -532,6 +536,7 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
         }
         ImGuiFileDialog::Instance()->Close();
     }
+
     if (ImGuiFileDialog::Instance()->Display("ExportTexDDS", ImGuiWindowFlags_NoCollapse, ImVec2(600, 400))) {
         if (ImGuiFileDialog::Instance()->IsOk() && state.pendingTexExportDds) {
             std::string exportPath = ImGuiFileDialog::Instance()->GetFilePathName();
@@ -550,6 +555,7 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
         }
         ImGuiFileDialog::Instance()->Close();
     }
+
     if (ImGuiFileDialog::Instance()->Display("ExportTexPNG", ImGuiWindowFlags_NoCollapse, ImVec2(600, 400))) {
         if (ImGuiFileDialog::Instance()->IsOk() && state.pendingTexExportPng) {
             std::string exportPath = ImGuiFileDialog::Instance()->GetFilePathName();
@@ -576,6 +582,7 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
         }
         ImGuiFileDialog::Instance()->Close();
     }
+
     if (ImGuiFileDialog::Instance()->Display("ExtractTexture", ImGuiWindowFlags_NoCollapse, ImVec2(600, 400))) {
         if (ImGuiFileDialog::Instance()->IsOk()) {
             std::string exportPath = ImGuiFileDialog::Instance()->GetFilePathName();
@@ -609,6 +616,7 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
         }
         ImGuiFileDialog::Instance()->Close();
     }
+
     if (ImGuiFileDialog::Instance()->Display("ExtractTexturePNG", ImGuiWindowFlags_NoCollapse, ImVec2(600, 400))) {
         if (ImGuiFileDialog::Instance()->IsOk()) {
             std::string exportPath = ImGuiFileDialog::Instance()->GetFilePathName();
@@ -650,6 +658,7 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
         }
         ImGuiFileDialog::Instance()->Close();
     }
+
     if (ImGuiFileDialog::Instance()->Display("DumpTextures", ImGuiWindowFlags_NoCollapse, ImVec2(600, 400))) {
         if (ImGuiFileDialog::Instance()->IsOk()) {
             std::string outDir = ImGuiFileDialog::Instance()->GetCurrentPath();
@@ -674,6 +683,7 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
         }
         ImGuiFileDialog::Instance()->Close();
     }
+
     if (ImGuiFileDialog::Instance()->Display("DumpModels", ImGuiWindowFlags_NoCollapse, ImVec2(600, 400))) {
         if (ImGuiFileDialog::Instance()->IsOk()) {
             std::string outDir = ImGuiFileDialog::Instance()->GetCurrentPath();
@@ -759,6 +769,7 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
         }
         ImGuiFileDialog::Instance()->Close();
     }
+
     if (ImGuiFileDialog::Instance()->Display("ConvertAllAudio", ImGuiWindowFlags_NoCollapse, ImVec2(600, 400))) {
         if (ImGuiFileDialog::Instance()->IsOk()) {
             std::string outDir = ImGuiFileDialog::Instance()->GetCurrentPath();
@@ -782,6 +793,7 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
         }
         ImGuiFileDialog::Instance()->Close();
     }
+
     if (ImGuiFileDialog::Instance()->Display("ConvertSelectedAudio", ImGuiWindowFlags_NoCollapse, ImVec2(600, 400))) {
         if (ImGuiFileDialog::Instance()->IsOk() && state.selectedEntryIndex >= 0) {
             std::string outPath = ImGuiFileDialog::Instance()->GetFilePathName();
@@ -803,20 +815,83 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
         ImGuiFileDialog::Instance()->Close();
     }
 
+    // Handle GLB Selection Dialog for Import
+    // ui_main.cpp
+
+    // ... inside drawUI function ...
+
+    // 1. Handle GLB Selection and Execute IMMEDIATELY
+    if (ImGuiFileDialog::Instance()->Display("ImportGLB", ImGuiWindowFlags_NoCollapse, ImVec2(600, 400))) {
+        if (ImGuiFileDialog::Instance()->IsOk()) {
+            std::string glbPath = ImGuiFileDialog::Instance()->GetFilePathName();
+
+            // Use the currently open folder as the destination
+            DAOImporter importer;
+            if (importer.ImportToDirectory(glbPath, state.selectedFolder)) {
+                state.statusMessage = "Successfully imported " + fs::path(glbPath).filename().string();
+
+                // Optional: Refresh the browser so the new files appear
+                state.erfFiles = scanForERFFiles(state.selectedFolder);
+                filterEncryptedErfs(state);
+            } else {
+                state.statusMessage = "Import failed! Check if 3 target ERFs exist in folder.";
+            }
+        }
+        ImGuiFileDialog::Instance()->Close();
+    }
+
+    // 2. DELETE the entire 'ImportTargetERF' block below
+    /*
+    if (ImGuiFileDialog::Instance()->Display("ImportTargetERF", ...)) {
+        ... DELETE THIS BLOCK ...
+    }
+    */
+
+    // ... rest of code
+
+    // Handle ERF Selection Dialog and Execute Import
+    if (ImGuiFileDialog::Instance()->Display("ImportTargetERF", ImGuiWindowFlags_NoCollapse, ImVec2(600, 400))) {
+        if (ImGuiFileDialog::Instance()->IsOk()) {
+            std::string erfPath = ImGuiFileDialog::Instance()->GetFilePathName();
+
+            DAOImporter importer;
+            if (importer.ConvertAndAddToERF(s_importGlbPath, erfPath)) {
+                state.statusMessage =
+                    "Successfully imported " + fs::path(s_importGlbPath).filename().string() +
+                    " into " + fs::path(erfPath).filename().string();
+            } else {
+                state.statusMessage = "Failed to import " + fs::path(s_importGlbPath).filename().string();
+            }
+        }
+        ImGuiFileDialog::Instance()->Close();
+    }
+
     if (ImGui::BeginMainMenuBar()) {
         if (ImGui::BeginMenu("File")) {
+            if (ImGui::BeginMenu("Import")) {
+                if (ImGui::MenuItem("GLB to ERF...")) {
+                    IGFD::FileDialogConfig cfg;          // FIX: use config, not string
+                    cfg.path = state.selectedFolder;     // FIX
+                    ImGuiFileDialog::Instance()->OpenDialog(
+                        "ImportGLB",
+                        "Choose GLB File",
+                        ".glb",
+                        cfg);                            // FIX
+                }
+                ImGui::EndMenu();
+            }
             if (ImGui::BeginMenu("Export")) {
                 if (ImGui::MenuItem("To GLB", nullptr, false, state.hasModel)) {
                     IGFD::FileDialogConfig config;
-                    #ifdef _WIN32
+#ifdef _WIN32
                     char* userProfile = getenv("USERPROFILE");
                     if (userProfile) config.path = std::string(userProfile) + "\\Documents";
                     else config.path = ".";
-                    #else
+#else
                     char* home = getenv("HOME");
                     if (home) config.path = std::string(home) + "/Documents";
                     else config.path = ".";
-                    #endif
+#endif
                     std::string defaultName = state.currentModel.name;
                     size_t dotPos = defaultName.rfind('.');
                     if (dotPos != std::string::npos) defaultName = defaultName.substr(0, dotPos);

@@ -34,6 +34,13 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(imguifiledialog)
 
+FetchContent_Declare(
+        tinygltf
+        GIT_REPOSITORY https://github.com/syoyo/tinygltf.git
+        GIT_TAG        v2.9.3
+)
+FetchContent_MakeAvailable(tinygltf)
+
 add_library(imgui_lib STATIC
         ${imgui_SOURCE_DIR}/imgui.cpp
         ${imgui_SOURCE_DIR}/imgui_demo.cpp
@@ -122,10 +129,12 @@ add_executable(HavenTools
         src/update/update.h
         src/update/about_text.h
         src/update/changelog_text.h
+        src/import.cpp
+        src/import.h
 )
 
 target_include_directories(HavenTools PRIVATE ${CMAKE_SOURCE_DIR}/src ${CMAKE_BINARY_DIR})
-target_link_libraries(HavenTools PRIVATE imgui_lib imguifiledialog_lib)
+target_link_libraries(HavenTools PRIVATE imgui_lib imguifiledialog_lib tinygltf)
 
 if(WIN32)
     target_compile_definitions(HavenTools PRIVATE _CRT_SECURE_NO_WARNINGS)

@@ -71,6 +71,7 @@ void loadAndMergeHead(AppState& state, const std::string& headMshFile);
 void drawVirtualList(int itemCount, std::function<void(int)> renderItem);
 
 void drawMeshBrowserWindow(AppState& state);
+void drawImportMenu(AppState& state);
 void drawBrowserWindow(AppState& state);
 
 void drawRenderSettingsWindow(AppState& state);
