@@ -2,6 +2,11 @@
 #include "update/update.h"
 #include <thread>
 
+#include "update/about_text.h"
+#include "update/changelog_text.h"
+
+static const char* CURRENT_APP_VERSION = "1.9";
+
 bool showSplash = true;
 
 static bool t_active = false;
@@ -9,6 +14,10 @@ static float t_alpha = 0.0f;
 static int t_targetTab = 0;
 static int t_phase = 0;
 static bool t_isLoadingContent = false;
+
+static bool s_showAbout = false;
+static bool s_showChangelog = false;
+static bool s_scrollToBottom = false;
 
 void runLoadingTask(AppState* statePtr) {
     AppState& state = *statePtr;
@@ -154,8 +163,21 @@ void handleInput(AppState& state, GLFWwindow* window, ImGuiIO& io) {
     static bool settingsLoaded = false;
     if (!settingsLoaded) {
         loadSettings(state);
+
+        if (state.lastRunVersion.empty()) {
+            s_showAbout = true;
+        }
+        else if (state.lastRunVersion != CURRENT_APP_VERSION) {
+            s_showChangelog = true;
+            s_scrollToBottom = true;
+        }
+        if (state.lastRunVersion != CURRENT_APP_VERSION) {
+            state.lastRunVersion = CURRENT_APP_VERSION;
+            saveSettings(state);
+        }
         settingsLoaded = true;
     }
+
     if (!io.WantCaptureMouse) {
         double mx, my;
         glfwGetCursorPos(window, &mx, &my);
@@ -780,7 +802,59 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
         }
         ImGuiFileDialog::Instance()->Close();
     }
+
     if (ImGui::BeginMainMenuBar()) {
+        if (ImGui::BeginMenu("File")) {
+            if (ImGui::BeginMenu("Export")) {
+                if (ImGui::MenuItem("To GLB", nullptr, false, state.hasModel)) {
+                    IGFD::FileDialogConfig config;
+                    #ifdef _WIN32
+                    char* userProfile = getenv("USERPROFILE");
+                    if (userProfile) config.path = std::string(userProfile) + "\\Documents";
+                    else config.path = ".";
+                    #else
+                    char* home = getenv("HOME");
+                    if (home) config.path = std::string(home) + "/Documents";
+                    else config.path = ".";
+                    #endif
+                    std::string defaultName = state.currentModel.name;
+                    size_t dotPos = defaultName.rfind('.');
+                    if (dotPos != std::string::npos) defaultName = defaultName.substr(0, dotPos);
+                    defaultName += ".glb";
+                    config.fileName = defaultName;
+                    ImGuiFileDialog::Instance()->OpenDialog("ExportCurrentGLB", "Export Model as GLB", ".glb", config);
+                }
+                ImGui::EndMenu();
+            }
+            ImGui::Separator();
+
+            if (ImGui::MenuItem("About")) {
+                s_showAbout = true;
+            }
+            if (ImGui::MenuItem("Changelog")) {
+                s_showChangelog = true;
+                s_scrollToBottom = true;
+            }
+
+            ImGui::Separator();
+            if (ImGui::MenuItem("Quit", "Alt+F4")) {
+                glfwSetWindowShouldClose(window, true);
+            }
+            ImGui::EndMenu();
+        }
+
+        if (ImGui::BeginMenu("Window")) {
+            if (state.mainTab == 0) {
+                ImGui::MenuItem("ERF Browser", nullptr, &state.showBrowser);
+                ImGui::MenuItem("Mesh Browser", nullptr, &state.showMeshBrowser);
+            }
+            ImGui::MenuItem("Render Settings", nullptr, &state.showRenderSettings);
+            ImGui::MenuItem("Animation", nullptr, &state.showAnimWindow);
+            ImGui::EndMenu();
+        }
+
+        ImGui::Text(" | ");
+
         ImGui::Text("Mode:");
         ImGui::SameLine();
 
@@ -808,36 +882,8 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
         ImGui::SameLine();
         ImGui::Text(" | ");
         ImGui::SameLine();
-        if (ImGui::BeginMenu("View")) {
-            if (state.mainTab == 0) {
-                ImGui::MenuItem("ERF Browser", nullptr, &state.showBrowser);
-                ImGui::MenuItem("Mesh Browser", nullptr, &state.showMeshBrowser);
-            }
-            ImGui::MenuItem("Render Settings", nullptr, &state.showRenderSettings);
-            ImGui::MenuItem("Animation", nullptr, &state.showAnimWindow);
-            ImGui::EndMenu();
-        }
 
         if (state.hasModel) {
-            if (ImGui::Button("Export GLB")) {
-                IGFD::FileDialogConfig config;
-                #ifdef _WIN32
-                char* userProfile = getenv("USERPROFILE");
-                if (userProfile) config.path = std::string(userProfile) + "\\Documents";
-                else config.path = ".";
-                #else
-                char* home = getenv("HOME");
-                if (home) config.path = std::string(home) + "/Documents";
-                else config.path = ".";
-                #endif
-                std::string defaultName = state.currentModel.name;
-                size_t dotPos = defaultName.rfind('.');
-                if (dotPos != std::string::npos) defaultName = defaultName.substr(0, dotPos);
-                defaultName += ".glb";
-                config.fileName = defaultName;
-                ImGuiFileDialog::Instance()->OpenDialog("ExportCurrentGLB", "Export Model as GLB", ".glb", config);
-            }
-            ImGui::SameLine();
             ImGui::Text("| %s | RMB: Look | WASD: Move", state.currentModel.name.c_str());
         }
 
@@ -905,6 +951,32 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
                 }
             }
         }
+        ImGui::End();
+    }
+
+    if (s_showAbout) {
+        ImGui::SetNextWindowSize(ImVec2(400, 300), ImGuiCond_FirstUseEver);
+        ImGui::Begin("About", &s_showAbout);
+        ImGui::BeginChild("AboutText", ImVec2(0, 0), true);
+        ImGui::TextWrapped("%s", s_aboutText);
+        ImGui::EndChild();
+        ImGui::End();
+    }
+    if (s_showChangelog) {
+        ImGui::SetNextWindowSize(ImVec2(500, 400), ImGuiCond_FirstUseEver);
+        ImGui::Begin("Changelog", &s_showChangelog);
+        ImGui::BeginChild("ChangeLogText", ImVec2(0, 0), true);
+        ImGui::TextWrapped("%s", s_changelogHistory);
+        ImGui::Separator();
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.0f, 1.0f, 0.0f, 1.0f));
+        ImGui::TextWrapped("%s", s_changelogLatest);
+        ImGui::PopStyleColor();
+        if (s_scrollToBottom) {
+            ImGui::SetScrollHereY(1.0f);
+            s_scrollToBottom = false;
+        }
+
+        ImGui::EndChild();
         ImGui::End();
     }
 

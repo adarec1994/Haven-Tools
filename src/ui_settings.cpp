@@ -7,6 +7,7 @@ void saveSettings(const AppState& state) {
     if (f.is_open()) {
         f << "lastDialogPath=" << state.lastDialogPath << "\n";
         f << "selectedFolder=" << state.selectedFolder << "\n";
+        f << "lastRunVersion=" << state.lastRunVersion << "\n";
     }
 }
 
@@ -19,8 +20,10 @@ void loadSettings(AppState& state) {
             if (eq != std::string::npos) {
                 std::string key = line.substr(0, eq);
                 std::string val = line.substr(eq + 1);
+
                 if (key == "lastDialogPath") state.lastDialogPath = val;
                 else if (key == "selectedFolder") state.selectedFolder = val;
+                else if (key == "lastRunVersion") state.lastRunVersion = val;
             }
         }
     }

@@ -120,6 +120,8 @@ add_executable(HavenTools
         src/update/app.rc
         src/update/update.cpp
         src/update/update.h
+        src/update/about_text.h
+        src/update/changelog_text.h
 )
 
 target_include_directories(HavenTools PRIVATE ${CMAKE_SOURCE_DIR}/src ${CMAKE_BINARY_DIR})

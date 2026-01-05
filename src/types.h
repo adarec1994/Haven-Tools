@@ -151,6 +151,7 @@ struct AppState {
     bool showUvViewer = false;
     bool showAnimWindow = false;
     bool showMeshBrowser = false;
+    std::string lastRunVersion;
     std::string maoContent;
     std::string maoFileName;
     int selectedMeshForUv = -1;
