@@ -271,7 +271,7 @@ bool DAOImporter::ImportToDirectory(const std::string& glbPath, const std::strin
     std::cout << "  + Generated: " << mmhFile << " (" << hierFiles[mmhFile].size() << " bytes)" << std::endl;
 
     for (const auto& tex : modelData.textures) {
-        if (tex.width > 0 && tex.height > 0 && !tex.data.empty()) {
+        if (tex.width > 0 && tex.height > 0 && !tex.data.empty() && !tex.ddsName.empty()) {
             std::string ddsName = tex.ddsName;
             std::vector<uint8_t> ddsData = ConvertToDDS(tex.data, tex.width, tex.height, tex.channels);
             texFiles[ddsName] = std::move(ddsData);
@@ -318,13 +318,11 @@ bool DAOImporter::LoadGLB(const std::string& path, DAOModelData& outData) {
         const auto& img = model.images[i];
         std::string srcName = img.uri.empty() ? img.name : img.uri;
         if (srcName.empty()) srcName = "texture_" + std::to_string(i);
-        std::string ddsName = CleanName(srcName) + ".dds";
-        imageIndexToDdsName[(int)i] = ddsName;
 
         if (img.width > 0 && img.height > 0 && !img.image.empty()) {
             DAOModelData::Texture tex;
             tex.originalName = srcName;
-            tex.ddsName = ddsName;
+            tex.ddsName = ""; // Will be set by material processing
             tex.width = img.width;
             tex.height = img.height;
             tex.channels = img.component;
@@ -333,11 +331,9 @@ bool DAOImporter::LoadGLB(const std::string& path, DAOModelData& outData) {
         }
     }
 
-    auto getTextureDdsName = [&](int textureIndex) -> std::string {
-        if (textureIndex < 0 || textureIndex >= (int)model.textures.size()) return "";
-        int imgIdx = model.textures[textureIndex].source;
-        if (imageIndexToDdsName.count(imgIdx)) return imageIndexToDdsName[imgIdx];
-        return "";
+    auto getTextureImageIndex = [&](int textureIndex) -> int {
+        if (textureIndex < 0 || textureIndex >= (int)model.textures.size()) return -1;
+        return model.textures[textureIndex].source;
     };
 
     for (size_t i = 0; i < model.materials.size(); ++i) {
@@ -345,22 +341,32 @@ bool DAOImporter::LoadGLB(const std::string& path, DAOModelData& outData) {
         DAOModelData::Material mat;
         mat.name = CleanName(gltfMat.name.empty() ? "material_" + std::to_string(i) : gltfMat.name);
 
-        if (gltfMat.pbrMetallicRoughness.baseColorTexture.index >= 0) {
-            mat.diffuseMap = getTextureDdsName(gltfMat.pbrMetallicRoughness.baseColorTexture.index);
+        // Name textures based on material name with suffixes
+        mat.diffuseMap = mat.name + "_d.dds";
+        mat.normalMap = mat.name + "_n.dds";
+        mat.specularMap = mat.name + "_spec.dds";
+
+        // Track which image indices map to which output names for this material
+        int diffuseIdx = getTextureImageIndex(gltfMat.pbrMetallicRoughness.baseColorTexture.index);
+        int normalIdx = getTextureImageIndex(gltfMat.normalTexture.index);
+        int specIdx = getTextureImageIndex(gltfMat.pbrMetallicRoughness.metallicRoughnessTexture.index);
+        if (specIdx < 0) specIdx = getTextureImageIndex(gltfMat.occlusionTexture.index);
+
+        // Update the texture entries with the correct output names
+        if (diffuseIdx >= 0 && diffuseIdx < (int)outData.textures.size()) {
+            outData.textures[diffuseIdx].ddsName = mat.diffuseMap;
         }
-        if (gltfMat.normalTexture.index >= 0) {
-            mat.normalMap = getTextureDdsName(gltfMat.normalTexture.index);
+        if (normalIdx >= 0 && normalIdx < (int)outData.textures.size()) {
+            outData.textures[normalIdx].ddsName = mat.normalMap;
         }
-        if (gltfMat.pbrMetallicRoughness.metallicRoughnessTexture.index >= 0) {
-            mat.specularMap = getTextureDdsName(gltfMat.pbrMetallicRoughness.metallicRoughnessTexture.index);
-        }
-        if (gltfMat.occlusionTexture.index >= 0 && mat.specularMap.empty()) {
-            mat.specularMap = getTextureDdsName(gltfMat.occlusionTexture.index);
+        if (specIdx >= 0 && specIdx < (int)outData.textures.size()) {
+            outData.textures[specIdx].ddsName = mat.specularMap;
         }
 
-        if (mat.diffuseMap.empty()) mat.diffuseMap = "default_diff.dds";
-        if (mat.normalMap.empty()) mat.normalMap = "default_norm.dds";
-        if (mat.specularMap.empty()) mat.specularMap = "default_spec.dds";
+        // If no texture was assigned, use defaults
+        if (diffuseIdx < 0) mat.diffuseMap = "default_d.dds";
+        if (normalIdx < 0) mat.normalMap = "default_n.dds";
+        if (specIdx < 0) mat.specularMap = "default_spec.dds";
 
         outData.materials.push_back(mat);
     }
@@ -679,7 +685,7 @@ bool DAOImporter::ConvertAndAddToERF(const std::string& glbPath, const std::stri
     }
 
     for (const auto& tex : modelData.textures) {
-        if (tex.width > 0 && tex.height > 0 && !tex.data.empty()) {
+        if (tex.width > 0 && tex.height > 0 && !tex.data.empty() && !tex.ddsName.empty()) {
             files[tex.ddsName] = ConvertToDDS(tex.data, tex.width, tex.height, tex.channels);
         }
     }
