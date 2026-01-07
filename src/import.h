@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <functional>
 
+// Represents the raw data extracted from the GLB file
 struct DAOModelData {
     std::string name;
 
@@ -41,7 +42,7 @@ struct DAOModelData {
     std::vector<Material> materials;
 };
 
-// Callback types
+// Callback types for UI integration
 using BackupConfirmCallback = std::function<bool(const std::string& erfName, const std::string& backupDir)>;
 using ProgressCallback = std::function<void(float progress, const std::string& status)>;
 
@@ -50,35 +51,33 @@ public:
     DAOImporter();
     ~DAOImporter();
 
-    // Set callback for backup confirmation dialog
-    // Called when no backup exists - return true to create backup, false to skip
+    // Set callbacks
     void SetBackupConfirmCallback(BackupConfirmCallback callback) { m_backupCallback = callback; }
-
-    // Set callback for progress updates
-    // Called with progress (0.0-1.0) and status message
     void SetProgressCallback(ProgressCallback callback) { m_progressCallback = callback; }
 
-    // Import GLB to Dragon Age directory
+    // Mode 1: loose files in override directory
     bool ImportToDirectory(const std::string& glbPath, const std::string& targetDir);
 
-    // Convert GLB and add all assets to a single ERF
+    // Mode 2: Pack everything into a single ERF
     bool ConvertAndAddToERF(const std::string& glbPath, const std::string& erfPath);
 
-    // Check if backup exists for an ERF
+    // Utilities
     static bool BackupExists(const std::string& erfPath);
-
-    // Get backup directory path
     static std::string GetBackupDir();
 
 private:
+    // Core GLB Loader
     bool LoadGLB(const std::string& path, DAOModelData& outData);
 
-    std::vector<uint8_t> GenerateMMH(const DAOModelData& model, const std::string& mshFilename);
+    // MSH Generation Pipeline (GLB -> XML -> Binary)
+    std::string GenerateMSH_XML(const DAOModelData& model);
+    std::vector<uint8_t> ConvertXMLToMSH(const std::string& xmlContent);
     std::vector<uint8_t> GenerateMSH(const DAOModelData& model);
+
+    // Helpers
+    std::vector<uint8_t> GenerateMMH(const DAOModelData& model, const std::string& mshFilename);
     std::string GenerateMAO(const std::string& materialName, const std::string& diffuse, const std::string& normal, const std::string& specular);
-
     bool RepackERF(const std::string& erfPath, const std::map<std::string, std::vector<uint8_t>>& newFiles);
-
     void ReportProgress(float progress, const std::string& status);
 
     BackupConfirmCallback m_backupCallback;
