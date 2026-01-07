@@ -37,7 +37,7 @@ FetchContent_MakeAvailable(imguifiledialog)
 FetchContent_Declare(
         tinygltf
         GIT_REPOSITORY https://github.com/syoyo/tinygltf.git
-        GIT_TAG        v2.9.3
+        GIT_TAG v2.9.3
 )
 FetchContent_MakeAvailable(tinygltf)
 
@@ -72,10 +72,8 @@ target_link_libraries(imguifiledialog_lib PUBLIC imgui_lib)
 file(READ "${CMAKE_SOURCE_DIR}/src/model_names.csv" CSV_CONTENT HEX)
 string(LENGTH "${CSV_CONTENT}" CSV_HEX_LENGTH)
 math(EXPR CSV_LENGTH "${CSV_HEX_LENGTH} / 2")
-
 string(REGEX REPLACE "([0-9a-f][0-9a-f])" "0x\\1," CSV_ARRAY "${CSV_CONTENT}")
 string(REGEX REPLACE ",$" "" CSV_ARRAY "${CSV_ARRAY}")
-
 file(WRITE "${CMAKE_BINARY_DIR}/model_names_csv.h"
         "#pragma once
 unsigned char model_names_csv[] = {
@@ -83,6 +81,35 @@ ${CSV_ARRAY}
 };
 unsigned int model_names_csv_len = ${CSV_LENGTH};
 ")
+
+function(embed_directory DIR_NAME)
+    file(GLOB_RECURSE FILES RELATIVE "${CMAKE_SOURCE_DIR}/src/dependencies/${DIR_NAME}"
+            "${CMAKE_SOURCE_DIR}/src/dependencies/${DIR_NAME}/*")
+
+    set(HEADER "")
+    foreach(F ${FILES})
+        file(READ "${CMAKE_SOURCE_DIR}/src/dependencies/${DIR_NAME}/${F}" DATA HEX)
+        string(LENGTH "${DATA}" LEN)
+        math(EXPR LEN "${LEN} / 2")
+        string(REGEX REPLACE "([0-9a-f][0-9a-f])" "0x\\1," DATA_ARRAY "${DATA}")
+        string(REGEX REPLACE ",$" "" DATA_ARRAY "${DATA_ARRAY}")
+        string(REPLACE "/" "_" VAR "${DIR_NAME}_${F}")
+        string(REPLACE "." "_" VAR "${VAR}")
+        string(APPEND HEADER
+                "unsigned char ${VAR}[] = {${DATA_ARRAY}};
+unsigned int ${VAR}_len = ${LEN};
+")
+    endforeach()
+
+    file(WRITE "${CMAKE_BINARY_DIR}/${DIR_NAME}_embedded.h"
+            "#pragma once
+${HEADER}
+            ")
+endfunction()
+
+embed_directory(msh)
+embed_directory(mmh)
+embed_directory(ani)
 
 add_executable(HavenTools
         src/main.cpp
@@ -133,7 +160,11 @@ add_executable(HavenTools
         src/import.h
 )
 
-target_include_directories(HavenTools PRIVATE ${CMAKE_SOURCE_DIR}/src ${CMAKE_BINARY_DIR})
+target_include_directories(HavenTools PRIVATE
+        ${CMAKE_SOURCE_DIR}/src
+        ${CMAKE_BINARY_DIR}
+)
+
 target_link_libraries(HavenTools PRIVATE imgui_lib imguifiledialog_lib tinygltf)
 
 if(WIN32)
