@@ -52,6 +52,7 @@ public:
         if(type) memcpy(s.type, type, std::min((size_t)4, strlen(type)));
         s.structSize = 0;
         m_structs.push_back(s);
+        std::cout << "[GFFBuilder] Added Struct: " << std::string(s.type, 4) << " (ID: " << m_structs.size()-1 << ")" << std::endl;
         return (uint32_t)m_structs.size() - 1;
     }
 
@@ -69,10 +70,16 @@ public:
         m_structs[structIdx].fields.push_back(f);
     }
 
+    // --- FIX: UTF-16 String Handling ---
     void AddStringField(uint32_t structIdx, uint32_t label, const std::string& str) {
-        m_queuedStrings.push_back({structIdx, (uint32_t)m_structs[structIdx].fields.size(), str});
+        std::vector<uint16_t> wideStr;
+        for (char c : str) wideStr.push_back((uint16_t)(unsigned char)c);
+
+        m_queuedStrings.push_back({structIdx, (uint32_t)m_structs[structIdx].fields.size(), wideStr});
         Field f = {label, 14, 0, 0}; // Type 14 = ECString
         m_structs[structIdx].fields.push_back(f);
+        // Debug: Print string being added
+        std::cout << "[GFFBuilder] Added String Field (Label " << label << "): " << str << std::endl;
     }
 
     void AddVector3Field(uint32_t structIdx, uint32_t label, float x, float y, float z) {
@@ -94,14 +101,11 @@ public:
     }
 
     std::vector<uint8_t> Build() {
-        // 1. Calculate Struct Sizes
-        for (auto& s : m_structs) {
-            s.structSize = (uint32_t)(s.fields.size() * 12); // 12 bytes per field definition
-        }
+        std::cout << "[GFFBuilder] Building binary GFF..." << std::endl;
+        for (auto& s : m_structs) s.structSize = (uint32_t)(s.fields.size() * 12);
 
         std::vector<uint8_t> dataBlock;
 
-        // Helpers
         auto appendToData = [&](const void* d, size_t len) -> uint32_t {
             uint32_t off = (uint32_t)dataBlock.size();
             const uint8_t* p = (const uint8_t*)d;
@@ -110,27 +114,30 @@ public:
         };
         auto writeU32ToData = [&](uint32_t v) -> uint32_t { return appendToData(&v, 4); };
 
-        // 2. Process Complex Types (Strings, Binary, Vector3s)
+        // 1. Strings (UTF-16LE with Length Prefix)
         std::map<std::pair<uint32_t, uint32_t>, uint32_t> stringDataOffsets;
         for (auto& q : m_queuedStrings) {
-            uint32_t strLen = (uint32_t)q.str.length();
-            uint32_t off = appendToData(&strLen, 4);
-            // GFF strings are usually 1 byte char in MSH/MMH context, but can be UTF-16.
-            // Bioware often stores ASCII as 1 byte in these versions. Let's stick to 1 byte for now based on 'graphicsProcessor' strings.
-            dataBlock.insert(dataBlock.end(), q.str.begin(), q.str.end());
-            uint8_t nullTerm = 0; dataBlock.push_back(nullTerm);
+            uint32_t charCount = (uint32_t)q.wideStr.size();
+            uint32_t off = appendToData(&charCount, 4);
+            // Write raw bytes (Little Endian)
+            for (uint16_t c : q.wideStr) {
+                uint8_t low = c & 0xFF;
+                uint8_t high = (c >> 8) & 0xFF;
+                dataBlock.push_back(low);
+                dataBlock.push_back(high);
+            }
+            // Null terminator (2 bytes)
+            dataBlock.push_back(0); dataBlock.push_back(0);
             stringDataOffsets[{q.structIdx, q.fieldIdx}] = off;
         }
 
         std::map<std::pair<uint32_t, uint32_t>, uint32_t> stringRefOffsets;
         for (auto& q : m_queuedStrings) {
-            // Only write reference if it's a top-level field (not inside a list)
-            // Ideally we check if this field belongs to a struct that is part of a list.
-            // For simplicity in this flat-ish builder, we assume standard assignment.
             uint32_t strDataOff = stringDataOffsets[{q.structIdx, q.fieldIdx}];
             stringRefOffsets[{q.structIdx, q.fieldIdx}] = writeU32ToData(strDataOff);
         }
 
+        // 2. Binary
         std::map<std::pair<uint32_t, uint32_t>, uint32_t> binaryOffsets;
         for (auto& q : m_queuedBinary) {
             uint32_t count = (uint32_t)q.data.size();
@@ -139,63 +146,48 @@ public:
             binaryOffsets[{q.structIdx, q.fieldIdx}] = off;
         }
 
+        // 3. Vector3
         std::map<std::pair<uint32_t, uint32_t>, uint32_t> vector3Offsets;
         for (auto& q : m_queuedVector3s) {
             float floats[3] = {q.x, q.y, q.z};
             vector3Offsets[{q.structIdx, q.fieldIdx}] = appendToData(floats, 12);
         }
 
+        // 4. UInt32
         std::map<std::pair<uint32_t, uint32_t>, uint32_t> uint32Offsets;
         for (auto& q : m_queuedUInt32s) {
              uint32Offsets[{q.structIdx, q.fieldIdx}] = writeU32ToData(q.value);
         }
 
-        // 3. Process Lists (Struct Lists)
+        // 5. Lists
         std::map<std::pair<uint32_t, uint32_t>, uint32_t> structListOffsets;
-
-        // We need to handle nested lists carefully.
-        // We iterate through queued lists. If a list contains structs that contain data, we write that data to the buffer.
-
         for (auto& q : m_queuedStructLists) {
             uint32_t count = (uint32_t)q.childIndices.size();
             uint32_t listStart = writeU32ToData(count);
-
             for (uint32_t childIdx : q.childIndices) {
                 const auto& childStruct = m_structs[childIdx];
                 for (size_t fi = 0; fi < childStruct.fields.size(); fi++) {
-                    // We need to find the value for this specific field index in the queues
                     bool found = false;
-
-                    // UInt32 / Float
                     for (const auto& uq : m_queuedUInt32s) {
                         if (uq.structIdx == childIdx && uq.fieldIdx == fi) {
                             writeU32ToData(uq.value); found = true; break;
                         }
                     }
                     if(found) continue;
-
-                    // String (Reference to data offset)
                     for (const auto& sq : m_queuedStrings) {
                         if (sq.structIdx == childIdx && sq.fieldIdx == fi) {
                             writeU32ToData(stringDataOffsets[{childIdx, (uint32_t)fi}]); found = true; break;
                         }
                     }
                     if(found) continue;
-
-                    // Vector3 (Reference to data offset)
                     for (const auto& vq : m_queuedVector3s) {
                         if (vq.structIdx == childIdx && vq.fieldIdx == fi) {
                             writeU32ToData(vector3Offsets[{childIdx, (uint32_t)fi}]); found = true; break;
                         }
                     }
                     if(found) continue;
-
-                    // Nested Struct List (Reference to data offset)
                     for (const auto& slq : m_queuedStructLists) {
                         if (slq.structIdx == childIdx && slq.fieldIdx == fi) {
-                            // This relies on the loop order - nested lists must be processed before parents.
-                            // For this simple implementation, we assume we don't have deep nesting or it's handled.
-                            // If `structListOffsets` doesn't have it yet, write 0 (placeholder).
                             if(structListOffsets.count({childIdx, (uint32_t)fi}))
                                 writeU32ToData(structListOffsets[{childIdx, (uint32_t)fi}]);
                             else
@@ -203,16 +195,14 @@ public:
                             found = true; break;
                         }
                     }
-
-                    if (!found) writeU32ToData(0); // Default empty
+                    if (!found) writeU32ToData(0);
                 }
             }
             structListOffsets[{q.structIdx, q.fieldIdx}] = listStart;
         }
 
-        // 4. Finalize Field Offsets
+        // 6. Offsets
         for (size_t si = 0; si < m_structs.size(); si++) {
-            // Check if this struct is part of a list. If so, its fields are essentially templates and don't hold data directly in the field definition.
             bool isChildStruct = false;
             for (const auto& sl : m_queuedStructLists) {
                 for (uint32_t idx : sl.childIndices) { if (idx == si) { isChildStruct = true; break; } }
@@ -222,9 +212,8 @@ public:
             for (size_t fi = 0; fi < m_structs[si].fields.size(); fi++) {
                 auto& field = m_structs[si].fields[fi];
                 if (isChildStruct) {
-                    field.dataOrOffset = (uint32_t)(fi * 4); // Offset within the struct array element
+                    field.dataOrOffset = (uint32_t)(fi * 4);
                 } else {
-                    // Root fields point directly to data
                     auto key = std::make_pair((uint32_t)si, (uint32_t)fi);
                     if (stringRefOffsets.count(key)) field.dataOrOffset = stringRefOffsets[key];
                     else if (binaryOffsets.count(key)) field.dataOrOffset = binaryOffsets[key];
@@ -235,7 +224,6 @@ public:
             }
         }
 
-        // 5. Construct Final File Buffer
         std::vector<uint8_t> buffer;
         auto writeBytes = [&](const void* data, size_t len) {
             const uint8_t* p = (const uint8_t*)data;
@@ -244,30 +232,37 @@ public:
         auto writeU32 = [&](uint32_t v) { writeBytes(&v, 4); };
         auto writeU16 = [&](uint16_t v) { writeBytes(&v, 2); };
 
-        // Header
-        writeBytes("GFF ", 4);
-        writeBytes("V4.0", 4); // Version
-        writeBytes("PC  ", 4); // Platform
-        writeBytes(m_fileType, 4); // Type
-        writeBytes("V1.0", 4); // Data Version
-        writeU32((uint32_t)m_structs.size()); // Struct Count
-        size_t dataOffsetPos = buffer.size();
-        writeU32(0); // Data Offset (Placeholder)
+        // --- FIX: Explicit Character Writing to prevent Byte Swapping ---
+        // Reference Header: GFF V4.0PC  MESHV0.1
+        const char* magic = "GFF ";
+        writeBytes(magic, 4);
 
-        // Struct Definitions
+        const char* version = "V4.0";
+        writeBytes(version, 4);
+
+        const char* platform = "PC  ";
+        writeBytes(platform, 4);
+
+        writeBytes(m_fileType, 4); // "MESH" or "MMH "
+
+        const char* dataVer = "V0.1"; // MATCH REFERENCE V0.1 (Was V1.0)
+        writeBytes(dataVer, 4);
+
+        writeU32((uint32_t)m_structs.size());
+        size_t dataOffsetPos = buffer.size();
+        writeU32(0);
+
         std::vector<size_t> fieldOffsetPositions;
         for (const auto& s : m_structs) {
             writeBytes(s.type, 4);
             writeU32((uint32_t)s.fields.size());
             fieldOffsetPositions.push_back(buffer.size());
-            writeU32(0); // Field Offset (Placeholder)
+            writeU32(0);
             writeU32(s.structSize);
         }
 
-        // Field Definitions
         for (size_t i = 0; i < m_structs.size(); i++) {
             uint32_t currentPos = (uint32_t)buffer.size();
-            // Patch Field Offset in Struct Def
             memcpy(&buffer[fieldOffsetPositions[i]], &currentPos, 4);
 
             for (const auto& f : m_structs[i].fields) {
@@ -278,19 +273,18 @@ public:
             }
         }
 
-        // Data Block
         uint32_t currentPos = (uint32_t)buffer.size();
-        // Patch Data Offset in Header
         memcpy(&buffer[dataOffsetPos], &currentPos, 4);
-
         buffer.insert(buffer.end(), dataBlock.begin(), dataBlock.end());
 
+        std::cout << "[GFFBuilder] Final buffer size: " << buffer.size() << " bytes." << std::endl;
         return buffer;
     }
 
+
 private:
     char m_fileType[4];
-    struct QueuedString { uint32_t structIdx; uint32_t fieldIdx; std::string str; };
+    struct QueuedString { uint32_t structIdx; uint32_t fieldIdx; std::vector<uint16_t> wideStr; };
     struct QueuedStructList { uint32_t structIdx; uint32_t fieldIdx; uint32_t childType; std::vector<uint32_t> childIndices; };
     struct QueuedBinary { uint32_t structIdx; uint32_t fieldIdx; std::vector<uint8_t> data; };
     struct QueuedUInt32 { uint32_t structIdx; uint32_t fieldIdx; uint32_t value; };
@@ -314,6 +308,31 @@ struct SimpleXMLNode {
     std::vector<SimpleXMLNode> children;
 };
 
+static bool WriteAllText(const std::filesystem::path& path, const std::string& text) {
+    std::ofstream out(path, std::ios::binary | std::ios::trunc);
+    if (!out) return false;
+    out.write(text.data(), (std::streamsize)text.size());
+    return true;
+}
+
+static void DumpMSHXmlNextToGLB(const std::string& glbPath,
+                                const std::string& baseName,
+                                const std::string& xml)
+{
+    namespace fs = std::filesystem;
+
+    fs::path glbDir = fs::path(glbPath).parent_path();
+    fs::path outXml = glbDir / (baseName + ".msh.xml");
+
+    if (!WriteAllText(outXml, xml)) {
+        std::cerr << "[XML] Failed to write: " << outXml.string()
+                  << " (errno=" << errno << ")\n";
+    } else {
+        std::cout << "[XML] Wrote: " << outXml.string() << "\n";
+    }
+}
+
+
 class SimpleXMLParser {
 public:
     static SimpleXMLNode Parse(const std::string& xml) {
@@ -335,14 +354,19 @@ private:
             if (pos >= xml.length() || xml[pos] != '<') return;
 
             if (pos + 1 < xml.length() && xml[pos+1] == '/') {
-                // End tag, return
                 while (pos < xml.length() && xml[pos] != '>') pos++;
                 pos++;
                 return;
             }
 
-            // Start tag
-            pos++; // skip <
+            pos++;
+            // Ignore processing instructions <? ... ?>
+            if (pos < xml.length() && (xml[pos] == '?' || xml[pos] == '!')) {
+                while (pos < xml.length() && xml[pos] != '>') pos++;
+                pos++;
+                continue;
+            }
+
             size_t endName = pos;
             while (endName < xml.length() && !isspace((unsigned char)xml[endName]) && xml[endName] != '>' && xml[endName] != '/') endName++;
 
@@ -350,48 +374,37 @@ private:
             node.name = xml.substr(pos, endName - pos);
             pos = endName;
 
-            // Attributes
             while (pos < xml.length() && xml[pos] != '>' && xml[pos] != '/') {
                 SkipWhitespace(xml, pos);
                 if (xml[pos] == '>' || xml[pos] == '/') break;
-
                 size_t attrStart = pos;
                 while (pos < xml.length() && xml[pos] != '=') pos++;
                 std::string attrName = xml.substr(attrStart, pos - attrStart);
-
-                pos++; // skip =
-                SkipWhitespace(xml, pos);
-                char quote = xml[pos];
                 pos++;
+                SkipWhitespace(xml, pos);
+                char quote = xml[pos]; pos++;
                 size_t valStart = pos;
                 while (pos < xml.length() && xml[pos] != quote) pos++;
                 std::string attrVal = xml.substr(valStart, pos - valStart);
-                pos++; // skip quote
-
+                pos++;
                 node.attributes[attrName] = attrVal;
             }
 
             if (xml[pos] == '/') {
-                // Self closing
                 while (pos < xml.length() && xml[pos] != '>') pos++;
                 pos++;
                 parent.children.push_back(node);
                 continue;
             }
 
-            pos++; // skip >
-
-            // Content or Children
+            pos++;
             size_t nextTag = xml.find('<', pos);
             if (nextTag != std::string::npos && xml[nextTag+1] == '/') {
-                // Just content
                 node.content = xml.substr(pos, nextTag - pos);
                 pos = nextTag;
-                // Consume end tag
                 while (pos < xml.length() && xml[pos] != '>') pos++;
                 pos++;
             } else {
-                // Has children
                 ParseNode(xml, pos, node);
             }
             parent.children.push_back(node);
@@ -406,73 +419,25 @@ private:
 DAOImporter::DAOImporter() : m_backupCallback(nullptr), m_progressCallback(nullptr) {}
 DAOImporter::~DAOImporter() {}
 
-bool DAOImporter::BackupExists(const std::string& erfPath) {
-    fs::path backupDir = fs::current_path() / "backups";
-    std::string erfName = fs::path(erfPath).filename().string();
-    return fs::exists(backupDir / (erfName + ".bak"));
-}
-
-std::string DAOImporter::GetBackupDir() {
-    return (fs::current_path() / "backups").string();
-}
-
-static std::string ToLower(std::string s) {
-    std::transform(s.begin(), s.end(), s.begin(), ::tolower);
-    return s;
-}
-
-static std::string CleanName(const std::string& input) {
-    std::string result = input;
-    size_t lastSlash = result.find_last_of("/\\");
-    if (lastSlash != std::string::npos) result = result.substr(lastSlash + 1);
-    size_t lastDot = result.find_last_of('.');
-    if (lastDot != std::string::npos) result = result.substr(0, lastDot);
-    return ToLower(result);
-}
-
+// Helpers
+bool DAOImporter::BackupExists(const std::string& erfPath) { return fs::exists(fs::path(erfPath).parent_path() / "backups" / (fs::path(erfPath).filename().string() + ".bak")); }
+std::string DAOImporter::GetBackupDir() { return (fs::current_path() / "backups").string(); }
+static std::string ToLower(std::string s) { std::transform(s.begin(), s.end(), s.begin(), ::tolower); return s; }
+static std::string CleanName(const std::string& input) { return ToLower(fs::path(input).stem().string()); }
 static std::string FindErfPath(const fs::path& root, const std::string& filename) {
-    if (fs::exists(root / filename)) return (root / filename).string();
-    try {
-        for (const auto& entry : fs::recursive_directory_iterator(root)) {
-            if (entry.is_regular_file() && ToLower(entry.path().filename().string()) == ToLower(filename)) {
-                return entry.path().string();
-            }
-        }
-    } catch (...) {}
+    if(fs::exists(root/filename)) return (root/filename).string();
     return "";
 }
-
 static std::vector<uint8_t> ConvertToDDS(const std::vector<uint8_t>& imageData, int width, int height, int channels) {
+    // Basic uncompressed DDS output
     std::vector<uint8_t> dds;
-
-    auto writeU32 = [&](uint32_t v) {
-        dds.push_back(v & 0xFF);
-        dds.push_back((v >> 8) & 0xFF);
-        dds.push_back((v >> 16) & 0xFF);
-        dds.push_back((v >> 24) & 0xFF);
-    };
-
-    // Minimal DDS Header
+    auto writeU32 = [&](uint32_t v) { dds.push_back(v & 0xFF); dds.push_back((v >> 8) & 0xFF); dds.push_back((v >> 16) & 0xFF); dds.push_back((v >> 24) & 0xFF); };
     dds.push_back('D'); dds.push_back('D'); dds.push_back('S'); dds.push_back(' ');
-    writeU32(124); // Size
-    writeU32(0x1 | 0x2 | 0x4 | 0x1000); // Flags (Caps, Height, Width, PixelFormat)
-    writeU32(height);
-    writeU32(width);
-    writeU32(width * 4); // Pitch
-    writeU32(0); // Depth
-    writeU32(1); // MipMaps
-    for (int i = 0; i < 11; ++i) writeU32(0); // Reserved
-    writeU32(32); // PF Size
-    writeU32(0x41); // PF Flags (RGB | Alpha)
-    writeU32(0); // FourCC
-    writeU32(32); // BitCount
-    writeU32(0x00FF0000); // R Mask
-    writeU32(0x0000FF00); // G Mask
-    writeU32(0x000000FF); // B Mask
-    writeU32(0xFF000000); // A Mask
-    writeU32(0x1000); // Caps1 (Texture)
-    for (int i = 0; i < 4; ++i) writeU32(0); // Caps2, etc
-
+    writeU32(124); writeU32(0x1 | 0x2 | 0x4 | 0x1000); writeU32(height); writeU32(width); writeU32(width * 4); writeU32(0); writeU32(1);
+    for (int i = 0; i < 11; ++i) writeU32(0);
+    writeU32(32); writeU32(0x41); writeU32(0); writeU32(32);
+    writeU32(0x00FF0000); writeU32(0x0000FF00); writeU32(0x000000FF); writeU32(0xFF000000);
+    writeU32(0x1000); for (int i = 0; i < 4; ++i) writeU32(0);
     for (int y = 0; y < height; ++y) {
         for (int x = 0; x < width; ++x) {
             int srcIdx = (y * width + x) * channels;
@@ -480,52 +445,32 @@ static std::vector<uint8_t> ConvertToDDS(const std::vector<uint8_t>& imageData, 
             uint8_t g = (channels > 1) ? imageData[srcIdx + 1] : r;
             uint8_t b = (channels > 2) ? imageData[srcIdx + 2] : r;
             uint8_t a = (channels > 3) ? imageData[srcIdx + 3] : 255;
-            // Write BGRA
-            dds.push_back(b);
-            dds.push_back(g);
-            dds.push_back(r);
-            dds.push_back(a);
+            dds.push_back(b); dds.push_back(g); dds.push_back(r); dds.push_back(a);
         }
     }
-
     return dds;
 }
-
-void DAOImporter::ReportProgress(float progress, const std::string& status) {
-    if (m_progressCallback) {
-        m_progressCallback(progress, status);
-    }
-}
+void DAOImporter::ReportProgress(float progress, const std::string& status) { if(m_progressCallback) m_progressCallback(progress, status); }
 
 // ----------------------------------------------------------------------------
-// XML Generation (Implementation of the Reverse-Engineered Schema)
+// XML Generation
 // ----------------------------------------------------------------------------
 std::string DAOImporter::GenerateMSH_XML(const DAOModelData& model) {
     std::stringstream ss;
     ss << std::fixed << std::setprecision(6);
-
-    ss << "<?xml version=\"1.0\" ?>\n";
-    ss << "<Mesh Name=\"" << model.name << "\">\n";
+    ss << "<?xml version=\"1.0\" ?>\n<Mesh Name=\"" << model.name << "\">\n";
     ss << "    <Version>V4.0</Version>\n";
 
     std::vector<float> vBuf;
     std::vector<int> iBuf;
-
-    // Bounds Calculation
     float minX = 99999.0f, minY = 99999.0f, minZ = 99999.0f;
     float maxX = -99999.0f, maxY = -99999.0f, maxZ = -99999.0f;
 
-    struct GroupInfo {
-        std::string name;
-        std::string material;
-        size_t startIndex;
-        size_t indexCount;
-    };
+    struct GroupInfo { std::string name; std::string material; size_t startIndex; size_t indexCount; };
     std::vector<GroupInfo> groups;
     size_t currentVertexOffset = 0;
 
     for (const auto& part : model.parts) {
-        // Enforce naming convention (uhm_ = LOD0, must be lower case)
         std::string groupName = ToLower(part.materialName);
         if (groupName.find("uhm_") != 0) groupName = "uhm_" + groupName;
 
@@ -553,67 +498,33 @@ std::string DAOImporter::GenerateMSH_XML(const DAOModelData& model) {
         currentVertexOffset += part.vertices.size();
     }
 
-    // 2. Write VertexData
     ss << "    <VertexData Count=\"" << (vBuf.size()/8) << "\">";
-    for(size_t i=0; i<vBuf.size(); ++i) {
-        if(i > 0) ss << " ";
-        ss << vBuf[i];
-    }
+    for(size_t i=0; i<vBuf.size(); ++i) { if(i>0)ss<<" "; ss<<vBuf[i]; }
     ss << "</VertexData>\n";
-
-    // 3. Write IndexData
     ss << "    <IndexData Count=\"" << iBuf.size() << "\">";
-    for(size_t i=0; i<iBuf.size(); ++i) {
-        if(i > 0) ss << " ";
-        ss << iBuf[i];
-    }
+    for(size_t i=0; i<iBuf.size(); ++i) { if(i>0)ss<<" "; ss<<iBuf[i]; }
     ss << "</IndexData>\n";
+    ss << "    <IndexFormat>INDEX16</IndexFormat>\n    <MeshGroups>\n";
+    for(const auto& g : groups) ss << "        <MeshGroup Name=\"" << g.name << "\" Material=\"" << g.material << "\">\n            <Faces Start=\"" << g.startIndex << "\" Count=\"" << g.indexCount << "\" />\n        </MeshGroup>\n";
+    ss << "    </MeshGroups>\n    <VertexDecls>\n        <Decl Type=\"0\" Usage=\"0\" Method=\"0\" />\n        <Decl Type=\"2\" Usage=\"3\" Method=\"0\" />\n        <Decl Type=\"1\" Usage=\"5\" Method=\"0\" />\n    </VertexDecls>\n";
 
-    ss << "    <IndexFormat>INDEX16</IndexFormat>\n";
-
-    // 4. MeshGroups
-    ss << "    <MeshGroups>\n";
-    for(const auto& g : groups) {
-        ss << "        <MeshGroup Name=\"" << g.name << "\" Material=\"" << g.material << "\">\n";
-        ss << "            <Faces Start=\"" << g.startIndex << "\" Count=\"" << g.indexCount << "\" />\n";
-        ss << "        </MeshGroup>\n";
-    }
-    ss << "    </MeshGroups>\n";
-
-    // 5. VertexDecls
-    ss << "    <VertexDecls>\n";
-    ss << "        <Decl Type=\"0\" Usage=\"0\" Method=\"0\" />\n"; // Position
-    ss << "        <Decl Type=\"2\" Usage=\"3\" Method=\"0\" />\n"; // Normal
-    ss << "        <Decl Type=\"1\" Usage=\"5\" Method=\"0\" />\n"; // TexCoord0
-    ss << "    </VertexDecls>\n";
-
-    // 6. Bounds
     float centerX = (minX + maxX) * 0.5f;
     float centerY = (minY + maxY) * 0.5f;
     float centerZ = (minZ + maxZ) * 0.5f;
     float radius = std::sqrt(std::pow(maxX - minX, 2) + std::pow(maxY - minY, 2) + std::pow(maxZ - minZ, 2)) * 0.5f;
 
-    ss << "    <Bounds>\n";
-    ss << "        <Min x=\"" << minX << "\" y=\"" << minY << "\" z=\"" << minZ << "\" />\n";
-    ss << "        <Max x=\"" << maxX << "\" y=\"" << maxY << "\" z=\"" << maxZ << "\" />\n";
-    ss << "        <Center x=\"" << centerX << "\" y=\"" << centerY << "\" z=\"" << centerZ << "\" />\n";
-    ss << "        <Radius>" << radius << "</Radius>\n";
-    ss << "    </Bounds>\n";
-
-    ss << "</Mesh>";
+    ss << "    <Bounds>\n        <Min x=\"" << minX << "\" y=\"" << minY << "\" z=\"" << minZ << "\" />\n        <Max x=\"" << maxX << "\" y=\"" << maxY << "\" z=\"" << maxZ << "\" />\n        <Center x=\"" << centerX << "\" y=\"" << centerY << "\" z=\"" << centerZ << "\" />\n        <Radius>" << radius << "</Radius>\n    </Bounds>\n</Mesh>";
     return ss.str();
 }
 
 // ----------------------------------------------------------------------------
-// XML to Binary MSH Converter
-// Replicates the logic of GraphicsProcessor.exe's ProcessorMesh
+// XML to Binary MSH Converter (FIXED)
 // ----------------------------------------------------------------------------
 std::vector<uint8_t> DAOImporter::ConvertXMLToMSH(const std::string& xmlContent) {
-    std::cout << "[Converter] Parsing XML to generate binary MSH..." << std::endl;
-
+    std::cout << "[Converter] Parsing generated XML..." << std::endl;
     SimpleXMLNode root = SimpleXMLParser::Parse(xmlContent);
     if (root.name != "Mesh") {
-        std::cerr << "Invalid XML: Root is not <Mesh>" << std::endl;
+        std::cerr << "Invalid XML: Root is <" << root.name << ">, expected <Mesh>" << std::endl;
         return {};
     }
 
@@ -622,90 +533,67 @@ std::vector<uint8_t> DAOImporter::ConvertXMLToMSH(const std::string& xmlContent)
     float min[3] = {0}, max[3] = {0}, center[3] = {0};
     float radius = 0.0f;
 
-    // Parse Data from XML Strings
     for (const auto& node : root.children) {
         if (node.name == "VertexData") {
             std::stringstream ss(node.content);
-            float f;
-            while(ss >> f) vertices.push_back(f);
-        }
-        else if (node.name == "IndexData") {
+            float f; while(ss >> f) vertices.push_back(f);
+        } else if (node.name == "IndexData") {
             std::stringstream ss(node.content);
-            int i;
-            while(ss >> i) indices.push_back((uint16_t)i);
-        }
-        else if (node.name == "Bounds") {
-            for(const auto& bNode : node.children) {
-                if (bNode.name == "Min") {
-                    min[0] = std::stof(bNode.attributes.at("x"));
-                    min[1] = std::stof(bNode.attributes.at("y"));
-                    min[2] = std::stof(bNode.attributes.at("z"));
-                }
-                if (bNode.name == "Max") {
-                    max[0] = std::stof(bNode.attributes.at("x"));
-                    max[1] = std::stof(bNode.attributes.at("y"));
-                    max[2] = std::stof(bNode.attributes.at("z"));
-                }
-                if (bNode.name == "Center") {
-                    center[0] = std::stof(bNode.attributes.at("x"));
-                    center[1] = std::stof(bNode.attributes.at("y"));
-                    center[2] = std::stof(bNode.attributes.at("z"));
-                }
-                if (bNode.name == "Radius") {
-                    radius = std::stof(bNode.content);
-                }
+            int i; while(ss >> i) indices.push_back((uint16_t)i);
+        } else if (node.name == "Bounds") {
+            for(const auto& b : node.children) {
+                if (b.name == "Min") { min[0]=std::stof(b.attributes.at("x")); min[1]=std::stof(b.attributes.at("y")); min[2]=std::stof(b.attributes.at("z")); }
+                if (b.name == "Max") { max[0]=std::stof(b.attributes.at("x")); max[1]=std::stof(b.attributes.at("y")); max[2]=std::stof(b.attributes.at("z")); }
+                if (b.name == "Center") { center[0]=std::stof(b.attributes.at("x")); center[1]=std::stof(b.attributes.at("y")); center[2]=std::stof(b.attributes.at("z")); }
+                if (b.name == "Radius") radius = std::stof(b.content);
             }
         }
     }
 
-    // Binary Construction using GFFBuilder
-    GFFBuilder gff("MSH ");
+    // --- FIX: Use "MESH" filetype (all caps, but mapped to lowercase structs later) ---
+    GFFBuilder gff("MESH"); // Matches "MSH " or "MESH" from reference
 
     std::vector<uint8_t> rawV(vertices.size() * 4);
     memcpy(rawV.data(), vertices.data(), rawV.size());
-
     std::vector<uint8_t> rawI(indices.size() * 2);
     memcpy(rawI.data(), indices.data(), rawI.size());
 
-    uint32_t rootStruct = gff.AddStruct("MESH");
-    uint32_t chunk = gff.AddStruct("msgr");
-
+    // --- FIX: Use lowercase struct names like reference 'c_admpart_0.msh' ---
+    uint32_t rootS = gff.AddStruct("mesh");
+    uint32_t chunk = gff.AddStruct("chnk");
     uint32_t d1 = gff.AddStruct("decl");
     uint32_t d2 = gff.AddStruct("decl");
     uint32_t d3 = gff.AddStruct("decl");
 
-    // Root Props
+    // --- FIX: Use UTF-16 String ---
     gff.AddStringField(chunk, 2, root.attributes.count("Name") ? root.attributes.at("Name") : "mesh");
-    gff.AddUInt32Field(chunk, 8000, 32);     // VertexSize
+
+    gff.AddUInt32Field(chunk, 8000, 32);
     gff.AddUInt32Field(chunk, 8001, (uint32_t)(vertices.size() / 8));
     gff.AddUInt32Field(chunk, 8002, (uint32_t)indices.size());
-    gff.AddUInt32Field(chunk, 8003, 4);      // PrimitiveType
-    gff.AddUInt32Field(chunk, 8004, 0);      // IndexFormat
-    gff.AddUInt32Field(chunk, 8008, (uint32_t)(vertices.size() / 8)); // ReferencedVerts
+    gff.AddUInt32Field(chunk, 8003, 4);
+    gff.AddUInt32Field(chunk, 8004, 0);
+    gff.AddUInt32Field(chunk, 8008, (uint32_t)(vertices.size() / 8));
 
-    // Add Bounds
     gff.AddVector3Field(chunk, 8014, min[0], min[1], min[2]);
     gff.AddVector3Field(chunk, 8015, max[0], max[1], max[2]);
     gff.AddVector3Field(chunk, 8016, center[0], center[1], center[2]);
     gff.AddFloatField(chunk, 8017, radius);
 
-    // Setup Declarators (Position, Normal, TexCoord)
     gff.AddUInt32Field(d1, 8027, 0);  gff.AddUInt32Field(d1, 8028, 2); gff.AddUInt32Field(d1, 8029, 0);
     gff.AddUInt32Field(d2, 8027, 12); gff.AddUInt32Field(d2, 8028, 2); gff.AddUInt32Field(d2, 8029, 3);
     gff.AddUInt32Field(d3, 8027, 24); gff.AddUInt32Field(d3, 8028, 1); gff.AddUInt32Field(d3, 8029, 5);
 
     gff.AddStructListField(chunk, 8025, 2, {d1, d2, d3});
-    gff.AddStructListField(rootStruct, 8021, 1, {chunk});
+    gff.AddStructListField(rootS, 8021, 1, {chunk});
 
-    // Add Raw Buffers
-    gff.AddBinaryField(rootStruct, 8022, rawV);
-    gff.AddBinaryField(rootStruct, 8023, rawI);
+    gff.AddBinaryField(rootS, 8022, rawV);
+    gff.AddBinaryField(rootS, 8023, rawI);
 
     return gff.Build();
 }
 
 std::vector<uint8_t> DAOImporter::GenerateMSH(const DAOModelData& model) {
-    // Pipeline: Model -> XML String -> Binary
     std::string xml = GenerateMSH_XML(model);
     return ConvertXMLToMSH(xml);
 }
@@ -910,9 +798,6 @@ bool DAOImporter::RepackERF(const std::string& erfPath, const std::map<std::stri
     return true;
 }
 
-// ----------------------------------------------------------------------------
-// High Level Export Functions
-// ----------------------------------------------------------------------------
 bool DAOImporter::ConvertAndAddToERF(const std::string& glbPath, const std::string& erfPath) {
     DAOModelData modelData;
     if (!LoadGLB(glbPath, modelData)) return false;
@@ -944,12 +829,19 @@ bool DAOImporter::ImportToDirectory(const std::string& glbPath, const std::strin
     if (!LoadGLB(glbPath, modelData)) return false;
 
     std::string baseName = modelData.name;
+
+    // dump the generated XML next to the GLB
+    {
+        std::string xml = GenerateMSH_XML(modelData);
+        DumpMSHXmlNextToGLB(glbPath, baseName, xml);
+    }
+
+    // KEEP ONLY ONE OF THESE (delete the duplicate)
     auto saveFile = [&](const std::string& name, const std::vector<uint8_t>& data) {
-        std::ofstream out(fs::path(targetDir) / name, std::ios::binary);
-        if(out) out.write(reinterpret_cast<const char*>(data.data()), data.size());
+        std::ofstream out(std::filesystem::path(targetDir) / name, std::ios::binary);
+        if (out) out.write(reinterpret_cast<const char*>(data.data()), data.size());
     };
 
-    // Use the new XML-based pipeline
     saveFile(baseName + ".msh", GenerateMSH(modelData));
     saveFile(baseName + ".mmh", GenerateMMH(modelData, baseName + ".msh"));
     saveFile(baseName + ".phy", GeneratePHYHelper(modelData, baseName + ".msh"));
@@ -965,6 +857,7 @@ bool DAOImporter::ImportToDirectory(const std::string& glbPath, const std::strin
             saveFile(tex.ddsName, ConvertToDDS(tex.data, tex.width, tex.height, tex.channels));
         }
     }
+
     return true;
 }
 

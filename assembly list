@@ -1,0 +1,73 @@
+The Main Initialization Function
+
+    sub_5868F0 (Local Initialization/Helper):
+
+        This function sets up a stack frame, initializes a block of memory to zero, and copies data using rep movsd. It appears to be a utility function used to initialize a local structure or array, likely unrelated to the global string registration that follows it.
+
+The Constructors
+
+    sub_4AE830 (String Constructor):
+
+        This function is called repeatedly. In every instance, a string literal (e.g., "VertexData", ".gff") is pushed to the stack, and a global memory address is moved into the ECX register (the this pointer). This function constructs a string object from the literal.
+
+    sub_4A7820 (Object Constructor):
+
+        Called near the end (00586C77), taking 0 as an argument. This constructs a different type of global object (not a string) located at unk_5FF9F4.
+
+The Destructors (Registered via _atexit)
+
+These functions are pushed as arguments to _atexit. This tells the program: "When the application closes, call this function to clean up memory."
+
+    sub_58F270: Destructor for the object containing ".gff".
+
+    sub_58F280: Destructor for the object containing "VertexData".
+
+    sub_58F290: Destructor for the object containing "IndexData".
+
+    sub_58F2A0: Destructor for the object containing "IndexFormat".
+
+    sub_58F2B0: Destructor for the object initialized with off_598344.
+
+    sub_58F2C0: Destructor for the object containing "Version".
+
+    sub_58F2D0: Destructor for the object initialized with off_59A7C4.
+
+    sub_58F2E0: Destructor for the object containing "MeshGroups".
+
+    sub_58F2F0: Destructor for the object containing "MeshGroup".
+
+    sub_58F300: Destructor for the object containing "AddlStreams".
+
+    sub_58F310: Destructor for the object containing "AddlVertexSizes".
+
+    sub_58F320: Destructor for the object containing "AddlElemCounts".
+
+    sub_58F330: Destructor for the object containing "AddlFreqs".
+
+    sub_58F340: Destructor for the object containing "AddlLoops".
+
+    sub_58F350: Destructor for the object containing "AddlInstanced".
+
+    sub_58F360: Destructor for the object containing "VertexDecls".
+
+    sub_58F370: Destructor for the object containing "uhm_".
+
+    sub_58F380: Destructor for the object containing "uem_".
+
+    sub_58F390: Destructor for the object containing "ulm_".
+
+    sub_58F3A0: Destructor for the object containing "_uhm_bas".
+
+    sub_58F3B0: Destructor for the object containing "_uem_bas".
+
+    sub_58F3C0: Destructor for the object containing "_ulm_bas".
+
+    sub_58F3D0: Destructor for the object containing "har".
+
+    sub_58F3E0: Destructor for the object containing "uh_".
+
+    sub_58F3F0: Destructor for the object containing "ul_".
+
+    sub_58F400: Destructor for the object containing "ue_".
+
+    sub_58F410: Destructor for the unknown global object at unk_5FF9F4.
