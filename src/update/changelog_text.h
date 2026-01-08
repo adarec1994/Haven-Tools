@@ -162,9 +162,6 @@ Use: Browse to your DAO installation and select the .exe.
 
 -- Added autoupdater by checking version on github.
 
-)";
-
-static const char* s_changelogLatest = R"(
 [Release 1.9]
 
 - Update to test auto updating.
@@ -174,4 +171,25 @@ static const char* s_changelogLatest = R"(
 -- Creates a .bak for old version after updating.
 
 - Added Changelog and About
+
+[Release 1.10]
+
+- Updated UI
+- Added Import option to File -> import
+
+- Added importing
+-- Importing is a WIP and buggy. It is not guaranteed to work. I have tried to automate fixing some of the necessary structure, such as GOB.
+-- HavenTools embeds a variety of .dll's and .exe's to support this.
+
+-- Please ensure that you report any issues to the issue tracker on GitHub, or in a comment on NexusMods.
+
+
+)";
+
+static const char* s_changelogLatest = R"(
+[Release 1.11]
+
+- Added progress bar to import/ exporting.
+- Added export options.
+
 )";

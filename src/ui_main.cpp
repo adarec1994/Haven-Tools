@@ -1,12 +1,12 @@
 #include "ui_internal.h"
 #include "update/update.h"
 #include <thread>
-#include <import.h>
+#include "import.h"
 
 #include "update/about_text.h"
 #include "update/changelog_text.h"
 
-static const char* CURRENT_APP_VERSION = "1.9";
+static const char* CURRENT_APP_VERSION = "1.11";
 
 bool showSplash = true;
 
@@ -19,6 +19,13 @@ static bool t_isLoadingContent = false;
 static bool s_showAbout = false;
 static bool s_showChangelog = false;
 static bool s_scrollToBottom = false;
+
+static std::string s_pendingImportGlbPath;
+static std::string s_pendingExportPath;
+
+static bool s_showExportOptions = false;
+static std::map<std::string, bool> s_animSelection;
+static bool s_selectAllAnims = true;
 
 void runLoadingTask(AppState* statePtr) {
     AppState& state = *statePtr;
@@ -158,6 +165,109 @@ void runCharDesignerLoading(AppState* statePtr) {
 
     statePtr->preloadProgress = 1.0f;
     t_isLoadingContent = false;
+}
+
+void runImportTask(AppState* statePtr) {
+    AppState& state = *statePtr;
+
+    state.preloadStatus = "Initializing import...";
+    state.preloadProgress = 0.0f;
+
+    DAOImporter importer;
+    importer.SetProgressCallback([&](float progress, const std::string& status) {
+        state.preloadProgress = progress;
+        state.preloadStatus = status;
+    });
+
+    bool success = importer.ImportToDirectory(s_pendingImportGlbPath, state.selectedFolder);
+
+    if (success) {
+        state.preloadStatus = "Reloading game data...";
+        runLoadingTask(statePtr);
+    } else {
+        state.preloadStatus = "Import Failed!";
+        std::this_thread::sleep_for(std::chrono::seconds(2));
+
+        t_isLoadingContent = false;
+        t_active = false;
+        t_phase = 0;
+        t_alpha = 0.0f;
+    }
+}
+
+void runExportTask(AppState* statePtr) {
+    AppState& state = *statePtr;
+    state.preloadStatus = "Initializing export...";
+    state.preloadProgress = 0.0f;
+
+    std::vector<Animation> exportAnims;
+
+    size_t totalSelected = 0;
+    for (const auto& pair : s_animSelection) {
+        if (pair.second) totalSelected++;
+    }
+    size_t processed = 0;
+
+    for (const auto& animFile : state.availableAnimFiles) {
+        if (!s_animSelection[animFile.first]) continue;
+
+        ERFFile animErf;
+        if (animErf.open(animFile.second)) {
+            for (const auto& animEntry : animErf.entries()) {
+                if (animEntry.name == animFile.first) {
+                    auto aniData = animErf.readEntry(animEntry);
+                    if (!aniData.empty()) {
+                        Animation anim = loadANI(aniData, animEntry.name);
+
+                        auto normalize = [](const std::string& s) {
+                            std::string result;
+                            for (char c : s) {
+                                if (c != '_') result += std::tolower(c);
+                            }
+                            return result;
+                        };
+                        for (auto& track : anim.tracks) {
+                            track.boneIndex = state.currentModel.skeleton.findBone(track.boneName);
+                            if (track.boneIndex < 0) {
+                                std::string trackNorm = normalize(track.boneName);
+                                for (size_t bi = 0; bi < state.currentModel.skeleton.bones.size(); bi++) {
+                                    if (trackNorm == normalize(state.currentModel.skeleton.bones[bi].name)) {
+                                        track.boneIndex = (int)bi;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                        exportAnims.push_back(anim);
+                    }
+                    break;
+                }
+            }
+        }
+
+        processed++;
+        if (totalSelected > 0) {
+            state.preloadProgress = (float)processed / (float)totalSelected * 0.9f;
+        }
+        state.preloadStatus = "Processing: " + animFile.first;
+    }
+
+    state.preloadStatus = "Writing GLB file...";
+    state.preloadProgress = 0.95f;
+
+    if (exportToGLB(state.currentModel, exportAnims, s_pendingExportPath)) {
+        state.statusMessage = "Exported: " + s_pendingExportPath + " (" + std::to_string(exportAnims.size()) + " anims)";
+    } else {
+        state.statusMessage = "Export failed!";
+    }
+
+    state.preloadProgress = 1.0f;
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+
+    t_isLoadingContent = false;
+    t_active = false;
+    t_phase = 0;
+    t_alpha = 0.0f;
 }
 
 void handleInput(AppState& state, GLFWwindow* window, ImGuiIO& io) {
@@ -317,7 +427,6 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
     static bool s_startedUpdateCheck = false;
     static bool s_openUpdatePopup = false;
     static bool s_dismissedUpdatePopup = false;
-    static std::string s_importGlbPath; // Added for Import functionality
 
     if (showSplash) {
         drawSplashScreen(state, displayW, displayH);
@@ -414,61 +523,75 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
         ImGuiFileDialog::Instance()->Close();
     }
 
+    if (ImGuiFileDialog::Instance()->Display("ImportGLB", ImGuiWindowFlags_NoCollapse, ImVec2(600, 400))) {
+        if (ImGuiFileDialog::Instance()->IsOk()) {
+            s_pendingImportGlbPath = ImGuiFileDialog::Instance()->GetFilePathName();
+            t_active = true;
+            t_targetTab = state.mainTab;
+            t_phase = 1;
+            t_alpha = 0.0f;
+            t_isLoadingContent = true;
+            std::thread(runImportTask, &state).detach();
+        }
+        ImGuiFileDialog::Instance()->Close();
+    }
+
     if (ImGuiFileDialog::Instance()->Display("ExportCurrentGLB", ImGuiWindowFlags_NoCollapse, ImVec2(600, 400))) {
         if (ImGuiFileDialog::Instance()->IsOk() && state.hasModel) {
-            std::string exportPath = ImGuiFileDialog::Instance()->GetFilePathName();
-            std::vector<Animation> exportAnims;
+            s_pendingExportPath = ImGuiFileDialog::Instance()->GetFilePathName();
+            s_animSelection.clear();
             for (const auto& animFile : state.availableAnimFiles) {
                 std::string animName = animFile.first;
                 size_t dotPos = animName.rfind('.');
                 if (dotPos != std::string::npos) animName = animName.substr(0, dotPos);
-                bool found = state.currentModelAnimations.empty();
-                if (!found) {
-                    for (const auto& validAnim : state.currentModelAnimations) {
-                        if (animName == validAnim) { found = true; break; }
+                bool valid = state.currentModelAnimations.empty();
+                if (!valid) {
+                    for (const auto& va : state.currentModelAnimations) {
+                        if (animName == va) { valid = true; break; }
                     }
                 }
-                if (!found) continue;
-                ERFFile animErf;
-                if (animErf.open(animFile.second)) {
-                    for (const auto& animEntry : animErf.entries()) {
-                        if (animEntry.name == animFile.first) {
-                            auto aniData = animErf.readEntry(animEntry);
-                            if (!aniData.empty()) {
-                                Animation anim = loadANI(aniData, animEntry.name);
-                                auto normalize = [](const std::string& s) {
-                                    std::string result;
-                                    for (char c : s) {
-                                        if (c != '_') result += std::tolower(c);
-                                    }
-                                    return result;
-                                };
-                                for (auto& track : anim.tracks) {
-                                    track.boneIndex = state.currentModel.skeleton.findBone(track.boneName);
-                                    if (track.boneIndex < 0) {
-                                        std::string trackNorm = normalize(track.boneName);
-                                        for (size_t bi = 0; bi < state.currentModel.skeleton.bones.size(); bi++) {
-                                            if (trackNorm == normalize(state.currentModel.skeleton.bones[bi].name)) {
-                                                track.boneIndex = (int)bi;
-                                                break;
-                                            }
-                                        }
-                                    }
-                                }
-                                exportAnims.push_back(anim);
-                            }
-                            break;
-                        }
-                    }
-                }
+                if (valid) s_animSelection[animFile.first] = true;
             }
-            if (exportToGLB(state.currentModel, exportAnims, exportPath)) {
-                state.statusMessage = "Exported: " + exportPath + " (" + std::to_string(exportAnims.size()) + " anims)";
-            } else {
-                state.statusMessage = "Export failed!";
-            }
+            s_selectAllAnims = true;
+            s_showExportOptions = true;
+            ImGui::OpenPopup("Export Options");
         }
         ImGuiFileDialog::Instance()->Close();
+    }
+
+    if (ImGui::BeginPopupModal("Export Options", &s_showExportOptions, ImGuiWindowFlags_AlwaysAutoResize)) {
+        ImGui::Text("Select Animations to Export:");
+        if (ImGui::Checkbox("Select All", &s_selectAllAnims)) {
+            for (auto& pair : s_animSelection) {
+                pair.second = s_selectAllAnims;
+            }
+        }
+        ImGui::Separator();
+
+        ImGui::BeginChild("AnimList", ImVec2(400, 300), true);
+        for (auto& pair : s_animSelection) {
+            ImGui::Checkbox(pair.first.c_str(), &pair.second);
+        }
+        ImGui::EndChild();
+        ImGui::Separator();
+
+        if (ImGui::Button("Export", ImVec2(120, 0))) {
+            s_showExportOptions = false;
+            ImGui::CloseCurrentPopup();
+
+            t_active = true;
+            t_targetTab = state.mainTab;
+            t_phase = 1;
+            t_alpha = 0.0f;
+            t_isLoadingContent = true;
+            std::thread(runExportTask, &state).detach();
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Cancel", ImVec2(120, 0))) {
+            s_showExportOptions = false;
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::EndPopup();
     }
 
     if (ImGuiFileDialog::Instance()->Display("ExportGLB", ImGuiWindowFlags_NoCollapse, ImVec2(600, 400))) {
@@ -815,29 +938,6 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
         ImGuiFileDialog::Instance()->Close();
     }
 
-    // Handle GLB Selection Dialog for Import
-    if (ImGuiFileDialog::Instance()->Display("ImportGLB", ImGuiWindowFlags_NoCollapse, ImVec2(600, 400))) {
-        if (ImGuiFileDialog::Instance()->IsOk()) {
-            std::string glbPath = ImGuiFileDialog::Instance()->GetFilePathName();
-
-            DAOImporter importer;
-            // Use the currently open folder as the search root
-            if (importer.ImportToDirectory(glbPath, state.selectedFolder)) {
-                state.statusMessage = "Successfully imported " + fs::path(glbPath).filename().string();
-
-                // === FORCE REFRESH ===
-                state.isPreloading = true;
-                showSplash = true;
-                std::thread(runLoadingTask, &state).detach();
-                // =====================
-
-            } else {
-                state.statusMessage = "Import failed! Check console for missing ERFs.";
-            }
-        }
-        ImGuiFileDialog::Instance()->Close();
-    }
-
     if (ImGui::BeginMainMenuBar()) {
         if (ImGui::BeginMenu("File")) {
             if (ImGui::BeginMenu("Import")) {
@@ -1023,32 +1123,58 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
         ImGui::End();
     }
 
-    if (t_active || Update::IsBusy() || Update::HadError()) {
-        float alpha = Update::IsBusy() ? 1.0f : t_alpha;
-        ImGui::SetNextWindowPos(ImVec2(10, displayH - 60), ImGuiCond_Always);
-        ImGui::SetNextWindowBgAlpha(alpha);
-        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, alpha);
-        ImGui::Begin("##TabTransition", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoInputs);
+    bool showLoading = t_active || Update::IsBusy() || Update::HadError();
 
-        float p = 0.0f;
-
-        if (Update::IsBusy()) {
-            ImGui::TextUnformatted(Update::GetStatusText());
-            p = Update::GetProgress();
-        } else if (Update::HadError()) {
-            ImGui::TextUnformatted("Update failed");
-            p = 0.0f;
-        } else {
-            ImGui::Text("Loading...");
-            if (t_isLoadingContent) {
-                p = state.preloadProgress;
-            } else {
-                p = (t_phase == 1) ? t_alpha * 0.5f : 1.0f;
-            }
+    if (showLoading) {
+        if (!ImGui::IsPopupOpen("##GlobalLoadingModal")) {
+            ImGui::OpenPopup("##GlobalLoadingModal");
         }
 
-        ImGui::ProgressBar(p, ImVec2(200, 20));
-        ImGui::End();
-        ImGui::PopStyleVar();
+        float alpha = Update::IsBusy() ? 1.0f : t_alpha;
+
+        ImVec2 center(displayW * 0.5f, displayH * 0.5f);
+        ImGui::SetNextWindowPos(center, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+
+        ImGui::PushStyleColor(ImGuiCol_ModalWindowDimBg, ImVec4(0.0f, 0.0f, 0.0f, 0.8f * alpha));
+
+        ImGui::PushStyleVar(ImGuiStyleVar_Alpha, alpha);
+
+        if (ImGui::BeginPopupModal("##GlobalLoadingModal", nullptr,
+            ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
+            ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize))
+        {
+            float p = 0.0f;
+            std::string statusText;
+
+            if (Update::IsBusy()) {
+                statusText = Update::GetStatusText();
+                p = Update::GetProgress();
+            } else if (Update::HadError()) {
+                statusText = "Update failed";
+                p = 0.0f;
+            } else {
+                if (t_isLoadingContent) {
+                    statusText = state.preloadStatus;
+                    p = state.preloadProgress;
+                } else {
+                    statusText = "Loading...";
+                    p = (t_phase == 1) ? t_alpha * 0.5f : 1.0f;
+                }
+            }
+
+            float winWidth = ImGui::GetWindowSize().x;
+            float textWidth = ImGui::CalcTextSize(statusText.c_str()).x;
+            ImGui::SetCursorPosX((winWidth - textWidth) * 0.5f);
+            ImGui::TextUnformatted(statusText.c_str());
+
+            ImGui::Spacing();
+
+            ImGui::ProgressBar(p, ImVec2(300, 25));
+
+            ImGui::EndPopup();
+        }
+
+        ImGui::PopStyleVar(1);
+        ImGui::PopStyleColor(1);
     }
 }

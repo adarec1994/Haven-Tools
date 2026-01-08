@@ -448,24 +448,27 @@ bool DAOImporter::ImportToDirectory(const std::string& glbPath, const std::strin
 
     std::cout << "\n[Import] Updating ERF files..." << std::endl;
 
-    ReportProgress(0.7f, "Updating modelmeshdata.erf...");
+    // START REFRESHING ERFS
+    ReportProgress(0.7f, "Refreshing .erf's...");
     bool ok1 = RepackERF(meshErf, meshFiles);
 
-    ReportProgress(0.8f, "Updating modelhierarchies.erf...");
+    ReportProgress(0.8f, "Refreshing .erf's (Hierarchies)...");
     bool ok2 = RepackERF(hierErf, hierFiles);
 
-    ReportProgress(0.85f, "Updating materialobjects.erf...");
+    ReportProgress(0.85f, "Refreshing .erf's (Materials)...");
     bool ok3 = RepackERF(matErf, matFiles);
 
     bool ok4 = true;
     if (!texErf.empty() && !texFiles.empty()) {
-        ReportProgress(0.9f, "Updating texturepack.erf...");
+        ReportProgress(0.9f, "Refreshing .erf's (Textures)...");
         ok4 = RepackERF(texErf, texFiles);
     }
 
-    ReportProgress(1.0f, ok1 && ok2 && ok3 && ok4 ? "Import complete!" : "Import failed!");
-    std::cout << "\n[Import] " << (ok1 && ok2 && ok3 && ok4 ? "SUCCESS" : "FAILED") << std::endl;
-    return ok1 && ok2 && ok3 && ok4;
+    bool success = ok1 && ok2 && ok3 && ok4;
+    ReportProgress(1.0f, success ? "Import complete!" : "Import failed!");
+
+    std::cout << "\n[Import] " << (success ? "SUCCESS" : "FAILED") << std::endl;
+    return success;
 }
 
 bool DAOImporter::LoadGLB(const std::string& path, DAOModelData& outData) {
