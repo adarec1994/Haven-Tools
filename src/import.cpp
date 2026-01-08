@@ -63,6 +63,7 @@ bool DAOGraphicsTools::Initialize() {
 }
 
 bool DAOGraphicsTools::ExtractTools() {
+#ifdef _WIN32
     auto writeFile = [](const fs::path& path, const unsigned char* data, unsigned int len) {
         std::ofstream out(path, std::ios::binary);
         if (!out) return false;
@@ -85,6 +86,9 @@ bool DAOGraphicsTools::ExtractTools() {
     ok &= writeFile(m_mmhDir / "umbra.dll", mmh_umbra_dll, mmh_umbra_dll_len);
 
     return ok;
+#else
+    return true;
+#endif
 }
 
 bool DAOGraphicsTools::RunProcessor(const fs::path& exePath, const fs::path& xmlPath) {

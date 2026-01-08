@@ -687,49 +687,68 @@ struct Mat4 {
     }
 };
 
-static void fbxWriteVec3(std::ofstream& out, float x, float y, float z) {
-    out << x << "," << y << "," << z;
-}
-
-static void fbxWriteMatrix(std::ofstream& out, const Mat4& mat) {
-    for (int i = 0; i < 16; i++) {
-        if (i > 0) out << ",";
-        out << mat.m[i];
-    }
-}
-
-static void fbxWriteQuatToEuler(std::ofstream& out, float x, float y, float z, float w) {
-    float sinr_cosp = 2 * (w * x + y * z);
-    float cosr_cosp = 1 - 2 * (x * x + y * y);
-    float ex = std::atan2(sinr_cosp, cosr_cosp);
-
-    float sinp = 2 * (w * y - z * x);
-    float ey = 0;
-    if (std::abs(sinp) >= 1) ey = std::copysign(3.14159265f / 2, sinp);
-    else ey = std::asin(sinp);
-
-    float siny_cosp = 2 * (w * z + x * y);
-    float cosy_cosp = 1 - 2 * (y * y + z * z);
-    float ez = std::atan2(siny_cosp, cosy_cosp);
-
-    out << (ex * 180.0f / 3.14159265f) << "," << (ey * 180.0f / 3.14159265f) << "," << (ez * 180.0f / 3.14159265f);
-}
-
 bool exportToFBX(const Model& model, const std::vector<Animation>& animations, const std::string& outputPath) {
-    std::ofstream out(outputPath);
-    if (!out) return false;
+    if (model.meshes.empty()) return false;
 
-    auto getGeoID = [](int i) { return 200000LL + i; };
-    auto getBoneID = [](int i) { return 400000LL + i; };
-    auto getModelID = [](int i) { return 500000LL + i; };
-    auto getSkinID = [](int i) { return 600000LL + i; };
-    auto getClusterID = [](int m, int b) { return 7000000LL + (int64_t)m * 10000 + b; };
+    std::vector<uint8_t> output;
+
+    auto writeU8 = [&](uint8_t v) { output.push_back(v); };
+    auto writeU16 = [&](uint16_t v) { output.push_back(v & 0xFF); output.push_back((v >> 8) & 0xFF); };
+    auto writeU32 = [&](uint32_t v) {
+        output.push_back(v & 0xFF); output.push_back((v >> 8) & 0xFF);
+        output.push_back((v >> 16) & 0xFF); output.push_back((v >> 24) & 0xFF);
+    };
+    auto writeU64 = [&](uint64_t v) {
+        for (int i = 0; i < 8; i++) output.push_back((v >> (i * 8)) & 0xFF);
+    };
+    auto writeI16 = [&](int16_t v) { writeU16((uint16_t)v); };
+    auto writeI32 = [&](int32_t v) { writeU32((uint32_t)v); };
+    auto writeI64 = [&](int64_t v) { writeU64((uint64_t)v); };
+    auto writeF32 = [&](float v) { uint32_t bits; std::memcpy(&bits, &v, 4); writeU32(bits); };
+    auto writeF64 = [&](double v) { uint64_t bits; std::memcpy(&bits, &v, 8); writeU64(bits); };
+    auto writeBytes = [&](const void* data, size_t len) {
+        const uint8_t* p = (const uint8_t*)data;
+        output.insert(output.end(), p, p + len);
+    };
+    auto writeString = [&](const std::string& s) {
+        writeU8((uint8_t)s.size());
+        writeBytes(s.data(), s.size());
+    };
+    auto writeLongString = [&](const std::string& s) {
+        writeU32((uint32_t)s.size());
+        writeBytes(s.data(), s.size());
+    };
+
+    auto getGeoID = [](int i) -> int64_t { return 200000LL + i; };
+    auto getBoneID = [](int i) -> int64_t { return 400000LL + i; };
+    auto getModelID = [](int i) -> int64_t { return 500000LL + i; };
+    auto getSkinID = [](int i) -> int64_t { return 600000LL + i; };
+    auto getClusterID = [](int m, int b) -> int64_t { return 7000000LL + (int64_t)m * 10000 + b; };
+    auto getMaterialID = [](int i) -> int64_t { return 800000LL + i; };
+    auto getTextureID = [](int i) -> int64_t { return 900000LL + i; };
+    auto getVideoID = [](int i) -> int64_t { return 1000000LL + i; };
 
     bool hasSkeleton = !model.skeleton.bones.empty();
-    int deformerCount = 0;
 
-    // Pre-calculate Global Transforms for the Skeleton to fix "Detached Mesh"
+    std::map<std::string, int> boneLookup;
+    if (hasSkeleton) {
+        for (size_t i = 0; i < model.skeleton.bones.size(); i++) {
+            std::string nameLower = model.skeleton.bones[i].name;
+            std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), ::tolower);
+            boneLookup[nameLower] = (int)i;
+        }
+    }
+
+    auto findBoneIndex = [&](const std::string& name) -> int {
+        std::string nameLower = name;
+        std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), ::tolower);
+        auto it = boneLookup.find(nameLower);
+        return (it != boneLookup.end()) ? it->second : -1;
+    };
+
     std::vector<Mat4> globalBoneTransforms;
+    Mat4 rootRotation = Mat4::FromTRS(0, 0, 0, -0.7071068f, 0, 0, 0.7071068f);
+
     if (hasSkeleton) {
         globalBoneTransforms.resize(model.skeleton.bones.size());
         for (size_t i = 0; i < model.skeleton.bones.size(); i++) {
@@ -738,209 +757,804 @@ bool exportToFBX(const Model& model, const std::vector<Animation>& animations, c
             if (bone.parentIndex >= 0) {
                 globalBoneTransforms[i] = globalBoneTransforms[bone.parentIndex] * local;
             } else {
-                globalBoneTransforms[i] = local;
+                globalBoneTransforms[i] = rootRotation * local;
             }
         }
     }
 
-    // Count Deformers
-    std::map<std::string, int> boneLookup;
-    if (hasSkeleton) {
-        for (size_t i = 0; i < model.skeleton.bones.size(); i++) boneLookup[model.skeleton.bones[i].name] = (int)i;
-
-        for (size_t i = 0; i < model.meshes.size(); i++) {
-            if (model.meshes[i].hasSkinning) {
-                deformerCount++; // Skin
-                std::set<int> uniqueBones;
-                for (const auto& v : model.meshes[i].vertices) {
-                    for (int b = 0; b < 4; b++) {
-                        if (v.boneWeights[b] > 0.001f) {
-                            int local = v.boneIndices[b];
-                            int global = -1;
-                            if (local >= 0) {
-                                if (!model.meshes[i].bonesUsed.empty() && local < (int)model.meshes[i].bonesUsed.size()) {
-                                    int used = model.meshes[i].bonesUsed[local];
-                                    if (used >= 0 && used < (int)model.boneIndexArray.size()) {
-                                        std::string bn = model.boneIndexArray[used];
-                                        if (boneLookup.count(bn)) global = boneLookup[bn];
-                                    }
-                                } else if (local < (int)model.boneIndexArray.size()) {
-                                    std::string bn = model.boneIndexArray[local];
-                                    if (boneLookup.count(bn)) global = boneLookup[bn];
-                                }
-                            }
-                            if (global != -1) uniqueBones.insert(global);
-                        }
-                    }
-                }
-                deformerCount += (int)uniqueBones.size(); // Clusters
-            }
-        }
-    }
-
-    out << "; FBX 7.5.0 project file\n";
-    out << "FBXHeaderExtension:  {\n\tFBXHeaderVersion: 1003\n\tFBXVersion: 7500\n}\n";
-    out << "GlobalSettings:  {\n\tVersion: 1000\n\tProperties70:  {\n";
-    out << "\t\tP: \"UpAxis\", \"int\", \"Integer\", \"\",1\n";
-    out << "\t\tP: \"CoordAxis\", \"int\", \"Integer\", \"\",2\n";
-    out << "\t\tP: \"UnitScaleFactor\", \"double\", \"Number\", \"\",1.0\n\t}\n}\n";
-
-    out << "Definitions:  {\n\tVersion: 100\n";
-    out << "\tCount: " << (model.meshes.size() * 2 + model.skeleton.bones.size() + deformerCount) << "\n";
-    out << "\tObjectType: \"Model\" {\n\t\tCount: " << (model.meshes.size() + model.skeleton.bones.size()) << "\n\t}\n";
-    out << "\tObjectType: \"Geometry\" {\n\t\tCount: " << model.meshes.size() << "\n\t}\n";
-    if (deformerCount > 0) out << "\tObjectType: \"Deformer\" {\n\t\tCount: " << deformerCount << "\n\t}\n";
-    out << "}\n\n";
-
-    out << "Objects:  {\n";
-
-    for (size_t i = 0; i < model.meshes.size(); i++) {
-        const auto& mesh = model.meshes[i];
-        out << "\tGeometry: " << getGeoID(i) << ", \"Geometry::\", \"Mesh\" {\n";
-
-        out << "\t\tVertices: * " << (mesh.vertices.size() * 3) << " {\n\t\t\ta: ";
-        for (size_t v = 0; v < mesh.vertices.size(); v++) {
-            if (v > 0) out << ",";
-            fbxWriteVec3(out, mesh.vertices[v].x, mesh.vertices[v].y, mesh.vertices[v].z);
-        }
-        out << "\n\t\t}\n";
-
-        out << "\t\tPolygonVertexIndex: * " << mesh.indices.size() << " {\n\t\t\ta: ";
-        for (size_t idx = 0; idx < mesh.indices.size(); idx += 3) {
-            if (idx > 0) out << ",";
-            out << mesh.indices[idx] << "," << mesh.indices[idx+1] << "," << (-1 - mesh.indices[idx+2]);
-        }
-        out << "\n\t\t}\n";
-
-        out << "\t\tLayerElementNormal: 0 {\n\t\t\tVersion: 101\n\t\t\tMappingInformationType: \"ByPolygonVertex\"\n\t\t\tReferenceInformationType: \"Direct\"\n";
-        out << "\t\t\tNormals: * " << (mesh.indices.size() * 3) << " {\n\t\t\t\ta: ";
-        for (size_t idx = 0; idx < mesh.indices.size(); idx++) {
-            int v = mesh.indices[idx];
-            if (idx > 0) out << ",";
-            fbxWriteVec3(out, mesh.vertices[v].nx, mesh.vertices[v].ny, mesh.vertices[v].nz);
-        }
-        out << "\n\t\t\t}\n\t\t}\n";
-        out << "\t}\n";
-    }
-
-    if (hasSkeleton) {
-        for (size_t i = 0; i < model.skeleton.bones.size(); i++) {
-            const auto& bone = model.skeleton.bones[i];
-            out << "\tModel: " << getBoneID(i) << ", \"Model::" << bone.name << "\", \"LimbNode\" {\n";
-            out << "\t\tVersion: 232\n\t\tProperties70:  {\n";
-            out << "\t\t\tP: \"Lcl Translation\", \"Lcl Translation\", \"\", \"A\",";
-            fbxWriteVec3(out, bone.posX, bone.posY, bone.posZ);
-            out << "\n\t\t\tP: \"Lcl Rotation\", \"Lcl Rotation\", \"\", \"A\",";
-            fbxWriteQuatToEuler(out, bone.rotX, bone.rotY, bone.rotZ, bone.rotW);
-            out << "\n\t\t}\n\t}\n";
-        }
-    }
-
-    for (size_t i = 0; i < model.meshes.size(); i++) {
-        out << "\tModel: " << getModelID(i) << ", \"Model::" << model.meshes[i].name << "\", \"Mesh\" {\n";
-        out << "\t\tVersion: 232\n\t\tProperties70:  {\n";
-        out << "\t\t\tP: \"Lcl Translation\", \"Lcl Translation\", \"\", \"A\", 0,0,0\n";
-        out << "\t\t\tP: \"Lcl Rotation\", \"Lcl Rotation\", \"\", \"A\", 0,0,0\n";
-        out << "\t\t\tP: \"Lcl Scaling\", \"Lcl Scaling\", \"\", \"A\", 1,1,1\n";
-        out << "\t\t}\n\t}\n";
-    }
-
+    std::vector<std::set<int>> meshBoneSets(model.meshes.size());
     if (hasSkeleton) {
         for (size_t i = 0; i < model.meshes.size(); i++) {
             if (!model.meshes[i].hasSkinning) continue;
-
-            out << "\tDeformer: " << getSkinID(i) << ", \"Deformer::Skin\", \"Skin\" {\n";
-            out << "\t\tVersion: 101\n\t}\n";
-
-            std::map<int, std::vector<std::pair<int, float>>> boneInfluences;
-            for (size_t vIdx = 0; vIdx < model.meshes[i].vertices.size(); vIdx++) {
-                const auto& v = model.meshes[i].vertices[vIdx];
+            const auto& mesh = model.meshes[i];
+            std::set<int> uniqueBones;
+            for (const auto& v : mesh.vertices) {
                 for (int b = 0; b < 4; b++) {
                     if (v.boneWeights[b] > 0.001f) {
                         int local = v.boneIndices[b];
                         int global = -1;
                         if (local >= 0) {
-                            if (!model.meshes[i].bonesUsed.empty() && local < (int)model.meshes[i].bonesUsed.size()) {
-                                int used = model.meshes[i].bonesUsed[local];
+                            if (!mesh.bonesUsed.empty() && local < (int)mesh.bonesUsed.size()) {
+                                int used = mesh.bonesUsed[local];
                                 if (used >= 0 && used < (int)model.boneIndexArray.size()) {
-                                    std::string bn = model.boneIndexArray[used];
-                                    if (boneLookup.count(bn)) global = boneLookup[bn];
+                                    global = findBoneIndex(model.boneIndexArray[used]);
                                 }
                             } else if (local < (int)model.boneIndexArray.size()) {
-                                std::string bn = model.boneIndexArray[local];
-                                if (boneLookup.count(bn)) global = boneLookup[bn];
+                                global = findBoneIndex(model.boneIndexArray[local]);
                             }
                         }
-                        if (global != -1) boneInfluences[global].push_back({(int)vIdx, v.boneWeights[b]});
+                        if (global != -1) uniqueBones.insert(global);
                     }
                 }
             }
+            meshBoneSets[i] = uniqueBones;
+        }
+    }
 
-            for (auto const& [boneIdx, infs] : boneInfluences) {
-                out << "\tDeformer: " << getClusterID(i, boneIdx) << ", \"SubDeformer::Cluster\", \"Cluster\" {\n";
-                out << "\t\tVersion: 100\n";
-                out << "\t\tIndexes: * " << infs.size() << " {\n\t\t\ta: ";
-                for (size_t k = 0; k < infs.size(); k++) { if (k > 0) out << ","; out << infs[k].first; }
-                out << "\n\t\t}\n";
-                out << "\t\tWeights: * " << infs.size() << " {\n\t\t\ta: ";
-                for (size_t k = 0; k < infs.size(); k++) { if (k > 0) out << ","; out << infs[k].second; }
-                out << "\n\t\t}\n";
+    struct NodeWriter {
+        std::vector<uint8_t>& out;
+        std::vector<size_t> nodeStack;
 
-                // CRITICAL FIX: Write the Global Transform of the Mesh (Identity) and the Bone (Calculated)
-                out << "\t\tTransform: * 16 {\n\t\t\ta: 1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1\n\t\t}\n";
-                out << "\t\tTransformLink: * 16 {\n\t\t\ta: ";
-                fbxWriteMatrix(out, globalBoneTransforms[boneIdx]);
-                out << "\n\t\t}\n\t}\n";
+        NodeWriter(std::vector<uint8_t>& o) : out(o) {}
+
+        void beginNode(const std::string& name) {
+            nodeStack.push_back(out.size());
+            for (int i = 0; i < 13; i++) out.push_back(0);
+            out.push_back((uint8_t)name.size());
+            out.insert(out.end(), name.begin(), name.end());
+        }
+
+        void endNode() {
+            size_t nodeStart = nodeStack.back();
+            nodeStack.pop_back();
+
+            for (int i = 0; i < 13; i++) out.push_back(0);
+
+            uint32_t endOffset = (uint32_t)out.size();
+            out[nodeStart] = endOffset & 0xFF;
+            out[nodeStart + 1] = (endOffset >> 8) & 0xFF;
+            out[nodeStart + 2] = (endOffset >> 16) & 0xFF;
+            out[nodeStart + 3] = (endOffset >> 24) & 0xFF;
+        }
+
+        void endNodeNoNested() {
+            size_t nodeStart = nodeStack.back();
+            nodeStack.pop_back();
+
+            uint32_t endOffset = (uint32_t)out.size();
+            out[nodeStart] = endOffset & 0xFF;
+            out[nodeStart + 1] = (endOffset >> 8) & 0xFF;
+            out[nodeStart + 2] = (endOffset >> 16) & 0xFF;
+            out[nodeStart + 3] = (endOffset >> 24) & 0xFF;
+        }
+
+        void setPropertyCount(uint32_t count, uint32_t listLen) {
+            size_t nodeStart = nodeStack.back();
+            out[nodeStart + 4] = count & 0xFF;
+            out[nodeStart + 5] = (count >> 8) & 0xFF;
+            out[nodeStart + 6] = (count >> 16) & 0xFF;
+            out[nodeStart + 7] = (count >> 24) & 0xFF;
+            out[nodeStart + 8] = listLen & 0xFF;
+            out[nodeStart + 9] = (listLen >> 8) & 0xFF;
+            out[nodeStart + 10] = (listLen >> 16) & 0xFF;
+            out[nodeStart + 11] = (listLen >> 24) & 0xFF;
+        }
+
+        size_t propStart;
+        uint32_t propCount;
+
+        void beginProps() {
+            propStart = out.size();
+            propCount = 0;
+        }
+
+        void addPropI16(int16_t v) { out.push_back('Y'); propCount++; out.push_back(v & 0xFF); out.push_back((v >> 8) & 0xFF); }
+        void addPropI32(int32_t v) { out.push_back('I'); propCount++; uint32_t u = (uint32_t)v; out.push_back(u & 0xFF); out.push_back((u >> 8) & 0xFF); out.push_back((u >> 16) & 0xFF); out.push_back((u >> 24) & 0xFF); }
+        void addPropI64(int64_t v) { out.push_back('L'); propCount++; uint64_t u = (uint64_t)v; for (int i = 0; i < 8; i++) out.push_back((u >> (i * 8)) & 0xFF); }
+        void addPropF32(float v) { out.push_back('F'); propCount++; uint32_t bits; std::memcpy(&bits, &v, 4); out.push_back(bits & 0xFF); out.push_back((bits >> 8) & 0xFF); out.push_back((bits >> 16) & 0xFF); out.push_back((bits >> 24) & 0xFF); }
+        void addPropF64(double v) { out.push_back('D'); propCount++; uint64_t bits; std::memcpy(&bits, &v, 8); for (int i = 0; i < 8; i++) out.push_back((bits >> (i * 8)) & 0xFF); }
+        void addPropString(const std::string& s) {
+            out.push_back('S'); propCount++;
+            uint32_t len = (uint32_t)s.size();
+            out.push_back(len & 0xFF); out.push_back((len >> 8) & 0xFF); out.push_back((len >> 16) & 0xFF); out.push_back((len >> 24) & 0xFF);
+            out.insert(out.end(), s.begin(), s.end());
+        }
+        void addPropRaw(const std::string& s) {
+            out.push_back('R'); propCount++;
+            uint32_t len = (uint32_t)s.size();
+            out.push_back(len & 0xFF); out.push_back((len >> 8) & 0xFF); out.push_back((len >> 16) & 0xFF); out.push_back((len >> 24) & 0xFF);
+            out.insert(out.end(), s.begin(), s.end());
+        }
+        void addPropRawBytes(const uint8_t* data, size_t len) {
+            out.push_back('R'); propCount++;
+            uint32_t l = (uint32_t)len;
+            out.push_back(l & 0xFF); out.push_back((l >> 8) & 0xFF); out.push_back((l >> 16) & 0xFF); out.push_back((l >> 24) & 0xFF);
+            out.insert(out.end(), data, data + len);
+        }
+
+        void addPropI32Array(const std::vector<int32_t>& arr) {
+            out.push_back('i'); propCount++;
+            uint32_t len = (uint32_t)arr.size();
+            out.push_back(len & 0xFF); out.push_back((len >> 8) & 0xFF); out.push_back((len >> 16) & 0xFF); out.push_back((len >> 24) & 0xFF);
+            out.push_back(0); out.push_back(0); out.push_back(0); out.push_back(0);
+            uint32_t byteLen = len * 4;
+            out.push_back(byteLen & 0xFF); out.push_back((byteLen >> 8) & 0xFF); out.push_back((byteLen >> 16) & 0xFF); out.push_back((byteLen >> 24) & 0xFF);
+            for (int32_t v : arr) {
+                uint32_t u = (uint32_t)v;
+                out.push_back(u & 0xFF); out.push_back((u >> 8) & 0xFF); out.push_back((u >> 16) & 0xFF); out.push_back((u >> 24) & 0xFF);
+            }
+        }
+
+        void addPropF64Array(const std::vector<double>& arr) {
+            out.push_back('d'); propCount++;
+            uint32_t len = (uint32_t)arr.size();
+            out.push_back(len & 0xFF); out.push_back((len >> 8) & 0xFF); out.push_back((len >> 16) & 0xFF); out.push_back((len >> 24) & 0xFF);
+            out.push_back(0); out.push_back(0); out.push_back(0); out.push_back(0);
+            uint32_t byteLen = len * 8;
+            out.push_back(byteLen & 0xFF); out.push_back((byteLen >> 8) & 0xFF); out.push_back((byteLen >> 16) & 0xFF); out.push_back((byteLen >> 24) & 0xFF);
+            for (double v : arr) {
+                uint64_t bits; std::memcpy(&bits, &v, 8);
+                for (int i = 0; i < 8; i++) out.push_back((bits >> (i * 8)) & 0xFF);
+            }
+        }
+
+        void endProps() {
+            uint32_t listLen = (uint32_t)(out.size() - propStart);
+            setPropertyCount(propCount, listLen);
+        }
+    };
+
+    auto quatToEuler = [](float qx, float qy, float qz, float qw, double& ex, double& ey, double& ez) {
+        float sinr_cosp = 2 * (qw * qx + qy * qz);
+        float cosr_cosp = 1 - 2 * (qx * qx + qy * qy);
+        ex = std::atan2(sinr_cosp, cosr_cosp) * 180.0 / 3.14159265358979323846;
+        float sinp = 2 * (qw * qy - qz * qx);
+        if (std::abs(sinp) >= 1) ey = std::copysign(90.0, sinp);
+        else ey = std::asin(sinp) * 180.0 / 3.14159265358979323846;
+        float siny_cosp = 2 * (qw * qz + qx * qy);
+        float cosy_cosp = 1 - 2 * (qy * qy + qz * qz);
+        ez = std::atan2(siny_cosp, cosy_cosp) * 180.0 / 3.14159265358979323846;
+    };
+
+    const char* header = "Kaydara FBX Binary  ";
+    writeBytes(header, 21);
+    writeU8(0x1A);
+    writeU8(0x00);
+    writeU32(7500);
+
+    NodeWriter nw(output);
+
+    nw.beginNode("FBXHeaderExtension");
+    nw.beginProps(); nw.endProps();
+    {
+        nw.beginNode("FBXHeaderVersion");
+        nw.beginProps(); nw.addPropI32(1003); nw.endProps();
+        nw.endNodeNoNested();
+
+        nw.beginNode("FBXVersion");
+        nw.beginProps(); nw.addPropI32(7500); nw.endProps();
+        nw.endNodeNoNested();
+
+        nw.beginNode("Creator");
+        nw.beginProps(); nw.addPropString("HavenTools"); nw.endProps();
+        nw.endNodeNoNested();
+    }
+    nw.endNode();
+
+    nw.beginNode("GlobalSettings");
+    nw.beginProps(); nw.endProps();
+    {
+        nw.beginNode("Version");
+        nw.beginProps(); nw.addPropI32(1000); nw.endProps();
+        nw.endNodeNoNested();
+
+        nw.beginNode("Properties70");
+        nw.beginProps(); nw.endProps();
+        {
+            auto addP = [&](const std::string& name, const std::string& t1, const std::string& t2, const std::string& flags, int val) {
+                nw.beginNode("P");
+                nw.beginProps();
+                nw.addPropString(name); nw.addPropString(t1); nw.addPropString(t2); nw.addPropString(flags);
+                nw.addPropI32(val);
+                nw.endProps();
+                nw.endNodeNoNested();
+            };
+            auto addPD = [&](const std::string& name, const std::string& t1, const std::string& t2, const std::string& flags, double val) {
+                nw.beginNode("P");
+                nw.beginProps();
+                nw.addPropString(name); nw.addPropString(t1); nw.addPropString(t2); nw.addPropString(flags);
+                nw.addPropF64(val);
+                nw.endProps();
+                nw.endNodeNoNested();
+            };
+            addP("UpAxis", "int", "Integer", "", 1);
+            addP("UpAxisSign", "int", "Integer", "", 1);
+            addP("FrontAxis", "int", "Integer", "", 2);
+            addP("FrontAxisSign", "int", "Integer", "", 1);
+            addP("CoordAxis", "int", "Integer", "", 0);
+            addP("CoordAxisSign", "int", "Integer", "", 1);
+            addP("OriginalUpAxis", "int", "Integer", "", 2);
+            addP("OriginalUpAxisSign", "int", "Integer", "", 1);
+            addPD("UnitScaleFactor", "double", "Number", "", 1.0);
+        }
+        nw.endNode();
+    }
+    nw.endNode();
+
+    nw.beginNode("Objects");
+    nw.beginProps(); nw.endProps();
+    {
+        nw.beginNode("Model");
+        nw.beginProps();
+        nw.addPropI64(100000);
+        nw.addPropString("Model::" + model.name + "\x00\x01Null");
+        nw.addPropString("Null");
+        nw.endProps();
+        {
+            nw.beginNode("Version");
+            nw.beginProps(); nw.addPropI32(232); nw.endProps();
+            nw.endNodeNoNested();
+
+            nw.beginNode("Properties70");
+            nw.beginProps(); nw.endProps();
+            {
+                nw.beginNode("P");
+                nw.beginProps();
+                nw.addPropString("Lcl Rotation"); nw.addPropString("Lcl Rotation"); nw.addPropString(""); nw.addPropString("A");
+                nw.addPropF64(-90.0); nw.addPropF64(0.0); nw.addPropF64(0.0);
+                nw.endProps();
+                nw.endNodeNoNested();
+            }
+            nw.endNode();
+        }
+        nw.endNode();
+
+        for (size_t mi = 0; mi < model.meshes.size(); mi++) {
+            const auto& mesh = model.meshes[mi];
+            std::string meshName = mesh.name.empty() ? "Mesh" + std::to_string(mi) : mesh.name;
+
+            nw.beginNode("Geometry");
+            nw.beginProps();
+            nw.addPropI64(getGeoID(mi));
+            nw.addPropString("Geometry::" + meshName + "\x00\x01Mesh");
+            nw.addPropString("Mesh");
+            nw.endProps();
+            {
+                std::vector<double> vertices;
+                for (const auto& v : mesh.vertices) {
+                    vertices.push_back(v.x); vertices.push_back(v.y); vertices.push_back(v.z);
+                }
+                nw.beginNode("Vertices");
+                nw.beginProps(); nw.addPropF64Array(vertices); nw.endProps();
+                nw.endNodeNoNested();
+
+                std::vector<int32_t> polyIdx;
+                for (size_t i = 0; i < mesh.indices.size(); i += 3) {
+                    polyIdx.push_back((int32_t)mesh.indices[i]);
+                    polyIdx.push_back((int32_t)mesh.indices[i + 1]);
+                    polyIdx.push_back(-((int32_t)mesh.indices[i + 2]) - 1);
+                }
+                nw.beginNode("PolygonVertexIndex");
+                nw.beginProps(); nw.addPropI32Array(polyIdx); nw.endProps();
+                nw.endNodeNoNested();
+
+                nw.beginNode("LayerElementNormal");
+                nw.beginProps(); nw.addPropI32(0); nw.endProps();
+                {
+                    nw.beginNode("Version");
+                    nw.beginProps(); nw.addPropI32(102); nw.endProps();
+                    nw.endNodeNoNested();
+                    nw.beginNode("Name");
+                    nw.beginProps(); nw.addPropString("Normals"); nw.endProps();
+                    nw.endNodeNoNested();
+                    nw.beginNode("MappingInformationType");
+                    nw.beginProps(); nw.addPropString("ByPolygonVertex"); nw.endProps();
+                    nw.endNodeNoNested();
+                    nw.beginNode("ReferenceInformationType");
+                    nw.beginProps(); nw.addPropString("Direct"); nw.endProps();
+                    nw.endNodeNoNested();
+
+                    std::vector<double> normals;
+                    for (uint32_t idx : mesh.indices) {
+                        normals.push_back(mesh.vertices[idx].nx);
+                        normals.push_back(mesh.vertices[idx].ny);
+                        normals.push_back(mesh.vertices[idx].nz);
+                    }
+                    nw.beginNode("Normals");
+                    nw.beginProps(); nw.addPropF64Array(normals); nw.endProps();
+                    nw.endNodeNoNested();
+                }
+                nw.endNode();
+
+                nw.beginNode("LayerElementUV");
+                nw.beginProps(); nw.addPropI32(0); nw.endProps();
+                {
+                    nw.beginNode("Version");
+                    nw.beginProps(); nw.addPropI32(101); nw.endProps();
+                    nw.endNodeNoNested();
+                    nw.beginNode("Name");
+                    nw.beginProps(); nw.addPropString("UVMap"); nw.endProps();
+                    nw.endNodeNoNested();
+                    nw.beginNode("MappingInformationType");
+                    nw.beginProps(); nw.addPropString("ByPolygonVertex"); nw.endProps();
+                    nw.endNodeNoNested();
+                    nw.beginNode("ReferenceInformationType");
+                    nw.beginProps(); nw.addPropString("Direct"); nw.endProps();
+                    nw.endNodeNoNested();
+
+                    std::vector<double> uvs;
+                    for (uint32_t idx : mesh.indices) {
+                        uvs.push_back(mesh.vertices[idx].u);
+                        uvs.push_back(1.0 - mesh.vertices[idx].v);
+                    }
+                    nw.beginNode("UV");
+                    nw.beginProps(); nw.addPropF64Array(uvs); nw.endProps();
+                    nw.endNodeNoNested();
+                }
+                nw.endNode();
+
+                if (mesh.materialIndex >= 0) {
+                    nw.beginNode("LayerElementMaterial");
+                    nw.beginProps(); nw.addPropI32(0); nw.endProps();
+                    {
+                        nw.beginNode("Version");
+                        nw.beginProps(); nw.addPropI32(101); nw.endProps();
+                        nw.endNodeNoNested();
+                        nw.beginNode("Name");
+                        nw.beginProps(); nw.addPropString("Material"); nw.endProps();
+                        nw.endNodeNoNested();
+                        nw.beginNode("MappingInformationType");
+                        nw.beginProps(); nw.addPropString("AllSame"); nw.endProps();
+                        nw.endNodeNoNested();
+                        nw.beginNode("ReferenceInformationType");
+                        nw.beginProps(); nw.addPropString("IndexToDirect"); nw.endProps();
+                        nw.endNodeNoNested();
+                        nw.beginNode("Materials");
+                        nw.beginProps(); nw.addPropI32Array({0}); nw.endProps();
+                        nw.endNodeNoNested();
+                    }
+                    nw.endNode();
+                }
+
+                nw.beginNode("Layer");
+                nw.beginProps(); nw.addPropI32(0); nw.endProps();
+                {
+                    nw.beginNode("Version");
+                    nw.beginProps(); nw.addPropI32(100); nw.endProps();
+                    nw.endNodeNoNested();
+
+                    nw.beginNode("LayerElement");
+                    nw.beginProps(); nw.endProps();
+                    {
+                        nw.beginNode("Type");
+                        nw.beginProps(); nw.addPropString("LayerElementNormal"); nw.endProps();
+                        nw.endNodeNoNested();
+                        nw.beginNode("TypedIndex");
+                        nw.beginProps(); nw.addPropI32(0); nw.endProps();
+                        nw.endNodeNoNested();
+                    }
+                    nw.endNode();
+
+                    nw.beginNode("LayerElement");
+                    nw.beginProps(); nw.endProps();
+                    {
+                        nw.beginNode("Type");
+                        nw.beginProps(); nw.addPropString("LayerElementUV"); nw.endProps();
+                        nw.endNodeNoNested();
+                        nw.beginNode("TypedIndex");
+                        nw.beginProps(); nw.addPropI32(0); nw.endProps();
+                        nw.endNodeNoNested();
+                    }
+                    nw.endNode();
+
+                    if (mesh.materialIndex >= 0) {
+                        nw.beginNode("LayerElement");
+                        nw.beginProps(); nw.endProps();
+                        {
+                            nw.beginNode("Type");
+                            nw.beginProps(); nw.addPropString("LayerElementMaterial"); nw.endProps();
+                            nw.endNodeNoNested();
+                            nw.beginNode("TypedIndex");
+                            nw.beginProps(); nw.addPropI32(0); nw.endProps();
+                            nw.endNodeNoNested();
+                        }
+                        nw.endNode();
+                    }
+                }
+                nw.endNode();
+            }
+            nw.endNode();
+
+            nw.beginNode("Model");
+            nw.beginProps();
+            nw.addPropI64(getModelID(mi));
+            nw.addPropString("Model::" + meshName + "\x00\x01Mesh");
+            nw.addPropString("Mesh");
+            nw.endProps();
+            {
+                nw.beginNode("Version");
+                nw.beginProps(); nw.addPropI32(232); nw.endProps();
+                nw.endNodeNoNested();
+
+                nw.beginNode("Properties70");
+                nw.beginProps(); nw.endProps();
+                nw.endNode();
+            }
+            nw.endNode();
+        }
+
+        if (hasSkeleton) {
+            for (size_t bi = 0; bi < model.skeleton.bones.size(); bi++) {
+                const auto& bone = model.skeleton.bones[bi];
+
+                nw.beginNode("Model");
+                nw.beginProps();
+                nw.addPropI64(getBoneID(bi));
+                nw.addPropString("Model::" + bone.name + "\x00\x01LimbNode");
+                nw.addPropString("LimbNode");
+                nw.endProps();
+                {
+                    nw.beginNode("Version");
+                    nw.beginProps(); nw.addPropI32(232); nw.endProps();
+                    nw.endNodeNoNested();
+
+                    nw.beginNode("Properties70");
+                    nw.beginProps(); nw.endProps();
+                    {
+                        nw.beginNode("P");
+                        nw.beginProps();
+                        nw.addPropString("Lcl Translation"); nw.addPropString("Lcl Translation"); nw.addPropString(""); nw.addPropString("A");
+                        nw.addPropF64(bone.posX); nw.addPropF64(bone.posY); nw.addPropF64(bone.posZ);
+                        nw.endProps();
+                        nw.endNodeNoNested();
+
+                        double ex, ey, ez;
+                        quatToEuler(bone.rotX, bone.rotY, bone.rotZ, bone.rotW, ex, ey, ez);
+                        nw.beginNode("P");
+                        nw.beginProps();
+                        nw.addPropString("Lcl Rotation"); nw.addPropString("Lcl Rotation"); nw.addPropString(""); nw.addPropString("A");
+                        nw.addPropF64(ex); nw.addPropF64(ey); nw.addPropF64(ez);
+                        nw.endProps();
+                        nw.endNodeNoNested();
+                    }
+                    nw.endNode();
+                }
+                nw.endNode();
+            }
+
+            for (size_t mi = 0; mi < model.meshes.size(); mi++) {
+                const auto& mesh = model.meshes[mi];
+                if (!mesh.hasSkinning || meshBoneSets[mi].empty()) continue;
+
+                nw.beginNode("Deformer");
+                nw.beginProps();
+                nw.addPropI64(getSkinID(mi));
+                nw.addPropString("Deformer::Skin\x00\x01Skin");
+                nw.addPropString("Skin");
+                nw.endProps();
+                {
+                    nw.beginNode("Version");
+                    nw.beginProps(); nw.addPropI32(101); nw.endProps();
+                    nw.endNodeNoNested();
+                    nw.beginNode("Link_DeformAcuracy");
+                    nw.beginProps(); nw.addPropF64(50.0); nw.endProps();
+                    nw.endNodeNoNested();
+                }
+                nw.endNode();
+
+                std::map<int, std::vector<std::pair<int, float>>> boneInfluences;
+                for (size_t vIdx = 0; vIdx < mesh.vertices.size(); vIdx++) {
+                    const auto& v = mesh.vertices[vIdx];
+                    float totalWeight = 0;
+                    for (int b = 0; b < 4; b++) totalWeight += v.boneWeights[b];
+
+                    for (int b = 0; b < 4; b++) {
+                        if (v.boneWeights[b] > 0.001f) {
+                            int local = v.boneIndices[b];
+                            int global = -1;
+                            if (local >= 0) {
+                                if (!mesh.bonesUsed.empty() && local < (int)mesh.bonesUsed.size()) {
+                                    int used = mesh.bonesUsed[local];
+                                    if (used >= 0 && used < (int)model.boneIndexArray.size()) {
+                                        global = findBoneIndex(model.boneIndexArray[used]);
+                                    }
+                                } else if (local < (int)model.boneIndexArray.size()) {
+                                    global = findBoneIndex(model.boneIndexArray[local]);
+                                }
+                            }
+                            if (global != -1) {
+                                float nw = (totalWeight > 0.0001f) ? v.boneWeights[b] / totalWeight : (b == 0 ? 1.0f : 0.0f);
+                                boneInfluences[global].push_back({(int)vIdx, nw});
+                            }
+                        }
+                    }
+                }
+
+                for (int boneIdx : meshBoneSets[mi]) {
+                    const auto& infs = boneInfluences[boneIdx];
+
+                    nw.beginNode("Deformer");
+                    nw.beginProps();
+                    nw.addPropI64(getClusterID(mi, boneIdx));
+                    nw.addPropString("SubDeformer::Cluster\x00\x01Cluster");
+                    nw.addPropString("Cluster");
+                    nw.endProps();
+                    {
+                        nw.beginNode("Version");
+                        nw.beginProps(); nw.addPropI32(100); nw.endProps();
+                        nw.endNodeNoNested();
+
+                        std::vector<int32_t> indices;
+                        std::vector<double> weights;
+                        for (const auto& inf : infs) {
+                            indices.push_back(inf.first);
+                            weights.push_back(inf.second);
+                        }
+
+                        nw.beginNode("Indexes");
+                        nw.beginProps(); nw.addPropI32Array(indices); nw.endProps();
+                        nw.endNodeNoNested();
+
+                        nw.beginNode("Weights");
+                        nw.beginProps(); nw.addPropF64Array(weights); nw.endProps();
+                        nw.endNodeNoNested();
+
+                        std::vector<double> transform = {1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1};
+                        nw.beginNode("Transform");
+                        nw.beginProps(); nw.addPropF64Array(transform); nw.endProps();
+                        nw.endNodeNoNested();
+
+                        std::vector<double> transformLink;
+                        const Mat4& m = globalBoneTransforms[boneIdx];
+                        for (int i = 0; i < 16; i++) transformLink.push_back(m.m[i]);
+                        nw.beginNode("TransformLink");
+                        nw.beginProps(); nw.addPropF64Array(transformLink); nw.endProps();
+                        nw.endNodeNoNested();
+                    }
+                    nw.endNode();
+                }
+            }
+        }
+
+        for (size_t mi = 0; mi < model.materials.size(); mi++) {
+            const auto& mat = model.materials[mi];
+
+            nw.beginNode("Material");
+            nw.beginProps();
+            nw.addPropI64(getMaterialID(mi));
+            nw.addPropString("Material::" + mat.name + "\x00\x01");
+            nw.addPropString("");
+            nw.endProps();
+            {
+                nw.beginNode("Version");
+                nw.beginProps(); nw.addPropI32(102); nw.endProps();
+                nw.endNodeNoNested();
+                nw.beginNode("ShadingModel");
+                nw.beginProps(); nw.addPropString("phong"); nw.endProps();
+                nw.endNodeNoNested();
+                nw.beginNode("MultiLayer");
+                nw.beginProps(); nw.addPropI32(0); nw.endProps();
+                nw.endNodeNoNested();
+
+                nw.beginNode("Properties70");
+                nw.beginProps(); nw.endProps();
+                {
+                    nw.beginNode("P");
+                    nw.beginProps();
+                    nw.addPropString("DiffuseColor"); nw.addPropString("Color"); nw.addPropString(""); nw.addPropString("A");
+                    nw.addPropF64(0.8); nw.addPropF64(0.8); nw.addPropF64(0.8);
+                    nw.endProps();
+                    nw.endNodeNoNested();
+                }
+                nw.endNode();
+            }
+            nw.endNode();
+
+            if (!mat.diffuseData.empty() && mat.diffuseWidth > 0 && mat.diffuseHeight > 0) {
+                int w = mat.diffuseWidth, h = mat.diffuseHeight;
+                std::vector<uint8_t> png;
+
+                std::string matNameLower = mat.name;
+                std::transform(matNameLower.begin(), matNameLower.end(), matNameLower.begin(), ::tolower);
+                bool isHairMaterial = (matNameLower.find("_har_") != std::string::npos ||
+                                       matNameLower.find("hair") != std::string::npos ||
+                                       matNameLower.find("_ubm_") != std::string::npos ||
+                                       matNameLower.find("_ulm_") != std::string::npos) &&
+                                      matNameLower.find("bld") == std::string::npos;
+
+                std::vector<uint8_t> exportData = mat.diffuseData;
+                if (isHairMaterial) {
+                    for (size_t i = 3; i < exportData.size(); i += 4) {
+                        exportData[i] = 255;
+                    }
+                }
+
+                uint32_t crc_table[256];
+                for (int n = 0; n < 256; n++) {
+                    uint32_t c = n;
+                    for (int k = 0; k < 8; k++) c = (c & 1) ? 0xedb88320 ^ (c >> 1) : c >> 1;
+                    crc_table[n] = c;
+                }
+                auto crc32 = [&](const uint8_t* data, size_t len) {
+                    uint32_t c = 0xffffffff;
+                    for (size_t i = 0; i < len; i++) c = crc_table[(c ^ data[i]) & 0xff] ^ (c >> 8);
+                    return c ^ 0xffffffff;
+                };
+                auto write32be = [](std::vector<uint8_t>& v, uint32_t val) {
+                    v.push_back((val >> 24) & 0xff); v.push_back((val >> 16) & 0xff);
+                    v.push_back((val >> 8) & 0xff); v.push_back(val & 0xff);
+                };
+                auto writeChunk = [&](const char* type, const std::vector<uint8_t>& data) {
+                    write32be(png, (uint32_t)data.size());
+                    png.insert(png.end(), type, type + 4);
+                    png.insert(png.end(), data.begin(), data.end());
+                    std::vector<uint8_t> forCrc(type, type + 4);
+                    forCrc.insert(forCrc.end(), data.begin(), data.end());
+                    write32be(png, crc32(forCrc.data(), forCrc.size()));
+                };
+
+                png = {0x89, 'P', 'N', 'G', 0x0D, 0x0A, 0x1A, 0x0A};
+
+                std::vector<uint8_t> ihdr(13);
+                ihdr[0] = (w >> 24) & 0xff; ihdr[1] = (w >> 16) & 0xff; ihdr[2] = (w >> 8) & 0xff; ihdr[3] = w & 0xff;
+                ihdr[4] = (h >> 24) & 0xff; ihdr[5] = (h >> 16) & 0xff; ihdr[6] = (h >> 8) & 0xff; ihdr[7] = h & 0xff;
+                ihdr[8] = 8; ihdr[9] = 6; ihdr[10] = 0; ihdr[11] = 0; ihdr[12] = 0;
+                writeChunk("IHDR", ihdr);
+
+                std::vector<uint8_t> raw;
+                for (int y = 0; y < h; y++) {
+                    raw.push_back(0);
+                    raw.insert(raw.end(), exportData.begin() + y * w * 4, exportData.begin() + (y + 1) * w * 4);
+                }
+
+                std::vector<uint8_t> deflated;
+                deflated.push_back(0x78); deflated.push_back(0x01);
+                size_t pos = 0;
+                while (pos < raw.size()) {
+                    size_t remain = raw.size() - pos;
+                    size_t blockLen = remain > 65535 ? 65535 : remain;
+                    bool last = (pos + blockLen >= raw.size());
+                    deflated.push_back(last ? 1 : 0);
+                    deflated.push_back(blockLen & 0xff);
+                    deflated.push_back((blockLen >> 8) & 0xff);
+                    deflated.push_back(~blockLen & 0xff);
+                    deflated.push_back((~blockLen >> 8) & 0xff);
+                    deflated.insert(deflated.end(), raw.begin() + pos, raw.begin() + pos + blockLen);
+                    pos += blockLen;
+                }
+                uint32_t adler = 1;
+                for (size_t i = 0; i < raw.size(); i++) {
+                    uint32_t s1 = adler & 0xffff, s2 = (adler >> 16) & 0xffff;
+                    s1 = (s1 + raw[i]) % 65521;
+                    s2 = (s2 + s1) % 65521;
+                    adler = (s2 << 16) | s1;
+                }
+                deflated.push_back((adler >> 24) & 0xff);
+                deflated.push_back((adler >> 16) & 0xff);
+                deflated.push_back((adler >> 8) & 0xff);
+                deflated.push_back(adler & 0xff);
+                writeChunk("IDAT", deflated);
+                writeChunk("IEND", {});
+
+                nw.beginNode("Video");
+                nw.beginProps();
+                nw.addPropI64(getVideoID(mi));
+                nw.addPropString("Video::" + mat.name + "\x00\x01Clip");
+                nw.addPropString("Clip");
+                nw.endProps();
+                {
+                    nw.beginNode("Type");
+                    nw.beginProps(); nw.addPropString("Clip"); nw.endProps();
+                    nw.endNodeNoNested();
+                    nw.beginNode("Content");
+                    nw.beginProps(); nw.addPropRawBytes(png.data(), png.size()); nw.endProps();
+                    nw.endNodeNoNested();
+                }
+                nw.endNode();
+
+                nw.beginNode("Texture");
+                nw.beginProps();
+                nw.addPropI64(getTextureID(mi));
+                nw.addPropString("Texture::" + mat.name + "\x00\x01");
+                nw.addPropString("");
+                nw.endProps();
+                {
+                    nw.beginNode("Type");
+                    nw.beginProps(); nw.addPropString("TextureVideoClip"); nw.endProps();
+                    nw.endNodeNoNested();
+                    nw.beginNode("Version");
+                    nw.beginProps(); nw.addPropI32(202); nw.endProps();
+                    nw.endNodeNoNested();
+                    nw.beginNode("TextureName");
+                    nw.beginProps(); nw.addPropString("Texture::" + mat.name); nw.endProps();
+                    nw.endNodeNoNested();
+                    nw.beginNode("Media");
+                    nw.beginProps(); nw.addPropString("Video::" + mat.name); nw.endProps();
+                    nw.endNodeNoNested();
+                    nw.beginNode("FileName");
+                    nw.beginProps(); nw.addPropString(mat.name + ".png"); nw.endProps();
+                    nw.endNodeNoNested();
+                    nw.beginNode("RelativeFilename");
+                    nw.beginProps(); nw.addPropString(mat.name + ".png"); nw.endProps();
+                    nw.endNodeNoNested();
+                }
+                nw.endNode();
             }
         }
     }
-    out << "}\n\n";
+    nw.endNode();
 
-    out << "Connections:  {\n";
-    for (size_t i = 0; i < model.meshes.size(); i++) {
-        out << "\tC: \"OO\"," << getGeoID(i) << "," << getModelID(i) << "\n";
-        out << "\tC: \"OO\"," << getModelID(i) << ",0\n";
-    }
+    nw.beginNode("Connections");
+    nw.beginProps(); nw.endProps();
+    {
+        auto addConn = [&](const std::string& type, int64_t child, int64_t parent) {
+            nw.beginNode("C");
+            nw.beginProps();
+            nw.addPropString(type);
+            nw.addPropI64(child);
+            nw.addPropI64(parent);
+            nw.endProps();
+            nw.endNodeNoNested();
+        };
+        auto addConnProp = [&](const std::string& type, int64_t child, int64_t parent, const std::string& prop) {
+            nw.beginNode("C");
+            nw.beginProps();
+            nw.addPropString(type);
+            nw.addPropI64(child);
+            nw.addPropI64(parent);
+            nw.addPropString(prop);
+            nw.endProps();
+            nw.endNodeNoNested();
+        };
 
-    if (hasSkeleton) {
-        for (size_t i = 0; i < model.skeleton.bones.size(); i++) {
-            int p = model.skeleton.bones[i].parentIndex;
-            out << "\tC: \"OO\"," << getBoneID(i) << "," << (p >= 0 ? getBoneID(p) : 0) << "\n";
-        }
+        addConn("OO", 100000, 0);
 
         for (size_t i = 0; i < model.meshes.size(); i++) {
-            if (!model.meshes[i].hasSkinning) continue;
-            out << "\tC: \"OO\"," << getSkinID(i) << "," << getGeoID(i) << "\n";
+            addConn("OO", getModelID(i), 100000);
+            addConn("OO", getGeoID(i), getModelID(i));
+        }
 
-            std::set<int> bonesRef;
-            for (const auto& v : model.meshes[i].vertices) {
-                for (int b = 0; b < 4; b++) {
-                    if (v.boneWeights[b] > 0.001f) {
-                        int local = v.boneIndices[b];
-                        int global = -1;
-                         if (local >= 0) {
-                            if (!model.meshes[i].bonesUsed.empty() && local < (int)model.meshes[i].bonesUsed.size()) {
-                                int used = model.meshes[i].bonesUsed[local];
-                                if (used >= 0 && used < (int)model.boneIndexArray.size()) {
-                                    std::string bn = model.boneIndexArray[used];
-                                    if (boneLookup.count(bn)) global = boneLookup[bn];
-                                }
-                            } else if (local < (int)model.boneIndexArray.size()) {
-                                std::string bn = model.boneIndexArray[local];
-                                if (boneLookup.count(bn)) global = boneLookup[bn];
-                            }
-                        }
-                        if (global != -1) bonesRef.insert(global);
-                    }
+        if (hasSkeleton) {
+            for (size_t i = 0; i < model.skeleton.bones.size(); i++) {
+                int parentIdx = model.skeleton.bones[i].parentIndex;
+                if (parentIdx >= 0) {
+                    addConn("OO", getBoneID(i), getBoneID(parentIdx));
+                } else {
+                    addConn("OO", getBoneID(i), 100000);
                 }
             }
 
-            for (int bIdx : bonesRef) {
-                out << "\tC: \"OO\"," << getClusterID(i, bIdx) << "," << getSkinID(i) << "\n";
-                out << "\tC: \"OO\"," << getBoneID(bIdx) << "," << getClusterID(i, bIdx) << "\n";
+            for (size_t mi = 0; mi < model.meshes.size(); mi++) {
+                if (!model.meshes[mi].hasSkinning || meshBoneSets[mi].empty()) continue;
+                addConn("OO", getSkinID(mi), getGeoID(mi));
+                for (int boneIdx : meshBoneSets[mi]) {
+                    addConn("OO", getClusterID(mi, boneIdx), getSkinID(mi));
+                    addConn("OO", getBoneID(boneIdx), getClusterID(mi, boneIdx));
+                }
+            }
+        }
+
+        for (size_t mi = 0; mi < model.meshes.size(); mi++) {
+            int matIdx = model.meshes[mi].materialIndex;
+            if (matIdx >= 0 && matIdx < (int)model.materials.size()) {
+                addConn("OO", getMaterialID(matIdx), getModelID(mi));
+            }
+        }
+
+        for (size_t mi = 0; mi < model.materials.size(); mi++) {
+            const auto& mat = model.materials[mi];
+            if (!mat.diffuseData.empty() && mat.diffuseWidth > 0 && mat.diffuseHeight > 0) {
+                addConnProp("OP", getTextureID(mi), getMaterialID(mi), "DiffuseColor");
+                addConn("OO", getVideoID(mi), getTextureID(mi));
             }
         }
     }
-    out << "}\n";
-    return true;
+    nw.endNode();
+
+    for (int i = 0; i < 13; i++) output.push_back(0);
+
+    std::ofstream out(outputPath, std::ios::binary);
+    if (!out) return false;
+    out.write(reinterpret_cast<const char*>(output.data()), output.size());
+    return out.good();
 }

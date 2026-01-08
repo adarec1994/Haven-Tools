@@ -191,6 +191,8 @@ static const char* s_changelogLatest = R"(
 
 - Added progress bar to import/ exporting.
 - Added export options. For now, only animations. More will come later,
-- Added FBX as an export option. File -> Export -> to FBX.
+- Added FBX binary as an export option. File -> Export -> to FBX.
+
+Note: Importing does not currently work on Linux.
 
 )";
