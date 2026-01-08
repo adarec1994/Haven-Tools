@@ -740,25 +740,6 @@ bool exportToFBX(const Model& model, const std::vector<Animation>& animations, c
         }
     }
 
-    // Compute global bone transforms for skinning
-    std::vector<Mat4> globalBoneTransforms;
-    Mat4 rootRotation = Mat4::FromTRS(0, 0, 0, -0.7071068f, 0, 0, 0.7071068f);
-
-    if (hasSkeleton) {
-        globalBoneTransforms.resize(model.skeleton.bones.size());
-        for (size_t i = 0; i < model.skeleton.bones.size(); i++) {
-            const auto& bone = model.skeleton.bones[i];
-            Mat4 local = Mat4::FromTRS(bone.posX, bone.posY, bone.posZ, bone.rotX, bone.rotY, bone.rotZ, bone.rotW);
-            if (bone.parentIndex >= 0 && bone.parentIndex < (int)i) {
-                globalBoneTransforms[i] = globalBoneTransforms[bone.parentIndex] * local;
-            } else if (bone.parentIndex < 0) {
-                globalBoneTransforms[i] = rootRotation * local;
-            } else {
-                globalBoneTransforms[i] = local;
-            }
-        }
-    }
-
     // --- Skinning Pre-processing ---
     // For each mesh, compute which skeleton bones affect it and the vertex weights
     std::vector<bool> meshHasSkin(model.meshes.size(), false);
@@ -1379,10 +1360,9 @@ bool exportToFBX(const Model& model, const std::vector<Animation>& animations, c
             // Cluster for each bone
             for (int boneIdx : meshBoneSets[mi]) {
                 const auto& infs = meshBoneInfluences[mi][boneIdx];
-                const auto& bone = model.skeleton.bones[boneIdx];
 
                 nw.beginNode("Deformer"); nw.beginProps(); nw.addPropI64(getClusterID(mi, boneIdx));
-                nw.addPropString("SubDeformer::" + bone.name + "\x00\x01Cluster");
+                nw.addPropString("SubDeformer::" + Bone.name + "\x00\x01Cluster");
                 nw.addPropString("Cluster"); nw.endProps();
                 nw.beginNode("Version"); nw.beginProps(); nw.addPropI32(100); nw.endProps(); nw.endNodeNoNested();
                 nw.beginNode("UserData"); nw.beginProps(); nw.addPropString(""); nw.addPropString(""); nw.endProps(); nw.endNodeNoNested();
@@ -1396,14 +1376,31 @@ bool exportToFBX(const Model& model, const std::vector<Animation>& animations, c
                 nw.beginNode("Indexes"); nw.beginProps(); nw.addPropI32Array(indices); nw.endProps(); nw.endNodeNoNested();
                 nw.beginNode("Weights"); nw.beginProps(); nw.addPropF64Array(weights); nw.endProps(); nw.endNodeNoNested();
 
-                // Transform - identity
-                std::vector<double> transform = {1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1};
+                // Build matrices from bone's precomputed world and inverse bind transforms
+                const auto& bone = model.skeleton.bones[boneIdx];
+
+                // Helper to build rotation matrix from quaternion
+                auto quatToMatrix = [](float qx, float qy, float qz, float qw, float tx, float ty, float tz, std::vector<double>& m) {
+                    float xx = qx*qx, yy = qy*qy, zz = qz*qz;
+                    float xy = qx*qy, xz = qx*qz, yz = qy*qz;
+                    float wx = qw*qx, wy = qw*qy, wz = qw*qz;
+                    m.resize(16);
+                    m[0] = 1 - 2*(yy+zz); m[1] = 2*(xy+wz);     m[2] = 2*(xz-wy);     m[3] = 0;
+                    m[4] = 2*(xy-wz);     m[5] = 1 - 2*(xx+zz); m[6] = 2*(yz+wx);     m[7] = 0;
+                    m[8] = 2*(xz+wy);     m[9] = 2*(yz-wx);     m[10] = 1 - 2*(xx+yy); m[11] = 0;
+                    m[12] = tx;           m[13] = ty;           m[14] = tz;            m[15] = 1;
+                };
+
+                // Transform - inverse bind pose (transforms vertices from mesh space to bone local space)
+                std::vector<double> transform;
+                quatToMatrix(bone.invBindRotX, bone.invBindRotY, bone.invBindRotZ, bone.invBindRotW,
+                            bone.invBindPosX, bone.invBindPosY, bone.invBindPosZ, transform);
                 nw.beginNode("Transform"); nw.beginProps(); nw.addPropF64Array(transform); nw.endProps(); nw.endNodeNoNested();
 
-                // TransformLink - global bone transform
+                // TransformLink - world bind pose (bone's world transform at bind time)
                 std::vector<double> transformLink;
-                const Mat4& m = globalBoneTransforms[boneIdx];
-                for (int i = 0; i < 16; i++) transformLink.push_back(m.m[i]);
+                quatToMatrix(bone.worldRotX, bone.worldRotY, bone.worldRotZ, bone.worldRotW,
+                            bone.worldPosX, bone.worldPosY, bone.worldPosZ, transformLink);
                 nw.beginNode("TransformLink"); nw.beginProps(); nw.addPropF64Array(transformLink); nw.endProps(); nw.endNodeNoNested();
 
                 nw.endNode();
