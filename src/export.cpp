@@ -652,8 +652,50 @@ bool exportToGLB(const Model& model, const std::vector<Animation>& animations, c
     return out.good();
 }
 
+struct Mat4 {
+    float m[16];
+
+    static Mat4 Identity() {
+        return {{1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1}};
+    }
+
+    static Mat4 FromTRS(float tx, float ty, float tz, float qx, float qy, float qz, float qw) {
+        float x2 = qx + qx, y2 = qy + qy, z2 = qz + qz;
+        float xx = qx * x2, xy = qx * y2, xz = qx * z2;
+        float yy = qy * y2, yz = qy * z2, zz = qz * z2;
+        float wx = qw * x2, wy = qw * y2, wz = qw * z2;
+
+        Mat4 res;
+        res.m[0] = 1.0f - (yy + zz); res.m[1] = xy + wz;          res.m[2] = xz - wy;          res.m[3] = 0;
+        res.m[4] = xy - wz;          res.m[5] = 1.0f - (xx + zz); res.m[6] = yz + wx;          res.m[7] = 0;
+        res.m[8] = xz + wy;          res.m[9] = yz - wx;          res.m[10] = 1.0f - (xx + yy); res.m[11] = 0;
+        res.m[12] = tx;              res.m[13] = ty;              res.m[14] = tz;              res.m[15] = 1;
+        return res;
+    }
+
+    Mat4 operator*(const Mat4& b) const {
+        Mat4 res;
+        for (int c = 0; c < 4; ++c) {
+            for (int r = 0; r < 4; ++r) {
+                res.m[r + c * 4] = m[r + 0 * 4] * b.m[0 + c * 4] +
+                                   m[r + 1 * 4] * b.m[1 + c * 4] +
+                                   m[r + 2 * 4] * b.m[2 + c * 4] +
+                                   m[r + 3 * 4] * b.m[3 + c * 4];
+            }
+        }
+        return res;
+    }
+};
+
 static void fbxWriteVec3(std::ofstream& out, float x, float y, float z) {
     out << x << "," << y << "," << z;
+}
+
+static void fbxWriteMatrix(std::ofstream& out, const Mat4& mat) {
+    for (int i = 0; i < 16; i++) {
+        if (i > 0) out << ",";
+        out << mat.m[i];
+    }
 }
 
 static void fbxWriteQuatToEuler(std::ofstream& out, float x, float y, float z, float w) {
@@ -678,7 +720,6 @@ bool exportToFBX(const Model& model, const std::vector<Animation>& animations, c
     if (!out) return false;
 
     auto getGeoID = [](int i) { return 200000LL + i; };
-    auto getMatID = [](int i) { return 300000LL + i; };
     auto getBoneID = [](int i) { return 400000LL + i; };
     auto getModelID = [](int i) { return 500000LL + i; };
     auto getSkinID = [](int i) { return 600000LL + i; };
@@ -687,13 +728,29 @@ bool exportToFBX(const Model& model, const std::vector<Animation>& animations, c
     bool hasSkeleton = !model.skeleton.bones.empty();
     int deformerCount = 0;
 
+    // Pre-calculate Global Transforms for the Skeleton to fix "Detached Mesh"
+    std::vector<Mat4> globalBoneTransforms;
     if (hasSkeleton) {
-        std::map<std::string, int> boneLookup;
+        globalBoneTransforms.resize(model.skeleton.bones.size());
+        for (size_t i = 0; i < model.skeleton.bones.size(); i++) {
+            const auto& bone = model.skeleton.bones[i];
+            Mat4 local = Mat4::FromTRS(bone.posX, bone.posY, bone.posZ, bone.rotX, bone.rotY, bone.rotZ, bone.rotW);
+            if (bone.parentIndex >= 0) {
+                globalBoneTransforms[i] = globalBoneTransforms[bone.parentIndex] * local;
+            } else {
+                globalBoneTransforms[i] = local;
+            }
+        }
+    }
+
+    // Count Deformers
+    std::map<std::string, int> boneLookup;
+    if (hasSkeleton) {
         for (size_t i = 0; i < model.skeleton.bones.size(); i++) boneLookup[model.skeleton.bones[i].name] = (int)i;
 
         for (size_t i = 0; i < model.meshes.size(); i++) {
             if (model.meshes[i].hasSkinning) {
-                deformerCount++;
+                deformerCount++; // Skin
                 std::set<int> uniqueBones;
                 for (const auto& v : model.meshes[i].vertices) {
                     for (int b = 0; b < 4; b++) {
@@ -716,7 +773,7 @@ bool exportToFBX(const Model& model, const std::vector<Animation>& animations, c
                         }
                     }
                 }
-                deformerCount += (int)uniqueBones.size();
+                deformerCount += (int)uniqueBones.size(); // Clusters
             }
         }
     }
@@ -726,13 +783,12 @@ bool exportToFBX(const Model& model, const std::vector<Animation>& animations, c
     out << "GlobalSettings:  {\n\tVersion: 1000\n\tProperties70:  {\n";
     out << "\t\tP: \"UpAxis\", \"int\", \"Integer\", \"\",1\n";
     out << "\t\tP: \"CoordAxis\", \"int\", \"Integer\", \"\",2\n";
-    out << "\t\tP: \"UnitScaleFactor\", \"double\", \"Number\", \"\",100.0\n\t}\n}\n";
+    out << "\t\tP: \"UnitScaleFactor\", \"double\", \"Number\", \"\",1.0\n\t}\n}\n";
 
     out << "Definitions:  {\n\tVersion: 100\n";
-    out << "\tCount: " << (model.meshes.size() * 2 + model.materials.size() + model.skeleton.bones.size() + deformerCount) << "\n";
+    out << "\tCount: " << (model.meshes.size() * 2 + model.skeleton.bones.size() + deformerCount) << "\n";
     out << "\tObjectType: \"Model\" {\n\t\tCount: " << (model.meshes.size() + model.skeleton.bones.size()) << "\n\t}\n";
     out << "\tObjectType: \"Geometry\" {\n\t\tCount: " << model.meshes.size() << "\n\t}\n";
-    out << "\tObjectType: \"Material\" {\n\t\tCount: " << model.materials.size() << "\n\t}\n";
     if (deformerCount > 0) out << "\tObjectType: \"Deformer\" {\n\t\tCount: " << deformerCount << "\n\t}\n";
     out << "}\n\n";
 
@@ -764,24 +820,7 @@ bool exportToFBX(const Model& model, const std::vector<Animation>& animations, c
             fbxWriteVec3(out, mesh.vertices[v].nx, mesh.vertices[v].ny, mesh.vertices[v].nz);
         }
         out << "\n\t\t\t}\n\t\t}\n";
-
-        out << "\t\tLayerElementUV: 0 {\n\t\t\tVersion: 101\n\t\t\tName: \"UVMap\"\n\t\t\tMappingInformationType: \"ByPolygonVertex\"\n\t\t\tReferenceInformationType: \"Direct\"\n";
-        out << "\t\t\tUV: * " << (mesh.indices.size() * 2) << " {\n\t\t\t\ta: ";
-        for (size_t idx = 0; idx < mesh.indices.size(); idx++) {
-            int v = mesh.indices[idx];
-            if (idx > 0) out << ",";
-            out << mesh.vertices[v].u << "," << (1.0f - mesh.vertices[v].v);
-        }
-        out << "\n\t\t\t}\n\t\t}\n";
-
-        out << "\t\tLayerElementMaterial: 0 {\n\t\t\tVersion: 101\n\t\t\tMappingInformationType: \"AllSame\"\n\t\t\tReferenceInformationType: \"IndexToDirect\"\n";
-        out << "\t\t\tMaterials: * 1 {\n\t\t\t\ta: 0\n\t\t\t}\n\t\t}\n\t}\n";
-    }
-
-    for (size_t i = 0; i < model.materials.size(); i++) {
-        out << "\tMaterial: " << getMatID(i) << ", \"Material::" << model.materials[i].name << "\", \"\" {\n";
-        out << "\t\tVersion: 102\n\t\tShadingModel: \"phong\"\n\t\tProperties70:  {\n";
-        out << "\t\t\tP: \"Diffuse\", \"Vector3D\", \"Vector\", \"\",0.8,0.8,0.8\n\t\t}\n\t}\n";
+        out << "\t}\n";
     }
 
     if (hasSkeleton) {
@@ -807,9 +846,6 @@ bool exportToFBX(const Model& model, const std::vector<Animation>& animations, c
     }
 
     if (hasSkeleton) {
-        std::map<std::string, int> boneLookup;
-        for (size_t i = 0; i < model.skeleton.bones.size(); i++) boneLookup[model.skeleton.bones[i].name] = (int)i;
-
         for (size_t i = 0; i < model.meshes.size(); i++) {
             if (!model.meshes[i].hasSkinning) continue;
 
@@ -849,8 +885,12 @@ bool exportToFBX(const Model& model, const std::vector<Animation>& animations, c
                 out << "\t\tWeights: * " << infs.size() << " {\n\t\t\ta: ";
                 for (size_t k = 0; k < infs.size(); k++) { if (k > 0) out << ","; out << infs[k].second; }
                 out << "\n\t\t}\n";
+
+                // CRITICAL FIX: Write the Global Transform of the Mesh (Identity) and the Bone (Calculated)
                 out << "\t\tTransform: * 16 {\n\t\t\ta: 1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1\n\t\t}\n";
-                out << "\t\tTransformLink: * 16 {\n\t\t\ta: 1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1\n\t\t}\n\t}\n";
+                out << "\t\tTransformLink: * 16 {\n\t\t\ta: ";
+                fbxWriteMatrix(out, globalBoneTransforms[boneIdx]);
+                out << "\n\t\t}\n\t}\n";
             }
         }
     }
@@ -859,9 +899,6 @@ bool exportToFBX(const Model& model, const std::vector<Animation>& animations, c
     out << "Connections:  {\n";
     for (size_t i = 0; i < model.meshes.size(); i++) {
         out << "\tC: \"OO\"," << getGeoID(i) << "," << getModelID(i) << "\n";
-        if (model.meshes[i].materialIndex >= 0 && model.meshes[i].materialIndex < (int)model.materials.size()) {
-            out << "\tC: \"OO\"," << getMatID(model.meshes[i].materialIndex) << "," << getModelID(i) << "\n";
-        }
         out << "\tC: \"OO\"," << getModelID(i) << ",0\n";
     }
 
@@ -871,9 +908,6 @@ bool exportToFBX(const Model& model, const std::vector<Animation>& animations, c
             out << "\tC: \"OO\"," << getBoneID(i) << "," << (p >= 0 ? getBoneID(p) : 0) << "\n";
         }
 
-        std::map<std::string, int> boneLookup;
-        for (size_t i = 0; i < model.skeleton.bones.size(); i++) boneLookup[model.skeleton.bones[i].name] = (int)i;
-
         for (size_t i = 0; i < model.meshes.size(); i++) {
             if (!model.meshes[i].hasSkinning) continue;
             out << "\tC: \"OO\"," << getSkinID(i) << "," << getGeoID(i) << "\n";
@@ -882,8 +916,8 @@ bool exportToFBX(const Model& model, const std::vector<Animation>& animations, c
             for (const auto& v : model.meshes[i].vertices) {
                 for (int b = 0; b < 4; b++) {
                     if (v.boneWeights[b] > 0.001f) {
-                         int local = v.boneIndices[b];
-                         int global = -1;
+                        int local = v.boneIndices[b];
+                        int global = -1;
                          if (local >= 0) {
                             if (!model.meshes[i].bonesUsed.empty() && local < (int)model.meshes[i].bonesUsed.size()) {
                                 int used = model.meshes[i].bonesUsed[local];

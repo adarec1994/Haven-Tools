@@ -190,6 +190,7 @@ static const char* s_changelogLatest = R"(
 [Release 1.11]
 
 - Added progress bar to import/ exporting.
-- Added export options.
+- Added export options. For now, only animations. More will come later,
+- Added FBX as an export option. File -> Export -> to FBX.
 
 )";
