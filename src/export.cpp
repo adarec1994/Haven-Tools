@@ -5,6 +5,9 @@
 #include <map>
 #include <cmath>
 #include <algorithm>
+#include <sstream>
+#include <iomanip>
+#include <set>
 
 static const uint32_t GLTF_MAGIC = 0x46546C67;
 static const uint32_t GLTF_VERSION = 2;
@@ -647,4 +650,263 @@ bool exportToGLB(const Model& model, const std::vector<Animation>& animations, c
     out.write(reinterpret_cast<const char*>(binBuffer.data()), binBuffer.size());
     
     return out.good();
+}
+
+static void fbxWriteVec3(std::ofstream& out, float x, float y, float z) {
+    out << x << "," << y << "," << z;
+}
+
+static void fbxWriteQuatToEuler(std::ofstream& out, float x, float y, float z, float w) {
+    float sinr_cosp = 2 * (w * x + y * z);
+    float cosr_cosp = 1 - 2 * (x * x + y * y);
+    float ex = std::atan2(sinr_cosp, cosr_cosp);
+
+    float sinp = 2 * (w * y - z * x);
+    float ey = 0;
+    if (std::abs(sinp) >= 1) ey = std::copysign(3.14159265f / 2, sinp);
+    else ey = std::asin(sinp);
+
+    float siny_cosp = 2 * (w * z + x * y);
+    float cosy_cosp = 1 - 2 * (y * y + z * z);
+    float ez = std::atan2(siny_cosp, cosy_cosp);
+
+    out << (ex * 180.0f / 3.14159265f) << "," << (ey * 180.0f / 3.14159265f) << "," << (ez * 180.0f / 3.14159265f);
+}
+
+bool exportToFBX(const Model& model, const std::vector<Animation>& animations, const std::string& outputPath) {
+    std::ofstream out(outputPath);
+    if (!out) return false;
+
+    auto getGeoID = [](int i) { return 200000LL + i; };
+    auto getMatID = [](int i) { return 300000LL + i; };
+    auto getBoneID = [](int i) { return 400000LL + i; };
+    auto getModelID = [](int i) { return 500000LL + i; };
+    auto getSkinID = [](int i) { return 600000LL + i; };
+    auto getClusterID = [](int m, int b) { return 7000000LL + (int64_t)m * 10000 + b; };
+
+    bool hasSkeleton = !model.skeleton.bones.empty();
+    int deformerCount = 0;
+
+    if (hasSkeleton) {
+        std::map<std::string, int> boneLookup;
+        for (size_t i = 0; i < model.skeleton.bones.size(); i++) boneLookup[model.skeleton.bones[i].name] = (int)i;
+
+        for (size_t i = 0; i < model.meshes.size(); i++) {
+            if (model.meshes[i].hasSkinning) {
+                deformerCount++;
+                std::set<int> uniqueBones;
+                for (const auto& v : model.meshes[i].vertices) {
+                    for (int b = 0; b < 4; b++) {
+                        if (v.boneWeights[b] > 0.001f) {
+                            int local = v.boneIndices[b];
+                            int global = -1;
+                            if (local >= 0) {
+                                if (!model.meshes[i].bonesUsed.empty() && local < (int)model.meshes[i].bonesUsed.size()) {
+                                    int used = model.meshes[i].bonesUsed[local];
+                                    if (used >= 0 && used < (int)model.boneIndexArray.size()) {
+                                        std::string bn = model.boneIndexArray[used];
+                                        if (boneLookup.count(bn)) global = boneLookup[bn];
+                                    }
+                                } else if (local < (int)model.boneIndexArray.size()) {
+                                    std::string bn = model.boneIndexArray[local];
+                                    if (boneLookup.count(bn)) global = boneLookup[bn];
+                                }
+                            }
+                            if (global != -1) uniqueBones.insert(global);
+                        }
+                    }
+                }
+                deformerCount += (int)uniqueBones.size();
+            }
+        }
+    }
+
+    out << "; FBX 7.5.0 project file\n";
+    out << "FBXHeaderExtension:  {\n\tFBXHeaderVersion: 1003\n\tFBXVersion: 7500\n}\n";
+    out << "GlobalSettings:  {\n\tVersion: 1000\n\tProperties70:  {\n";
+    out << "\t\tP: \"UpAxis\", \"int\", \"Integer\", \"\",1\n";
+    out << "\t\tP: \"CoordAxis\", \"int\", \"Integer\", \"\",2\n";
+    out << "\t\tP: \"UnitScaleFactor\", \"double\", \"Number\", \"\",100.0\n\t}\n}\n";
+
+    out << "Definitions:  {\n\tVersion: 100\n";
+    out << "\tCount: " << (model.meshes.size() * 2 + model.materials.size() + model.skeleton.bones.size() + deformerCount) << "\n";
+    out << "\tObjectType: \"Model\" {\n\t\tCount: " << (model.meshes.size() + model.skeleton.bones.size()) << "\n\t}\n";
+    out << "\tObjectType: \"Geometry\" {\n\t\tCount: " << model.meshes.size() << "\n\t}\n";
+    out << "\tObjectType: \"Material\" {\n\t\tCount: " << model.materials.size() << "\n\t}\n";
+    if (deformerCount > 0) out << "\tObjectType: \"Deformer\" {\n\t\tCount: " << deformerCount << "\n\t}\n";
+    out << "}\n\n";
+
+    out << "Objects:  {\n";
+
+    for (size_t i = 0; i < model.meshes.size(); i++) {
+        const auto& mesh = model.meshes[i];
+        out << "\tGeometry: " << getGeoID(i) << ", \"Geometry::\", \"Mesh\" {\n";
+
+        out << "\t\tVertices: * " << (mesh.vertices.size() * 3) << " {\n\t\t\ta: ";
+        for (size_t v = 0; v < mesh.vertices.size(); v++) {
+            if (v > 0) out << ",";
+            fbxWriteVec3(out, mesh.vertices[v].x, mesh.vertices[v].y, mesh.vertices[v].z);
+        }
+        out << "\n\t\t}\n";
+
+        out << "\t\tPolygonVertexIndex: * " << mesh.indices.size() << " {\n\t\t\ta: ";
+        for (size_t idx = 0; idx < mesh.indices.size(); idx += 3) {
+            if (idx > 0) out << ",";
+            out << mesh.indices[idx] << "," << mesh.indices[idx+1] << "," << (-1 - mesh.indices[idx+2]);
+        }
+        out << "\n\t\t}\n";
+
+        out << "\t\tLayerElementNormal: 0 {\n\t\t\tVersion: 101\n\t\t\tMappingInformationType: \"ByPolygonVertex\"\n\t\t\tReferenceInformationType: \"Direct\"\n";
+        out << "\t\t\tNormals: * " << (mesh.indices.size() * 3) << " {\n\t\t\t\ta: ";
+        for (size_t idx = 0; idx < mesh.indices.size(); idx++) {
+            int v = mesh.indices[idx];
+            if (idx > 0) out << ",";
+            fbxWriteVec3(out, mesh.vertices[v].nx, mesh.vertices[v].ny, mesh.vertices[v].nz);
+        }
+        out << "\n\t\t\t}\n\t\t}\n";
+
+        out << "\t\tLayerElementUV: 0 {\n\t\t\tVersion: 101\n\t\t\tName: \"UVMap\"\n\t\t\tMappingInformationType: \"ByPolygonVertex\"\n\t\t\tReferenceInformationType: \"Direct\"\n";
+        out << "\t\t\tUV: * " << (mesh.indices.size() * 2) << " {\n\t\t\t\ta: ";
+        for (size_t idx = 0; idx < mesh.indices.size(); idx++) {
+            int v = mesh.indices[idx];
+            if (idx > 0) out << ",";
+            out << mesh.vertices[v].u << "," << (1.0f - mesh.vertices[v].v);
+        }
+        out << "\n\t\t\t}\n\t\t}\n";
+
+        out << "\t\tLayerElementMaterial: 0 {\n\t\t\tVersion: 101\n\t\t\tMappingInformationType: \"AllSame\"\n\t\t\tReferenceInformationType: \"IndexToDirect\"\n";
+        out << "\t\t\tMaterials: * 1 {\n\t\t\t\ta: 0\n\t\t\t}\n\t\t}\n\t}\n";
+    }
+
+    for (size_t i = 0; i < model.materials.size(); i++) {
+        out << "\tMaterial: " << getMatID(i) << ", \"Material::" << model.materials[i].name << "\", \"\" {\n";
+        out << "\t\tVersion: 102\n\t\tShadingModel: \"phong\"\n\t\tProperties70:  {\n";
+        out << "\t\t\tP: \"Diffuse\", \"Vector3D\", \"Vector\", \"\",0.8,0.8,0.8\n\t\t}\n\t}\n";
+    }
+
+    if (hasSkeleton) {
+        for (size_t i = 0; i < model.skeleton.bones.size(); i++) {
+            const auto& bone = model.skeleton.bones[i];
+            out << "\tModel: " << getBoneID(i) << ", \"Model::" << bone.name << "\", \"LimbNode\" {\n";
+            out << "\t\tVersion: 232\n\t\tProperties70:  {\n";
+            out << "\t\t\tP: \"Lcl Translation\", \"Lcl Translation\", \"\", \"A\",";
+            fbxWriteVec3(out, bone.posX, bone.posY, bone.posZ);
+            out << "\n\t\t\tP: \"Lcl Rotation\", \"Lcl Rotation\", \"\", \"A\",";
+            fbxWriteQuatToEuler(out, bone.rotX, bone.rotY, bone.rotZ, bone.rotW);
+            out << "\n\t\t}\n\t}\n";
+        }
+    }
+
+    for (size_t i = 0; i < model.meshes.size(); i++) {
+        out << "\tModel: " << getModelID(i) << ", \"Model::" << model.meshes[i].name << "\", \"Mesh\" {\n";
+        out << "\t\tVersion: 232\n\t\tProperties70:  {\n";
+        out << "\t\t\tP: \"Lcl Translation\", \"Lcl Translation\", \"\", \"A\", 0,0,0\n";
+        out << "\t\t\tP: \"Lcl Rotation\", \"Lcl Rotation\", \"\", \"A\", 0,0,0\n";
+        out << "\t\t\tP: \"Lcl Scaling\", \"Lcl Scaling\", \"\", \"A\", 1,1,1\n";
+        out << "\t\t}\n\t}\n";
+    }
+
+    if (hasSkeleton) {
+        std::map<std::string, int> boneLookup;
+        for (size_t i = 0; i < model.skeleton.bones.size(); i++) boneLookup[model.skeleton.bones[i].name] = (int)i;
+
+        for (size_t i = 0; i < model.meshes.size(); i++) {
+            if (!model.meshes[i].hasSkinning) continue;
+
+            out << "\tDeformer: " << getSkinID(i) << ", \"Deformer::Skin\", \"Skin\" {\n";
+            out << "\t\tVersion: 101\n\t}\n";
+
+            std::map<int, std::vector<std::pair<int, float>>> boneInfluences;
+            for (size_t vIdx = 0; vIdx < model.meshes[i].vertices.size(); vIdx++) {
+                const auto& v = model.meshes[i].vertices[vIdx];
+                for (int b = 0; b < 4; b++) {
+                    if (v.boneWeights[b] > 0.001f) {
+                        int local = v.boneIndices[b];
+                        int global = -1;
+                        if (local >= 0) {
+                            if (!model.meshes[i].bonesUsed.empty() && local < (int)model.meshes[i].bonesUsed.size()) {
+                                int used = model.meshes[i].bonesUsed[local];
+                                if (used >= 0 && used < (int)model.boneIndexArray.size()) {
+                                    std::string bn = model.boneIndexArray[used];
+                                    if (boneLookup.count(bn)) global = boneLookup[bn];
+                                }
+                            } else if (local < (int)model.boneIndexArray.size()) {
+                                std::string bn = model.boneIndexArray[local];
+                                if (boneLookup.count(bn)) global = boneLookup[bn];
+                            }
+                        }
+                        if (global != -1) boneInfluences[global].push_back({(int)vIdx, v.boneWeights[b]});
+                    }
+                }
+            }
+
+            for (auto const& [boneIdx, infs] : boneInfluences) {
+                out << "\tDeformer: " << getClusterID(i, boneIdx) << ", \"SubDeformer::Cluster\", \"Cluster\" {\n";
+                out << "\t\tVersion: 100\n";
+                out << "\t\tIndexes: * " << infs.size() << " {\n\t\t\ta: ";
+                for (size_t k = 0; k < infs.size(); k++) { if (k > 0) out << ","; out << infs[k].first; }
+                out << "\n\t\t}\n";
+                out << "\t\tWeights: * " << infs.size() << " {\n\t\t\ta: ";
+                for (size_t k = 0; k < infs.size(); k++) { if (k > 0) out << ","; out << infs[k].second; }
+                out << "\n\t\t}\n";
+                out << "\t\tTransform: * 16 {\n\t\t\ta: 1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1\n\t\t}\n";
+                out << "\t\tTransformLink: * 16 {\n\t\t\ta: 1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1\n\t\t}\n\t}\n";
+            }
+        }
+    }
+    out << "}\n\n";
+
+    out << "Connections:  {\n";
+    for (size_t i = 0; i < model.meshes.size(); i++) {
+        out << "\tC: \"OO\"," << getGeoID(i) << "," << getModelID(i) << "\n";
+        if (model.meshes[i].materialIndex >= 0 && model.meshes[i].materialIndex < (int)model.materials.size()) {
+            out << "\tC: \"OO\"," << getMatID(model.meshes[i].materialIndex) << "," << getModelID(i) << "\n";
+        }
+        out << "\tC: \"OO\"," << getModelID(i) << ",0\n";
+    }
+
+    if (hasSkeleton) {
+        for (size_t i = 0; i < model.skeleton.bones.size(); i++) {
+            int p = model.skeleton.bones[i].parentIndex;
+            out << "\tC: \"OO\"," << getBoneID(i) << "," << (p >= 0 ? getBoneID(p) : 0) << "\n";
+        }
+
+        std::map<std::string, int> boneLookup;
+        for (size_t i = 0; i < model.skeleton.bones.size(); i++) boneLookup[model.skeleton.bones[i].name] = (int)i;
+
+        for (size_t i = 0; i < model.meshes.size(); i++) {
+            if (!model.meshes[i].hasSkinning) continue;
+            out << "\tC: \"OO\"," << getSkinID(i) << "," << getGeoID(i) << "\n";
+
+            std::set<int> bonesRef;
+            for (const auto& v : model.meshes[i].vertices) {
+                for (int b = 0; b < 4; b++) {
+                    if (v.boneWeights[b] > 0.001f) {
+                         int local = v.boneIndices[b];
+                         int global = -1;
+                         if (local >= 0) {
+                            if (!model.meshes[i].bonesUsed.empty() && local < (int)model.meshes[i].bonesUsed.size()) {
+                                int used = model.meshes[i].bonesUsed[local];
+                                if (used >= 0 && used < (int)model.boneIndexArray.size()) {
+                                    std::string bn = model.boneIndexArray[used];
+                                    if (boneLookup.count(bn)) global = boneLookup[bn];
+                                }
+                            } else if (local < (int)model.boneIndexArray.size()) {
+                                std::string bn = model.boneIndexArray[local];
+                                if (boneLookup.count(bn)) global = boneLookup[bn];
+                            }
+                        }
+                        if (global != -1) bonesRef.insert(global);
+                    }
+                }
+            }
+
+            for (int bIdx : bonesRef) {
+                out << "\tC: \"OO\"," << getClusterID(i, bIdx) << "," << getSkinID(i) << "\n";
+                out << "\tC: \"OO\"," << getBoneID(bIdx) << "," << getClusterID(i, bIdx) << "\n";
+            }
+        }
+    }
+    out << "}\n";
+    return true;
 }

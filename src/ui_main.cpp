@@ -26,6 +26,7 @@ static std::string s_pendingExportPath;
 static bool s_showExportOptions = false;
 static std::map<std::string, bool> s_animSelection;
 static bool s_selectAllAnims = true;
+static bool s_isFbxExport = false;
 
 void runLoadingTask(AppState* statePtr) {
     AppState& state = *statePtr;
@@ -252,10 +253,17 @@ void runExportTask(AppState* statePtr) {
         state.preloadStatus = "Processing: " + animFile.first;
     }
 
-    state.preloadStatus = "Writing GLB file...";
+    state.preloadStatus = "Writing File...";
     state.preloadProgress = 0.95f;
 
-    if (exportToGLB(state.currentModel, exportAnims, s_pendingExportPath)) {
+    bool success = false;
+    if (s_isFbxExport) {
+        success = exportToFBX(state.currentModel, exportAnims, s_pendingExportPath);
+    } else {
+        success = exportToGLB(state.currentModel, exportAnims, s_pendingExportPath);
+    }
+
+    if (success) {
         state.statusMessage = "Exported: " + s_pendingExportPath + " (" + std::to_string(exportAnims.size()) + " anims)";
     } else {
         state.statusMessage = "Export failed!";
@@ -539,6 +547,31 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
     if (ImGuiFileDialog::Instance()->Display("ExportCurrentGLB", ImGuiWindowFlags_NoCollapse, ImVec2(600, 400))) {
         if (ImGuiFileDialog::Instance()->IsOk() && state.hasModel) {
             s_pendingExportPath = ImGuiFileDialog::Instance()->GetFilePathName();
+            s_isFbxExport = false;
+            s_animSelection.clear();
+            for (const auto& animFile : state.availableAnimFiles) {
+                std::string animName = animFile.first;
+                size_t dotPos = animName.rfind('.');
+                if (dotPos != std::string::npos) animName = animName.substr(0, dotPos);
+                bool valid = state.currentModelAnimations.empty();
+                if (!valid) {
+                    for (const auto& va : state.currentModelAnimations) {
+                        if (animName == va) { valid = true; break; }
+                    }
+                }
+                if (valid) s_animSelection[animFile.first] = true;
+            }
+            s_selectAllAnims = true;
+            s_showExportOptions = true;
+            ImGui::OpenPopup("Export Options");
+        }
+        ImGuiFileDialog::Instance()->Close();
+    }
+
+    if (ImGuiFileDialog::Instance()->Display("ExportCurrentFBX", ImGuiWindowFlags_NoCollapse, ImVec2(600, 400))) {
+        if (ImGuiFileDialog::Instance()->IsOk() && state.hasModel) {
+            s_pendingExportPath = ImGuiFileDialog::Instance()->GetFilePathName();
+            s_isFbxExport = true;
             s_animSelection.clear();
             for (const auto& animFile : state.availableAnimFiles) {
                 std::string animName = animFile.first;
@@ -966,6 +999,24 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
                     defaultName += ".glb";
                     config.fileName = defaultName;
                     ImGuiFileDialog::Instance()->OpenDialog("ExportCurrentGLB", "Export Model as GLB", ".glb", config);
+                }
+                if (ImGui::MenuItem("To FBX", nullptr, false, state.hasModel)) {
+                    IGFD::FileDialogConfig config;
+#ifdef _WIN32
+                    char* userProfile = getenv("USERPROFILE");
+                    if (userProfile) config.path = std::string(userProfile) + "\\Documents";
+                    else config.path = ".";
+#else
+                    char* home = getenv("HOME");
+                    if (home) config.path = std::string(home) + "/Documents";
+                    else config.path = ".";
+#endif
+                    std::string defaultName = state.currentModel.name;
+                    size_t dotPos = defaultName.rfind('.');
+                    if (dotPos != std::string::npos) defaultName = defaultName.substr(0, dotPos);
+                    defaultName += ".fbx";
+                    config.fileName = defaultName;
+                    ImGuiFileDialog::Instance()->OpenDialog("ExportCurrentFBX", "Export Model as FBX", ".fbx", config);
                 }
                 ImGui::EndMenu();
             }

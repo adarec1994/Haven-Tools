@@ -4,3 +4,4 @@
 #include <vector>
 
 bool exportToGLB(const Model& model, const std::vector<Animation>& animations, const std::string& outputPath);
+bool exportToFBX(const Model& model, const std::vector<Animation>& animations, const std::string& outputPath);
