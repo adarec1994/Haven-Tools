@@ -497,6 +497,43 @@ void buildCharacterLists(AppState& state) {
         loadSelectedMorphPreset(state);
     }
 
+    cd.swords.clear();
+    cd.greatswords.clear();
+    cd.daggers.clear();
+    cd.staves.clear();
+    cd.shields.clear();
+    cd.axes.clear();
+    cd.greataxes.clear();
+    cd.maces.clear();
+    cd.mauls.clear();
+
+    for (const auto& mesh : state.meshBrowser.allMeshes) {
+        if (mesh.lod != 0) continue;
+        std::string fileLower = mesh.mshFile;
+        std::transform(fileLower.begin(), fileLower.end(), fileLower.begin(), ::tolower);
+        if (fileLower.find("w_") != 0) continue;
+        std::string displayName = mesh.mshName.empty() ? mesh.mshFile : mesh.mshName;
+        if (fileLower.find("w_lsw_") == 0) {
+            cd.swords.push_back({mesh.mshFile, displayName});
+        } else if (fileLower.find("w_gsw_") == 0) {
+            cd.greatswords.push_back({mesh.mshFile, displayName});
+        } else if (fileLower.find("w_dgr_") == 0) {
+            cd.daggers.push_back({mesh.mshFile, displayName});
+        } else if (fileLower.find("w_stf_") == 0) {
+            cd.staves.push_back({mesh.mshFile, displayName});
+        } else if (fileLower.find("w_shd_") == 0) {
+            cd.shields.push_back({mesh.mshFile, displayName});
+        } else if (fileLower.find("w_axe_") == 0) {
+            cd.axes.push_back({mesh.mshFile, displayName});
+        } else if (fileLower.find("w_gax_") == 0) {
+            cd.greataxes.push_back({mesh.mshFile, displayName});
+        } else if (fileLower.find("w_mce_") == 0) {
+            cd.maces.push_back({mesh.mshFile, displayName});
+        } else if (fileLower.find("w_mal_") == 0) {
+            cd.mauls.push_back({mesh.mshFile, displayName});
+        }
+    }
+
     cd.listsBuilt = true;
 }
 
@@ -696,6 +733,129 @@ static Model* getOrLoadPart(AppState& state, const std::string& partFile) {
     return &result.first->second;
 }
 
+static void attachWeaponToBone(AppState& state, Model& model, const std::string& weaponFile, const std::string& boneName) {
+    int boneIdx = model.skeleton.findBone(boneName);
+
+    if (boneIdx < 0) {
+        std::string boneNameLower = boneName;
+        std::transform(boneNameLower.begin(), boneNameLower.end(), boneNameLower.begin(), ::tolower);
+        for (size_t i = 0; i < model.skeleton.bones.size(); i++) {
+            std::string bn = model.skeleton.bones[i].name;
+            std::transform(bn.begin(), bn.end(), bn.begin(), ::tolower);
+            if (bn == boneNameLower) {
+                boneIdx = (int)i;
+                break;
+            }
+        }
+    }
+
+    if (boneIdx < 0) {
+        std::cout << "[Weapon] Could not find bone: " << boneName << std::endl;
+        return;
+    }
+
+    Model* weaponModel = getOrLoadPart(state, weaponFile);
+    if (!weaponModel) {
+        std::cout << "[Weapon] Could not load weapon: " << weaponFile << std::endl;
+        return;
+    }
+
+    const Bone& propBone = model.skeleton.bones[boneIdx];
+
+    // Find GOB bone in weapon skeleton - this is the "magnet" point on the weapon
+    int gobIdx = weaponModel->skeleton.findBone("GOB");
+    if (gobIdx < 0) gobIdx = weaponModel->skeleton.findBone("gob");
+
+    // GOB position in weapon's world space
+    float gobX = 0, gobY = 0, gobZ = 0;
+    if (gobIdx >= 0) {
+        const Bone& gob = weaponModel->skeleton.bones[gobIdx];
+        gobX = gob.worldPosX;
+        gobY = gob.worldPosY;
+        gobZ = gob.worldPosZ;
+    }
+
+    // Check if this is a shield (for special handling)
+    bool isShield = (weaponFile.find("shd") != std::string::npos || weaponFile.find("SHD") != std::string::npos);
+
+    auto quatRotate = [](float qx, float qy, float qz, float qw, float vx, float vy, float vz, float& ox, float& oy, float& oz) {
+        float tx = 2.0f * (qy * vz - qz * vy);
+        float ty = 2.0f * (qz * vx - qx * vz);
+        float tz = 2.0f * (qx * vy - qy * vx);
+        ox = vx + qw * tx + (qy * tz - qz * ty);
+        oy = vy + qw * ty + (qz * tx - qx * tz);
+        oz = vz + qw * tz + (qx * ty - qy * tx);
+    };
+
+    auto quatMul = [](float ax, float ay, float az, float aw,
+                      float bx, float by, float bz, float bw,
+                      float& ox, float& oy, float& oz, float& ow) {
+        ox = aw * bx + ax * bw + ay * bz - az * by;
+        oy = aw * by - ax * bz + ay * bw + az * bx;
+        oz = aw * bz + ax * by - ay * bx + az * bw;
+        ow = aw * bw - ax * bx - ay * by - az * bz;
+    };
+
+    // Check if left hand - need to flip 180 degrees
+    bool isLeftHand = (boneName == "Prop17" || boneName == "Prop02");
+
+    float finalRotX = propBone.worldRotX;
+    float finalRotY = propBone.worldRotY;
+    float finalRotZ = propBone.worldRotZ;
+    float finalRotW = propBone.worldRotW;
+
+    if (isLeftHand && !isShield) {
+        // 180 degree rotation around Z axis: quat(0, 0, 1, 0)
+        float flipX, flipY, flipZ, flipW;
+        quatMul(propBone.worldRotX, propBone.worldRotY, propBone.worldRotZ, propBone.worldRotW,
+                0.0f, 0.0f, 1.0f, 0.0f,
+                flipX, flipY, flipZ, flipW);
+        finalRotX = flipX;
+        finalRotY = flipY;
+        finalRotZ = flipZ;
+        finalRotW = flipW;
+    }
+
+    for (const auto& mesh : weaponModel->meshes) {
+        Mesh meshCopy = mesh;
+
+        for (auto& v : meshCopy.vertices) {
+            // Move GOB to origin - this puts vertices in "bone local" space
+            // The skinning system will transform from here to world space
+            v.x -= gobX;
+            v.y -= gobY;
+            v.z -= gobZ;
+
+            // Set up skinning: 100% weight to the prop bone (index 0 in our bonesUsed)
+            v.boneIndices[0] = 0;
+            v.boneWeights[0] = 1.0f;
+            v.boneIndices[1] = v.boneIndices[2] = v.boneIndices[3] = 0;
+            v.boneWeights[1] = v.boneWeights[2] = v.boneWeights[3] = 0.0f;
+        }
+
+        // Set up skinning to the prop bone
+        meshCopy.hasSkinning = true;
+        meshCopy.skipInvBind = true;  // Vertices are in bone-local space, skip invBind transform
+        meshCopy.bonesUsed.clear();
+        meshCopy.bonesUsed.push_back(boneIdx);
+        meshCopy.skinningBoneMap.clear();
+        meshCopy.skinningBoneMap.push_back(boneIdx);
+        meshCopy.skinningCacheBuilt = true;
+
+        model.meshes.push_back(std::move(meshCopy));
+    }
+
+    for (const auto& mat : weaponModel->materials) {
+        bool found = false;
+        for (const auto& existing : model.materials) {
+            if (existing.name == mat.name) { found = true; break; }
+        }
+        if (!found) {
+            model.materials.push_back(mat);
+        }
+    }
+}
+
 void loadCharacterModel(AppState& state) {
     auto& cd = state.charDesigner;
     if (!cd.needsRebuild) return;
@@ -854,6 +1014,70 @@ void loadCharacterModel(AppState& state) {
     }
     if (cd.glovesStyle > 0 && cd.selectedGloves >= 0) {
         applyMaterialStyle(state, state.currentModel, cd.glovesStyle, "glv");
+    }
+
+    if (cd.weaponStyle > 0) {
+        std::string mainHandPart, offHandPart;
+        switch (cd.weaponStyle) {
+            case 1:
+                if (cd.selectedMainHandWeapon >= 0 && cd.selectedMainHandWeapon < (int)cd.swords.size()) {
+                    mainHandPart = cd.swords[cd.selectedMainHandWeapon].first;
+                }
+                if (cd.selectedOffHandWeapon >= 0 && cd.selectedOffHandWeapon < (int)cd.swords.size()) {
+                    offHandPart = cd.swords[cd.selectedOffHandWeapon].first;
+                }
+                break;
+            case 2:
+                if (cd.selectedMainHandWeapon >= 0 && cd.selectedMainHandWeapon < (int)cd.daggers.size()) {
+                    mainHandPart = cd.daggers[cd.selectedMainHandWeapon].first;
+                }
+                if (cd.selectedOffHandWeapon >= 0 && cd.selectedOffHandWeapon < (int)cd.daggers.size()) {
+                    offHandPart = cd.daggers[cd.selectedOffHandWeapon].first;
+                }
+                break;
+            case 3:
+                if (cd.selectedMainHandWeapon >= 0 && cd.selectedMainHandWeapon < (int)cd.swords.size()) {
+                    mainHandPart = cd.swords[cd.selectedMainHandWeapon].first;
+                }
+                if (cd.selectedOffHandWeapon >= 0 && cd.selectedOffHandWeapon < (int)cd.shields.size()) {
+                    offHandPart = cd.shields[cd.selectedOffHandWeapon].first;
+                }
+                break;
+            case 4:
+                if (cd.selectedMainHandWeapon >= 0 && cd.selectedMainHandWeapon < (int)cd.daggers.size()) {
+                    mainHandPart = cd.daggers[cd.selectedMainHandWeapon].first;
+                }
+                if (cd.selectedOffHandWeapon >= 0 && cd.selectedOffHandWeapon < (int)cd.shields.size()) {
+                    offHandPart = cd.shields[cd.selectedOffHandWeapon].first;
+                }
+                break;
+            case 5:
+                if (cd.selectedMainHandWeapon >= 0 && cd.selectedMainHandWeapon < (int)cd.staves.size()) {
+                    mainHandPart = cd.staves[cd.selectedMainHandWeapon].first;
+                }
+                break;
+            case 6:
+                if (cd.selectedMainHandWeapon >= 0 && cd.selectedMainHandWeapon < (int)cd.greatswords.size()) {
+                    mainHandPart = cd.greatswords[cd.selectedMainHandWeapon].first;
+                }
+                break;
+            case 7:
+                if (cd.selectedMainHandWeapon >= 0 && cd.selectedMainHandWeapon < (int)cd.greataxes.size()) {
+                    mainHandPart = cd.greataxes[cd.selectedMainHandWeapon].first;
+                }
+                break;
+            case 8:
+                if (cd.selectedMainHandWeapon >= 0 && cd.selectedMainHandWeapon < (int)cd.mauls.size()) {
+                    mainHandPart = cd.mauls[cd.selectedMainHandWeapon].first;
+                }
+                break;
+        }
+        if (!mainHandPart.empty()) {
+            attachWeaponToBone(state, state.currentModel, mainHandPart, "Prop15");
+        }
+        if (!offHandPart.empty()) {
+            attachWeaponToBone(state, state.currentModel, offHandPart, "Prop17");
+        }
     }
 
     if (cd.selectedTattoo > 0 && cd.selectedTattoo < (int)cd.tattoos.size()) {
@@ -1531,6 +1755,163 @@ void drawCharacterDesigner(AppState& state, ImGuiIO& io) {
             ImGui::ColorEdit3("Color 1##helmet", cd.helmetTintZone1, ImGuiColorEditFlags_NoInputs);
             ImGui::ColorEdit3("Color 2##helmet", cd.helmetTintZone2, ImGuiColorEditFlags_NoInputs);
             ImGui::ColorEdit3("Color 3##helmet", cd.helmetTintZone3, ImGuiColorEditFlags_NoInputs);
+
+            ImGui::EndTabItem();
+        }
+
+        if (ImGui::BeginTabItem("Weapons")) {
+            const char* weaponStyles[] = {
+                "None",
+                "Dual Swords",
+                "Dual Daggers",
+                "Sword + Shield",
+                "Dagger + Shield",
+                "Staff",
+                "Greatsword",
+                "Greataxe",
+                "Maul"
+            };
+
+            if (ImGui::Combo("Style", &cd.weaponStyle, weaponStyles, IM_ARRAYSIZE(weaponStyles))) {
+                cd.selectedMainHandWeapon = -1;
+                cd.selectedOffHandWeapon = -1;
+                cd.needsRebuild = true;
+            }
+
+            ImGui::Separator();
+
+            if (cd.weaponStyle == 1) {
+                ImGui::Text("Main Hand:");
+                ImGui::BeginChild("MainSwords", ImVec2(0, 150), true);
+                for (int i = 0; i < (int)cd.swords.size(); i++) {
+                    bool selected = (cd.selectedMainHandWeapon == i);
+                    if (ImGui::Selectable((cd.swords[i].second + "##main").c_str(), selected)) {
+                        cd.selectedMainHandWeapon = i;
+                        cd.needsRebuild = true;
+                    }
+                }
+                ImGui::EndChild();
+                ImGui::Text("Off Hand:");
+                ImGui::BeginChild("OffSwords", ImVec2(0, 150), true);
+                for (int i = 0; i < (int)cd.swords.size(); i++) {
+                    bool selected = (cd.selectedOffHandWeapon == i);
+                    if (ImGui::Selectable((cd.swords[i].second + "##off").c_str(), selected)) {
+                        cd.selectedOffHandWeapon = i;
+                        cd.needsRebuild = true;
+                    }
+                }
+                ImGui::EndChild();
+            }
+            else if (cd.weaponStyle == 2) {
+                ImGui::Text("Main Hand:");
+                ImGui::BeginChild("MainDaggers", ImVec2(0, 150), true);
+                for (int i = 0; i < (int)cd.daggers.size(); i++) {
+                    bool selected = (cd.selectedMainHandWeapon == i);
+                    if (ImGui::Selectable((cd.daggers[i].second + "##main").c_str(), selected)) {
+                        cd.selectedMainHandWeapon = i;
+                        cd.needsRebuild = true;
+                    }
+                }
+                ImGui::EndChild();
+                ImGui::Text("Off Hand:");
+                ImGui::BeginChild("OffDaggers", ImVec2(0, 150), true);
+                for (int i = 0; i < (int)cd.daggers.size(); i++) {
+                    bool selected = (cd.selectedOffHandWeapon == i);
+                    if (ImGui::Selectable((cd.daggers[i].second + "##off").c_str(), selected)) {
+                        cd.selectedOffHandWeapon = i;
+                        cd.needsRebuild = true;
+                    }
+                }
+                ImGui::EndChild();
+            }
+            else if (cd.weaponStyle == 3) {
+                ImGui::Text("Sword:");
+                ImGui::BeginChild("MainSword", ImVec2(0, 150), true);
+                for (int i = 0; i < (int)cd.swords.size(); i++) {
+                    bool selected = (cd.selectedMainHandWeapon == i);
+                    if (ImGui::Selectable((cd.swords[i].second + "##main").c_str(), selected)) {
+                        cd.selectedMainHandWeapon = i;
+                        cd.needsRebuild = true;
+                    }
+                }
+                ImGui::EndChild();
+                ImGui::Text("Shield:");
+                ImGui::BeginChild("OffShield", ImVec2(0, 150), true);
+                for (int i = 0; i < (int)cd.shields.size(); i++) {
+                    bool selected = (cd.selectedOffHandWeapon == i);
+                    if (ImGui::Selectable((cd.shields[i].second + "##off").c_str(), selected)) {
+                        cd.selectedOffHandWeapon = i;
+                        cd.needsRebuild = true;
+                    }
+                }
+                ImGui::EndChild();
+            }
+            else if (cd.weaponStyle == 4) {
+                ImGui::Text("Dagger:");
+                ImGui::BeginChild("MainDagger", ImVec2(0, 150), true);
+                for (int i = 0; i < (int)cd.daggers.size(); i++) {
+                    bool selected = (cd.selectedMainHandWeapon == i);
+                    if (ImGui::Selectable((cd.daggers[i].second + "##main").c_str(), selected)) {
+                        cd.selectedMainHandWeapon = i;
+                        cd.needsRebuild = true;
+                    }
+                }
+                ImGui::EndChild();
+                ImGui::Text("Shield:");
+                ImGui::BeginChild("OffShield2", ImVec2(0, 150), true);
+                for (int i = 0; i < (int)cd.shields.size(); i++) {
+                    bool selected = (cd.selectedOffHandWeapon == i);
+                    if (ImGui::Selectable((cd.shields[i].second + "##off").c_str(), selected)) {
+                        cd.selectedOffHandWeapon = i;
+                        cd.needsRebuild = true;
+                    }
+                }
+                ImGui::EndChild();
+            }
+            else if (cd.weaponStyle == 5) {
+                ImGui::BeginChild("Staves", ImVec2(0, 300), true);
+                for (int i = 0; i < (int)cd.staves.size(); i++) {
+                    bool selected = (cd.selectedMainHandWeapon == i);
+                    if (ImGui::Selectable(cd.staves[i].second.c_str(), selected)) {
+                        cd.selectedMainHandWeapon = i;
+                        cd.needsRebuild = true;
+                    }
+                }
+                ImGui::EndChild();
+            }
+            else if (cd.weaponStyle == 6) {
+                ImGui::BeginChild("Greatswords", ImVec2(0, 300), true);
+                for (int i = 0; i < (int)cd.greatswords.size(); i++) {
+                    bool selected = (cd.selectedMainHandWeapon == i);
+                    if (ImGui::Selectable(cd.greatswords[i].second.c_str(), selected)) {
+                        cd.selectedMainHandWeapon = i;
+                        cd.needsRebuild = true;
+                    }
+                }
+                ImGui::EndChild();
+            }
+            else if (cd.weaponStyle == 7) {
+                ImGui::BeginChild("Greataxes", ImVec2(0, 300), true);
+                for (int i = 0; i < (int)cd.greataxes.size(); i++) {
+                    bool selected = (cd.selectedMainHandWeapon == i);
+                    if (ImGui::Selectable(cd.greataxes[i].second.c_str(), selected)) {
+                        cd.selectedMainHandWeapon = i;
+                        cd.needsRebuild = true;
+                    }
+                }
+                ImGui::EndChild();
+            }
+            else if (cd.weaponStyle == 8) {
+                ImGui::BeginChild("Mauls", ImVec2(0, 300), true);
+                for (int i = 0; i < (int)cd.mauls.size(); i++) {
+                    bool selected = (cd.selectedMainHandWeapon == i);
+                    if (ImGui::Selectable(cd.mauls[i].second.c_str(), selected)) {
+                        cd.selectedMainHandWeapon = i;
+                        cd.needsRebuild = true;
+                    }
+                }
+                ImGui::EndChild();
+            }
 
             ImGui::EndTabItem();
         }

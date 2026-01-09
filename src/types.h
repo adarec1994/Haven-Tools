@@ -316,6 +316,20 @@ struct AppState {
         int headMeshIndex = -1;
         int eyesMeshIndex = -1;
         int lashesMeshIndex = -1;
+        int weaponStyle = 0;
+        int selectedMainHandWeapon = -1;
+        int selectedOffHandWeapon = -1;
+        std::vector<std::pair<std::string, std::string>> swords;
+        std::vector<std::pair<std::string, std::string>> greatswords;
+        std::vector<std::pair<std::string, std::string>> daggers;
+        std::vector<std::pair<std::string, std::string>> staves;
+        std::vector<std::pair<std::string, std::string>> shields;
+        std::vector<std::pair<std::string, std::string>> axes;
+        std::vector<std::pair<std::string, std::string>> greataxes;
+        std::vector<std::pair<std::string, std::string>> maces;
+        std::vector<std::pair<std::string, std::string>> mauls;
+        std::string currentMainHandPart;
+        std::string currentOffHandPart;
     } charDesigner;
 
     bool showFSBBrowser = false;

@@ -85,21 +85,35 @@ void transformVertexBySkeleton(const Vertex& v, const Mesh& mesh, const Model& m
         int skelIdx = skinningMap[meshLocalIdx];
         if (skelIdx < 0) continue;
         const auto& bone = skeleton.bones[skelIdx];
-        float bx, by, bz;
-        quatRotate(bone.invBindRotX, bone.invBindRotY, bone.invBindRotZ, bone.invBindRotW,
-                   v.x, v.y, v.z, bx, by, bz);
-        bx += bone.invBindPosX;
-        by += bone.invBindPosY;
-        bz += bone.invBindPosZ;
+
+        float bx, by, bz, bnx, bny, bnz;
+
+        if (mesh.skipInvBind) {
+            // For attached weapons: vertices are already in bone-local space
+            // Just apply world transform directly
+            bx = v.x;
+            by = v.y;
+            bz = v.z;
+            bnx = v.nx;
+            bny = v.ny;
+            bnz = v.nz;
+        } else {
+            // Normal skinning: apply invBind first
+            quatRotate(bone.invBindRotX, bone.invBindRotY, bone.invBindRotZ, bone.invBindRotW,
+                       v.x, v.y, v.z, bx, by, bz);
+            bx += bone.invBindPosX;
+            by += bone.invBindPosY;
+            bz += bone.invBindPosZ;
+            quatRotate(bone.invBindRotX, bone.invBindRotY, bone.invBindRotZ, bone.invBindRotW,
+                       v.nx, v.ny, v.nz, bnx, bny, bnz);
+        }
+
         float wx, wy, wz;
         quatRotate(bone.worldRotX, bone.worldRotY, bone.worldRotZ, bone.worldRotW,
                    bx, by, bz, wx, wy, wz);
         wx += bone.worldPosX;
         wy += bone.worldPosY;
         wz += bone.worldPosZ;
-        float bnx, bny, bnz;
-        quatRotate(bone.invBindRotX, bone.invBindRotY, bone.invBindRotZ, bone.invBindRotW,
-                   v.nx, v.ny, v.nz, bnx, bny, bnz);
         float wnx, wny, wnz;
         quatRotate(bone.worldRotX, bone.worldRotY, bone.worldRotZ, bone.worldRotW,
                    bnx, bny, bnz, wnx, wny, wnz);
