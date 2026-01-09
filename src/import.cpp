@@ -837,7 +837,7 @@ bool DAOImporter::WriteMMHXml(const fs::path& outputPath, const DAOModelData& mo
     bool hasSkeleton = model.skeleton.hasSkeleton && !model.skeleton.bones.empty();
 
     out << "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n";
-    out << "<ModelHierarchy Name=\"" << model.name << ".mmh\" ModelDataName=\"" << mshFilename << "\">\n";
+    out << "<ModelHierarchy Name=\"" << model.name << "\" ModelDataName=\"" << model.name << "\">\n";
 
     if (hasSkeleton) {
         std::function<void(int, int)> writeBone = [&](int boneIdx, int depth) {
@@ -857,11 +857,8 @@ bool DAOImporter::WriteMMHXml(const fs::path& outputPath, const DAOModelData& mo
                 }
             }
 
-            if (!children.empty()) {
-                out << indent << "  <Children>\n";
-                for (int child : children) writeBone(child, depth + 2);
-                out << indent << "  </Children>\n";
-            }
+            // Children nodes are nested directly inside parent node
+            for (int child : children) writeBone(child, depth + 1);
 
             out << indent << "</Node>\n";
         };
@@ -869,11 +866,10 @@ bool DAOImporter::WriteMMHXml(const fs::path& outputPath, const DAOModelData& mo
         out << "  <Node Name=\"GOB\" SoundMaterialType=\"0\">\n";
         out << "    <Translation>0 0 0</Translation>\n";
         out << "    <Rotation>0 0 0 1</Rotation>\n";
-        out << "    <Children>\n";
 
         for (size_t i = 0; i < model.skeleton.bones.size(); ++i) {
             if (model.skeleton.bones[i].parentIndex == -1) {
-                writeBone(static_cast<int>(i), 3);
+                writeBone(static_cast<int>(i), 2);
             }
         }
 
@@ -882,7 +878,7 @@ bool DAOImporter::WriteMMHXml(const fs::path& outputPath, const DAOModelData& mo
             for (int bi : part.bonesUsed) allBonesUsed.insert(bi);
         }
 
-        out << "      <NodeMesh Name=\"" << model.name << "\" ";
+        out << "    <NodeMesh Name=\"" << model.name << "\" ";
         if (!allBonesUsed.empty()) {
             out << "BonesUsed=\"";
             bool first = true;
@@ -894,27 +890,22 @@ bool DAOImporter::WriteMMHXml(const fs::path& outputPath, const DAOModelData& mo
             out << "\" ";
         }
         out << "MeshGroupName=\"" << model.name << "\" ";
-        out << "MaterialLibrary=\"" << materialName << "\" ";
         out << "MaterialObject=\"" << materialName << "\" ";
         out << "CastRuntimeShadow=\"1\" ReceiveRuntimeShadow=\"1\">\n";
-        out << "        <Translation>0 0 0</Translation>\n";
-        out << "        <Rotation>0 0 0 1</Rotation>\n";
-        out << "      </NodeMesh>\n";
+        out << "      <Translation>0 0 0</Translation>\n";
+        out << "      <Rotation>0 0 0 1</Rotation>\n";
+        out << "    </NodeMesh>\n";
 
-        out << "    </Children>\n";
         out << "  </Node>\n";
     } else {
-        out << "  <Node Name=\"GOB\" SoundMaterialType=\"0\">\n";
+        // Non-skinned mesh - use NodeMesh directly
+        out << "  <NodeMesh Name=\"" << model.name << "\" ";
+        out << "MeshGroupName=\"" << model.name << "\" ";
+        out << "MaterialObject=\"" << materialName << "\" ";
+        out << "CastRuntimeShadow=\"1\" ReceiveRuntimeShadow=\"1\">\n";
         out << "    <Translation>0 0 0</Translation>\n";
         out << "    <Rotation>0 0 0 1</Rotation>\n";
-        out << "    <Children>\n";
-        out << "      <MeshNode Name=\"" << model.name << "\" MeshName=\"" << model.name << "\"";
-        out << " MaterialObject=\"" << materialName << "\" CastShadow=\"1\" ReceiveShadow=\"1\">\n";
-        out << "        <Translation>0 0 0</Translation>\n";
-        out << "        <Rotation>0 0 0 1</Rotation>\n";
-        out << "      </MeshNode>\n";
-        out << "    </Children>\n";
-        out << "  </Node>\n";
+        out << "  </NodeMesh>\n";
     }
 
     out << "</ModelHierarchy>\n";
