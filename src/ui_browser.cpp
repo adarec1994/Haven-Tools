@@ -1,5 +1,6 @@
 #include "ui_internal.h"
 
+// Helper function to determine ERF source category
 static std::string GetErfSource(const std::string& erfPath) {
     std::string pathLower = erfPath;
     std::transform(pathLower.begin(), pathLower.end(), pathLower.begin(), ::tolower);
@@ -8,20 +9,72 @@ static std::string GetErfSource(const std::string& erfPath) {
         pathLower.find("packages\\core_ep1") != std::string::npos) {
         return "Awakening";
     }
-
+    // Everything in packages/core (including mods added to it) is "Core" by default
+    // Imported models will be marked as "Mods" separately
     return "Core";
 }
 
-static int s_meshDataSourceFilter = 0;
-static std::set<std::string> s_importedModels;
+static int s_meshDataSourceFilter = 0; // 0=All, 1=Core, 2=Awakening, 3=Mods
+static std::set<std::string> s_importedModels; // Track models imported by Haven-Tools
+static bool s_importedModelsLoaded = false;
 
+// Get the path to the imported models list file
+static std::string getImportedModelsPath() {
+    return (fs::path(getExeDir()) / "imported_models.txt").string();
+}
+
+// Load imported models from file
+static void loadImportedModels() {
+    if (s_importedModelsLoaded) return;
+    s_importedModelsLoaded = true;
+
+    std::ifstream file(getImportedModelsPath());
+    if (!file) return;
+
+    std::string line;
+    while (std::getline(file, line)) {
+        if (line.empty()) continue;
+        // Remove carriage return if present
+        if (!line.empty() && line.back() == '\r') line.pop_back();
+        std::string lower = line;
+        std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
+        s_importedModels.insert(lower);
+    }
+
+    std::cout << "[Browser] Loaded " << s_importedModels.size() << " imported models from file" << std::endl;
+}
+
+// Save imported models to file
+static void saveImportedModels() {
+    std::ofstream file(getImportedModelsPath());
+    if (!file) {
+        std::cerr << "[Browser] Failed to save imported models list" << std::endl;
+        return;
+    }
+
+    for (const auto& name : s_importedModels) {
+        file << name << "\n";
+    }
+
+    std::cout << "[Browser] Saved " << s_importedModels.size() << " imported models to file" << std::endl;
+}
+
+// Call this when a model is imported to mark it as a mod
 void markModelAsImported(const std::string& modelName) {
+    loadImportedModels(); // Ensure loaded first
+
     std::string nameLower = modelName;
     std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), ::tolower);
     s_importedModels.insert(nameLower);
+
+    // Save to file immediately
+    saveImportedModels();
 }
 
+// Check if a model was imported
 static bool isImportedModel(const std::string& modelName) {
+    loadImportedModels(); // Ensure loaded first
+
     std::string nameLower = modelName;
     std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), ::tolower);
     return s_importedModels.find(nameLower) != s_importedModels.end();
@@ -243,6 +296,7 @@ void drawBrowserWindow(AppState& state) {
     for (const auto& [filename, indices] : state.erfsByName) {
         bool isSelected = (state.selectedErfName == filename);
 
+        // Check if this is modelmeshdata.erf for special handling
         std::string filenameLower = filename;
         std::transform(filenameLower.begin(), filenameLower.end(), filenameLower.begin(), ::tolower);
         bool isModelMeshData = (filenameLower == "modelmeshdata.erf");
@@ -254,7 +308,7 @@ void drawBrowserWindow(AppState& state) {
                 state.mergedEntries.clear();
                 state.filteredEntryIndices.clear();
                 state.lastContentFilter.clear();
-                s_meshDataSourceFilter = 0;
+                s_meshDataSourceFilter = 0; // Reset filter
 
                 std::set<std::string> seenNames;
                 for (size_t erfIdx : indices) {
@@ -270,6 +324,7 @@ void drawBrowserWindow(AppState& state) {
                                 ce.name = name;
                                 ce.erfIdx = erfIdx;
                                 ce.entryIdx = entryIdx;
+                                // Check if this was imported by Haven-Tools
                                 if (isImportedModel(name)) {
                                     ce.source = "Mods";
                                 } else {
@@ -284,9 +339,11 @@ void drawBrowserWindow(AppState& state) {
             }
         }
 
+        // Show subcategory filters when modelmeshdata.erf is selected
         if (isSelected && isModelMeshData && !state.mergedEntries.empty()) {
             ImGui::Indent();
 
+            // Count entries per category
             int coreCount = 0, awakCount = 0, modsCount = 0;
             for (const auto& ce : state.mergedEntries) {
                 if (ce.source == "Core") coreCount++;
@@ -435,6 +492,7 @@ void drawBrowserWindow(AppState& state) {
             std::string filterLower = currentFilter;
             std::transform(filterLower.begin(), filterLower.end(), filterLower.begin(), ::tolower);
 
+            // Check if we need source filtering (for modelmeshdata.erf)
             std::string selNameLower = state.selectedErfName;
             std::transform(selNameLower.begin(), selNameLower.end(), selNameLower.begin(), ::tolower);
             bool filterBySource = (selNameLower == "modelmeshdata.erf" && s_meshDataSourceFilter > 0);
@@ -447,6 +505,7 @@ void drawBrowserWindow(AppState& state) {
                     continue;
                 }
 
+                // Source filter for modelmeshdata.erf
                 if (filterBySource) {
                     if (s_meshDataSourceFilter == 1 && ce.source != "Core") continue;
                     if (s_meshDataSourceFilter == 2 && ce.source != "Awakening") continue;
