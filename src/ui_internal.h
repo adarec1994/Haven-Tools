@@ -7,6 +7,7 @@
 #include "export.h"
 #include "dds_loader.h"
 #include "Gff.h"
+#include "gda.h"
 #ifdef _WIN32
 #define NOMINMAX
 #include <windows.h>
@@ -88,3 +89,4 @@ void buildCharacterLists(AppState& state);
 void loadCharacterModel(AppState& state);
 void drawCharacterDesigner(AppState& state, ImGuiIO& io);
 void preloadCharacterData(AppState& state);
+void draw2DAEditorWindow(AppState& state);

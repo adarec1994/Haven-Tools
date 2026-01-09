@@ -1105,6 +1105,8 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
             }
             ImGui::MenuItem("Render Settings", nullptr, &state.showRenderSettings);
             ImGui::MenuItem("Animation", nullptr, &state.showAnimWindow);
+            ImGui::Separator();
+            ImGui::MenuItem("2DA/GDA Editor", nullptr, &state.gdaEditor.showWindow);
             ImGui::EndMenu();
         }
 
@@ -1165,6 +1167,7 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
     if (state.showAnimWindow && state.hasModel) drawAnimWindow(state, io);
     if (state.showAudioPlayer) drawAudioPlayer(state);
     if (state.showFSBBrowser) drawFSBBrowserWindow(state);
+    draw2DAEditorWindow(state);
     if (state.showHeadSelector) {
         ImGui::SetNextWindowSize(ImVec2(300, 0), ImGuiCond_FirstUseEver);
         ImGui::Begin("Select Head", &state.showHeadSelector, ImGuiWindowFlags_AlwaysAutoResize);

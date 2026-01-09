@@ -158,6 +158,9 @@ add_executable(HavenTools
         src/update/changelog_text.h
         src/import.cpp
         src/import.h
+        src/gda.cpp
+        src/gda.h
+        src/ui_gda.cpp
 )
 
 target_include_directories(HavenTools PRIVATE

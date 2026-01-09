@@ -11,6 +11,23 @@
 #include "tnt_loader.h"
 
 class ERFFile;
+class GDAFile;
+
+struct GDAEditorState {
+    bool showWindow = false;
+    std::string currentFile;
+    GDAFile* editor = nullptr;
+    int selectedRow = -1;
+    std::string statusMessage;
+    bool showBackupDialog = false;
+    bool showRestoreDialog = false;
+    char rowFilter[128] = "";
+    std::vector<std::string> gdaFilesInErf;
+    int selectedGdaInErf = -1;
+
+    ~GDAEditorState();
+};
+
 struct Camera {
     float x = 0.0f, y = 0.0f, z = 5.0f;
     float yaw = 0.0f;
@@ -255,6 +272,9 @@ struct AppState {
         int clothesStyle = 0;
         int bootsStyle = 0;
         int glovesStyle = 0;
+        int weaponStyle = 0;
+        int selectedMainHandWeapon = -1;
+        int selectedOffHandWeapon = -1;
         float hairColor[3] = {0.3f, 0.2f, 0.1f};
         float skinColor[3] = {0.9f, 0.7f, 0.6f};
         float eyeColor[3] = {0.4f, 0.3f, 0.2f};
@@ -291,6 +311,15 @@ struct AppState {
         std::vector<std::pair<std::string, std::string>> helmets;
         std::vector<std::pair<std::string, std::string>> robes;
         std::vector<std::pair<std::string, std::string>> tattoos;
+        std::vector<std::pair<std::string, std::string>> swords;
+        std::vector<std::pair<std::string, std::string>> greatswords;
+        std::vector<std::pair<std::string, std::string>> daggers;
+        std::vector<std::pair<std::string, std::string>> staves;
+        std::vector<std::pair<std::string, std::string>> shields;
+        std::vector<std::pair<std::string, std::string>> axes;
+        std::vector<std::pair<std::string, std::string>> greataxes;
+        std::vector<std::pair<std::string, std::string>> maces;
+        std::vector<std::pair<std::string, std::string>> mauls;
         std::unordered_map<std::string, Model> partCache;
         std::string currentArmorPart;
         std::string currentClothesPart;
@@ -316,20 +345,6 @@ struct AppState {
         int headMeshIndex = -1;
         int eyesMeshIndex = -1;
         int lashesMeshIndex = -1;
-        int weaponStyle = 0;
-        int selectedMainHandWeapon = -1;
-        int selectedOffHandWeapon = -1;
-        std::vector<std::pair<std::string, std::string>> swords;
-        std::vector<std::pair<std::string, std::string>> greatswords;
-        std::vector<std::pair<std::string, std::string>> daggers;
-        std::vector<std::pair<std::string, std::string>> staves;
-        std::vector<std::pair<std::string, std::string>> shields;
-        std::vector<std::pair<std::string, std::string>> axes;
-        std::vector<std::pair<std::string, std::string>> greataxes;
-        std::vector<std::pair<std::string, std::string>> maces;
-        std::vector<std::pair<std::string, std::string>> mauls;
-        std::string currentMainHandPart;
-        std::string currentOffHandPart;
     } charDesigner;
 
     bool showFSBBrowser = false;
@@ -337,6 +352,8 @@ struct AppState {
     std::vector<FSBSampleInfo> currentFSBSamples;
     int selectedFSBSample = -1;
     char fsbSampleFilter[128] = "";
+
+    GDAEditorState gdaEditor;
 };
 std::string getExeDir();
 void ensureExtractDir(const std::string& exeDir);

@@ -541,12 +541,14 @@ void drawBrowserWindow(AppState& state) {
             bool isModel = isModelFile(ce.name), isMao = isMaoFile(ce.name), isPhy = isPhyFile(ce.name);
             bool isTexture = ce.name.size() > 4 && ce.name.substr(ce.name.size() - 4) == ".dds";
             bool isAudioFile = ce.name.size() > 4 && (ce.name.substr(ce.name.size() - 4) == ".fsb" );
+            bool isGda = ce.name.size() > 4 && ce.name.substr(ce.name.size() - 4) == ".gda";
 
             if (isModel) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.4f, 1.0f, 0.4f, 1.0f));
             else if (isMao) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.8f, 0.4f, 1.0f));
             else if (isPhy) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.4f, 1.0f, 1.0f));
             else if (isTexture) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.4f, 0.8f, 1.0f, 1.0f));
             else if (isAudioFile) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.6f, 0.2f, 1.0f));
+            else if (isGda) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.2f, 1.0f, 1.0f, 1.0f));
 
             char label[256]; snprintf(label, sizeof(label), "%s##%d", ce.name.c_str(), idx);
             if (ImGui::Selectable(label, idx == state.selectedEntryIndex, ImGuiSelectableFlags_AllowDoubleClick)) {
@@ -619,6 +621,23 @@ void drawBrowserWindow(AppState& state) {
                                     state.showTexturePreview = true;
                                     state.previewMeshIndex = -1;
                                     state.statusMessage = "Previewing: " + ce.name;
+                                }
+                            } else if (isGda) {
+                                auto data = erf.readEntry(entry);
+                                if (!data.empty()) {
+                                    delete state.gdaEditor.editor;
+                                    state.gdaEditor.editor = new GDAFile();
+                                    if (state.gdaEditor.editor->load(data, ce.name)) {
+                                        state.gdaEditor.currentFile = state.erfFiles[ce.erfIdx] + ":" + ce.name;
+                                        state.gdaEditor.selectedRow = -1;
+                                        state.gdaEditor.statusMessage = "Loaded: " + ce.name;
+                                        state.gdaEditor.showWindow = true;
+                                        state.statusMessage = "Opened GDA: " + ce.name;
+                                    } else {
+                                        state.gdaEditor.statusMessage = "Failed to parse GDA";
+                                        delete state.gdaEditor.editor;
+                                        state.gdaEditor.editor = nullptr;
+                                    }
                                 }
                             }
                         }
@@ -758,7 +777,7 @@ void drawBrowserWindow(AppState& state) {
                 }
                 ImGui::EndPopup();
             }
-            if (isModel || isMao || isPhy || isTexture || isAudioFile) ImGui::PopStyleColor();
+            if (isModel || isMao || isPhy || isTexture || isAudioFile || isGda) ImGui::PopStyleColor();
         });
 
         ImGui::EndChild();

@@ -198,10 +198,8 @@ static const char* s_changelogLatest = R"(
 
 - Fixed a bug with importing where models would not be added to the .erf
 - Added support for skeletons when importing
-- Imported models now correctly display their textures.
+- Imported models now correctly display their textures and rigs.
 - Added filters between All/ Mods/ Core game/ and Awakening Expansion.
+- Added Weapons tab to character browser (WIP!)
 
 )";
-
-// BUG -- MATERIALS AND SKELETONS ARE NOT BEING IMPORTED RIGHT NOW..
-// BUG -- MOD FILTER IS GONE WHEN RESETTING THE APP..
