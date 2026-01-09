@@ -1,5 +1,32 @@
 #include "ui_internal.h"
 
+static std::string GetErfSource(const std::string& erfPath) {
+    std::string pathLower = erfPath;
+    std::transform(pathLower.begin(), pathLower.end(), pathLower.begin(), ::tolower);
+
+    if (pathLower.find("packages/core_ep1") != std::string::npos ||
+        pathLower.find("packages\\core_ep1") != std::string::npos) {
+        return "Awakening";
+    }
+
+    return "Core";
+}
+
+static int s_meshDataSourceFilter = 0;
+static std::set<std::string> s_importedModels;
+
+void markModelAsImported(const std::string& modelName) {
+    std::string nameLower = modelName;
+    std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), ::tolower);
+    s_importedModels.insert(nameLower);
+}
+
+static bool isImportedModel(const std::string& modelName) {
+    std::string nameLower = modelName;
+    std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), ::tolower);
+    return s_importedModels.find(nameLower) != s_importedModels.end();
+}
+
 void drawMeshBrowserWindow(AppState& state) {
     loadMeshDatabase(state);
     ImGui::SetNextWindowSize(ImVec2(400, 500), ImGuiCond_FirstUseEver);
@@ -215,6 +242,11 @@ void drawBrowserWindow(AppState& state) {
 
     for (const auto& [filename, indices] : state.erfsByName) {
         bool isSelected = (state.selectedErfName == filename);
+
+        std::string filenameLower = filename;
+        std::transform(filenameLower.begin(), filenameLower.end(), filenameLower.begin(), ::tolower);
+        bool isModelMeshData = (filenameLower == "modelmeshdata.erf");
+
         if (ImGui::Selectable(filename.c_str(), isSelected)) {
             if (!isSelected) {
                 state.selectedErfName = filename;
@@ -222,8 +254,12 @@ void drawBrowserWindow(AppState& state) {
                 state.mergedEntries.clear();
                 state.filteredEntryIndices.clear();
                 state.lastContentFilter.clear();
+                s_meshDataSourceFilter = 0;
+
                 std::set<std::string> seenNames;
                 for (size_t erfIdx : indices) {
+                    std::string source = GetErfSource(state.erfFiles[erfIdx]);
+
                     ERFFile erf;
                     if (erf.open(state.erfFiles[erfIdx])) {
                         for (size_t entryIdx = 0; entryIdx < erf.entries().size(); entryIdx++) {
@@ -234,6 +270,11 @@ void drawBrowserWindow(AppState& state) {
                                 ce.name = name;
                                 ce.erfIdx = erfIdx;
                                 ce.entryIdx = entryIdx;
+                                if (isImportedModel(name)) {
+                                    ce.source = "Mods";
+                                } else {
+                                    ce.source = source;
+                                }
                                 state.mergedEntries.push_back(ce);
                             }
                         }
@@ -241,6 +282,55 @@ void drawBrowserWindow(AppState& state) {
                 }
                 state.statusMessage = std::to_string(state.mergedEntries.size()) + " entries from " + std::to_string(indices.size()) + " ERF(s)";
             }
+        }
+
+        if (isSelected && isModelMeshData && !state.mergedEntries.empty()) {
+            ImGui::Indent();
+
+            int coreCount = 0, awakCount = 0, modsCount = 0;
+            for (const auto& ce : state.mergedEntries) {
+                if (ce.source == "Core") coreCount++;
+                else if (ce.source == "Awakening") awakCount++;
+                else modsCount++;
+            }
+
+            char label[64];
+
+            snprintf(label, sizeof(label), "All (%zu)", state.mergedEntries.size());
+            if (ImGui::RadioButton(label, s_meshDataSourceFilter == 0)) {
+                s_meshDataSourceFilter = 0;
+                state.filteredEntryIndices.clear();
+                state.lastContentFilter.clear();
+            }
+
+            if (coreCount > 0) {
+                snprintf(label, sizeof(label), "Core (%d)", coreCount);
+                if (ImGui::RadioButton(label, s_meshDataSourceFilter == 1)) {
+                    s_meshDataSourceFilter = 1;
+                    state.filteredEntryIndices.clear();
+                    state.lastContentFilter.clear();
+                }
+            }
+
+            if (awakCount > 0) {
+                snprintf(label, sizeof(label), "Awakening (%d)", awakCount);
+                if (ImGui::RadioButton(label, s_meshDataSourceFilter == 2)) {
+                    s_meshDataSourceFilter = 2;
+                    state.filteredEntryIndices.clear();
+                    state.lastContentFilter.clear();
+                }
+            }
+
+            if (modsCount > 0) {
+                snprintf(label, sizeof(label), "Mods (%d)", modsCount);
+                if (ImGui::RadioButton(label, s_meshDataSourceFilter == 3)) {
+                    s_meshDataSourceFilter = 3;
+                    state.filteredEntryIndices.clear();
+                    state.lastContentFilter.clear();
+                }
+            }
+
+            ImGui::Unindent();
         }
     }
     ImGui::EndChild();
@@ -344,15 +434,29 @@ void drawBrowserWindow(AppState& state) {
             state.filteredEntryIndices.reserve(state.mergedEntries.size());
             std::string filterLower = currentFilter;
             std::transform(filterLower.begin(), filterLower.end(), filterLower.begin(), ::tolower);
+
+            std::string selNameLower = state.selectedErfName;
+            std::transform(selNameLower.begin(), selNameLower.end(), selNameLower.begin(), ::tolower);
+            bool filterBySource = (selNameLower == "modelmeshdata.erf" && s_meshDataSourceFilter > 0);
+
             for (int i = 0; i < (int)state.mergedEntries.size(); i++) {
-                if (state.mergedEntries[i].name.find("__HEADER__") == 0) {
+                const auto& ce = state.mergedEntries[i];
+
+                if (ce.name.find("__HEADER__") == 0) {
                     state.filteredEntryIndices.push_back(i);
                     continue;
                 }
+
+                if (filterBySource) {
+                    if (s_meshDataSourceFilter == 1 && ce.source != "Core") continue;
+                    if (s_meshDataSourceFilter == 2 && ce.source != "Awakening") continue;
+                    if (s_meshDataSourceFilter == 3 && ce.source != "Mods") continue;
+                }
+
                 if (filterLower.empty()) {
                     state.filteredEntryIndices.push_back(i);
                 } else {
-                    std::string nameLower = state.mergedEntries[i].name;
+                    std::string nameLower = ce.name;
                     std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), ::tolower);
                     if (nameLower.find(filterLower) != std::string::npos) {
                         state.filteredEntryIndices.push_back(i);

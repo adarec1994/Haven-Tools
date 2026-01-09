@@ -265,13 +265,12 @@ bool exportToGLB(const Model& model, const std::vector<Animation>& animations, c
             if (boneIdx < 0) continue;
             if (track.keyframes.empty()) continue;
 
-            // Check if this is GOD/GOB bone - skip translation for these
             std::string boneNameLower = model.skeleton.bones[boneIdx].name;
             std::transform(boneNameLower.begin(), boneNameLower.end(), boneNameLower.begin(), ::tolower);
             bool isGodBone = (boneNameLower == "god" || boneNameLower == "gob");
 
             if (track.isTranslation && isGodBone) {
-                continue; // Skip GOD/GOB translation
+                continue;
             }
 
             size_t timeOff = binBuffer.size();
@@ -306,12 +305,10 @@ bool exportToGLB(const Model& model, const std::vector<Animation>& animations, c
                 ae.samplerIndices.push_back(samplerIdx);
                 ae.channels.push_back({boneIdx, "rotation"});
             } else if (track.isTranslation) {
-                // Get bind pose offset for this bone
                 const Bone& bone = model.skeleton.bones[boneIdx];
                 float baseX = bone.posX, baseY = bone.posY, baseZ = bone.posZ;
 
                 for (const auto& kf : track.keyframes) {
-                    // Animation translation is additive to bind pose
                     writeFloat(binBuffer, baseX + kf.x);
                     writeFloat(binBuffer, baseY + kf.y);
                     writeFloat(binBuffer, baseZ + kf.z);
@@ -692,13 +689,11 @@ bool exportToFBX(const Model& model, const std::vector<Animation>& animations, c
 
     std::vector<uint8_t> output;
 
-    // --- Helper Functions ---
     auto writeBytes = [&](const void* data, size_t len) {
         const uint8_t* p = (const uint8_t*)data;
         output.insert(output.end(), p, p + len);
     };
 
-    // ID Generators - separate ID spaces to avoid any collisions
     const int64_t ROOT_MODEL_ID = 1000000LL;
     auto getGeoID = [](int i) -> int64_t { return 10000000LL + i; };
     auto getBoneID = [](int i) -> int64_t { return 20000000LL + i; };
@@ -713,7 +708,6 @@ bool exportToFBX(const Model& model, const std::vector<Animation>& animations, c
     auto getAnimCurveNodeID = [](int a, int t, int c) -> int64_t { return 110000000LL + (int64_t)a * 100000 + (int64_t)t * 1000 + c; };
     auto getAnimCurveID = [](int a, int t, int c, int axis) -> int64_t { return 120000000LL + (int64_t)a * 1000000 + (int64_t)t * 10000 + (int64_t)c * 100 + axis; };
 
-    // --- Skeleton Pre-processing ---
     bool hasSkeleton = !model.skeleton.bones.empty();
     std::map<std::string, int> boneLookup;
     if (hasSkeleton) {
@@ -731,7 +725,6 @@ bool exportToFBX(const Model& model, const std::vector<Animation>& animations, c
         return (it != boneLookup.end()) ? it->second : -1;
     };
 
-    // Build mesh bone map (maps boneIndexArray indices to skeleton bone indices)
     std::vector<int> meshBoneMap;
     if (hasSkeleton && !model.boneIndexArray.empty()) {
         meshBoneMap.resize(model.boneIndexArray.size(), -1);
@@ -740,8 +733,6 @@ bool exportToFBX(const Model& model, const std::vector<Animation>& animations, c
         }
     }
 
-    // --- Skinning Pre-processing ---
-    // For each mesh, compute which skeleton bones affect it and the vertex weights
     std::vector<bool> meshHasSkin(model.meshes.size(), false);
     std::vector<std::set<int>> meshBoneSets(model.meshes.size());
     std::vector<std::map<int, std::vector<std::pair<int, float>>>> meshBoneInfluences(model.meshes.size());
@@ -751,49 +742,39 @@ bool exportToFBX(const Model& model, const std::vector<Animation>& animations, c
             const auto& mesh = model.meshes[mi];
             if (!mesh.hasSkinning) continue;
 
-            std::set<int> uniqueBones;
-            std::map<int, std::vector<std::pair<int, float>>> boneInfluences;
+            for (size_t vi = 0; vi < mesh.vertices.size(); vi++) {
+                const auto& v = mesh.vertices[vi];
 
-            for (size_t vIdx = 0; vIdx < mesh.vertices.size(); vIdx++) {
-                const auto& v = mesh.vertices[vIdx];
-                float totalWeight = 0;
-                for (int b = 0; b < 4; b++) totalWeight += v.boneWeights[b];
+                float weightSum = 0;
+                for (int i = 0; i < 4; i++) weightSum += v.boneWeights[i];
+                if (weightSum < 0.0001f) continue;
 
-                for (int b = 0; b < 4; b++) {
-                    if (v.boneWeights[b] > 0.0001f) {
-                        int meshLocalIdx = v.boneIndices[b];
-                        int skelIdx = -1;
+                for (int i = 0; i < 4; i++) {
+                    float weight = v.boneWeights[i] / weightSum;
+                    if (weight < 0.0001f) continue;
 
-                        if (meshLocalIdx >= 0) {
-                            // Map through bonesUsed if available, then through boneIndexArray
-                            int globalIdx = meshLocalIdx;
-                            if (!mesh.bonesUsed.empty() && meshLocalIdx < (int)mesh.bonesUsed.size()) {
-                                globalIdx = mesh.bonesUsed[meshLocalIdx];
-                            }
-                            if (globalIdx >= 0 && globalIdx < (int)meshBoneMap.size()) {
-                                skelIdx = meshBoneMap[globalIdx];
-                            }
-                        }
+                    int meshLocalIdx = v.boneIndices[i];
+                    int globalIdx = meshLocalIdx;
 
-                        if (skelIdx >= 0 && skelIdx < (int)model.skeleton.bones.size()) {
-                            uniqueBones.insert(skelIdx);
-                            float nw = (totalWeight > 0.0001f) ? v.boneWeights[b] / totalWeight : (b == 0 ? 1.0f : 0.0f);
-                            boneInfluences[skelIdx].push_back({(int)vIdx, nw});
-                        }
+                    if (!mesh.bonesUsed.empty() && meshLocalIdx >= 0 && meshLocalIdx < (int)mesh.bonesUsed.size()) {
+                        globalIdx = mesh.bonesUsed[meshLocalIdx];
+                    }
+
+                    int skelIdx = -1;
+                    if (globalIdx >= 0 && globalIdx < (int)meshBoneMap.size()) {
+                        skelIdx = meshBoneMap[globalIdx];
+                    }
+
+                    if (skelIdx >= 0) {
+                        meshHasSkin[mi] = true;
+                        meshBoneSets[mi].insert(skelIdx);
+                        meshBoneInfluences[mi][skelIdx].push_back({(int)vi, weight});
                     }
                 }
-            }
-
-            if (!uniqueBones.empty()) {
-                meshHasSkin[mi] = true;
-                meshBoneSets[mi] = uniqueBones;
-                meshBoneInfluences[mi] = boneInfluences;
             }
         }
     }
 
-    // --- Texture Pre-processing ---
-    // Build list of materials that have texture data, and map material index to texture index
     struct TextureEntry {
         int materialIndex;
         std::vector<uint8_t> pngData;
@@ -801,7 +782,6 @@ bool exportToFBX(const Model& model, const std::vector<Animation>& animations, c
     std::vector<TextureEntry> textureEntries;
     std::vector<int> materialToTextureIndex(model.materials.size(), -1);
 
-    // PNG encoder lambda
     auto encodePNG = [](const std::vector<uint8_t>& rgba, int w, int h, bool forceOpaqueAlpha) -> std::vector<uint8_t> {
         std::vector<uint8_t> png;
         std::vector<uint8_t> exportData = rgba;
@@ -877,7 +857,6 @@ bool exportToFBX(const Model& model, const std::vector<Animation>& animations, c
     for (size_t mi = 0; mi < model.materials.size(); mi++) {
         const auto& mat = model.materials[mi];
         if (!mat.diffuseData.empty() && mat.diffuseWidth > 0 && mat.diffuseHeight > 0) {
-            // Check for hair materials that need alpha forced to opaque
             std::string matNameLower = mat.name;
             std::transform(matNameLower.begin(), matNameLower.end(), matNameLower.begin(), ::tolower);
             bool isHairMaterial = (matNameLower.find("_har_") != std::string::npos ||
@@ -895,7 +874,6 @@ bool exportToFBX(const Model& model, const std::vector<Animation>& animations, c
         }
     }
 
-    // --- Animation Pre-processing ---
     struct AnimExportData {
         std::string name;
         float duration;
@@ -963,7 +941,6 @@ bool exportToFBX(const Model& model, const std::vector<Animation>& animations, c
         if (!ae.tracks.empty()) animExports.push_back(ae);
     }
 
-    // --- Counts ---
     int skinCount = 0, clusterCount = 0;
     for (size_t mi = 0; mi < model.meshes.size(); mi++) {
         if (meshHasSkin[mi]) {
@@ -980,7 +957,6 @@ bool exportToFBX(const Model& model, const std::vector<Animation>& animations, c
         animCurveCount += (int)ae.tracks.size() * 3;
     }
 
-    // --- NodeWriter ---
     struct NodeWriter {
         std::vector<uint8_t>& out;
         std::vector<size_t> nodeStack;
@@ -1097,7 +1073,6 @@ bool exportToFBX(const Model& model, const std::vector<Animation>& animations, c
         ez = std::atan2(siny_cosp, cosy_cosp) * 180.0 / 3.14159265358979323846;
     };
 
-    // --- Write Header ---
     const char* header = "Kaydara FBX Binary  ";
     writeBytes(header, 21);
     output.push_back(0x1A);
@@ -1108,14 +1083,12 @@ bool exportToFBX(const Model& model, const std::vector<Animation>& animations, c
 
     NodeWriter nw(output);
 
-    // FBXHeaderExtension
     nw.beginNode("FBXHeaderExtension"); nw.beginProps(); nw.endProps();
     nw.beginNode("FBXHeaderVersion"); nw.beginProps(); nw.addPropI32(1003); nw.endProps(); nw.endNodeNoNested();
     nw.beginNode("FBXVersion"); nw.beginProps(); nw.addPropI32(7400); nw.endProps(); nw.endNodeNoNested();
     nw.beginNode("Creator"); nw.beginProps(); nw.addPropString("HavenTools"); nw.endProps(); nw.endNodeNoNested();
     nw.endNode();
 
-    // GlobalSettings
     nw.beginNode("GlobalSettings"); nw.beginProps(); nw.endProps();
     nw.beginNode("Version"); nw.beginProps(); nw.addPropI32(1000); nw.endProps(); nw.endNodeNoNested();
     nw.beginNode("Properties70"); nw.beginProps(); nw.endProps();
@@ -1140,7 +1113,6 @@ bool exportToFBX(const Model& model, const std::vector<Animation>& animations, c
     nw.endNode();
     nw.endNode();
 
-    // Documents
     nw.beginNode("Documents"); nw.beginProps(); nw.endProps();
     nw.beginNode("Count"); nw.beginProps(); nw.addPropI32(1); nw.endProps(); nw.endNodeNoNested();
     nw.beginNode("Document"); nw.beginProps(); nw.addPropI64(1000000000LL); nw.addPropString(""); nw.addPropString("Scene"); nw.endProps();
@@ -1153,10 +1125,8 @@ bool exportToFBX(const Model& model, const std::vector<Animation>& animations, c
     nw.endNode();
     nw.endNode();
 
-    // References
     nw.beginNode("References"); nw.beginProps(); nw.endProps(); nw.endNode();
 
-    // Definitions
     nw.beginNode("Definitions"); nw.beginProps(); nw.endProps();
     nw.beginNode("Version"); nw.beginProps(); nw.addPropI32(100); nw.endProps(); nw.endNodeNoNested();
 
@@ -1220,10 +1190,8 @@ bool exportToFBX(const Model& model, const std::vector<Animation>& animations, c
     }
     nw.endNode();
 
-    // Objects
     nw.beginNode("Objects"); nw.beginProps(); nw.endProps();
 
-    // Root null model
     std::string rootName = model.name + "\x00\x01" + "Null";
     nw.beginNode("Model"); nw.beginProps(); nw.addPropI64(ROOT_MODEL_ID); nw.addPropString("Model::" + rootName); nw.addPropString("Null"); nw.endProps();
     nw.beginNode("Version"); nw.beginProps(); nw.addPropI32(232); nw.endProps(); nw.endNodeNoNested();
@@ -1235,12 +1203,10 @@ bool exportToFBX(const Model& model, const std::vector<Animation>& animations, c
     nw.beginNode("Culling"); nw.beginProps(); nw.addPropString("CullingOff"); nw.endProps(); nw.endNodeNoNested();
     nw.endNode();
 
-    // Geometry and Model nodes for meshes
     for (size_t mi = 0; mi < model.meshes.size(); mi++) {
         const auto& mesh = model.meshes[mi];
         std::string meshName = mesh.name.empty() ? "Mesh" + std::to_string(mi) : mesh.name;
 
-        // Geometry node
         std::string geoName = "Geometry::" + meshName + "\x00\x01" + "Mesh";
         nw.beginNode("Geometry"); nw.beginProps(); nw.addPropI64(getGeoID(mi)); nw.addPropString(geoName); nw.addPropString("Mesh"); nw.endProps();
         nw.beginNode("GeometryVersion"); nw.beginProps(); nw.addPropI32(124); nw.endProps(); nw.endNodeNoNested();
@@ -1257,7 +1223,6 @@ bool exportToFBX(const Model& model, const std::vector<Animation>& animations, c
         }
         nw.beginNode("PolygonVertexIndex"); nw.beginProps(); nw.addPropI32Array(polyIdx); nw.endProps(); nw.endNodeNoNested();
 
-        // Normals
         nw.beginNode("LayerElementNormal"); nw.beginProps(); nw.addPropI32(0); nw.endProps();
         nw.beginNode("Version"); nw.beginProps(); nw.addPropI32(102); nw.endProps(); nw.endNodeNoNested();
         nw.beginNode("Name"); nw.beginProps(); nw.addPropString(""); nw.endProps(); nw.endNodeNoNested();
@@ -1272,7 +1237,6 @@ bool exportToFBX(const Model& model, const std::vector<Animation>& animations, c
         nw.beginNode("Normals"); nw.beginProps(); nw.addPropF64Array(normals); nw.endProps(); nw.endNodeNoNested();
         nw.endNode();
 
-        // UVs
         nw.beginNode("LayerElementUV"); nw.beginProps(); nw.addPropI32(0); nw.endProps();
         nw.beginNode("Version"); nw.beginProps(); nw.addPropI32(101); nw.endProps(); nw.endNodeNoNested();
         nw.beginNode("Name"); nw.beginProps(); nw.addPropString("UVMap"); nw.endProps(); nw.endNodeNoNested();
@@ -1281,12 +1245,11 @@ bool exportToFBX(const Model& model, const std::vector<Animation>& animations, c
         std::vector<double> uvs;
         for (uint32_t idx : mesh.indices) {
             uvs.push_back(mesh.vertices[idx].u);
-            uvs.push_back(mesh.vertices[idx].v);  // Already flipped in loader
+            uvs.push_back(mesh.vertices[idx].v);
         }
         nw.beginNode("UV"); nw.beginProps(); nw.addPropF64Array(uvs); nw.endProps(); nw.endNodeNoNested();
         nw.endNode();
 
-        // Material layer
         nw.beginNode("LayerElementMaterial"); nw.beginProps(); nw.addPropI32(0); nw.endProps();
         nw.beginNode("Version"); nw.beginProps(); nw.addPropI32(101); nw.endProps(); nw.endNodeNoNested();
         nw.beginNode("Name"); nw.beginProps(); nw.addPropString(""); nw.endProps(); nw.endNodeNoNested();
@@ -1295,7 +1258,6 @@ bool exportToFBX(const Model& model, const std::vector<Animation>& animations, c
         nw.beginNode("Materials"); nw.beginProps(); nw.addPropI32Array({0}); nw.endProps(); nw.endNodeNoNested();
         nw.endNode();
 
-        // Layer
         nw.beginNode("Layer"); nw.beginProps(); nw.addPropI32(0); nw.endProps();
         nw.beginNode("Version"); nw.beginProps(); nw.addPropI32(100); nw.endProps(); nw.endNodeNoNested();
         nw.beginNode("LayerElement"); nw.beginProps(); nw.endProps();
@@ -1311,9 +1273,8 @@ bool exportToFBX(const Model& model, const std::vector<Animation>& animations, c
         nw.beginNode("TypedIndex"); nw.beginProps(); nw.addPropI32(0); nw.endProps(); nw.endNodeNoNested();
         nw.endNode();
         nw.endNode();
-        nw.endNode(); // Geometry
+        nw.endNode();
 
-        // Model node for mesh
         std::string modelMeshName = "Model::" + meshName + "\x00\x01" + "Mesh";
         nw.beginNode("Model"); nw.beginProps(); nw.addPropI64(getModelID(mi)); nw.addPropString(modelMeshName); nw.addPropString("Mesh"); nw.endProps();
         nw.beginNode("Version"); nw.beginProps(); nw.addPropI32(232); nw.endProps(); nw.endNodeNoNested();
@@ -1323,7 +1284,6 @@ bool exportToFBX(const Model& model, const std::vector<Animation>& animations, c
         nw.endNode();
     }
 
-    // Bone nodes
     if (hasSkeleton) {
         for (size_t bi = 0; bi < model.skeleton.bones.size(); bi++) {
             const auto& bone = model.skeleton.bones[bi];
@@ -1341,28 +1301,27 @@ bool exportToFBX(const Model& model, const std::vector<Animation>& animations, c
             nw.beginNode("P"); nw.beginProps(); nw.addPropString("Lcl Rotation"); nw.addPropString("Lcl Rotation"); nw.addPropString(""); nw.addPropString("A");
             nw.addPropF64(ex); nw.addPropF64(ey); nw.addPropF64(ez); nw.endProps(); nw.endNodeNoNested();
 
+            nw.beginNode("P"); nw.beginProps(); nw.addPropString("Size"); nw.addPropString("double"); nw.addPropString("Number"); nw.addPropString("");
+            nw.addPropF64(1.0); nw.endProps(); nw.endNodeNoNested();
+
             nw.endNode();
-            nw.beginNode("Shading"); nw.beginProps(); nw.addPropString("Y"); nw.endProps(); nw.endNodeNoNested();
-            nw.beginNode("Culling"); nw.beginProps(); nw.addPropString("CullingOff"); nw.endProps(); nw.endNodeNoNested();
             nw.endNode();
         }
 
-        // Skin and Cluster deformers
         for (size_t mi = 0; mi < model.meshes.size(); mi++) {
             if (!meshHasSkin[mi]) continue;
 
-            // Skin deformer
             nw.beginNode("Deformer"); nw.beginProps(); nw.addPropI64(getSkinID(mi)); nw.addPropString("Deformer::Skin\x00\x01Skin"); nw.addPropString("Skin"); nw.endProps();
             nw.beginNode("Version"); nw.beginProps(); nw.addPropI32(101); nw.endProps(); nw.endNodeNoNested();
             nw.beginNode("Link_DeformAcuracy"); nw.beginProps(); nw.addPropF64(50.0); nw.endProps(); nw.endNodeNoNested();
             nw.endNode();
 
-            // Cluster for each bone
             for (int boneIdx : meshBoneSets[mi]) {
                 const auto& infs = meshBoneInfluences[mi][boneIdx];
+                const auto& bone = model.skeleton.bones[boneIdx];
 
                 nw.beginNode("Deformer"); nw.beginProps(); nw.addPropI64(getClusterID(mi, boneIdx));
-                nw.addPropString("SubDeformer::" + Bone.name + "\x00\x01Cluster");
+                nw.addPropString("SubDeformer::" + bone.name + "\x00\x01Cluster");
                 nw.addPropString("Cluster"); nw.endProps();
                 nw.beginNode("Version"); nw.beginProps(); nw.addPropI32(100); nw.endProps(); nw.endNodeNoNested();
                 nw.beginNode("UserData"); nw.beginProps(); nw.addPropString(""); nw.addPropString(""); nw.endProps(); nw.endNodeNoNested();
@@ -1376,31 +1335,49 @@ bool exportToFBX(const Model& model, const std::vector<Animation>& animations, c
                 nw.beginNode("Indexes"); nw.beginProps(); nw.addPropI32Array(indices); nw.endProps(); nw.endNodeNoNested();
                 nw.beginNode("Weights"); nw.beginProps(); nw.addPropF64Array(weights); nw.endProps(); nw.endNodeNoNested();
 
-                // Build matrices from bone's precomputed world and inverse bind transforms
-                const auto& bone = model.skeleton.bones[boneIdx];
-
-                // Helper to build rotation matrix from quaternion
-                auto quatToMatrix = [](float qx, float qy, float qz, float qw, float tx, float ty, float tz, std::vector<double>& m) {
-                    float xx = qx*qx, yy = qy*qy, zz = qz*qz;
-                    float xy = qx*qy, xz = qx*qz, yz = qy*qz;
-                    float wx = qw*qx, wy = qw*qy, wz = qw*qz;
-                    m.resize(16);
-                    m[0] = 1 - 2*(yy+zz); m[1] = 2*(xy+wz);     m[2] = 2*(xz-wy);     m[3] = 0;
-                    m[4] = 2*(xy-wz);     m[5] = 1 - 2*(xx+zz); m[6] = 2*(yz+wx);     m[7] = 0;
-                    m[8] = 2*(xz+wy);     m[9] = 2*(yz-wx);     m[10] = 1 - 2*(xx+yy); m[11] = 0;
-                    m[12] = tx;           m[13] = ty;           m[14] = tz;            m[15] = 1;
-                };
-
-                // Transform - inverse bind pose (transforms vertices from mesh space to bone local space)
-                std::vector<double> transform;
-                quatToMatrix(bone.invBindRotX, bone.invBindRotY, bone.invBindRotZ, bone.invBindRotW,
-                            bone.invBindPosX, bone.invBindPosY, bone.invBindPosZ, transform);
+                std::vector<double> transform = {1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1};
                 nw.beginNode("Transform"); nw.beginProps(); nw.addPropF64Array(transform); nw.endProps(); nw.endNodeNoNested();
 
-                // TransformLink - world bind pose (bone's world transform at bind time)
-                std::vector<double> transformLink;
-                quatToMatrix(bone.worldRotX, bone.worldRotY, bone.worldRotZ, bone.worldRotW,
-                            bone.worldPosX, bone.worldPosY, bone.worldPosZ, transformLink);
+                double qx = bone.invBindRotX, qy = bone.invBindRotY, qz = bone.invBindRotZ, qw = bone.invBindRotW;
+                double tx = bone.invBindPosX, ty = bone.invBindPosY, tz = bone.invBindPosZ;
+
+                double xx = qx*qx, yy = qy*qy, zz = qz*qz;
+                double xy = qx*qy, xz = qx*qz, yz = qy*qz;
+                double wx = qw*qx, wy = qw*qy, wz = qw*qz;
+
+                double m00 = 1.0 - 2.0*(yy+zz);
+                double m01 = 2.0*(xy+wz);
+                double m02 = 2.0*(xz-wy);
+                double m10 = 2.0*(xy-wz);
+                double m11 = 1.0 - 2.0*(xx+zz);
+                double m12 = 2.0*(yz+wx);
+                double m20 = 2.0*(xz+wy);
+                double m21 = 2.0*(yz-wx);
+                double m22 = 1.0 - 2.0*(xx+yy);
+
+                double det = m00*(m11*m22 - m12*m21) - m01*(m10*m22 - m12*m20) + m02*(m10*m21 - m11*m20);
+                double invDet = 1.0 / det;
+
+                double i00 = (m11*m22 - m12*m21) * invDet;
+                double i01 = (m02*m21 - m01*m22) * invDet;
+                double i02 = (m01*m12 - m02*m11) * invDet;
+                double i10 = (m12*m20 - m10*m22) * invDet;
+                double i11 = (m00*m22 - m02*m20) * invDet;
+                double i12 = (m02*m10 - m00*m12) * invDet;
+                double i20 = (m10*m21 - m11*m20) * invDet;
+                double i21 = (m01*m20 - m00*m21) * invDet;
+                double i22 = (m00*m11 - m01*m10) * invDet;
+
+                double itx = -(i00*tx + i10*ty + i20*tz);
+                double ity = -(i01*tx + i11*ty + i21*tz);
+                double itz = -(i02*tx + i12*ty + i22*tz);
+
+                std::vector<double> transformLink = {
+                    i00, i01, i02, 0,
+                    i10, i11, i12, 0,
+                    i20, i21, i22, 0,
+                    itx, ity, itz, 1
+                };
                 nw.beginNode("TransformLink"); nw.beginProps(); nw.addPropF64Array(transformLink); nw.endProps(); nw.endNodeNoNested();
 
                 nw.endNode();
@@ -1408,7 +1385,6 @@ bool exportToFBX(const Model& model, const std::vector<Animation>& animations, c
         }
     }
 
-    // Materials
     for (size_t mi = 0; mi < model.materials.size(); mi++) {
         const auto& mat = model.materials[mi];
         std::string matName = "Material::" + mat.name + "\x00\x01";
@@ -1426,12 +1402,10 @@ bool exportToFBX(const Model& model, const std::vector<Animation>& animations, c
         nw.endNode();
     }
 
-    // Textures and Videos - iterate through textureEntries (not materials!)
     for (size_t ti = 0; ti < textureEntries.size(); ti++) {
         const auto& te = textureEntries[ti];
         const auto& mat = model.materials[te.materialIndex];
 
-        // Video node
         std::string videoName = "Video::" + mat.name + "\x00\x01Clip";
         nw.beginNode("Video"); nw.beginProps(); nw.addPropI64(getVideoID(ti)); nw.addPropString(videoName); nw.addPropString("Clip"); nw.endProps();
         nw.beginNode("Type"); nw.beginProps(); nw.addPropString("Clip"); nw.endProps(); nw.endNodeNoNested();
@@ -1442,7 +1416,6 @@ bool exportToFBX(const Model& model, const std::vector<Animation>& animations, c
         nw.beginNode("Content"); nw.beginProps(); nw.addPropRawBytes(te.pngData.data(), te.pngData.size()); nw.endProps(); nw.endNodeNoNested();
         nw.endNode();
 
-        // Texture node
         std::string texName = "Texture::" + mat.name + "\x00\x01";
         nw.beginNode("Texture"); nw.beginProps(); nw.addPropI64(getTextureID(ti)); nw.addPropString(texName); nw.addPropString(""); nw.endProps();
         nw.beginNode("Type"); nw.beginProps(); nw.addPropString("TextureVideoClip"); nw.endProps(); nw.endNodeNoNested();
@@ -1459,7 +1432,6 @@ bool exportToFBX(const Model& model, const std::vector<Animation>& animations, c
         nw.endNode();
     }
 
-    // Animation objects
     for (size_t ai = 0; ai < animExports.size(); ai++) {
         const auto& ae = animExports[ai];
         int64_t fbxTimeStart = 0;
@@ -1513,9 +1485,8 @@ bool exportToFBX(const Model& model, const std::vector<Animation>& animations, c
         }
     }
 
-    nw.endNode(); // Objects
+    nw.endNode();
 
-    // Connections
     nw.beginNode("Connections"); nw.beginProps(); nw.endProps();
 
     auto addConn = [&](const std::string& type, int64_t child, int64_t parent) {
@@ -1525,23 +1496,19 @@ bool exportToFBX(const Model& model, const std::vector<Animation>& animations, c
         nw.beginNode("C"); nw.beginProps(); nw.addPropString(type); nw.addPropI64(child); nw.addPropI64(parent); nw.addPropString(prop); nw.endProps(); nw.endNodeNoNested();
     };
 
-    // Root to scene
     addConn("OO", ROOT_MODEL_ID, 0);
 
-    // Meshes to root, geometry to mesh models
     for (size_t i = 0; i < model.meshes.size(); i++) {
         addConn("OO", getModelID(i), ROOT_MODEL_ID);
         addConn("OO", getGeoID(i), getModelID(i));
     }
 
-    // Bones to parent bones or root
     if (hasSkeleton) {
         for (size_t i = 0; i < model.skeleton.bones.size(); i++) {
             int parentIdx = model.skeleton.bones[i].parentIndex;
             addConn("OO", getBoneID(i), parentIdx >= 0 ? getBoneID(parentIdx) : ROOT_MODEL_ID);
         }
 
-        // Skin deformers
         for (size_t mi = 0; mi < model.meshes.size(); mi++) {
             if (!meshHasSkin[mi]) continue;
             addConn("OO", getSkinID(mi), getGeoID(mi));
@@ -1552,7 +1519,6 @@ bool exportToFBX(const Model& model, const std::vector<Animation>& animations, c
         }
     }
 
-    // Materials to mesh models
     for (size_t mi = 0; mi < model.meshes.size(); mi++) {
         int matIdx = model.meshes[mi].materialIndex;
         if (matIdx >= 0 && matIdx < (int)model.materials.size()) {
@@ -1560,7 +1526,6 @@ bool exportToFBX(const Model& model, const std::vector<Animation>& animations, c
         }
     }
 
-    // Textures to materials (use materialToTextureIndex mapping!)
     for (size_t mi = 0; mi < model.materials.size(); mi++) {
         int texIdx = materialToTextureIndex[mi];
         if (texIdx >= 0) {
@@ -1569,7 +1534,6 @@ bool exportToFBX(const Model& model, const std::vector<Animation>& animations, c
         }
     }
 
-    // Animation connections
     for (size_t ai = 0; ai < animExports.size(); ai++) {
         const auto& ae = animExports[ai];
         addConn("OO", getAnimLayerID(ai), getAnimStackID(ai));
@@ -1587,9 +1551,8 @@ bool exportToFBX(const Model& model, const std::vector<Animation>& animations, c
         }
     }
 
-    nw.endNode(); // Connections
+    nw.endNode();
 
-    // Takes section
     if (!animExports.empty()) {
         nw.beginNode("Takes"); nw.beginProps(); nw.endProps();
         nw.beginNode("Current"); nw.beginProps(); nw.addPropString(animExports[0].name); nw.endProps(); nw.endNodeNoNested();
@@ -1606,7 +1569,6 @@ bool exportToFBX(const Model& model, const std::vector<Animation>& animations, c
         nw.endNode();
     }
 
-    // File terminator
     for (int i = 0; i < 13; i++) output.push_back(0);
 
     std::ofstream out(outputPath, std::ios::binary);

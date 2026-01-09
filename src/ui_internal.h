@@ -73,6 +73,7 @@ void drawVirtualList(int itemCount, std::function<void(int)> renderItem);
 void drawMeshBrowserWindow(AppState& state);
 void drawImportMenu(AppState& state);
 void drawBrowserWindow(AppState& state);
+void markModelAsImported(const std::string& modelName);
 
 void drawRenderSettingsWindow(AppState& state);
 void drawMaoViewer(AppState& state);

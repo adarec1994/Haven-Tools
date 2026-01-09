@@ -6,6 +6,8 @@
 #include <algorithm>
 #include <iomanip>
 #include <cmath>
+#include <set>
+#include <functional>
 
 #define TINYGLTF_IMPLEMENTATION
 #define STB_IMAGE_IMPLEMENTATION
@@ -35,10 +37,7 @@ static std::string CleanName(const std::string& input) {
 }
 
 DAOGraphicsTools::DAOGraphicsTools() {}
-
-DAOGraphicsTools::~DAOGraphicsTools() {
-    Cleanup();
-}
+DAOGraphicsTools::~DAOGraphicsTools() { Cleanup(); }
 
 bool DAOGraphicsTools::Initialize() {
     if (m_initialized) return true;
@@ -72,7 +71,6 @@ bool DAOGraphicsTools::ExtractTools() {
     };
 
     bool ok = true;
-
     ok &= writeFile(m_mshDir / "GraphicsProcessorMSH.exe", msh_GraphicsProcessorMSH_exe, msh_GraphicsProcessorMSH_exe_len);
     ok &= writeFile(m_mshDir / "IlmImf.dll", msh_IlmImf_dll, msh_IlmImf_dll_len);
     ok &= writeFile(m_mshDir / "NxCharacter.dll", msh_NxCharacter_dll, msh_NxCharacter_dll_len);
@@ -102,9 +100,6 @@ bool DAOGraphicsTools::RunProcessorWithCmd(const fs::path& exePath, const std::s
         return false;
     }
 
-    std::cout << "[DAOTools] Exe exists: " << fs::exists(exePath) << std::endl;
-    std::cout << "[DAOTools] Exe size: " << fs::file_size(exePath) << std::endl;
-
 #ifdef _WIN32
     std::cout << "[DAOTools] Running: " << cmdLine << std::endl;
 
@@ -112,8 +107,7 @@ bool DAOGraphicsTools::RunProcessorWithCmd(const fs::path& exePath, const std::s
     sa.nLength = sizeof(sa);
     sa.bInheritHandle = TRUE;
 
-    HANDLE hStdOutRead, hStdOutWrite;
-    HANDLE hStdErrRead, hStdErrWrite;
+    HANDLE hStdOutRead, hStdOutWrite, hStdErrRead, hStdErrWrite;
     CreatePipe(&hStdOutRead, &hStdOutWrite, &sa, 0);
     CreatePipe(&hStdErrRead, &hStdErrWrite, &sa, 0);
     SetHandleInformation(hStdOutRead, HANDLE_FLAG_INHERIT, 0);
@@ -127,28 +121,19 @@ bool DAOGraphicsTools::RunProcessorWithCmd(const fs::path& exePath, const std::s
     si.hStdInput = NULL;
 
     PROCESS_INFORMATION pi = {};
-
     std::string cmd = cmdLine;
     fs::path workDir = exePath.parent_path();
-    std::cout << "[DAOTools] Working dir: " << workDir << std::endl;
 
-    std::cout << "[DAOTools] Files in working dir:" << std::endl;
-    for (const auto& entry : fs::directory_iterator(workDir)) {
-        std::cout << "  " << entry.path().filename() << " (" << entry.file_size() << " bytes)" << std::endl;
-    }
-
-    if (CreateProcessA(NULL, &cmd[0], NULL, NULL, TRUE,
-                       0, NULL, workDir.string().c_str(), &si, &pi)) {
+    if (CreateProcessA(NULL, &cmd[0], NULL, NULL, TRUE, 0, NULL, workDir.string().c_str(), &si, &pi)) {
         CloseHandle(hStdOutWrite);
         CloseHandle(hStdErrWrite);
 
-        DWORD waitResult = WaitForSingleObject(pi.hProcess, 30000);
-        std::cout << "[DAOTools] Wait result: " << waitResult << " (0=WAIT_OBJECT_0, 258=TIMEOUT)" << std::endl;
+        WaitForSingleObject(pi.hProcess, 30000);
 
         char buffer[4096];
         DWORD bytesRead;
-
         std::string stdoutStr, stderrStr;
+
         while (ReadFile(hStdOutRead, buffer, sizeof(buffer) - 1, &bytesRead, NULL) && bytesRead > 0) {
             buffer[bytesRead] = 0;
             stdoutStr += buffer;
@@ -161,12 +146,8 @@ bool DAOGraphicsTools::RunProcessorWithCmd(const fs::path& exePath, const std::s
         CloseHandle(hStdOutRead);
         CloseHandle(hStdErrRead);
 
-        if (!stdoutStr.empty()) {
-            std::cout << "[DAOTools] STDOUT: " << stdoutStr << std::endl;
-        }
-        if (!stderrStr.empty()) {
-            std::cout << "[DAOTools] STDERR: " << stderrStr << std::endl;
-        }
+        if (!stdoutStr.empty()) std::cout << "[DAOTools] STDOUT: " << stdoutStr << std::endl;
+        if (!stderrStr.empty()) std::cout << "[DAOTools] STDERR: " << stderrStr << std::endl;
 
         DWORD exitCode = 1;
         GetExitCodeProcess(pi.hProcess, &exitCode);
@@ -174,14 +155,9 @@ bool DAOGraphicsTools::RunProcessorWithCmd(const fs::path& exePath, const std::s
 
         CloseHandle(pi.hProcess);
         CloseHandle(pi.hThread);
-
-        std::cout << "[DAOTools] Files after processing:" << std::endl;
-        for (const auto& entry : fs::directory_iterator(workDir)) {
-            std::cout << "  " << entry.path().filename() << " (" << entry.file_size() << " bytes)" << std::endl;
-        }
-
         return exitCode == 0;
     }
+
     DWORD err = GetLastError();
     std::cerr << "[DAOTools] CreateProcess failed: " << err << std::endl;
     CloseHandle(hStdOutRead);
@@ -198,10 +174,8 @@ bool DAOGraphicsTools::RunProcessorWithCmd(const fs::path& exePath, const std::s
 std::vector<uint8_t> DAOGraphicsTools::ReadBinaryFile(const fs::path& path) {
     std::ifstream file(path, std::ios::binary | std::ios::ate);
     if (!file) return {};
-
     size_t size = file.tellg();
     file.seekg(0);
-
     std::vector<uint8_t> data(size);
     file.read(reinterpret_cast<char*>(data.data()), size);
     return data;
@@ -209,7 +183,6 @@ std::vector<uint8_t> DAOGraphicsTools::ReadBinaryFile(const fs::path& path) {
 
 std::vector<uint8_t> DAOGraphicsTools::ProcessMSH(const fs::path& xmlPath) {
     fs::path exePath = m_mshDir / "GraphicsProcessorMSH.exe";
-
     fs::path localXml = m_mshDir / xmlPath.filename();
     fs::copy_file(xmlPath, localXml, fs::copy_options::overwrite_existing);
 
@@ -218,16 +191,10 @@ std::vector<uint8_t> DAOGraphicsTools::ProcessMSH(const fs::path& xmlPath) {
         outName = outName.substr(0, outName.size() - 4);
     }
     fs::path outPath = m_mshDir / (outName + ".msh");
-
     fs::remove(outPath);
 
-    // FIXED: Use correct command line from MaxScript:
-    // GraphicsProcessorMSH.exe -platform pc mmdtogff <filename>
     std::string cmdLine = "\"" + exePath.string() + "\" -platform pc mmdtogff \"" + localXml.string() + "\"";
-
-    if (!RunProcessorWithCmd(exePath, cmdLine)) {
-        return {};
-    }
+    if (!RunProcessorWithCmd(exePath, cmdLine)) return {};
 
     if (!fs::exists(outPath)) {
         std::cerr << "[DAOTools] MSH output not created: " << outPath << std::endl;
@@ -241,7 +208,6 @@ std::vector<uint8_t> DAOGraphicsTools::ProcessMSH(const fs::path& xmlPath) {
 
 std::vector<uint8_t> DAOGraphicsTools::ProcessMMH(const fs::path& xmlPath) {
     fs::path exePath = m_mmhDir / "GraphicsProcessorMMH.exe";
-
     fs::path localXml = m_mmhDir / xmlPath.filename();
     fs::copy_file(xmlPath, localXml, fs::copy_options::overwrite_existing);
 
@@ -250,12 +216,9 @@ std::vector<uint8_t> DAOGraphicsTools::ProcessMMH(const fs::path& xmlPath) {
         outName = outName.substr(0, outName.size() - 4);
     }
     fs::path outPath = m_mmhDir / (outName + ".mmh");
-
     fs::remove(outPath);
 
-    if (!RunProcessor(exePath, localXml)) {
-        return {};
-    }
+    if (!RunProcessor(exePath, localXml)) return {};
 
     if (!fs::exists(outPath)) {
         std::cerr << "[DAOTools] MMH output not created: " << outPath << std::endl;
@@ -288,9 +251,7 @@ std::string DAOImporter::GetBackupDir() {
 }
 
 void DAOImporter::ReportProgress(float progress, const std::string& status) {
-    if (m_progressCallback) {
-        m_progressCallback(progress, status);
-    }
+    if (m_progressCallback) m_progressCallback(progress, status);
 }
 
 static std::string FindErfPath(const fs::path& root, const std::string& filename) {
@@ -348,7 +309,6 @@ static std::vector<uint8_t> ConvertToDDS(const std::vector<uint8_t>& imageData, 
             dds.push_back(a);
         }
     }
-
     return dds;
 }
 
@@ -452,19 +412,18 @@ bool DAOImporter::ImportToDirectory(const std::string& glbPath, const std::strin
 
     std::cout << "\n[Import] Updating ERF files..." << std::endl;
 
-    // START REFRESHING ERFS
-    ReportProgress(0.7f, "Refreshing .erf's...");
+    ReportProgress(0.7f, "Refreshing modelmeshdata.erf...");
     bool ok1 = RepackERF(meshErf, meshFiles);
 
-    ReportProgress(0.8f, "Refreshing .erf's (Hierarchies)...");
+    ReportProgress(0.8f, "Refreshing modelhierarchies.erf...");
     bool ok2 = RepackERF(hierErf, hierFiles);
 
-    ReportProgress(0.85f, "Refreshing .erf's (Materials)...");
+    ReportProgress(0.85f, "Refreshing materialobjects.erf...");
     bool ok3 = RepackERF(matErf, matFiles);
 
     bool ok4 = true;
     if (!texErf.empty() && !texFiles.empty()) {
-        ReportProgress(0.9f, "Refreshing .erf's (Textures)...");
+        ReportProgress(0.9f, "Refreshing texturepack.erf...");
         ok4 = RepackERF(texErf, texFiles);
     }
 
@@ -479,11 +438,89 @@ bool DAOImporter::LoadGLB(const std::string& path, DAOModelData& outData) {
     tinygltf::Model model;
     tinygltf::TinyGLTF loader;
     std::string err, warn;
+
     if (!loader.LoadBinaryFromFile(&model, &err, &warn, path)) {
         std::cerr << "GLB Load Error: " << err << std::endl;
         return false;
     }
     outData.name = ToLower(fs::path(path).stem().string());
+
+    if (!model.skins.empty()) {
+        const auto& skin = model.skins[0];
+        outData.skeleton.hasSkeleton = true;
+        std::cout << "[GLB] Found skeleton with " << skin.joints.size() << " bones" << std::endl;
+
+        std::vector<float> inverseBindMatrices;
+        if (skin.inverseBindMatrices >= 0) {
+            const auto& accessor = model.accessors[skin.inverseBindMatrices];
+            const auto& bufferView = model.bufferViews[accessor.bufferView];
+            const auto& buffer = model.buffers[bufferView.buffer];
+            const float* data = reinterpret_cast<const float*>(
+                buffer.data.data() + bufferView.byteOffset + accessor.byteOffset);
+            inverseBindMatrices.assign(data, data + accessor.count * 16);
+        }
+
+        outData.skeleton.bones.resize(skin.joints.size());
+        for (size_t i = 0; i < skin.joints.size(); ++i) {
+            int nodeIdx = skin.joints[i];
+            const auto& node = model.nodes[nodeIdx];
+            ImportBone& bone = outData.skeleton.bones[i];
+
+            bone.name = node.name.empty() ? "bone_" + std::to_string(i) : node.name;
+            bone.index = static_cast<int>(i);
+            bone.parentIndex = -1;
+
+            if (!node.translation.empty()) {
+                bone.translation[0] = static_cast<float>(node.translation[0]);
+                bone.translation[1] = static_cast<float>(node.translation[1]);
+                bone.translation[2] = static_cast<float>(node.translation[2]);
+            } else {
+                bone.translation[0] = bone.translation[1] = bone.translation[2] = 0.0f;
+            }
+
+            if (!node.rotation.empty()) {
+                bone.rotation[0] = static_cast<float>(node.rotation[0]);
+                bone.rotation[1] = static_cast<float>(node.rotation[1]);
+                bone.rotation[2] = static_cast<float>(node.rotation[2]);
+                bone.rotation[3] = static_cast<float>(node.rotation[3]);
+            } else {
+                bone.rotation[0] = bone.rotation[1] = bone.rotation[2] = 0.0f;
+                bone.rotation[3] = 1.0f;
+            }
+
+            if (!node.scale.empty()) {
+                bone.scale[0] = static_cast<float>(node.scale[0]);
+                bone.scale[1] = static_cast<float>(node.scale[1]);
+                bone.scale[2] = static_cast<float>(node.scale[2]);
+            } else {
+                bone.scale[0] = bone.scale[1] = bone.scale[2] = 1.0f;
+            }
+
+            if (i * 16 + 15 < inverseBindMatrices.size()) {
+                for (int j = 0; j < 16; ++j) {
+                    bone.inverseBindMatrix[j] = inverseBindMatrices[i * 16 + j];
+                }
+            }
+        }
+
+        for (size_t i = 0; i < skin.joints.size(); ++i) {
+            int nodeIdx = skin.joints[i];
+            for (size_t n = 0; n < model.nodes.size(); ++n) {
+                const auto& parentNode = model.nodes[n];
+                for (int childIdx : parentNode.children) {
+                    if (childIdx == nodeIdx) {
+                        for (size_t j = 0; j < skin.joints.size(); ++j) {
+                            if (skin.joints[j] == static_cast<int>(n)) {
+                                outData.skeleton.bones[i].parentIndex = static_cast<int>(j);
+                                break;
+                            }
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+    }
 
     for (size_t i = 0; i < model.images.size(); ++i) {
         const auto& img = model.images[i];
@@ -574,83 +611,106 @@ bool DAOImporter::LoadGLB(const std::string& path, DAOModelData& outData) {
             const tinygltf::Accessor* normAcc = nullptr;
             const tinygltf::Accessor* uvAcc = nullptr;
             const tinygltf::Accessor* tanAcc = nullptr;
+            const tinygltf::Accessor* jointsAcc = nullptr;
+            const tinygltf::Accessor* weightsAcc = nullptr;
 
             for (const auto& attr : prim.attributes) {
                 if (attr.first == "POSITION") posAcc = getAccessor(attr.second);
                 else if (attr.first == "NORMAL") normAcc = getAccessor(attr.second);
                 else if (attr.first == "TEXCOORD_0") uvAcc = getAccessor(attr.second);
                 else if (attr.first == "TANGENT") tanAcc = getAccessor(attr.second);
+                else if (attr.first == "JOINTS_0") jointsAcc = getAccessor(attr.second);
+                else if (attr.first == "WEIGHTS_0") weightsAcc = getAccessor(attr.second);
             }
 
             if (!posAcc) continue;
+
+            part.hasSkinning = (jointsAcc != nullptr && weightsAcc != nullptr);
 
             const float* positions = reinterpret_cast<const float*>(getBufferData(posAcc));
             const float* normals = normAcc ? reinterpret_cast<const float*>(getBufferData(normAcc)) : nullptr;
             const float* uvs = uvAcc ? reinterpret_cast<const float*>(getBufferData(uvAcc)) : nullptr;
             const float* tangents = tanAcc ? reinterpret_cast<const float*>(getBufferData(tanAcc)) : nullptr;
+            const uint8_t* jointsData = jointsAcc ? getBufferData(jointsAcc) : nullptr;
+            const float* weightsData = weightsAcc ? reinterpret_cast<const float*>(getBufferData(weightsAcc)) : nullptr;
 
             size_t vertexCount = posAcc->count;
             part.vertices.resize(vertexCount);
 
             for (size_t v = 0; v < vertexCount; ++v) {
-                part.vertices[v].x = positions[v * 3];
-                part.vertices[v].y = positions[v * 3 + 1];
-                part.vertices[v].z = positions[v * 3 + 2];
+                ImportVertex& vert = part.vertices[v];
+
+                vert.x = positions[v * 3];
+                vert.y = positions[v * 3 + 1];
+                vert.z = positions[v * 3 + 2];
 
                 if (normals) {
-                    part.vertices[v].nx = normals[v * 3];
-                    part.vertices[v].ny = normals[v * 3 + 1];
-                    part.vertices[v].nz = normals[v * 3 + 2];
+                    vert.nx = normals[v * 3];
+                    vert.ny = normals[v * 3 + 1];
+                    vert.nz = normals[v * 3 + 2];
                 } else {
-                    part.vertices[v].nx = 0;
-                    part.vertices[v].ny = 1;
-                    part.vertices[v].nz = 0;
+                    vert.nx = 0; vert.ny = 1; vert.nz = 0;
                 }
 
                 if (uvs) {
-                    part.vertices[v].u = uvs[v * 2];
-                    part.vertices[v].v = uvs[v * 2 + 1];
+                    vert.u = uvs[v * 2];
+                    vert.v = uvs[v * 2 + 1];
                 } else {
-                    part.vertices[v].u = 0;
-                    part.vertices[v].v = 0;
+                    vert.u = 0; vert.v = 0;
                 }
 
                 if (tangents) {
-                    part.vertices[v].tx = tangents[v * 4];
-                    part.vertices[v].ty = tangents[v * 4 + 1];
-                    part.vertices[v].tz = tangents[v * 4 + 2];
-                    part.vertices[v].tw = tangents[v * 4 + 3];
+                    vert.tx = tangents[v * 4];
+                    vert.ty = tangents[v * 4 + 1];
+                    vert.tz = tangents[v * 4 + 2];
+                    vert.tw = tangents[v * 4 + 3];
                 } else {
-                    // Generate a default tangent perpendicular to normal
-                    // Use the cross product of normal with an arbitrary axis
-                    float nx = part.vertices[v].nx;
-                    float ny = part.vertices[v].ny;
-                    float nz = part.vertices[v].nz;
-
-                    // Choose axis least aligned with normal
                     float ax = 1.0f, ay = 0.0f, az = 0.0f;
-                    if (std::abs(nx) > 0.9f) {
-                        ax = 0.0f; ay = 1.0f; az = 0.0f;
-                    }
+                    if (std::abs(vert.nx) > 0.9f) { ax = 0.0f; ay = 1.0f; az = 0.0f; }
 
-                    // Cross product: tangent = axis x normal
-                    float tx = ay * nz - az * ny;
-                    float ty = az * nx - ax * nz;
-                    float tz = ax * ny - ay * nx;
+                    float tx = ay * vert.nz - az * vert.ny;
+                    float ty = az * vert.nx - ax * vert.nz;
+                    float tz = ax * vert.ny - ay * vert.nx;
 
-                    // Normalize
                     float len = std::sqrt(tx*tx + ty*ty + tz*tz);
-                    if (len > 0.0001f) {
-                        tx /= len; ty /= len; tz /= len;
-                    } else {
-                        tx = 1.0f; ty = 0.0f; tz = 0.0f;
+                    if (len > 0.0001f) { tx /= len; ty /= len; tz /= len; }
+                    else { tx = 1.0f; ty = 0.0f; tz = 0.0f; }
+
+                    vert.tx = tx; vert.ty = ty; vert.tz = tz; vert.tw = 1.0f;
+                }
+
+                if (part.hasSkinning && jointsData && weightsData) {
+                    if (jointsAcc->componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE) {
+                        vert.boneIndices[0] = jointsData[v * 4 + 0];
+                        vert.boneIndices[1] = jointsData[v * 4 + 1];
+                        vert.boneIndices[2] = jointsData[v * 4 + 2];
+                        vert.boneIndices[3] = jointsData[v * 4 + 3];
+                    } else if (jointsAcc->componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT) {
+                        const uint16_t* joints16 = reinterpret_cast<const uint16_t*>(jointsData);
+                        vert.boneIndices[0] = joints16[v * 4 + 0];
+                        vert.boneIndices[1] = joints16[v * 4 + 1];
+                        vert.boneIndices[2] = joints16[v * 4 + 2];
+                        vert.boneIndices[3] = joints16[v * 4 + 3];
                     }
 
-                    part.vertices[v].tx = tx;
-                    part.vertices[v].ty = ty;
-                    part.vertices[v].tz = tz;
-                    part.vertices[v].tw = 1.0f;
+                    vert.boneWeights[0] = weightsData[v * 4 + 0];
+                    vert.boneWeights[1] = weightsData[v * 4 + 1];
+                    vert.boneWeights[2] = weightsData[v * 4 + 2];
+                    vert.boneWeights[3] = weightsData[v * 4 + 3];
                 }
+            }
+
+            if (part.hasSkinning) {
+                std::set<int> usedBones;
+                for (const auto& v : part.vertices) {
+                    for (int i = 0; i < 4; ++i) {
+                        if (v.boneWeights[i] > 0.0f) {
+                            usedBones.insert(v.boneIndices[i]);
+                        }
+                    }
+                }
+                part.bonesUsed.assign(usedBones.begin(), usedBones.end());
+                std::cout << "[GLB] Mesh '" << part.name << "' uses " << part.bonesUsed.size() << " bones" << std::endl;
             }
 
             if (prim.indices >= 0) {
@@ -660,19 +720,13 @@ bool DAOImporter::LoadGLB(const std::string& path, DAOModelData& outData) {
                 part.indices.resize(idxCount);
 
                 if (idxAcc->componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT) {
-                    const uint16_t* indices16 = reinterpret_cast<const uint16_t*>(idxData);
-                    for (size_t i = 0; i < idxCount; ++i) {
-                        part.indices[i] = indices16[i];
-                    }
+                    const uint16_t* idx16 = reinterpret_cast<const uint16_t*>(idxData);
+                    for (size_t i = 0; i < idxCount; ++i) part.indices[i] = idx16[i];
                 } else if (idxAcc->componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT) {
-                    const uint32_t* indices32 = reinterpret_cast<const uint32_t*>(idxData);
-                    for (size_t i = 0; i < idxCount; ++i) {
-                        part.indices[i] = indices32[i];
-                    }
+                    const uint32_t* idx32 = reinterpret_cast<const uint32_t*>(idxData);
+                    for (size_t i = 0; i < idxCount; ++i) part.indices[i] = idx32[i];
                 } else if (idxAcc->componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE) {
-                    for (size_t i = 0; i < idxCount; ++i) {
-                        part.indices[i] = idxData[i];
-                    }
+                    for (size_t i = 0; i < idxCount; ++i) part.indices[i] = idxData[i];
                 }
             }
 
@@ -687,160 +741,188 @@ bool DAOImporter::WriteMSHXml(const fs::path& outputPath, const DAOModelData& mo
     std::ofstream out(outputPath);
     if (!out) return false;
 
-    // Set up consistent floating-point formatting - write directly to file
     out << std::fixed << std::setprecision(6);
 
-    size_t totalVerts = 0;
-    size_t totalIndices = 0;
+    size_t totalVerts = 0, totalIndices = 0;
+    bool hasSkinning = false;
+
     for (const auto& part : model.parts) {
         totalVerts += part.vertices.size();
         totalIndices += part.indices.size();
+        if (part.hasSkinning) hasSkinning = true;
     }
 
-    std::cout << "[MSH XML] Writing to: " << outputPath << std::endl;
-    std::cout << "[MSH XML] Model name: " << model.name << std::endl;
-    std::cout << "[MSH XML] Total vertices: " << totalVerts << std::endl;
-    std::cout << "[MSH XML] Total indices: " << totalIndices << std::endl;
-    std::cout << "[MSH XML] Parts: " << model.parts.size() << std::endl;
+    std::cout << "[MSH XML] Vertices: " << totalVerts << ", Indices: " << totalIndices
+              << ", Skinning: " << (hasSkinning ? "yes" : "no") << std::endl;
 
-    // Write XML header - match MaxScript format exactly (line 936-941 of DAOModelExport.ms)
     out << "<?xml version=\"1.0\" ?>\n";
     out << "<ModelMeshData Name=\"" << model.name << ".MSH\" Version=\"1\">\n";
     out << "<MeshGroup Name=\"" << model.name << "\" Optimize=\"All\">\n";
 
-    // POSITION - format: "X Y Z 1.0\n" per MaxScript line 1369
-    out << "<Data ElementCount=\"" << totalVerts << "\" Semantic=\"POSITION\" Type=\"Float4\">\n";
-    out << "<![CDATA[\n";
-    for (const auto& part : model.parts) {
-        for (const auto& v : part.vertices) {
+    out << "<Data ElementCount=\"" << totalVerts << "\" Semantic=\"POSITION\" Type=\"Float4\">\n<![CDATA[\n";
+    for (const auto& part : model.parts)
+        for (const auto& v : part.vertices)
             out << v.x << " " << v.y << " " << v.z << " 1.0\n";
-        }
-    }
-    out << "]]>\n";
-    out << "</Data>\n";
+    out << "]]>\n</Data>\n";
 
-    // TEXCOORD - format: "U V\n" per MaxScript line 1388 (V is flipped: 1-V)
-    out << "<Data ElementCount=\"" << totalVerts << "\" Semantic=\"TEXCOORD\" Type=\"Float2\">\n";
-    out << "<![CDATA[\n";
-    for (const auto& part : model.parts) {
-        for (const auto& v : part.vertices) {
-            float flippedV = 1.0f - v.v;
-            out << v.u << " " << flippedV << "\n";
-        }
-    }
-    out << "]]>\n";
-    out << "</Data>\n";
+    out << "<Data ElementCount=\"" << totalVerts << "\" Semantic=\"TEXCOORD\" Type=\"Float2\">\n<![CDATA[\n";
+    for (const auto& part : model.parts)
+        for (const auto& v : part.vertices)
+            out << v.u << " " << (1.0f - v.v) << "\n";
+    out << "]]>\n</Data>\n";
 
-    // TANGENT - format: "X Y Z 1.0\n" per MaxScript line 1441
-    out << "<Data ElementCount=\"" << totalVerts << "\" Semantic=\"TANGENT\" Type=\"Float4\">\n";
-    out << "<![CDATA[\n";
-    for (const auto& part : model.parts) {
-        for (const auto& v : part.vertices) {
+    out << "<Data ElementCount=\"" << totalVerts << "\" Semantic=\"TANGENT\" Type=\"Float4\">\n<![CDATA[\n";
+    for (const auto& part : model.parts)
+        for (const auto& v : part.vertices)
             out << v.tx << " " << v.ty << " " << v.tz << " 1.0\n";
-        }
-    }
-    out << "]]>\n";
-    out << "</Data>\n";
+    out << "]]>\n</Data>\n";
 
-    // BINORMAL - format: "X Y Z 1.0\n" per MaxScript line 1473
-    // Calculated as cross(normal, tangent) * handedness
-    out << "<Data ElementCount=\"" << totalVerts << "\" Semantic=\"BINORMAL\" Type=\"Float4\">\n";
-    out << "<![CDATA[\n";
+    out << "<Data ElementCount=\"" << totalVerts << "\" Semantic=\"BINORMAL\" Type=\"Float4\">\n<![CDATA[\n";
     for (const auto& part : model.parts) {
         for (const auto& v : part.vertices) {
-            // binormal = cross(normal, tangent) * handedness
             float bx = v.ny * v.tz - v.nz * v.ty;
             float by = v.nz * v.tx - v.nx * v.tz;
             float bz = v.nx * v.ty - v.ny * v.tx;
-            float hand = v.tw; // handedness from tangent w component
-            out << (bx * hand) << " " << (by * hand) << " " << (bz * hand) << " 1.0\n";
+            out << (bx * v.tw) << " " << (by * v.tw) << " " << (bz * v.tw) << " 1.0\n";
         }
     }
-    out << "]]>\n";
-    out << "</Data>\n";
+    out << "]]>\n</Data>\n";
 
-    // NORMAL - format: "X Y Z 1.0\n" per MaxScript line 1497
-    out << "<Data ElementCount=\"" << totalVerts << "\" Semantic=\"NORMAL\" Type=\"Float4\">\n";
-    out << "<![CDATA[\n";
-    for (const auto& part : model.parts) {
-        for (const auto& v : part.vertices) {
+    out << "<Data ElementCount=\"" << totalVerts << "\" Semantic=\"NORMAL\" Type=\"Float4\">\n<![CDATA[\n";
+    for (const auto& part : model.parts)
+        for (const auto& v : part.vertices)
             out << v.nx << " " << v.ny << " " << v.nz << " 1.0\n";
-        }
-    }
-    out << "]]>\n";
-    out << "</Data>\n";
+    out << "]]>\n</Data>\n";
 
-    // Indices - format: "I0 I1 I2\n" per MaxScript line 1610 (one triangle per line)
-    out << "<Data IndexCount=\"" << totalIndices << "\" IndexType=\"Index32\" Semantic=\"Indices\">\n";
-    out << "<![CDATA[\n";
+    if (hasSkinning) {
+        out << "<Data ElementCount=\"" << totalVerts << "\" Semantic=\"BLENDWEIGHT\" Type=\"Float4\">\n<![CDATA[\n";
+        for (const auto& part : model.parts)
+            for (const auto& v : part.vertices)
+                out << v.boneWeights[0] << " " << v.boneWeights[1] << " "
+                    << v.boneWeights[2] << " " << v.boneWeights[3] << "\n";
+        out << "]]>\n</Data>\n";
+
+        out << "<Data ElementCount=\"" << totalVerts << "\" Semantic=\"BLENDINDICES\" Type=\"Short4\">\n<![CDATA[\n";
+        for (const auto& part : model.parts)
+            for (const auto& v : part.vertices)
+                out << v.boneIndices[0] << " " << v.boneIndices[1] << " "
+                    << v.boneIndices[2] << " " << v.boneIndices[3] << "\n";
+        out << "]]>\n</Data>\n";
+    }
+
+    out << "<Data IndexCount=\"" << totalIndices << "\" IndexType=\"Index32\" Semantic=\"Indices\">\n<![CDATA[\n";
     uint32_t indexOffset = 0;
     for (const auto& part : model.parts) {
         for (size_t i = 0; i + 2 < part.indices.size(); i += 3) {
-            uint32_t i0 = part.indices[i] + indexOffset;
-            uint32_t i1 = part.indices[i + 1] + indexOffset;
-            uint32_t i2 = part.indices[i + 2] + indexOffset;
-            out << i0 << " " << i1 << " " << i2 << "\n";
+            out << (part.indices[i] + indexOffset) << " "
+                << (part.indices[i + 1] + indexOffset) << " "
+                << (part.indices[i + 2] + indexOffset) << "\n";
         }
         indexOffset += static_cast<uint32_t>(part.vertices.size());
     }
-    out << "]]>\n";
-    out << "</Data>\n";
+    out << "]]>\n</Data>\n";
 
-    out << "</MeshGroup>\n";
-    out << "</ModelMeshData>\n";
-
+    out << "</MeshGroup>\n</ModelMeshData>\n";
     out.flush();
-    bool success = out.good();
-    out.close();
-
-    // Verify the file was written correctly
-    if (success) {
-        std::ifstream verify(outputPath);
-        if (verify) {
-            verify.seekg(0, std::ios::end);
-            size_t fileSize = verify.tellg();
-            std::cout << "[MSH XML] Written " << fileSize << " bytes" << std::endl;
-
-            // Show first few lines for debugging
-            verify.seekg(0, std::ios::beg);
-            std::string line;
-            int lineCount = 0;
-            std::cout << "[MSH XML] First 15 lines:" << std::endl;
-            while (std::getline(verify, line) && lineCount < 15) {
-                std::cout << "  " << line << std::endl;
-                lineCount++;
-            }
-        }
-    }
-
-    return success;
+    return out.good();
 }
 
 bool DAOImporter::WriteMMHXml(const fs::path& outputPath, const DAOModelData& model, const std::string& mshFilename) {
     std::ofstream out(outputPath);
     if (!out) return false;
 
+    out << std::fixed << std::setprecision(6);
+
     std::string materialName = model.materials.empty() ? model.name : model.materials[0].name;
+    bool hasSkeleton = model.skeleton.hasSkeleton && !model.skeleton.bones.empty();
 
     out << "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n";
     out << "<ModelHierarchy Name=\"" << model.name << ".mmh\" ModelDataName=\"" << mshFilename << "\">\n";
-    out << "  <Node Name=\"GOB\" SoundMaterialType=\"0\">\n";
-    out << "    <Translation>0 0 0</Translation>\n";
-    out << "    <Rotation>0 0 0 1</Rotation>\n";
-    out << "    <Children>\n";
-    out << "      <MeshNode Name=\"" << model.name << "\" MeshName=\"" << model.name << "\"";
-    out << " MaterialObject=\"" << materialName << "\" CastShadow=\"1\" ReceiveShadow=\"1\">\n";
-    out << "        <Translation>0 0 0</Translation>\n";
-    out << "        <Rotation>0 0 0 1</Rotation>\n";
-    out << "      </MeshNode>\n";
-    out << "    </Children>\n";
-    out << "  </Node>\n";
-    out << "</ModelHierarchy>\n";
 
+    if (hasSkeleton) {
+        std::function<void(int, int)> writeBone = [&](int boneIdx, int depth) {
+            const ImportBone& bone = model.skeleton.bones[boneIdx];
+            std::string indent(depth * 2, ' ');
+
+            out << indent << "<Node Name=\"" << bone.name << "\" BoneIndex=\"" << bone.index << "\">\n";
+            out << indent << "  <Translation>" << bone.translation[0] << " "
+                << bone.translation[1] << " " << bone.translation[2] << "</Translation>\n";
+            out << indent << "  <Rotation>" << bone.rotation[0] << " " << bone.rotation[1] << " "
+                << bone.rotation[2] << " " << bone.rotation[3] << "</Rotation>\n";
+
+            std::vector<int> children;
+            for (size_t i = 0; i < model.skeleton.bones.size(); ++i) {
+                if (model.skeleton.bones[i].parentIndex == boneIdx) {
+                    children.push_back(static_cast<int>(i));
+                }
+            }
+
+            if (!children.empty()) {
+                out << indent << "  <Children>\n";
+                for (int child : children) writeBone(child, depth + 2);
+                out << indent << "  </Children>\n";
+            }
+
+            out << indent << "</Node>\n";
+        };
+
+        out << "  <Node Name=\"GOB\" SoundMaterialType=\"0\">\n";
+        out << "    <Translation>0 0 0</Translation>\n";
+        out << "    <Rotation>0 0 0 1</Rotation>\n";
+        out << "    <Children>\n";
+
+        for (size_t i = 0; i < model.skeleton.bones.size(); ++i) {
+            if (model.skeleton.bones[i].parentIndex == -1) {
+                writeBone(static_cast<int>(i), 3);
+            }
+        }
+
+        std::set<int> allBonesUsed;
+        for (const auto& part : model.parts) {
+            for (int bi : part.bonesUsed) allBonesUsed.insert(bi);
+        }
+
+        out << "      <NodeMesh Name=\"" << model.name << "\" ";
+        if (!allBonesUsed.empty()) {
+            out << "BonesUsed=\"";
+            bool first = true;
+            for (int bi : allBonesUsed) {
+                if (!first) out << " ";
+                out << bi;
+                first = false;
+            }
+            out << "\" ";
+        }
+        out << "MeshGroupName=\"" << model.name << "\" ";
+        out << "MaterialLibrary=\"" << materialName << "\" ";
+        out << "MaterialObject=\"" << materialName << "\" ";
+        out << "CastRuntimeShadow=\"1\" ReceiveRuntimeShadow=\"1\">\n";
+        out << "        <Translation>0 0 0</Translation>\n";
+        out << "        <Rotation>0 0 0 1</Rotation>\n";
+        out << "      </NodeMesh>\n";
+
+        out << "    </Children>\n";
+        out << "  </Node>\n";
+    } else {
+        out << "  <Node Name=\"GOB\" SoundMaterialType=\"0\">\n";
+        out << "    <Translation>0 0 0</Translation>\n";
+        out << "    <Rotation>0 0 0 1</Rotation>\n";
+        out << "    <Children>\n";
+        out << "      <MeshNode Name=\"" << model.name << "\" MeshName=\"" << model.name << "\"";
+        out << " MaterialObject=\"" << materialName << "\" CastShadow=\"1\" ReceiveShadow=\"1\">\n";
+        out << "        <Translation>0 0 0</Translation>\n";
+        out << "        <Rotation>0 0 0 1</Rotation>\n";
+        out << "      </MeshNode>\n";
+        out << "    </Children>\n";
+        out << "  </Node>\n";
+    }
+
+    out << "</ModelHierarchy>\n";
     return out.good();
 }
 
-std::string DAOImporter::GenerateMAO(const std::string& matName, const std::string& diffuse, const std::string& normal, const std::string& specular) {
+std::string DAOImporter::GenerateMAO(const std::string& matName, const std::string& diffuse,
+                                      const std::string& normal, const std::string& specular) {
     std::stringstream ss;
     ss << "<?xml version=\"1.0\" ?>\n<MaterialObject Name=\"" << matName << "\">\n";
     ss << "    <Material Name=\"Prop.mat\" />\n";
@@ -857,9 +939,6 @@ enum class ERFVersion { Unknown, V20, V22, V30 };
 bool DAOImporter::RepackERF(const std::string& erfPath, const std::map<std::string, std::vector<uint8_t>>& newFiles) {
     std::cout << "\n[RepackERF] === " << fs::path(erfPath).filename().string() << " ===" << std::endl;
     std::cout << "[RepackERF] Adding " << newFiles.size() << " files" << std::endl;
-    for (const auto& [name, data] : newFiles) {
-        std::cout << "  + " << name << " (" << data.size() << " bytes)" << std::endl;
-    }
 
     if (!fs::exists(erfPath)) {
         std::cerr << "[RepackERF] ERROR: File does not exist!" << std::endl;
@@ -869,171 +948,121 @@ bool DAOImporter::RepackERF(const std::string& erfPath, const std::map<std::stri
     std::vector<uint8_t> erfData;
     {
         std::ifstream in(erfPath, std::ios::binary | std::ios::ate);
-        if (!in) {
-            std::cerr << "[RepackERF] ERROR: Cannot open file" << std::endl;
-            return false;
-        }
+        if (!in) return false;
         size_t size = in.tellg();
         in.seekg(0);
         erfData.resize(size);
         in.read(reinterpret_cast<char*>(erfData.data()), size);
     }
-    std::cout << "[RepackERF] Current size: " << erfData.size() << " bytes" << std::endl;
 
-    if (erfData.size() < 16) {
-        std::cerr << "[RepackERF] ERROR: File too small" << std::endl;
-        return false;
-    }
+    if (erfData.size() < 32) return false;
 
     auto readU32 = [&](size_t offset) -> uint32_t {
         if (offset + 4 > erfData.size()) return 0;
         return *reinterpret_cast<uint32_t*>(&erfData[offset]);
     };
 
-    std::string magic(reinterpret_cast<char*>(erfData.data()), 4);
-    std::string version(reinterpret_cast<char*>(erfData.data() + 4), 4);
+    auto readUtf16String = [&](size_t offset, size_t charCount) -> std::string {
+        std::string result;
+        for (size_t i = 0; i < charCount; ++i) {
+            size_t pos = offset + i * 2;
+            if (pos + 2 > erfData.size()) break;
+            uint16_t ch = *reinterpret_cast<uint16_t*>(&erfData[pos]);
+            if (ch == 0) break;
+            if (ch < 128) result += static_cast<char>(ch);
+        }
+        return result;
+    };
+
+    std::string magic = readUtf16String(0, 4);
+    std::string version = readUtf16String(8, 4);
 
     if (magic != "ERF ") {
-        std::cerr << "[RepackERF] ERROR: Invalid magic: " << magic << std::endl;
+        std::cerr << "[RepackERF] ERROR: Invalid magic" << std::endl;
         return false;
     }
 
     ERFVersion erfVer = ERFVersion::Unknown;
     if (version == "V2.0") erfVer = ERFVersion::V20;
     else if (version == "V2.2") erfVer = ERFVersion::V22;
-    else if (version == "V3.0") erfVer = ERFVersion::V30;
-
-    std::cout << "[RepackERF] Format: " << version << std::endl;
 
     if (erfVer != ERFVersion::V20 && erfVer != ERFVersion::V22) {
         std::cerr << "[RepackERF] ERROR: Unsupported version: " << version << std::endl;
         return false;
     }
 
-    uint32_t fileCount = readU32(8);
-    std::cout << "[RepackERF] Current entries: " << fileCount << std::endl;
+    uint32_t fileCount = readU32(16);
+    uint32_t year = readU32(20);
+    uint32_t day = readU32(24);
+    uint32_t unknown = readU32(28);
 
-    size_t headerSize = (erfVer == ERFVersion::V22) ? 24 : 16;
-    size_t entrySize = (erfVer == ERFVersion::V22) ? 72 : 8;
-
-    struct FileEntry {
-        std::string name;
-        uint32_t offset;
-        uint32_t size;
-        uint64_t nameHash;
-    };
+    struct FileEntry { std::string name; uint32_t offset; uint32_t size; };
     std::vector<FileEntry> entries;
 
-    size_t tableOffset = headerSize;
+    size_t tableOffset = 32;
     for (uint32_t i = 0; i < fileCount; ++i) {
-        size_t entryOff = tableOffset + i * entrySize;
-        if (entryOff + entrySize > erfData.size()) break;
-
+        size_t entryOff = tableOffset + i * 72;
+        if (entryOff + 72 > erfData.size()) break;
         FileEntry e;
-        if (erfVer == ERFVersion::V22) {
-            char nameBuf[65] = {0};
-            memcpy(nameBuf, &erfData[entryOff], 64);
-            e.name = nameBuf;
-            e.offset = readU32(entryOff + 64);
-            e.size = readU32(entryOff + 68);
-        } else {
-            e.nameHash = *reinterpret_cast<uint64_t*>(&erfData[entryOff]);
-            e.offset = 0;
-            e.size = 0;
-            e.name = "";
-        }
+        e.name = readUtf16String(entryOff, 32);
+        e.offset = readU32(entryOff + 64);
+        e.size = readU32(entryOff + 68);
         entries.push_back(e);
     }
 
-    if (erfVer == ERFVersion::V20) {
-        size_t offsetTableStart = tableOffset + fileCount * 8;
-        for (uint32_t i = 0; i < fileCount; ++i) {
-            entries[i].offset = readU32(offsetTableStart + i * 8);
-            entries[i].size = readU32(offsetTableStart + i * 8 + 4);
-        }
-    }
-
     for (const auto& [name, data] : newFiles) {
-        bool found = false;
         std::string lowerName = ToLower(name);
+        bool found = false;
         for (auto& e : entries) {
-            if (ToLower(e.name) == lowerName) {
-                found = true;
-                break;
-            }
+            if (ToLower(e.name) == lowerName) { found = true; break; }
         }
         if (!found) {
-            FileEntry newEntry;
-            newEntry.name = name;
-            newEntry.offset = 0;
-            newEntry.size = (uint32_t)data.size();
-            newEntry.nameHash = 0;
-            entries.push_back(newEntry);
+            entries.push_back({name, 0, static_cast<uint32_t>(data.size())});
         }
     }
-
-    std::cout << "[RepackERF] Total after merge: " << entries.size() << std::endl;
 
     fs::path backupDir = fs::current_path() / "backups";
     fs::create_directories(backupDir);
     fs::path backupPath = backupDir / (fs::path(erfPath).filename().string() + ".bak");
-
     if (!fs::exists(backupPath)) {
         bool doBackup = true;
-        if (m_backupCallback) {
-            doBackup = m_backupCallback(fs::path(erfPath).filename().string(), backupDir.string());
-        }
-        if (doBackup) {
-            fs::copy_file(erfPath, backupPath);
-            std::cout << "[RepackERF] Created backup: " << backupPath << std::endl;
-        }
-    } else {
-        std::cout << "[RepackERF] Backup exists (skipping)" << std::endl;
+        if (m_backupCallback) doBackup = m_backupCallback(fs::path(erfPath).filename().string(), backupDir.string());
+        if (doBackup) fs::copy_file(erfPath, backupPath);
     }
 
     std::vector<uint8_t> newErfData;
+    auto writeU16 = [&](uint16_t v) {
+        newErfData.push_back(v & 0xFF);
+        newErfData.push_back((v >> 8) & 0xFF);
+    };
     auto writeU32 = [&](uint32_t v) {
         newErfData.push_back(v & 0xFF);
         newErfData.push_back((v >> 8) & 0xFF);
         newErfData.push_back((v >> 16) & 0xFF);
         newErfData.push_back((v >> 24) & 0xFF);
     };
-    auto writeU64 = [&](uint64_t v) {
-        for (int i = 0; i < 8; ++i) {
-            newErfData.push_back((v >> (i * 8)) & 0xFF);
+    auto writeUtf16Fixed = [&](const std::string& str, size_t charCount) {
+        for (size_t i = 0; i < charCount; ++i) {
+            writeU16(i < str.size() ? static_cast<uint16_t>(static_cast<unsigned char>(str[i])) : 0);
         }
     };
 
-    newErfData.insert(newErfData.end(), {'E', 'R', 'F', ' '});
-    newErfData.insert(newErfData.end(), version.begin(), version.end());
-    writeU32((uint32_t)entries.size());
-    if (erfVer == ERFVersion::V22) {
-        writeU32(readU32(12));
-        writeU32(readU32(16));
-        writeU32(readU32(20));
-    } else {
-        writeU32(readU32(12));
-    }
+    writeUtf16Fixed("ERF ", 4);
+    writeUtf16Fixed(version, 4);
+    writeU32(static_cast<uint32_t>(entries.size()));
+    writeU32(year);
+    writeU32(day);
+    writeU32(unknown);
 
     size_t tableStart = newErfData.size();
-    size_t newEntrySize = (erfVer == ERFVersion::V22) ? 72 : 8;
-    size_t tableSize = entries.size() * newEntrySize;
-    if (erfVer == ERFVersion::V20) {
-        tableSize += entries.size() * 8;
-    }
-
-    size_t dataStart = tableStart + tableSize;
+    size_t dataStart = tableStart + entries.size() * 72;
     while (dataStart % 16 != 0) dataStart++;
-
     newErfData.resize(dataStart, 0);
 
     std::vector<std::pair<uint32_t, uint32_t>> offsets;
 
-    std::cout << "[RepackERF] Final file list (first 10 new entries):" << std::endl;
-    int newCount = 0;
-
     for (auto& e : entries) {
-        uint32_t offset = (uint32_t)newErfData.size();
+        uint32_t offset = static_cast<uint32_t>(newErfData.size());
         uint32_t size = 0;
 
         std::string lowerName = ToLower(e.name);
@@ -1041,52 +1070,31 @@ bool DAOImporter::RepackERF(const std::string& erfPath, const std::map<std::stri
             [&](const auto& p) { return ToLower(p.first) == lowerName; });
 
         if (it != newFiles.end()) {
-            size = (uint32_t)it->second.size();
+            size = static_cast<uint32_t>(it->second.size());
             newErfData.insert(newErfData.end(), it->second.begin(), it->second.end());
-            if (newCount < 10) {
-                std::cout << "  [NEW] " << e.name << " (" << size << " bytes)" << std::endl;
-                newCount++;
-            }
         } else {
             size = e.size;
             if (e.offset + e.size <= erfData.size()) {
-                newErfData.insert(newErfData.end(),
-                    erfData.begin() + e.offset,
-                    erfData.begin() + e.offset + e.size);
+                newErfData.insert(newErfData.end(), erfData.begin() + e.offset, erfData.begin() + e.offset + e.size);
             }
         }
-
         offsets.push_back({offset, size});
     }
 
-    if (erfVer == ERFVersion::V22) {
-        for (size_t i = 0; i < entries.size(); ++i) {
-            size_t entryOff = tableStart + i * 72;
-            char nameBuf[64] = {0};
-            strncpy(nameBuf, entries[i].name.c_str(), 63);
-            memcpy(&newErfData[entryOff], nameBuf, 64);
-            memcpy(&newErfData[entryOff + 64], &offsets[i].first, 4);
-            memcpy(&newErfData[entryOff + 68], &offsets[i].second, 4);
+    for (size_t i = 0; i < entries.size(); ++i) {
+        size_t entryOff = tableStart + i * 72;
+        for (size_t c = 0; c < 32; ++c) {
+            uint16_t ch = c < entries[i].name.size() ? static_cast<uint16_t>(static_cast<unsigned char>(entries[i].name[c])) : 0;
+            newErfData[entryOff + c * 2] = ch & 0xFF;
+            newErfData[entryOff + c * 2 + 1] = (ch >> 8) & 0xFF;
         }
-    } else {
-        for (size_t i = 0; i < entries.size(); ++i) {
-            size_t hashOff = tableStart + i * 8;
-            memcpy(&newErfData[hashOff], &entries[i].nameHash, 8);
-
-            size_t offsetOff = tableStart + entries.size() * 8 + i * 8;
-            memcpy(&newErfData[offsetOff], &offsets[i].first, 4);
-            memcpy(&newErfData[offsetOff + 4], &offsets[i].second, 4);
-        }
+        memcpy(&newErfData[entryOff + 64], &offsets[i].first, 4);
+        memcpy(&newErfData[entryOff + 68], &offsets[i].second, 4);
     }
 
-    {
-        std::ofstream out(erfPath, std::ios::binary);
-        if (!out) {
-            std::cerr << "[RepackERF] ERROR: Cannot write output" << std::endl;
-            return false;
-        }
-        out.write(reinterpret_cast<char*>(newErfData.data()), newErfData.size());
-    }
+    std::ofstream out(erfPath, std::ios::binary);
+    if (!out) return false;
+    out.write(reinterpret_cast<char*>(newErfData.data()), newErfData.size());
 
     std::cout << "[RepackERF] SUCCESS (" << newErfData.size() << " bytes)" << std::endl;
     return true;

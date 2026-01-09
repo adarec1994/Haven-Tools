@@ -8,30 +8,36 @@
 
 namespace fs = std::filesystem;
 
+struct ImportVertex {
+    float x, y, z;
+    float nx, ny, nz;
+    float u, v;
+    float tx, ty, tz, tw;
+
+    float boneWeights[4] = {0, 0, 0, 0};
+    int boneIndices[4] = {0, 0, 0, 0};
+};
+
+struct ImportBone {
+    std::string name;
+    int index;
+    int parentIndex;
+    float translation[3];
+    float rotation[4];
+    float scale[3];
+    float inverseBindMatrix[16];
+};
+
 struct DAOModelData {
     std::string name;
-
-    struct Vertex {
-        float x, y, z;
-        float nx, ny, nz;
-        float u, v;
-        float tx, ty, tz, tw;  // tangent (w is handedness, typically 1.0 or -1.0)
-    };
 
     struct MeshPart {
         std::string name;
         std::string materialName;
-        std::vector<Vertex> vertices;
+        std::vector<ImportVertex> vertices;
         std::vector<uint32_t> indices;
-    };
-
-    struct Texture {
-        std::string originalName;
-        std::string ddsName;
-        int width = 0;
-        int height = 0;
-        int channels = 0;
-        std::vector<uint8_t> data;
+        std::vector<int> bonesUsed;
+        bool hasSkinning = false;
     };
 
     struct Material {
@@ -41,13 +47,23 @@ struct DAOModelData {
         std::string specularMap;
     };
 
-    std::vector<MeshPart> parts;
-    std::vector<Texture> textures;
-    std::vector<Material> materials;
-};
+    struct Texture {
+        std::string originalName;
+        std::string ddsName;
+        int width = 0, height = 0, channels = 0;
+        std::vector<uint8_t> data;
+    };
 
-using BackupConfirmCallback = std::function<bool(const std::string& erfName, const std::string& backupDir)>;
-using ProgressCallback = std::function<void(float progress, const std::string& status)>;
+    struct Skeleton {
+        std::vector<ImportBone> bones;
+        bool hasSkeleton = false;
+    };
+
+    std::vector<MeshPart> parts;
+    std::vector<Material> materials;
+    std::vector<Texture> textures;
+    Skeleton skeleton;
+};
 
 class DAOGraphicsTools {
 public:
@@ -55,13 +71,13 @@ public:
     ~DAOGraphicsTools();
 
     bool Initialize();
-    bool IsReady() const { return m_initialized; }
-    const fs::path& GetWorkDir() const { return m_workDir; }
-
     std::vector<uint8_t> ProcessMSH(const fs::path& xmlPath);
     std::vector<uint8_t> ProcessMMH(const fs::path& xmlPath);
-
     void Cleanup();
+
+    fs::path GetWorkDir() const { return m_workDir; }
+    fs::path GetMshDir() const { return m_mshDir; }
+    fs::path GetMmhDir() const { return m_mmhDir; }
 
 private:
     bool ExtractTools();
@@ -81,8 +97,11 @@ public:
     DAOImporter();
     ~DAOImporter();
 
-    void SetBackupConfirmCallback(BackupConfirmCallback callback) { m_backupCallback = callback; }
-    void SetProgressCallback(ProgressCallback callback) { m_progressCallback = callback; }
+    using BackupCallback = std::function<bool(const std::string& erfName, const std::string& backupDir)>;
+    using ProgressCallback = std::function<void(float progress, const std::string& status)>;
+
+    void SetBackupCallback(BackupCallback cb) { m_backupCallback = cb; }
+    void SetProgressCallback(ProgressCallback cb) { m_progressCallback = cb; }
 
     bool ImportToDirectory(const std::string& glbPath, const std::string& targetDir);
 
@@ -91,16 +110,14 @@ public:
 
 private:
     bool LoadGLB(const std::string& path, DAOModelData& outData);
-
     bool WriteMSHXml(const fs::path& outputPath, const DAOModelData& model);
     bool WriteMMHXml(const fs::path& outputPath, const DAOModelData& model, const std::string& mshFilename);
-    std::string GenerateMAO(const std::string& materialName, const std::string& diffuse, const std::string& normal, const std::string& specular);
-
+    std::string GenerateMAO(const std::string& matName, const std::string& diffuse,
+                            const std::string& normal, const std::string& specular);
     bool RepackERF(const std::string& erfPath, const std::map<std::string, std::vector<uint8_t>>& newFiles);
-
     void ReportProgress(float progress, const std::string& status);
 
     DAOGraphicsTools m_tools;
-    BackupConfirmCallback m_backupCallback;
+    BackupCallback m_backupCallback;
     ProgressCallback m_progressCallback;
 };

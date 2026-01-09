@@ -6,7 +6,7 @@
 #include "update/about_text.h"
 #include "update/changelog_text.h"
 
-static const char* CURRENT_APP_VERSION = "1.11";
+static const char* CURRENT_APP_VERSION = "1.12";
 
 bool showSplash = true;
 
@@ -176,15 +176,76 @@ void runImportTask(AppState* statePtr) {
 
     DAOImporter importer;
     importer.SetProgressCallback([&](float progress, const std::string& status) {
-        state.preloadProgress = progress;
+        state.preloadProgress = progress * 0.9f;
         state.preloadStatus = status;
     });
 
     bool success = importer.ImportToDirectory(s_pendingImportGlbPath, state.selectedFolder);
 
     if (success) {
-        state.preloadStatus = "Reloading game data...";
-        runLoadingTask(statePtr);
+        std::string modelName = fs::path(s_pendingImportGlbPath).stem().string() + ".msh";
+        markModelAsImported(modelName);
+
+        state.preloadStatus = "Refreshing modified ERFs...";
+        state.preloadProgress = 0.92f;
+
+        fs::path baseDir(state.selectedFolder);
+        fs::path corePath = baseDir / "packages" / "core" / "data";
+        fs::path texturePath = baseDir / "packages" / "core" / "textures" / "high";
+
+        std::vector<std::string> modifiedErfs = {
+            (corePath / "modelmeshdata.erf").string(),
+            (corePath / "modelhierarchies.erf").string(),
+            (corePath / "materialobjects.erf").string(),
+            (texturePath / "texturepack.erf").string()
+        };
+
+        for (const auto& erfPath : modifiedErfs) {
+            if (!fs::exists(erfPath)) continue;
+
+            std::string pathLower = erfPath;
+            std::transform(pathLower.begin(), pathLower.end(), pathLower.begin(), ::tolower);
+
+            auto removeAndReload = [&](std::vector<std::unique_ptr<ERFFile>>& erfs,
+                                       std::vector<std::string>& paths) {
+                for (size_t i = 0; i < paths.size(); ++i) {
+                    std::string existingLower = paths[i];
+                    std::transform(existingLower.begin(), existingLower.end(), existingLower.begin(), ::tolower);
+                    if (existingLower == pathLower) {
+                        erfs.erase(erfs.begin() + i);
+                        paths.erase(paths.begin() + i);
+                        break;
+                    }
+                }
+                auto erfPtr = std::make_unique<ERFFile>();
+                if (erfPtr->open(erfPath)) {
+                    erfs.push_back(std::move(erfPtr));
+                    paths.push_back(erfPath);
+                }
+            };
+
+            if (pathLower.find("modelmesh") != std::string::npos ||
+                pathLower.find("modelhierarch") != std::string::npos) {
+                removeAndReload(state.modelErfs, state.modelErfPaths);
+            }
+            if (pathLower.find("material") != std::string::npos) {
+                removeAndReload(state.materialErfs, state.materialErfPaths);
+            }
+            if (pathLower.find("texture") != std::string::npos) {
+                removeAndReload(state.textureErfs, state.textureErfPaths);
+            }
+        }
+
+        state.preloadProgress = 1.0f;
+        state.preloadStatus = "Import complete!";
+        state.statusMessage = "Model imported successfully!";
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+
+        t_isLoadingContent = false;
+        t_active = false;
+        t_phase = 0;
+        t_alpha = 0.0f;
     } else {
         state.preloadStatus = "Import Failed!";
         std::this_thread::sleep_for(std::chrono::seconds(2));

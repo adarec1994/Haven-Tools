@@ -123,6 +123,7 @@ struct CachedEntry {
     std::string name;
     size_t erfIdx;
     size_t entryIdx;
+    std::string source;
 };
 struct FSBSampleInfo {
     std::string name;

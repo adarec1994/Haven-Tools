@@ -183,10 +183,6 @@ Use: Browse to your DAO installation and select the .exe.
 
 -- Please ensure that you report any issues to the issue tracker on GitHub, or in a comment on NexusMods.
 
-
-)";
-
-static const char* s_changelogLatest = R"(
 [Release 1.11]
 
 - Added progress bar to import/ exporting.
@@ -196,3 +192,16 @@ static const char* s_changelogLatest = R"(
 Note: Importing does not currently work on Linux.
 
 )";
+
+static const char* s_changelogLatest = R"(
+[Release 1.12]
+
+- Fixed a bug with importing where models would not be added to the .erf
+- Added support for skeletons when importing
+- Imported models now correctly display their textures.
+- Added filters between All/ Mods/ Core game/ and Awakening Expansion.
+
+)";
+
+// BUG -- MATERIALS AND SKELETONS ARE NOT BEING IMPORTED RIGHT NOW..
+// BUG -- MOD FILTER IS GONE WHEN RESETTING THE APP..
