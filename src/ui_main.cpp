@@ -666,7 +666,6 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
     }
 
     if (ImGui::BeginPopupModal("Export Options", &s_showExportOptions, ImGuiWindowFlags_AlwaysAutoResize)) {
-        // Collision export option
         bool hasCollision = !state.currentModel.collisionShapes.empty();
         if (hasCollision) {
             ImGui::Checkbox("Include Collision Shapes", &s_exportCollision);
@@ -677,7 +676,6 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
         }
         ImGui::Separator();
 
-        // Collapsible animations section
         int selectedCount = 0;
         for (const auto& pair : s_animSelection) {
             if (pair.second) selectedCount++;

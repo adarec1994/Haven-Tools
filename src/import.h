@@ -59,19 +59,15 @@ struct DAOModelData {
         bool hasSkeleton = false;
     };
 
-    // Collision shapes imported from UE-named meshes
     enum class CollisionType { Box, Sphere, Capsule, Mesh };
     struct CollisionShape {
         std::string name;
         CollisionType type = CollisionType::Mesh;
         float posX = 0, posY = 0, posZ = 0;
         float rotX = 0, rotY = 0, rotZ = 0, rotW = 1;
-        // Box dimensions (half-extents)
         float boxX = 1, boxY = 1, boxZ = 1;
-        // Sphere/Capsule
         float radius = 1;
-        float height = 2; // For capsule
-        // Convex mesh data
+        float height = 2;
         std::vector<float> meshVerts;
         std::vector<uint32_t> meshIndices;
     };

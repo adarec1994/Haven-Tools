@@ -762,11 +762,9 @@ static void attachWeaponToBone(AppState& state, Model& model, const std::string&
 
     const Bone& propBone = model.skeleton.bones[boneIdx];
 
-    // Find GOB bone in weapon skeleton - this is the "magnet" point on the weapon
     int gobIdx = weaponModel->skeleton.findBone("GOB");
     if (gobIdx < 0) gobIdx = weaponModel->skeleton.findBone("gob");
 
-    // GOB position in weapon's world space
     float gobX = 0, gobY = 0, gobZ = 0;
     if (gobIdx >= 0) {
         const Bone& gob = weaponModel->skeleton.bones[gobIdx];
@@ -775,7 +773,6 @@ static void attachWeaponToBone(AppState& state, Model& model, const std::string&
         gobZ = gob.worldPosZ;
     }
 
-    // Check if this is a shield (for special handling)
     bool isShield = (weaponFile.find("shd") != std::string::npos || weaponFile.find("SHD") != std::string::npos);
 
     auto quatRotate = [](float qx, float qy, float qz, float qw, float vx, float vy, float vz, float& ox, float& oy, float& oz) {
@@ -796,7 +793,6 @@ static void attachWeaponToBone(AppState& state, Model& model, const std::string&
         ow = aw * bw - ax * bx - ay * by - az * bz;
     };
 
-    // Check if left hand - need to flip 180 degrees
     bool isLeftHand = (boneName == "Prop17" || boneName == "Prop02");
 
     float finalRotX = propBone.worldRotX;
@@ -805,7 +801,6 @@ static void attachWeaponToBone(AppState& state, Model& model, const std::string&
     float finalRotW = propBone.worldRotW;
 
     if (isLeftHand && !isShield) {
-        // 180 degree rotation around Z axis: quat(0, 0, 1, 0)
         float flipX, flipY, flipZ, flipW;
         quatMul(propBone.worldRotX, propBone.worldRotY, propBone.worldRotZ, propBone.worldRotW,
                 0.0f, 0.0f, 1.0f, 0.0f,
@@ -820,22 +815,18 @@ static void attachWeaponToBone(AppState& state, Model& model, const std::string&
         Mesh meshCopy = mesh;
 
         for (auto& v : meshCopy.vertices) {
-            // Move GOB to origin - this puts vertices in "bone local" space
-            // The skinning system will transform from here to world space
             v.x -= gobX;
             v.y -= gobY;
             v.z -= gobZ;
 
-            // Set up skinning: 100% weight to the prop bone (index 0 in our bonesUsed)
             v.boneIndices[0] = 0;
             v.boneWeights[0] = 1.0f;
             v.boneIndices[1] = v.boneIndices[2] = v.boneIndices[3] = 0;
             v.boneWeights[1] = v.boneWeights[2] = v.boneWeights[3] = 0.0f;
         }
 
-        // Set up skinning to the prop bone
         meshCopy.hasSkinning = true;
-        meshCopy.skipInvBind = true;  // Vertices are in bone-local space, skip invBind transform
+        meshCopy.skipInvBind = true;
         meshCopy.bonesUsed.clear();
         meshCopy.bonesUsed.push_back(boneIdx);
         meshCopy.skinningBoneMap.clear();

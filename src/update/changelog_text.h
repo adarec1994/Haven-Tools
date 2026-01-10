@@ -208,8 +208,7 @@ static const char* s_changelogLatest = R"(
 - Fixed a bug where models with submeshes would get merged when importing.
 - Added collision importing/ exporting.
 -- You must follow the naming convention UCP_MeshName_01 for collision.
-
-
-
+- Added an option to delete models that have been imported from the .erf.
+- Updated 2da parsing.
 
 )";

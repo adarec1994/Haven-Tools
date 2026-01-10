@@ -1,6 +1,5 @@
 #include "ui_internal.h"
 
-// Helper function to determine ERF source category
 static std::string GetErfSource(const std::string& erfPath) {
     std::string pathLower = erfPath;
     std::transform(pathLower.begin(), pathLower.end(), pathLower.begin(), ::tolower);
@@ -9,21 +8,18 @@ static std::string GetErfSource(const std::string& erfPath) {
         pathLower.find("packages\\core_ep1") != std::string::npos) {
         return "Awakening";
     }
-    // Everything in packages/core (including mods added to it) is "Core" by default
-    // Imported models will be marked as "Mods" separately
+
     return "Core";
 }
 
-static int s_meshDataSourceFilter = 0; // 0=All, 1=Core, 2=Awakening, 3=Mods
-static std::set<std::string> s_importedModels; // Track models imported by Haven-Tools
+static int s_meshDataSourceFilter = 0;
+static std::set<std::string> s_importedModels;
 static bool s_importedModelsLoaded = false;
 
-// Get the path to the imported models list file
 static std::string getImportedModelsPath() {
     return (fs::path(getExeDir()) / "imported_models.txt").string();
 }
 
-// Load imported models from file
 static void loadImportedModels() {
     if (s_importedModelsLoaded) return;
     s_importedModelsLoaded = true;
@@ -33,8 +29,6 @@ static void loadImportedModels() {
 
     std::string line;
     while (std::getline(file, line)) {
-        if (line.empty()) continue;
-        // Remove carriage return if present
         if (!line.empty() && line.back() == '\r') line.pop_back();
         std::string lower = line;
         std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
@@ -44,7 +38,6 @@ static void loadImportedModels() {
     std::cout << "[Browser] Loaded " << s_importedModels.size() << " imported models from file" << std::endl;
 }
 
-// Save imported models to file
 static void saveImportedModels() {
     std::ofstream file(getImportedModelsPath());
     if (!file) {
@@ -59,28 +52,23 @@ static void saveImportedModels() {
     std::cout << "[Browser] Saved " << s_importedModels.size() << " imported models to file" << std::endl;
 }
 
-// Call this when a model is imported to mark it as a mod
 void markModelAsImported(const std::string& modelName) {
-    loadImportedModels(); // Ensure loaded first
+    loadImportedModels();
 
     std::string nameLower = modelName;
     std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), ::tolower);
     s_importedModels.insert(nameLower);
 
-    // Save to file immediately
     saveImportedModels();
 }
 
-// Check if a model was imported
 static bool isImportedModel(const std::string& modelName) {
-    loadImportedModels(); // Ensure loaded first
-
+    loadImportedModels();
     std::string nameLower = modelName;
     std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), ::tolower);
     return s_importedModels.find(nameLower) != s_importedModels.end();
 }
 
-// Remove a model from the imported list
 static void unmarkModelAsImported(const std::string& modelName) {
     loadImportedModels();
 
@@ -91,16 +79,13 @@ static void unmarkModelAsImported(const std::string& modelName) {
     saveImportedModels();
 }
 
-// Delete confirmation state
 static bool s_showDeleteConfirm = false;
 static std::string s_deleteModelName;
 static CachedEntry s_deleteEntry;
 
-// Helper to delete entries from an ERF file
 static bool deleteFromERF(const std::string& erfPath, const std::vector<std::string>& namesToDelete) {
     if (!fs::exists(erfPath)) return false;
 
-    // Read entire ERF
     std::vector<uint8_t> erfData;
     {
         std::ifstream in(erfPath, std::ios::binary | std::ios::ate);
@@ -138,7 +123,6 @@ static bool deleteFromERF(const std::string& erfPath, const std::vector<std::str
     uint32_t day = readU32(24);
     uint32_t unknown = readU32(28);
 
-    // Build set of names to delete (lowercase)
     std::set<std::string> deleteSet;
     for (const auto& name : namesToDelete) {
         std::string lower = name;
@@ -146,7 +130,6 @@ static bool deleteFromERF(const std::string& erfPath, const std::vector<std::str
         deleteSet.insert(lower);
     }
 
-    // Parse entries and filter out ones to delete
     struct FileEntry { std::string name; uint32_t offset; uint32_t size; };
     std::vector<FileEntry> keepEntries;
 
@@ -170,27 +153,20 @@ static bool deleteFromERF(const std::string& erfPath, const std::vector<std::str
     }
 
     if (keepEntries.size() == fileCount) {
-        // Nothing was deleted
         return false;
     }
-
-    // Rebuild ERF with remaining entries
     std::vector<uint8_t> newErf;
     newErf.reserve(erfData.size());
 
-    // Write header (32 bytes)
     for (int i = 0; i < 32; ++i) newErf.push_back(erfData[i]);
 
-    // Update file count
     uint32_t newCount = static_cast<uint32_t>(keepEntries.size());
     *reinterpret_cast<uint32_t*>(&newErf[16]) = newCount;
 
-    // Write file table
     size_t dataStart = 32 + keepEntries.size() * 72;
     uint32_t currentOffset = static_cast<uint32_t>(dataStart);
 
     for (auto& e : keepEntries) {
-        // Entry: 64 bytes name (UTF-16) + 4 bytes offset + 4 bytes size = 72 bytes
         for (size_t c = 0; c < 32; ++c) {
             if (c < e.name.size()) {
                 newErf.push_back(static_cast<uint8_t>(e.name[c]));
@@ -201,7 +177,6 @@ static bool deleteFromERF(const std::string& erfPath, const std::vector<std::str
             }
         }
 
-        // Write offset and size
         uint32_t newOffset = currentOffset;
         for (int b = 0; b < 4; ++b) newErf.push_back((newOffset >> (b * 8)) & 0xFF);
         for (int b = 0; b < 4; ++b) newErf.push_back((e.size >> (b * 8)) & 0xFF);
@@ -209,7 +184,6 @@ static bool deleteFromERF(const std::string& erfPath, const std::vector<std::str
         currentOffset += e.size;
     }
 
-    // Write file data
     for (const auto& e : keepEntries) {
         if (e.offset + e.size <= erfData.size()) {
             for (uint32_t i = 0; i < e.size; ++i) {
@@ -218,7 +192,6 @@ static bool deleteFromERF(const std::string& erfPath, const std::vector<std::str
         }
     }
 
-    // Write to file
     std::ofstream out(erfPath, std::ios::binary);
     if (!out) return false;
     out.write(reinterpret_cast<const char*>(newErf.data()), newErf.size());
@@ -443,7 +416,6 @@ void drawBrowserWindow(AppState& state) {
     for (const auto& [filename, indices] : state.erfsByName) {
         bool isSelected = (state.selectedErfName == filename);
 
-        // Check if this is modelmeshdata.erf for special handling
         std::string filenameLower = filename;
         std::transform(filenameLower.begin(), filenameLower.end(), filenameLower.begin(), ::tolower);
         bool isModelMeshData = (filenameLower == "modelmeshdata.erf");
@@ -455,7 +427,7 @@ void drawBrowserWindow(AppState& state) {
                 state.mergedEntries.clear();
                 state.filteredEntryIndices.clear();
                 state.lastContentFilter.clear();
-                s_meshDataSourceFilter = 0; // Reset filter
+                s_meshDataSourceFilter = 0;
 
                 std::set<std::string> seenNames;
                 for (size_t erfIdx : indices) {
@@ -471,7 +443,6 @@ void drawBrowserWindow(AppState& state) {
                                 ce.name = name;
                                 ce.erfIdx = erfIdx;
                                 ce.entryIdx = entryIdx;
-                                // Check if this was imported by Haven-Tools
                                 if (isImportedModel(name)) {
                                     ce.source = "Mods";
                                 } else {
@@ -486,11 +457,9 @@ void drawBrowserWindow(AppState& state) {
             }
         }
 
-        // Show subcategory filters when modelmeshdata.erf is selected
         if (isSelected && isModelMeshData && !state.mergedEntries.empty()) {
             ImGui::Indent();
 
-            // Count entries per category
             int coreCount = 0, awakCount = 0, modsCount = 0;
             for (const auto& ce : state.mergedEntries) {
                 if (ce.source == "Core") coreCount++;
@@ -639,7 +608,6 @@ void drawBrowserWindow(AppState& state) {
             std::string filterLower = currentFilter;
             std::transform(filterLower.begin(), filterLower.end(), filterLower.begin(), ::tolower);
 
-            // Check if we need source filtering (for modelmeshdata.erf)
             std::string selNameLower = state.selectedErfName;
             std::transform(selNameLower.begin(), selNameLower.end(), selNameLower.begin(), ::tolower);
             bool filterBySource = (selNameLower == "modelmeshdata.erf" && s_meshDataSourceFilter > 0);
@@ -652,7 +620,6 @@ void drawBrowserWindow(AppState& state) {
                     continue;
                 }
 
-                // Source filter for modelmeshdata.erf
                 if (filterBySource) {
                     if (s_meshDataSourceFilter == 1 && ce.source != "Core") continue;
                     if (s_meshDataSourceFilter == 2 && ce.source != "Awakening") continue;
@@ -883,7 +850,6 @@ void drawBrowserWindow(AppState& state) {
                     config.fileName = defaultName;
                     ImGuiFileDialog::Instance()->OpenDialog("ExportGLB", "Export as GLB", ".glb", config);
                 }
-                // Only show delete option for imported models
                 if (isImportedModel(ce.name)) {
                     ImGui::Separator();
                     ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.3f, 0.3f, 1.0f));
@@ -973,7 +939,6 @@ void drawBrowserWindow(AppState& state) {
         ImGuiFileDialog::Instance()->Close();
     }
 
-    // Delete confirmation popup
     if (s_showDeleteConfirm) {
         ImGui::OpenPopup("Delete Imported Model?");
         s_showDeleteConfirm = false;
@@ -989,14 +954,12 @@ void drawBrowserWindow(AppState& state) {
         ImGui::Spacing();
 
         if (ImGui::Button("Yes, Delete", ImVec2(120, 0))) {
-            // Get base name without extension
             std::string baseName = s_deleteModelName;
             size_t dotPos = baseName.rfind('.');
             if (dotPos != std::string::npos) baseName = baseName.substr(0, dotPos);
 
             int deletedCount = 0;
 
-            // Delete from modelmeshdata.erf
             for (const auto& erfPath : state.erfFiles) {
                 std::string erfLower = erfPath;
                 std::transform(erfLower.begin(), erfLower.end(), erfLower.begin(), ::tolower);
@@ -1008,7 +971,6 @@ void drawBrowserWindow(AppState& state) {
                 }
             }
 
-            // Delete from modelhierarchies.erf
             for (const auto& erfPath : state.erfFiles) {
                 std::string erfLower = erfPath;
                 std::transform(erfLower.begin(), erfLower.end(), erfLower.begin(), ::tolower);
@@ -1020,10 +982,8 @@ void drawBrowserWindow(AppState& state) {
                 }
             }
 
-            // Remove from imported models list
             unmarkModelAsImported(s_deleteModelName);
 
-            // Clear current model if it matches the deleted one
             std::string currentModelLower = state.currentModel.name;
             std::transform(currentModelLower.begin(), currentModelLower.end(), currentModelLower.begin(), ::tolower);
             std::string deletedModelLower = s_deleteModelName;
@@ -1033,7 +993,6 @@ void drawBrowserWindow(AppState& state) {
                 state.hasModel = false;
             }
 
-            // Clear browser cache to force refresh
             state.mergedEntries.clear();
             state.filteredEntryIndices.clear();
             state.lastContentFilter.clear();

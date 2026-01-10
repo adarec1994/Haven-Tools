@@ -112,7 +112,6 @@ bool GDAFile::parseGDA(const std::vector<uint8_t>& data) {
     const auto& structs = gff.structs();
     if (structs.size() < 3) return false;
 
-    // Find struct indices
     int gtopIdx = -1, colmIdx = -1, rowsIdx = -1;
     for (size_t i = 0; i < structs.size(); i++) {
         std::string stype(structs[i].structType);
@@ -128,13 +127,8 @@ bool GDAFile::parseGDA(const std::vector<uint8_t>& data) {
     const auto& colmStruct = structs[colmIdx];
     const auto& rowsStruct = structs[rowsIdx];
 
-    // gtop struct has 2 fields:
-    // Field 0 (type=colmIdx, flags=0xc000): list of columns
-    // Field 1 (type=rowsIdx, flags=0xc000): list of rows
-
     if (gtopStruct.fields.size() < 2) return false;
 
-    // Get column list
     uint32_t colmListRefPos = dataOffset + gtopStruct.fields[0].dataOffset;
     int32_t colmListOffset = gff.readInt32At(colmListRefPos);
     if (colmListOffset < 0) return false;
@@ -142,9 +136,8 @@ bool GDAFile::parseGDA(const std::vector<uint8_t>& data) {
     uint32_t colmListPos = dataOffset + colmListOffset;
     uint32_t columnCount = gff.readUInt32At(colmListPos);
     uint32_t colmDataStart = colmListPos + 4;
-    uint32_t colmStructSize = colmStruct.structSize;  // 8 bytes: hash (4) + type (1) + padding (3)
+    uint32_t colmStructSize = colmStruct.structSize;
 
-    // Get row list
     uint32_t rowsListRefPos = dataOffset + gtopStruct.fields[1].dataOffset;
     int32_t rowsListOffset = gff.readInt32At(rowsListRefPos);
     if (rowsListOffset < 0) return false;
@@ -154,31 +147,25 @@ bool GDAFile::parseGDA(const std::vector<uint8_t>& data) {
     uint32_t rowDataStart = rowsListPos + 4;
     uint32_t rowSize = rowsStruct.structSize;
 
-    // Build column info from rows struct fields (they have the offsets)
-    // and from colm list (they have the hashes and types)
     struct ColInfo {
         uint32_t hash;
-        uint8_t gdaType;  // 0=string, 1=int, 2=float, 3=bool, 4=resource
+        uint8_t gdaType;
         uint16_t gffTypeId;
         uint32_t offset;
         std::string name;
     };
     std::vector<ColInfo> colInfos;
 
-    // Read column metadata from colm list
     for (uint32_t i = 0; i < columnCount && i < rowsStruct.fields.size(); i++) {
         ColInfo ci;
 
-        // From colm struct: hash and GDA type
         uint32_t colmOffset = colmDataStart + i * colmStructSize;
         ci.hash = gff.readUInt32At(colmOffset);
         ci.gdaType = gff.readUInt8At(colmOffset + 4);
 
-        // From rows struct field: GFF type and offset within row
         ci.gffTypeId = rowsStruct.fields[i].typeId;
         ci.offset = rowsStruct.fields[i].dataOffset;
 
-        // Look up column name
         auto it = s_knownColumns.find(ci.hash);
         if (it != s_knownColumns.end()) {
             ci.name = it->second;
@@ -189,7 +176,6 @@ bool GDAFile::parseGDA(const std::vector<uint8_t>& data) {
         colInfos.push_back(ci);
     }
 
-    // Build columns
     for (const auto& ci : colInfos) {
         GDAColumn col;
         col.hash = ci.hash;
@@ -205,7 +191,6 @@ bool GDAFile::parseGDA(const std::vector<uint8_t>& data) {
         m_columns.push_back(col);
     }
 
-    // Read rows
     for (uint32_t r = 0; r < rowCount; r++) {
         GDARow row;
         uint32_t rowOff = rowDataStart + r * rowSize;
@@ -219,10 +204,9 @@ bool GDAFile::parseGDA(const std::vector<uint8_t>& data) {
                 continue;
             }
 
-            // Use GDA type for interpretation
             switch (ci.gdaType) {
-                case 0: // String
-                case 4: // Resource (also a string)
+                case 0:
+                case 4:
                 {
                     int32_t strOff = gff.readInt32At(valOff);
                     if (strOff < 0 || strOff == (int32_t)0xFFFFFFFF) {
@@ -233,9 +217,8 @@ bool GDAFile::parseGDA(const std::vector<uint8_t>& data) {
                     }
                     break;
                 }
-                case 1: // Int
+                case 1:
                 {
-                    // Check GFF type for size
                     switch (ci.gffTypeId) {
                         case 0: row.values.push_back(static_cast<int32_t>(gff.readUInt8At(valOff))); break;
                         case 1: row.values.push_back(static_cast<int32_t>(gff.readAt<int8_t>(valOff))); break;
@@ -247,7 +230,7 @@ bool GDAFile::parseGDA(const std::vector<uint8_t>& data) {
                     }
                     break;
                 }
-                case 2: // Float
+                case 2:
                 {
                     if (ci.gffTypeId == 9) {
                         row.values.push_back(static_cast<float>(gff.readAt<double>(valOff)));
@@ -256,7 +239,7 @@ bool GDAFile::parseGDA(const std::vector<uint8_t>& data) {
                     }
                     break;
                 }
-                case 3: // Bool
+                case 3:
                 {
                     if (ci.gffTypeId == 0) {
                         row.values.push_back(gff.readUInt8At(valOff) != 0);

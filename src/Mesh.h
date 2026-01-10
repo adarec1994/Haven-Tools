@@ -102,7 +102,7 @@ struct Mesh {
 
     std::vector<int> skinningBoneMap;
     bool skinningCacheBuilt = false;
-    bool skipInvBind = false;  // For attached weapons - vertices already in bone-local space
+    bool skipInvBind = false;
 
     void calculateBounds() {
         if (vertices.empty()) return;

@@ -411,7 +411,6 @@ bool DAOImporter::ImportToDirectory(const std::string& glbPath, const std::strin
         std::cout << "  + Generated: " << maoFile << std::endl;
     }
 
-    // Generate PHY file if collision shapes exist
     if (!modelData.collisionShapes.empty()) {
         ReportProgress(0.67f, "Generating PHY file...");
         std::string phyFile = baseName + ".phy";
@@ -457,7 +456,6 @@ bool DAOImporter::LoadGLB(const std::string& path, DAOModelData& outData) {
     }
     outData.name = ToLower(fs::path(path).stem().string());
 
-    // Debug: Print scene info
     std::cout << "\n=== GLB DEBUG ===" << std::endl;
     std::cout << "[GLB] File: " << path << std::endl;
     std::cout << "[GLB] Scenes: " << model.scenes.size() << std::endl;
@@ -465,7 +463,6 @@ bool DAOImporter::LoadGLB(const std::string& path, DAOModelData& outData) {
     std::cout << "[GLB] Meshes: " << model.meshes.size() << std::endl;
     std::cout << "[GLB] Skins: " << model.skins.size() << std::endl;
 
-    // Debug: Print all nodes and their transforms
     std::cout << "\n[GLB] Node hierarchy:" << std::endl;
     for (size_t i = 0; i < model.nodes.size(); ++i) {
         const auto& node = model.nodes[i];
@@ -576,7 +573,6 @@ bool DAOImporter::LoadGLB(const std::string& path, DAOModelData& outData) {
             }
         }
 
-        // Debug: Print first few bones
         std::cout << "\n[GLB] Bone data (first 5):" << std::endl;
         for (size_t i = 0; i < std::min(size_t(5), outData.skeleton.bones.size()); ++i) {
             const auto& bone = outData.skeleton.bones[i];
@@ -647,13 +643,10 @@ bool DAOImporter::LoadGLB(const std::string& path, DAOModelData& outData) {
         outData.materials.push_back(defaultMat);
     }
 
-    // Helper to apply quaternion rotation to a vector
     auto rotateByQuat = [](float& x, float& y, float& z, const float* q) {
-        // q = [x, y, z, w]
+
         float qx = q[0], qy = q[1], qz = q[2], qw = q[3];
 
-        // v' = q * v * q^-1
-        // Optimized formula:
         float tx = 2.0f * (qy * z - qz * y);
         float ty = 2.0f * (qz * x - qx * z);
         float tz = 2.0f * (qx * y - qy * x);
@@ -665,9 +658,7 @@ bool DAOImporter::LoadGLB(const std::string& path, DAOModelData& outData) {
         x = nx; y = ny; z = nz;
     };
 
-    // Helper to check if mesh name is a collision mesh (UE naming convention)
     auto isCollisionMesh = [](const std::string& name) -> int {
-        // Returns: 0=not collision, 1=box, 2=sphere, 3=capsule, 4=convex mesh
         if (name.substr(0, 4) == "UBX_") return 1;
         if (name.substr(0, 4) == "USP_") return 2;
         if (name.substr(0, 4) == "UCP_") return 3;
@@ -675,7 +666,6 @@ bool DAOImporter::LoadGLB(const std::string& path, DAOModelData& outData) {
         return 0;
     };
 
-    // Helper to compute bounding box from vertices
     auto computeBounds = [](const std::vector<float>& verts, float& minX, float& maxX,
                            float& minY, float& maxY, float& minZ, float& maxZ) {
         minX = minY = minZ = 1e30f;
@@ -690,18 +680,15 @@ bool DAOImporter::LoadGLB(const std::string& path, DAOModelData& outData) {
         }
     };
 
-    // Process each mesh - keep them as separate parts with their own materials
     for (size_t meshIdx = 0; meshIdx < model.meshes.size(); ++meshIdx) {
         const auto& mesh = model.meshes[meshIdx];
 
-        // Check if this is a collision mesh
         int collisionType = isCollisionMesh(mesh.name);
 
         for (size_t primIdx = 0; primIdx < mesh.primitives.size(); ++primIdx) {
             const auto& prim = mesh.primitives[primIdx];
             if (prim.mode != TINYGLTF_MODE_TRIANGLES) continue;
 
-            // Handle collision mesh
             if (collisionType > 0) {
                 auto getAccessor = [&](int idx) -> const tinygltf::Accessor* {
                     if (idx < 0 || idx >= (int)model.accessors.size()) return nullptr;
@@ -722,7 +709,6 @@ bool DAOImporter::LoadGLB(const std::string& path, DAOModelData& outData) {
                 const float* positions = reinterpret_cast<const float*>(getBufferData(posAcc));
                 size_t vertCount = posAcc->count;
 
-                // Read all vertices
                 std::vector<float> verts(vertCount * 3);
                 for (size_t v = 0; v < vertCount; ++v) {
                     verts[v*3] = positions[v*3];
@@ -730,7 +716,6 @@ bool DAOImporter::LoadGLB(const std::string& path, DAOModelData& outData) {
                     verts[v*3+2] = positions[v*3+2];
                 }
 
-                // Read indices
                 std::vector<uint32_t> indices;
                 if (prim.indices >= 0) {
                     const tinygltf::Accessor* idxAcc = getAccessor(prim.indices);
@@ -748,7 +733,6 @@ bool DAOImporter::LoadGLB(const std::string& path, DAOModelData& outData) {
                     }
                 }
 
-                // Compute bounds for shape estimation
                 float minX, maxX, minY, maxY, minZ, maxZ;
                 computeBounds(verts, minX, maxX, minY, maxY, minZ, maxZ);
                 float cx = (minX + maxX) / 2.0f;
@@ -760,7 +744,7 @@ bool DAOImporter::LoadGLB(const std::string& path, DAOModelData& outData) {
                 shape.posX = cx; shape.posY = cy; shape.posZ = cz;
 
                 switch (collisionType) {
-                    case 1: // Box - UBX_
+                    case 1:
                         shape.type = DAOModelData::CollisionType::Box;
                         shape.boxX = (maxX - minX) / 2.0f;
                         shape.boxY = (maxY - minY) / 2.0f;
@@ -768,22 +752,20 @@ bool DAOImporter::LoadGLB(const std::string& path, DAOModelData& outData) {
                         std::cout << "[GLB] Collision box: " << mesh.name << " size=("
                                   << shape.boxX*2 << ", " << shape.boxY*2 << ", " << shape.boxZ*2 << ")" << std::endl;
                         break;
-                    case 2: // Sphere - USP_
+                    case 2:
                         shape.type = DAOModelData::CollisionType::Sphere;
                         shape.radius = std::max({maxX-minX, maxY-minY, maxZ-minZ}) / 2.0f;
                         std::cout << "[GLB] Collision sphere: " << mesh.name << " radius=" << shape.radius << std::endl;
                         break;
-                    case 3: // Capsule - UCP_
+                    case 3:
                         shape.type = DAOModelData::CollisionType::Capsule;
-                        // Capsule: height is along Z, radius from X/Y
                         shape.height = maxZ - minZ;
                         shape.radius = std::max(maxX-minX, maxY-minY) / 2.0f;
                         std::cout << "[GLB] Collision capsule: " << mesh.name << " radius=" << shape.radius
                                   << " height=" << shape.height << std::endl;
                         break;
-                    case 4: // Convex mesh - UCX_
+                    case 4:
                         shape.type = DAOModelData::CollisionType::Mesh;
-                        // Store raw mesh data, centered at origin
                         for (size_t i = 0; i < verts.size(); i += 3) {
                             shape.meshVerts.push_back(verts[i] - cx);
                             shape.meshVerts.push_back(verts[i+1] - cy);
@@ -796,11 +778,10 @@ bool DAOImporter::LoadGLB(const std::string& path, DAOModelData& outData) {
                 }
 
                 outData.collisionShapes.push_back(shape);
-                continue; // Skip adding to regular mesh parts
+                continue;
             }
 
             DAOModelData::MeshPart part;
-            // Use mesh name, add primitive index only if multiple primitives in same mesh
             std::string baseName = mesh.name.empty() ? outData.name : CleanName(mesh.name);
             if (mesh.primitives.size() > 1) {
                 part.name = baseName + "_" + std::to_string(primIdx);
@@ -955,7 +936,6 @@ bool DAOImporter::LoadGLB(const std::string& path, DAOModelData& outData) {
         }
     }
 
-    // Debug: Print mesh bounding box and check orientation
     float minX = FLT_MAX, minY = FLT_MAX, minZ = FLT_MAX;
     float maxX = -FLT_MAX, maxY = -FLT_MAX, maxZ = -FLT_MAX;
     for (const auto& part : outData.parts) {
@@ -975,33 +955,24 @@ bool DAOImporter::LoadGLB(const std::string& path, DAOModelData& outData) {
     std::cout << "  Y: [" << minY << " to " << maxY << "] size=" << ySize << std::endl;
     std::cout << "  Z: [" << minZ << " to " << maxZ << "] size=" << zSize << std::endl;
 
-    // Dragon Age expects Z-up coordinate system
-    // Check if model needs rotation correction
     bool needsRotation = false;
-    float correctionQuat[4] = {0, 0, 0, 1}; // Identity
+    float correctionQuat[4] = {0, 0, 0, 1};
 
     if (zSize > xSize * 1.5f && zSize > ySize * 1.5f) {
-        // Z is tallest - model is already Z-up (correct for DAO)
         std::cout << "  [OK] Model is Z-up (correct orientation)" << std::endl;
     } else if (ySize > xSize * 1.5f && ySize > zSize * 1.5f) {
-        // Y is tallest - model is Y-up (typical GLB from Blender)
-        // Need to rotate +90 degrees around X to convert Y-up to Z-up
         std::cout << "  [FIX] Model is Y-up, applying +90° X rotation for Z-up" << std::endl;
-        // Quaternion for +90° around X: [sin(45°), 0, 0, cos(45°)] = [0.707, 0, 0, 0.707]
-        correctionQuat[0] = 0.7071068f; // x
-        correctionQuat[1] = 0.0f;       // y
-        correctionQuat[2] = 0.0f;       // z
-        correctionQuat[3] = 0.7071068f; // w
+        correctionQuat[0] = 0.7071068f;
+        correctionQuat[1] = 0.0f;
+        correctionQuat[2] = 0.0f;
+        correctionQuat[3] = 0.7071068f;
         needsRotation = true;
     } else if (xSize > ySize * 1.5f && xSize > zSize * 1.5f) {
-        // X is tallest - model is lying on its side
         std::cout << "  [WARNING] Model has X as tallest axis (unusual orientation)" << std::endl;
     } else {
-        // No dominant axis - might be a prop or non-humanoid, leave as-is
         std::cout << "  [INFO] No dominant vertical axis, keeping original orientation" << std::endl;
     }
 
-    // Apply rotation correction if needed
     if (needsRotation) {
         for (auto& part : outData.parts) {
             for (auto& v : part.vertices) {
@@ -1029,7 +1000,6 @@ bool DAOImporter::WriteMSHXml(const fs::path& outputPath, const DAOModelData& mo
     out << "<?xml version=\"1.0\" ?>\n";
     out << "<ModelMeshData Name=\"" << model.name << ".MSH\" Version=\"1\">\n";
 
-    // Write each part as a separate MeshGroup
     for (size_t partIdx = 0; partIdx < model.parts.size(); ++partIdx) {
         const auto& part = model.parts[partIdx];
         size_t vertCount = part.vertices.size();
@@ -1127,13 +1097,11 @@ bool DAOImporter::WriteMMHXml(const fs::path& outputPath, const DAOModelData& mo
                 }
             }
 
-            // Children nodes are nested directly inside parent node
             for (int child : children) writeBone(child, depth + 1);
 
             out << indent << "</Node>\n";
         };
 
-        // Check if model already has a root GOB bone
         bool hasGOB = false;
         int gobBoneIdx = -1;
         for (size_t i = 0; i < model.skeleton.bones.size(); ++i) {
@@ -1145,10 +1113,8 @@ bool DAOImporter::WriteMMHXml(const fs::path& outputPath, const DAOModelData& mo
         }
 
         if (hasGOB) {
-            // Model has GOB - write skeleton starting from GOB
             writeBone(gobBoneIdx, 1);
         } else {
-            // No GOB - create wrapper
             out << "  <Node Name=\"GOB\" SoundMaterialType=\"0\">\n";
             out << "    <Translation>0 0 0</Translation>\n";
             out << "    <Rotation>0 0 0 1</Rotation>\n";
@@ -1163,11 +1129,9 @@ bool DAOImporter::WriteMMHXml(const fs::path& outputPath, const DAOModelData& mo
         int meshIndent = hasGOB ? 2 : 4;
         std::string meshIndentStr(meshIndent, ' ');
 
-        // Output one NodeMesh per mesh part (each with its own material)
         for (size_t partIdx = 0; partIdx < model.parts.size(); ++partIdx) {
             const auto& part = model.parts[partIdx];
 
-            // Get bones used by this specific part
             std::set<int> partBonesUsed(part.bonesUsed.begin(), part.bonesUsed.end());
 
             out << meshIndentStr << "<NodeMesh Name=\"" << part.name << "\" ";
@@ -1193,7 +1157,6 @@ bool DAOImporter::WriteMMHXml(const fs::path& outputPath, const DAOModelData& mo
             out << "  </Node>\n";
         }
     } else {
-        // Non-skinned mesh - output one NodeMesh per part
         for (size_t partIdx = 0; partIdx < model.parts.size(); ++partIdx) {
             const auto& part = model.parts[partIdx];
             out << "  <NodeMesh Name=\"" << part.name << "\" ";
@@ -1389,11 +1352,9 @@ bool DAOImporter::RepackERF(const std::string& erfPath, const std::map<std::stri
     return true;
 }
 
-// Generate PHY file (GFF format) from collision shapes
 std::vector<uint8_t> DAOImporter::GeneratePHY(const DAOModelData& model) {
     if (model.collisionShapes.empty()) return {};
 
-    // GFF V4.0 format helper functions
     auto writeU32 = [](std::vector<uint8_t>& buf, uint32_t val) {
         buf.push_back(val & 0xFF);
         buf.push_back((val >> 8) & 0xFF);
@@ -1415,16 +1376,11 @@ std::vector<uint8_t> DAOImporter::GeneratePHY(const DAOModelData& model) {
 
     std::vector<uint8_t> data;
 
-    // GFF V4.0 Header (16 bytes)
     data.push_back('G'); data.push_back('F'); data.push_back('F'); data.push_back(' ');
     data.push_back('V'); data.push_back('4'); data.push_back('.'); data.push_back('0');
     data.push_back('P'); data.push_back('C'); data.push_back(' '); data.push_back(' ');
-    writeU32(data, 0); // Platform flags
+    writeU32(data, 0);
 
-    // For a minimal PHY, we need struct/field definitions
-    // This is a simplified version - full GFF is complex
-
-    // For now, just log that we're generating collision data
     std::cout << "[PHY] Generating collision data for " << model.collisionShapes.size() << " shapes" << std::endl;
     for (const auto& shape : model.collisionShapes) {
         switch (shape.type) {
