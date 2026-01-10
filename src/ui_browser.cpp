@@ -1,91 +1,71 @@
 #include "ui_internal.h"
-
 static std::string GetErfSource(const std::string& erfPath) {
     std::string pathLower = erfPath;
     std::transform(pathLower.begin(), pathLower.end(), pathLower.begin(), ::tolower);
-
     if (pathLower.find("packages/core_ep1") != std::string::npos ||
         pathLower.find("packages\\core_ep1") != std::string::npos) {
         return "Awakening";
     }
-
     return "Core";
 }
-
 static int s_meshDataSourceFilter = 0;
+static int s_hierDataSourceFilter = 0;
 static std::set<std::string> s_importedModels;
 static bool s_importedModelsLoaded = false;
-
 static std::string getImportedModelsPath() {
     return (fs::path(getExeDir()) / "imported_models.txt").string();
 }
-
 static void loadImportedModels() {
     if (s_importedModelsLoaded) return;
     s_importedModelsLoaded = true;
-
     std::ifstream file(getImportedModelsPath());
     if (!file) return;
-
     std::string line;
     while (std::getline(file, line)) {
+        if (line.empty()) continue;
         if (!line.empty() && line.back() == '\r') line.pop_back();
         std::string lower = line;
         std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
         s_importedModels.insert(lower);
     }
-
     std::cout << "[Browser] Loaded " << s_importedModels.size() << " imported models from file" << std::endl;
 }
-
 static void saveImportedModels() {
     std::ofstream file(getImportedModelsPath());
     if (!file) {
         std::cerr << "[Browser] Failed to save imported models list" << std::endl;
         return;
     }
-
     for (const auto& name : s_importedModels) {
         file << name << "\n";
     }
-
     std::cout << "[Browser] Saved " << s_importedModels.size() << " imported models to file" << std::endl;
 }
-
 void markModelAsImported(const std::string& modelName) {
     loadImportedModels();
-
     std::string nameLower = modelName;
     std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), ::tolower);
     s_importedModels.insert(nameLower);
-
     saveImportedModels();
 }
-
 static bool isImportedModel(const std::string& modelName) {
     loadImportedModels();
     std::string nameLower = modelName;
     std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), ::tolower);
     return s_importedModels.find(nameLower) != s_importedModels.end();
 }
-
 static void unmarkModelAsImported(const std::string& modelName) {
     loadImportedModels();
-
     std::string nameLower = modelName;
     std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), ::tolower);
     s_importedModels.erase(nameLower);
-
     saveImportedModels();
 }
-
 static bool s_showDeleteConfirm = false;
 static std::string s_deleteModelName;
 static CachedEntry s_deleteEntry;
-
 static bool deleteFromERF(const std::string& erfPath, const std::vector<std::string>& namesToDelete) {
     if (!fs::exists(erfPath)) return false;
-
     std::vector<uint8_t> erfData;
     {
         std::ifstream in(erfPath, std::ios::binary | std::ios::ate);
@@ -95,14 +75,11 @@ static bool deleteFromERF(const std::string& erfPath, const std::vector<std::str
         erfData.resize(size);
         in.read(reinterpret_cast<char*>(erfData.data()), size);
     }
-
     if (erfData.size() < 32) return false;
-
     auto readU32 = [&](size_t offset) -> uint32_t {
         if (offset + 4 > erfData.size()) return 0;
         return *reinterpret_cast<uint32_t*>(&erfData[offset]);
     };
-
     auto readUtf16String = [&](size_t offset, size_t charCount) -> std::string {
         std::string result;
         for (size_t i = 0; i < charCount; ++i) {
@@ -114,25 +91,20 @@ static bool deleteFromERF(const std::string& erfPath, const std::vector<std::str
         }
         return result;
     };
-
     std::string magic = readUtf16String(0, 4);
     if (magic != "ERF ") return false;
-
     uint32_t fileCount = readU32(16);
     uint32_t year = readU32(20);
     uint32_t day = readU32(24);
     uint32_t unknown = readU32(28);
-
     std::set<std::string> deleteSet;
     for (const auto& name : namesToDelete) {
         std::string lower = name;
         std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
         deleteSet.insert(lower);
     }
-
     struct FileEntry { std::string name; uint32_t offset; uint32_t size; };
     std::vector<FileEntry> keepEntries;
-
     size_t tableOffset = 32;
     for (uint32_t i = 0; i < fileCount; ++i) {
         size_t entryOff = tableOffset + i * 72;
@@ -141,31 +113,24 @@ static bool deleteFromERF(const std::string& erfPath, const std::vector<std::str
         e.name = readUtf16String(entryOff, 32);
         e.offset = readU32(entryOff + 64);
         e.size = readU32(entryOff + 68);
-
         std::string nameLower = e.name;
         std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), ::tolower);
-
         if (deleteSet.find(nameLower) == deleteSet.end()) {
             keepEntries.push_back(e);
         } else {
             std::cout << "[Delete] Removing: " << e.name << std::endl;
         }
     }
-
     if (keepEntries.size() == fileCount) {
         return false;
     }
     std::vector<uint8_t> newErf;
     newErf.reserve(erfData.size());
-
     for (int i = 0; i < 32; ++i) newErf.push_back(erfData[i]);
-
     uint32_t newCount = static_cast<uint32_t>(keepEntries.size());
     *reinterpret_cast<uint32_t*>(&newErf[16]) = newCount;
-
     size_t dataStart = 32 + keepEntries.size() * 72;
     uint32_t currentOffset = static_cast<uint32_t>(dataStart);
-
     for (auto& e : keepEntries) {
         for (size_t c = 0; c < 32; ++c) {
             if (c < e.name.size()) {
@@ -176,14 +141,11 @@ static bool deleteFromERF(const std::string& erfPath, const std::vector<std::str
                 newErf.push_back(0);
             }
         }
-
         uint32_t newOffset = currentOffset;
         for (int b = 0; b < 4; ++b) newErf.push_back((newOffset >> (b * 8)) & 0xFF);
         for (int b = 0; b < 4; ++b) newErf.push_back((e.size >> (b * 8)) & 0xFF);
-
         currentOffset += e.size;
     }
-
     for (const auto& e : keepEntries) {
         if (e.offset + e.size <= erfData.size()) {
             for (uint32_t i = 0; i < e.size; ++i) {
@@ -191,15 +153,12 @@ static bool deleteFromERF(const std::string& erfPath, const std::vector<std::str
             }
         }
     }
-
     std::ofstream out(erfPath, std::ios::binary);
     if (!out) return false;
     out.write(reinterpret_cast<const char*>(newErf.data()), newErf.size());
-
     std::cout << "[Delete] ERF rebuilt: " << keepEntries.size() << " entries (was " << fileCount << ")" << std::endl;
     return true;
 }
-
 void drawMeshBrowserWindow(AppState& state) {
     loadMeshDatabase(state);
     ImGui::SetNextWindowSize(ImVec2(400, 500), ImGuiCond_FirstUseEver);
@@ -353,16 +312,13 @@ void drawBrowserWindow(AppState& state) {
         if (!state.statusMessage.empty()) { ImGui::SameLine(); ImGui::Text("%s", state.statusMessage.c_str()); }
         ImGui::EndMenuBar();
     }
-
     ImGui::Columns(2, "browser_columns");
     ImGui::Text("Files");
     ImGui::Separator();
-
     ImGui::BeginChild("ERFList", ImVec2(0, 0), true);
     if (!state.audioFilesLoaded && !state.selectedFolder.empty()) {
         scanAudioFiles(state);
     }
-
     bool audioSelected = (state.selectedErfName == "[Audio]");
     if (ImGui::Selectable("Audio - Sound Effects", audioSelected)) {
         if (!audioSelected) {
@@ -386,7 +342,6 @@ void drawBrowserWindow(AppState& state) {
             state.statusMessage = std::to_string(state.audioFiles.size()) + " audio files";
         }
     }
-
     bool voSelected = (state.selectedErfName == "[VoiceOver]");
     if (ImGui::Selectable("Audio - Voice Over", voSelected)) {
         if (!voSelected) {
@@ -410,16 +365,13 @@ void drawBrowserWindow(AppState& state) {
             state.statusMessage = std::to_string(state.voiceOverFiles.size()) + " voice over files";
         }
     }
-
     ImGui::Separator();
-
     for (const auto& [filename, indices] : state.erfsByName) {
         bool isSelected = (state.selectedErfName == filename);
-
         std::string filenameLower = filename;
         std::transform(filenameLower.begin(), filenameLower.end(), filenameLower.begin(), ::tolower);
         bool isModelMeshData = (filenameLower == "modelmeshdata.erf");
-
+        bool isModelHierarchies = (filenameLower == "modelhierarchies.erf");
         if (ImGui::Selectable(filename.c_str(), isSelected)) {
             if (!isSelected) {
                 state.selectedErfName = filename;
@@ -428,11 +380,10 @@ void drawBrowserWindow(AppState& state) {
                 state.filteredEntryIndices.clear();
                 state.lastContentFilter.clear();
                 s_meshDataSourceFilter = 0;
-
+                s_hierDataSourceFilter = 0;
                 std::set<std::string> seenNames;
                 for (size_t erfIdx : indices) {
                     std::string source = GetErfSource(state.erfFiles[erfIdx]);
-
                     ERFFile erf;
                     if (erf.open(state.erfFiles[erfIdx])) {
                         for (size_t entryIdx = 0; entryIdx < erf.entries().size(); entryIdx++) {
@@ -456,26 +407,21 @@ void drawBrowserWindow(AppState& state) {
                 state.statusMessage = std::to_string(state.mergedEntries.size()) + " entries from " + std::to_string(indices.size()) + " ERF(s)";
             }
         }
-
         if (isSelected && isModelMeshData && !state.mergedEntries.empty()) {
             ImGui::Indent();
-
             int coreCount = 0, awakCount = 0, modsCount = 0;
             for (const auto& ce : state.mergedEntries) {
                 if (ce.source == "Core") coreCount++;
                 else if (ce.source == "Awakening") awakCount++;
                 else modsCount++;
             }
-
             char label[64];
-
             snprintf(label, sizeof(label), "All (%zu)", state.mergedEntries.size());
             if (ImGui::RadioButton(label, s_meshDataSourceFilter == 0)) {
                 s_meshDataSourceFilter = 0;
                 state.filteredEntryIndices.clear();
                 state.lastContentFilter.clear();
             }
-
             if (coreCount > 0) {
                 snprintf(label, sizeof(label), "Core (%d)", coreCount);
                 if (ImGui::RadioButton(label, s_meshDataSourceFilter == 1)) {
@@ -484,7 +430,6 @@ void drawBrowserWindow(AppState& state) {
                     state.lastContentFilter.clear();
                 }
             }
-
             if (awakCount > 0) {
                 snprintf(label, sizeof(label), "Awakening (%d)", awakCount);
                 if (ImGui::RadioButton(label, s_meshDataSourceFilter == 2)) {
@@ -493,7 +438,6 @@ void drawBrowserWindow(AppState& state) {
                     state.lastContentFilter.clear();
                 }
             }
-
             if (modsCount > 0) {
                 snprintf(label, sizeof(label), "Mods (%d)", modsCount);
                 if (ImGui::RadioButton(label, s_meshDataSourceFilter == 3)) {
@@ -502,29 +446,64 @@ void drawBrowserWindow(AppState& state) {
                     state.lastContentFilter.clear();
                 }
             }
-
+            ImGui::Unindent();
+        }
+        if (isSelected && isModelHierarchies && !state.mergedEntries.empty()) {
+            ImGui::Indent();
+            int coreCount = 0, awakCount = 0, modsCount = 0;
+            for (const auto& ce : state.mergedEntries) {
+                if (ce.source == "Core") coreCount++;
+                else if (ce.source == "Awakening") awakCount++;
+                else modsCount++;
+            }
+            char label[64];
+            snprintf(label, sizeof(label), "All (%zu)", state.mergedEntries.size());
+            if (ImGui::RadioButton(label, s_hierDataSourceFilter == 0)) {
+                s_hierDataSourceFilter = 0;
+                state.filteredEntryIndices.clear();
+                state.lastContentFilter.clear();
+            }
+            if (coreCount > 0) {
+                snprintf(label, sizeof(label), "Core (%d)", coreCount);
+                if (ImGui::RadioButton(label, s_hierDataSourceFilter == 1)) {
+                    s_hierDataSourceFilter = 1;
+                    state.filteredEntryIndices.clear();
+                    state.lastContentFilter.clear();
+                }
+            }
+            if (awakCount > 0) {
+                snprintf(label, sizeof(label), "Awakening (%d)", awakCount);
+                if (ImGui::RadioButton(label, s_hierDataSourceFilter == 2)) {
+                    s_hierDataSourceFilter = 2;
+                    state.filteredEntryIndices.clear();
+                    state.lastContentFilter.clear();
+                }
+            }
+            if (modsCount > 0) {
+                snprintf(label, sizeof(label), "Mods (%d)", modsCount);
+                if (ImGui::RadioButton(label, s_hierDataSourceFilter == 3)) {
+                    s_hierDataSourceFilter = 3;
+                    state.filteredEntryIndices.clear();
+                    state.lastContentFilter.clear();
+                }
+            }
             ImGui::Unindent();
         }
     }
     ImGui::EndChild();
-
     ImGui::NextColumn();
-
     if (!state.selectedErfName.empty() && !state.mergedEntries.empty()) {
         bool hasTextures = false, hasModels = false;
         bool isAudioCategory = (state.selectedErfName == "[Audio]" || state.selectedErfName == "[VoiceOver]");
-
         for (const auto& ce : state.mergedEntries) {
             if (ce.name.find("__HEADER__") == 0) continue;
             if (ce.name.size() > 4 && ce.name.substr(ce.name.size() - 4) == ".dds") hasTextures = true;
             if (isModelFile(ce.name)) hasModels = true;
             if (hasTextures && hasModels) break;
         }
-
         ImGui::Text("Contents (%zu)", state.mergedEntries.size());
         ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
         ImGui::InputText("##contentSearch", state.contentFilter, sizeof(state.contentFilter));
-
         if (isAudioCategory) {
             if (ImGui::Button("Convert All to MP3")) {
                 IGFD::FileDialogConfig config;
@@ -563,7 +542,6 @@ void drawBrowserWindow(AppState& state) {
                 #endif
                 ImGuiFileDialog::Instance()->OpenDialog("DumpAllFiles", "Select Output Folder", nullptr, config);
             }
-
             if (hasTextures) {
                 ImGui::SameLine();
                 if (ImGui::Button("Dump Textures")) {
@@ -597,9 +575,7 @@ void drawBrowserWindow(AppState& state) {
                 }
             }
         }
-
         ImGui::Separator();
-
         std::string currentFilter = state.contentFilter;
         if (currentFilter != state.lastContentFilter || state.filteredEntryIndices.empty()) {
             state.lastContentFilter = currentFilter;
@@ -607,25 +583,26 @@ void drawBrowserWindow(AppState& state) {
             state.filteredEntryIndices.reserve(state.mergedEntries.size());
             std::string filterLower = currentFilter;
             std::transform(filterLower.begin(), filterLower.end(), filterLower.begin(), ::tolower);
-
             std::string selNameLower = state.selectedErfName;
             std::transform(selNameLower.begin(), selNameLower.end(), selNameLower.begin(), ::tolower);
-            bool filterBySource = (selNameLower == "modelmeshdata.erf" && s_meshDataSourceFilter > 0);
-
+            bool filterByMeshSource = (selNameLower == "modelmeshdata.erf" && s_meshDataSourceFilter > 0);
+            bool filterByHierSource = (selNameLower == "modelhierarchies.erf" && s_hierDataSourceFilter > 0);
             for (int i = 0; i < (int)state.mergedEntries.size(); i++) {
                 const auto& ce = state.mergedEntries[i];
-
                 if (ce.name.find("__HEADER__") == 0) {
                     state.filteredEntryIndices.push_back(i);
                     continue;
                 }
-
-                if (filterBySource) {
+                if (filterByMeshSource) {
                     if (s_meshDataSourceFilter == 1 && ce.source != "Core") continue;
                     if (s_meshDataSourceFilter == 2 && ce.source != "Awakening") continue;
                     if (s_meshDataSourceFilter == 3 && ce.source != "Mods") continue;
                 }
-
+                if (filterByHierSource) {
+                    if (s_hierDataSourceFilter == 1 && ce.source != "Core") continue;
+                    if (s_hierDataSourceFilter == 2 && ce.source != "Awakening") continue;
+                    if (s_hierDataSourceFilter == 3 && ce.source != "Mods") continue;
+                }
                 if (filterLower.empty()) {
                     state.filteredEntryIndices.push_back(i);
                 } else {
@@ -637,13 +614,10 @@ void drawBrowserWindow(AppState& state) {
                 }
             }
         }
-
         ImGui::BeginChild("EntryList", ImVec2(0, 0), true);
-
         drawVirtualList((int)state.filteredEntryIndices.size(), [&](int i) {
             int idx = state.filteredEntryIndices[i];
             const CachedEntry& ce = state.mergedEntries[idx];
-
             if (ce.name.find("__HEADER__") == 0) {
                 std::string headerTitle = ce.name.substr(10);
                 ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.0f, 0.0f, 1.0f));
@@ -651,19 +625,16 @@ void drawBrowserWindow(AppState& state) {
                 ImGui::PopStyleColor();
                 return;
             }
-
             bool isModel = isModelFile(ce.name), isMao = isMaoFile(ce.name), isPhy = isPhyFile(ce.name);
             bool isTexture = ce.name.size() > 4 && ce.name.substr(ce.name.size() - 4) == ".dds";
             bool isAudioFile = ce.name.size() > 4 && (ce.name.substr(ce.name.size() - 4) == ".fsb" );
             bool isGda = ce.name.size() > 4 && ce.name.substr(ce.name.size() - 4) == ".gda";
-
             if (isModel) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.4f, 1.0f, 0.4f, 1.0f));
             else if (isMao) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.8f, 0.4f, 1.0f));
             else if (isPhy) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.4f, 1.0f, 1.0f));
             else if (isTexture) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.4f, 0.8f, 1.0f, 1.0f));
             else if (isAudioFile) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.6f, 0.2f, 1.0f));
             else if (isGda) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.2f, 1.0f, 1.0f, 1.0f));
-
             char label[256]; snprintf(label, sizeof(label), "%s##%d", ce.name.c_str(), idx);
             if (ImGui::Selectable(label, idx == state.selectedEntryIndex, ImGuiSelectableFlags_AllowDoubleClick)) {
                 state.selectedEntryIndex = idx;
@@ -758,10 +729,8 @@ void drawBrowserWindow(AppState& state) {
                     }
                 }
             }
-
             bool isAudio = (state.selectedErfName == "[Audio]" || state.selectedErfName == "[VoiceOver]") &&
                            (ce.name.size() > 4 && (ce.name.substr(ce.name.size() - 4) == ".fsb" ));
-
             if (isAudio && ImGui::IsMouseDoubleClicked(0) && idx == state.selectedEntryIndex) {
                 std::string fullPath;
                 if (state.selectedErfName == "[Audio]" && ce.erfIdx < state.audioFiles.size()) {
@@ -779,7 +748,6 @@ void drawBrowserWindow(AppState& state) {
                         state.fsbSampleFilter[0] = '\0';
                         state.showFSBBrowser = true;
                         state.statusMessage = "Sound bank: " + std::to_string(samples.size()) + " samples";
-
                          if (samples.size() == 1) {
                             stopAudio();
                             state.audioPlaying = false;
@@ -903,12 +871,10 @@ void drawBrowserWindow(AppState& state) {
             }
             if (isModel || isMao || isPhy || isTexture || isAudioFile || isGda) ImGui::PopStyleColor();
         });
-
         ImGui::EndChild();
     } else ImGui::Text("Select an ERF file");
     ImGui::Columns(1);
     ImGui::End();
-
     if (ImGuiFileDialog::Instance()->Display("DumpAllFiles", ImGuiWindowFlags_NoCollapse, ImVec2(500, 400))) {
         if (ImGuiFileDialog::Instance()->IsOk()) {
             std::string outDir = ImGuiFileDialog::Instance()->GetCurrentPath();
@@ -938,12 +904,10 @@ void drawBrowserWindow(AppState& state) {
         }
         ImGuiFileDialog::Instance()->Close();
     }
-
     if (s_showDeleteConfirm) {
         ImGui::OpenPopup("Delete Imported Model?");
         s_showDeleteConfirm = false;
     }
-
     if (ImGui::BeginPopupModal("Delete Imported Model?", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
         ImGui::Text("Are you sure you want to delete:");
         ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.4f, 1.0f), "%s", s_deleteModelName.c_str());
@@ -952,14 +916,11 @@ void drawBrowserWindow(AppState& state) {
         ImGui::Spacing();
         ImGui::Separator();
         ImGui::Spacing();
-
         if (ImGui::Button("Yes, Delete", ImVec2(120, 0))) {
             std::string baseName = s_deleteModelName;
             size_t dotPos = baseName.rfind('.');
             if (dotPos != std::string::npos) baseName = baseName.substr(0, dotPos);
-
             int deletedCount = 0;
-
             for (const auto& erfPath : state.erfFiles) {
                 std::string erfLower = erfPath;
                 std::transform(erfLower.begin(), erfLower.end(), erfLower.begin(), ::tolower);
@@ -970,7 +931,6 @@ void drawBrowserWindow(AppState& state) {
                     break;
                 }
             }
-
             for (const auto& erfPath : state.erfFiles) {
                 std::string erfLower = erfPath;
                 std::transform(erfLower.begin(), erfLower.end(), erfLower.begin(), ::tolower);
@@ -981,9 +941,7 @@ void drawBrowserWindow(AppState& state) {
                     break;
                 }
             }
-
             unmarkModelAsImported(s_deleteModelName);
-
             std::string currentModelLower = state.currentModel.name;
             std::transform(currentModelLower.begin(), currentModelLower.end(), currentModelLower.begin(), ::tolower);
             std::string deletedModelLower = s_deleteModelName;
@@ -992,21 +950,16 @@ void drawBrowserWindow(AppState& state) {
                 state.currentModel = Model();
                 state.hasModel = false;
             }
-
             state.mergedEntries.clear();
             state.filteredEntryIndices.clear();
             state.lastContentFilter.clear();
-
             state.statusMessage = "Deleted " + baseName + " (" + std::to_string(deletedCount) + " ERF files updated)";
             ImGui::CloseCurrentPopup();
         }
-
         ImGui::SameLine();
-
         if (ImGui::Button("No, Cancel", ImVec2(120, 0))) {
             ImGui::CloseCurrentPopup();
         }
-
         ImGui::EndPopup();
     }
 }

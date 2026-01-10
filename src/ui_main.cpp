@@ -3,45 +3,35 @@
 #include <thread>
 #include "import.h"
 #include "export.h"
-
 #include "update/about_text.h"
 #include "update/changelog_text.h"
-
 static const char* CURRENT_APP_VERSION = "1.12";
-
 bool showSplash = true;
-
 static bool t_active = false;
 static float t_alpha = 0.0f;
 static int t_targetTab = 0;
 static int t_phase = 0;
 static bool t_isLoadingContent = false;
-
 static bool s_showAbout = false;
 static bool s_showChangelog = false;
 static bool s_scrollToBottom = false;
-
 static std::string s_pendingImportGlbPath;
 static std::string s_pendingExportPath;
-
 static bool s_showExportOptions = false;
 static std::map<std::string, bool> s_animSelection;
 static bool s_selectAllAnims = true;
 static bool s_isFbxExport = false;
 static bool s_exportCollision = true;
 static bool s_animListExpanded = false;
-
+static int s_fbxScaleIndex = 0;
 void runLoadingTask(AppState* statePtr) {
     AppState& state = *statePtr;
-
     state.preloadStatus = "Scanning game folders...";
     state.preloadProgress = 0.0f;
     state.erfFiles = scanForERFFiles(state.selectedFolder);
-
     state.preloadStatus = "Filtering encrypted files...";
     state.preloadProgress = 0.05f;
     filterEncryptedErfs(state);
-
     state.meshCache.clear();
     state.mmhCache.clear();
     state.maoCache.clear();
@@ -52,27 +42,22 @@ void runLoadingTask(AppState* statePtr) {
     state.materialErfPaths.clear();
     state.textureErfs.clear();
     state.textureErfPaths.clear();
-
     std::vector<std::string> charPrefixes = {"df_", "dm_", "hf_", "hm_", "ef_", "em_", "cn_"};
     std::vector<std::string> erfPaths;
     for (size_t i : state.filteredErfIndices) {
         erfPaths.push_back(state.erfFiles[i]);
     }
-
     size_t totalErfs = erfPaths.size();
     size_t processed = 0;
-
     for (const auto& erfPath : erfPaths) {
         std::string filename = fs::path(erfPath).filename().string();
         state.preloadStatus = filename;
-
         ERFFile erf;
         if (!erf.open(erfPath)) {
             processed++;
             state.preloadProgress = 0.1f + ((float)processed / (float)totalErfs) * 0.8f;
             continue;
         }
-
         std::string pathLower = erfPath;
         std::transform(pathLower.begin(), pathLower.end(), pathLower.begin(), ::tolower);
         bool isModel = pathLower.find("model") != std::string::npos ||
@@ -81,7 +66,6 @@ void runLoadingTask(AppState* statePtr) {
                        pathLower.find("chargen") != std::string::npos;
         bool isMaterial = pathLower.find("material") != std::string::npos;
         bool isTexture = pathLower.find("texture") != std::string::npos;
-
         for (const auto& entry : erf.entries()) {
             std::string nameLower = entry.name;
             std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), ::tolower);
@@ -117,7 +101,6 @@ void runLoadingTask(AppState* statePtr) {
                 }
             }
         }
-
         if (isModel) {
             auto erfPtr = std::make_unique<ERFFile>();
             if (erfPtr->open(erfPath)) {
@@ -139,76 +122,57 @@ void runLoadingTask(AppState* statePtr) {
                 state.textureErfPaths.push_back(erfPath);
             }
         }
-
         processed++;
         state.preloadProgress = 0.1f + ((float)processed / (float)totalErfs) * 0.8f;
     }
-
     state.modelErfsLoaded = true;
     state.materialErfsLoaded = true;
     state.textureErfsLoaded = true;
     state.cacheBuilt = true;
-
     state.preloadStatus = "Scanning audio files...";
     state.preloadProgress = 0.95f;
     scanAudioFiles(state);
-
     state.preloadProgress = 1.0f;
     state.statusMessage = "Ready";
     saveSettings(state);
-
     state.isPreloading = false;
     showSplash = false;
 }
-
 void runCharDesignerLoading(AppState* statePtr) {
     t_isLoadingContent = true;
     statePtr->preloadProgress = 0.0f;
-
     preloadCharacterData(*statePtr);
-
     statePtr->preloadProgress = 1.0f;
     t_isLoadingContent = false;
 }
-
 void runImportTask(AppState* statePtr) {
     AppState& state = *statePtr;
-
     state.preloadStatus = "Initializing import...";
     state.preloadProgress = 0.0f;
-
     DAOImporter importer;
     importer.SetProgressCallback([&](float progress, const std::string& status) {
         state.preloadProgress = progress * 0.9f;
         state.preloadStatus = status;
     });
-
     bool success = importer.ImportToDirectory(s_pendingImportGlbPath, state.selectedFolder);
-
     if (success) {
         std::string modelName = fs::path(s_pendingImportGlbPath).stem().string() + ".msh";
         markModelAsImported(modelName);
-
         state.preloadStatus = "Refreshing modified ERFs...";
         state.preloadProgress = 0.92f;
-
         fs::path baseDir(state.selectedFolder);
         fs::path corePath = baseDir / "packages" / "core" / "data";
         fs::path texturePath = baseDir / "packages" / "core" / "textures" / "high";
-
         std::vector<std::string> modifiedErfs = {
             (corePath / "modelmeshdata.erf").string(),
             (corePath / "modelhierarchies.erf").string(),
             (corePath / "materialobjects.erf").string(),
             (texturePath / "texturepack.erf").string()
         };
-
         for (const auto& erfPath : modifiedErfs) {
             if (!fs::exists(erfPath)) continue;
-
             std::string pathLower = erfPath;
             std::transform(pathLower.begin(), pathLower.end(), pathLower.begin(), ::tolower);
-
             auto removeAndReload = [&](std::vector<std::unique_ptr<ERFFile>>& erfs,
                                        std::vector<std::string>& paths) {
                 for (size_t i = 0; i < paths.size(); ++i) {
@@ -226,7 +190,6 @@ void runImportTask(AppState* statePtr) {
                     paths.push_back(erfPath);
                 }
             };
-
             if (pathLower.find("modelmesh") != std::string::npos ||
                 pathLower.find("modelhierarch") != std::string::npos) {
                 removeAndReload(state.modelErfs, state.modelErfPaths);
@@ -238,13 +201,10 @@ void runImportTask(AppState* statePtr) {
                 removeAndReload(state.textureErfs, state.textureErfPaths);
             }
         }
-
         state.preloadProgress = 1.0f;
         state.preloadStatus = "Import complete!";
         state.statusMessage = "Model imported successfully!";
-
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
-
         t_isLoadingContent = false;
         t_active = false;
         t_phase = 0;
@@ -252,30 +212,24 @@ void runImportTask(AppState* statePtr) {
     } else {
         state.preloadStatus = "Import Failed!";
         std::this_thread::sleep_for(std::chrono::seconds(2));
-
         t_isLoadingContent = false;
         t_active = false;
         t_phase = 0;
         t_alpha = 0.0f;
     }
 }
-
 void runExportTask(AppState* statePtr) {
     AppState& state = *statePtr;
     state.preloadStatus = "Initializing export...";
     state.preloadProgress = 0.0f;
-
     std::vector<Animation> exportAnims;
-
     size_t totalSelected = 0;
     for (const auto& pair : s_animSelection) {
         if (pair.second) totalSelected++;
     }
     size_t processed = 0;
-
     for (const auto& animFile : state.availableAnimFiles) {
         if (!s_animSelection[animFile.first]) continue;
-
         ERFFile animErf;
         if (animErf.open(animFile.second)) {
             for (const auto& animEntry : animErf.entries()) {
@@ -283,7 +237,6 @@ void runExportTask(AppState* statePtr) {
                     auto aniData = animErf.readEntry(animEntry);
                     if (!aniData.empty()) {
                         Animation anim = loadANI(aniData, animEntry.name);
-
                         auto normalize = [](const std::string& s) {
                             std::string result;
                             for (char c : s) {
@@ -309,53 +262,45 @@ void runExportTask(AppState* statePtr) {
                 }
             }
         }
-
         processed++;
         if (totalSelected > 0) {
             state.preloadProgress = (float)processed / (float)totalSelected * 0.9f;
         }
         state.preloadStatus = "Processing: " + animFile.first;
     }
-
     state.preloadStatus = "Writing File...";
     state.preloadProgress = 0.95f;
-
     ExportOptions exportOpts;
     exportOpts.includeCollision = s_exportCollision;
     exportOpts.includeAnimations = true;
-
+    float scaleValues[] = { 1.0f, 10.0f, 100.0f, 1000.0f };
+    exportOpts.fbxScale = scaleValues[s_fbxScaleIndex];
     bool success = false;
     if (s_isFbxExport) {
         success = exportToFBX(state.currentModel, exportAnims, s_pendingExportPath, exportOpts);
     } else {
         success = exportToGLB(state.currentModel, exportAnims, s_pendingExportPath, exportOpts);
     }
-
     std::string exportInfo = std::to_string(exportAnims.size()) + " anims";
     if (exportOpts.includeCollision && !state.currentModel.collisionShapes.empty()) {
         exportInfo += ", " + std::to_string(state.currentModel.collisionShapes.size()) + " collision";
     }
-
     if (success) {
         state.statusMessage = "Exported: " + s_pendingExportPath + " (" + exportInfo + ")";
     } else {
         state.statusMessage = "Export failed!";
     }
-
     state.preloadProgress = 1.0f;
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
-
     t_isLoadingContent = false;
     t_active = false;
     t_phase = 0;
     t_alpha = 0.0f;
 }
-
 void handleInput(AppState& state, GLFWwindow* window, ImGuiIO& io) {
     static bool settingsLoaded = false;
     if (!settingsLoaded) {
         loadSettings(state);
-
         if (state.lastRunVersion.empty()) {
             s_showAbout = true;
         }
@@ -369,7 +314,6 @@ void handleInput(AppState& state, GLFWwindow* window, ImGuiIO& io) {
         }
         settingsLoaded = true;
     }
-
     if (!io.WantCaptureMouse) {
         double mx, my;
         glfwGetCursorPos(window, &mx, &my);
@@ -467,17 +411,14 @@ void handleInput(AppState& state, GLFWwindow* window, ImGuiIO& io) {
         if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS) state.camera.moveUp(-speed);
     }
 }
-
 void drawSplashScreen(AppState& state, int displayW, int displayH) {
     ImGui::SetNextWindowPos(ImVec2(0, 0));
     ImGui::SetNextWindowSize(ImVec2((float)displayW, (float)displayH));
     ImGui::Begin("##Splash", nullptr,
         ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
         ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings);
-
     float centerX = displayW * 0.5f;
     float centerY = displayH * 0.5f;
-
     if (!state.isPreloading) {
         ImVec2 buttonSize(250, 40);
         ImGui::SetCursorPos(ImVec2(centerX - buttonSize.x * 0.5f, centerY));
@@ -496,40 +437,31 @@ void drawSplashScreen(AppState& state, int displayW, int displayH) {
     }
     ImGui::End();
 }
-
 void preloadErfs(AppState& state) {
     runLoadingTask(&state);
 }
-
 void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
     int displayW, displayH;
     glfwGetFramebufferSize(window, &displayW, &displayH);
-
     static bool s_startedUpdateCheck = false;
     static bool s_openUpdatePopup = false;
     static bool s_dismissedUpdatePopup = false;
-
     if (showSplash) {
         drawSplashScreen(state, displayW, displayH);
-
         if (!s_startedUpdateCheck) {
             s_startedUpdateCheck = true;
             Update::StartCheckForUpdates();
         }
-
         if (Update::IsCheckDone() && Update::IsUpdateAvailable() && !s_dismissedUpdatePopup && !s_openUpdatePopup && !Update::IsBusy()) {
             s_openUpdatePopup = true;
             ImGui::OpenPopup("Update Available");
         }
-
         if (ImGui::BeginPopupModal("Update Available", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
             const char* latest = Update::GetLatestVersionText();
             if (!latest) latest = "?";
-
             ImGui::Text("An update to version %s is available.", latest);
             ImGui::TextUnformatted("Do you want to update?");
             ImGui::Spacing();
-
             if (ImGui::Button("Yes", ImVec2(120, 0))) {
                 Update::DownloadAndApplyLatest();
                 s_dismissedUpdatePopup = true;
@@ -542,10 +474,8 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
                 s_openUpdatePopup = false;
                 ImGui::CloseCurrentPopup();
             }
-
             ImGui::EndPopup();
         }
-
         if (!state.isPreloading) {
             if (ImGuiFileDialog::Instance()->Display("ChooseLauncher", ImGuiWindowFlags_NoCollapse, ImVec2(700, 450))) {
                 if (ImGuiFileDialog::Instance()->IsOk()) {
@@ -560,7 +490,6 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
         }
         return;
     }
-
     if (t_active) {
         float dt = io.DeltaTime;
         if (t_phase == 1) {
@@ -592,7 +521,6 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
             }
         }
     }
-
     if (ImGuiFileDialog::Instance()->Display("ChooseFolder", ImGuiWindowFlags_NoCollapse, ImVec2(600, 400))) {
         if (ImGuiFileDialog::Instance()->IsOk()) {
             state.selectedFolder = ImGuiFileDialog::Instance()->GetCurrentPath();
@@ -603,7 +531,6 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
         }
         ImGuiFileDialog::Instance()->Close();
     }
-
     if (ImGuiFileDialog::Instance()->Display("ImportGLB", ImGuiWindowFlags_NoCollapse, ImVec2(600, 400))) {
         if (ImGuiFileDialog::Instance()->IsOk()) {
             s_pendingImportGlbPath = ImGuiFileDialog::Instance()->GetFilePathName();
@@ -616,7 +543,6 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
         }
         ImGuiFileDialog::Instance()->Close();
     }
-
     if (ImGuiFileDialog::Instance()->Display("ExportCurrentGLB", ImGuiWindowFlags_NoCollapse, ImVec2(600, 400))) {
         if (ImGuiFileDialog::Instance()->IsOk() && state.hasModel) {
             s_pendingExportPath = ImGuiFileDialog::Instance()->GetFilePathName();
@@ -640,7 +566,6 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
         }
         ImGuiFileDialog::Instance()->Close();
     }
-
     if (ImGuiFileDialog::Instance()->Display("ExportCurrentFBX", ImGuiWindowFlags_NoCollapse, ImVec2(600, 400))) {
         if (ImGuiFileDialog::Instance()->IsOk() && state.hasModel) {
             s_pendingExportPath = ImGuiFileDialog::Instance()->GetFilePathName();
@@ -664,7 +589,6 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
         }
         ImGuiFileDialog::Instance()->Close();
     }
-
     if (ImGui::BeginPopupModal("Export Options", &s_showExportOptions, ImGuiWindowFlags_AlwaysAutoResize)) {
         bool hasCollision = !state.currentModel.collisionShapes.empty();
         if (hasCollision) {
@@ -674,13 +598,19 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
         } else {
             ImGui::TextDisabled("No collision shapes in model");
         }
+        if (s_isFbxExport) {
+            ImGui::Separator();
+            const char* scaleOptions[] = { "x1", "x10", "x100", "x1000" };
+            ImGui::Text("Scale:");
+            ImGui::SameLine();
+            ImGui::SetNextItemWidth(100);
+            ImGui::Combo("##FBXScale", &s_fbxScaleIndex, scaleOptions, 4);
+        }
         ImGui::Separator();
-
         int selectedCount = 0;
         for (const auto& pair : s_animSelection) {
             if (pair.second) selectedCount++;
         }
-
         std::string animHeader = "Animations (" + std::to_string(selectedCount) + "/" + std::to_string(s_animSelection.size()) + " selected)";
         if (ImGui::CollapsingHeader(animHeader.c_str(), ImGuiTreeNodeFlags_DefaultOpen)) {
             if (ImGui::Checkbox("Select All", &s_selectAllAnims)) {
@@ -688,7 +618,6 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
                     pair.second = s_selectAllAnims;
                 }
             }
-
             ImGui::BeginChild("AnimList", ImVec2(400, 200), true);
             for (auto& pair : s_animSelection) {
                 ImGui::Checkbox(pair.first.c_str(), &pair.second);
@@ -696,11 +625,9 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
             ImGui::EndChild();
         }
         ImGui::Separator();
-
         if (ImGui::Button("Export", ImVec2(120, 0))) {
             s_showExportOptions = false;
             ImGui::CloseCurrentPopup();
-
             t_active = true;
             t_targetTab = state.mainTab;
             t_phase = 1;
@@ -715,7 +642,6 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
         }
         ImGui::EndPopup();
     }
-
     if (ImGuiFileDialog::Instance()->Display("ExportGLB", ImGuiWindowFlags_NoCollapse, ImVec2(600, 400))) {
         if (ImGuiFileDialog::Instance()->IsOk() && state.pendingExport) {
             std::string exportPath = ImGuiFileDialog::Instance()->GetFilePathName();
@@ -781,7 +707,6 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
         }
         ImGuiFileDialog::Instance()->Close();
     }
-
     if (ImGuiFileDialog::Instance()->Display("ExportTexDDS", ImGuiWindowFlags_NoCollapse, ImVec2(600, 400))) {
         if (ImGuiFileDialog::Instance()->IsOk() && state.pendingTexExportDds) {
             std::string exportPath = ImGuiFileDialog::Instance()->GetFilePathName();
@@ -800,7 +725,6 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
         }
         ImGuiFileDialog::Instance()->Close();
     }
-
     if (ImGuiFileDialog::Instance()->Display("ExportTexPNG", ImGuiWindowFlags_NoCollapse, ImVec2(600, 400))) {
         if (ImGuiFileDialog::Instance()->IsOk() && state.pendingTexExportPng) {
             std::string exportPath = ImGuiFileDialog::Instance()->GetFilePathName();
@@ -827,7 +751,6 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
         }
         ImGuiFileDialog::Instance()->Close();
     }
-
     if (ImGuiFileDialog::Instance()->Display("ExtractTexture", ImGuiWindowFlags_NoCollapse, ImVec2(600, 400))) {
         if (ImGuiFileDialog::Instance()->IsOk()) {
             std::string exportPath = ImGuiFileDialog::Instance()->GetFilePathName();
@@ -861,7 +784,6 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
         }
         ImGuiFileDialog::Instance()->Close();
     }
-
     if (ImGuiFileDialog::Instance()->Display("ExtractTexturePNG", ImGuiWindowFlags_NoCollapse, ImVec2(600, 400))) {
         if (ImGuiFileDialog::Instance()->IsOk()) {
             std::string exportPath = ImGuiFileDialog::Instance()->GetFilePathName();
@@ -903,7 +825,6 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
         }
         ImGuiFileDialog::Instance()->Close();
     }
-
     if (ImGuiFileDialog::Instance()->Display("DumpTextures", ImGuiWindowFlags_NoCollapse, ImVec2(600, 400))) {
         if (ImGuiFileDialog::Instance()->IsOk()) {
             std::string outDir = ImGuiFileDialog::Instance()->GetCurrentPath();
@@ -928,7 +849,6 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
         }
         ImGuiFileDialog::Instance()->Close();
     }
-
     if (ImGuiFileDialog::Instance()->Display("DumpModels", ImGuiWindowFlags_NoCollapse, ImVec2(600, 400))) {
         if (ImGuiFileDialog::Instance()->IsOk()) {
             std::string outDir = ImGuiFileDialog::Instance()->GetCurrentPath();
@@ -1014,7 +934,6 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
         }
         ImGuiFileDialog::Instance()->Close();
     }
-
     if (ImGuiFileDialog::Instance()->Display("ConvertAllAudio", ImGuiWindowFlags_NoCollapse, ImVec2(600, 400))) {
         if (ImGuiFileDialog::Instance()->IsOk()) {
             std::string outDir = ImGuiFileDialog::Instance()->GetCurrentPath();
@@ -1038,7 +957,6 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
         }
         ImGuiFileDialog::Instance()->Close();
     }
-
     if (ImGuiFileDialog::Instance()->Display("ConvertSelectedAudio", ImGuiWindowFlags_NoCollapse, ImVec2(600, 400))) {
         if (ImGuiFileDialog::Instance()->IsOk() && state.selectedEntryIndex >= 0) {
             std::string outPath = ImGuiFileDialog::Instance()->GetFilePathName();
@@ -1059,7 +977,6 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
         }
         ImGuiFileDialog::Instance()->Close();
     }
-
     if (ImGui::BeginMainMenuBar()) {
         if (ImGui::BeginMenu("File")) {
             if (ImGui::BeginMenu("Import")) {
@@ -1110,7 +1027,6 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
                 ImGui::EndMenu();
             }
             ImGui::Separator();
-
             if (ImGui::MenuItem("About")) {
                 s_showAbout = true;
             }
@@ -1118,14 +1034,12 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
                 s_showChangelog = true;
                 s_scrollToBottom = true;
             }
-
             ImGui::Separator();
             if (ImGui::MenuItem("Quit", "Alt+F4")) {
                 glfwSetWindowShouldClose(window, true);
             }
             ImGui::EndMenu();
         }
-
         if (ImGui::BeginMenu("Window")) {
             if (state.mainTab == 0) {
                 ImGui::MenuItem("ERF Browser", nullptr, &state.showBrowser);
@@ -1137,12 +1051,9 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
             ImGui::MenuItem("2DA/GDA Editor", nullptr, &state.gdaEditor.showWindow);
             ImGui::EndMenu();
         }
-
         ImGui::Text(" | ");
-
         ImGui::Text("Mode:");
         ImGui::SameLine();
-
         bool browserSelected = (state.mainTab == 0);
         if (ImGui::RadioButton("Browser", browserSelected)) {
             if (state.mainTab != 0 && !t_active) {
@@ -1153,7 +1064,6 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
             }
         }
         ImGui::SameLine();
-
         bool charSelected = (state.mainTab == 1);
         if (ImGui::RadioButton("Character Designer", charSelected)) {
             if (state.mainTab != 1 && !t_active) {
@@ -1167,21 +1077,17 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
         ImGui::SameLine();
         ImGui::Text(" | ");
         ImGui::SameLine();
-
         if (state.hasModel) {
             ImGui::Text("| %s | RMB: Look | WASD: Move", state.currentModel.name.c_str());
         }
-
         const char* ver = Update::GetInstalledVersionText();
         float verW = ImGui::CalcTextSize(ver).x;
         float right = ImGui::GetWindowContentRegionMax().x;
         ImGui::SameLine();
         ImGui::SetCursorPosX(right - verW - ImGui::GetStyle().ItemSpacing.x);
         ImGui::TextUnformatted(ver);
-
         ImGui::EndMainMenuBar();
     }
-
     if (state.mainTab == 0) {
         if (state.showBrowser) drawBrowserWindow(state);
         if (state.showMeshBrowser) drawMeshBrowserWindow(state);
@@ -1239,7 +1145,6 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
         }
         ImGui::End();
     }
-
     if (s_showAbout) {
         ImGui::SetNextWindowSize(ImVec2(400, 300), ImGuiCond_FirstUseEver);
         ImGui::Begin("About", &s_showAbout);
@@ -1261,34 +1166,25 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
             ImGui::SetScrollHereY(1.0f);
             s_scrollToBottom = false;
         }
-
         ImGui::EndChild();
         ImGui::End();
     }
-
     bool showLoading = t_active || Update::IsBusy() || Update::HadError();
-
     if (showLoading) {
         if (!ImGui::IsPopupOpen("##GlobalLoadingModal")) {
             ImGui::OpenPopup("##GlobalLoadingModal");
         }
-
         float alpha = Update::IsBusy() ? 1.0f : t_alpha;
-
         ImVec2 center(displayW * 0.5f, displayH * 0.5f);
         ImGui::SetNextWindowPos(center, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
-
         ImGui::PushStyleColor(ImGuiCol_ModalWindowDimBg, ImVec4(0.0f, 0.0f, 0.0f, 0.8f * alpha));
-
         ImGui::PushStyleVar(ImGuiStyleVar_Alpha, alpha);
-
         if (ImGui::BeginPopupModal("##GlobalLoadingModal", nullptr,
             ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
             ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize))
         {
             float p = 0.0f;
             std::string statusText;
-
             if (Update::IsBusy()) {
                 statusText = Update::GetStatusText();
                 p = Update::GetProgress();
@@ -1304,19 +1200,14 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
                     p = (t_phase == 1) ? t_alpha * 0.5f : 1.0f;
                 }
             }
-
             float winWidth = ImGui::GetWindowSize().x;
             float textWidth = ImGui::CalcTextSize(statusText.c_str()).x;
             ImGui::SetCursorPosX((winWidth - textWidth) * 0.5f);
             ImGui::TextUnformatted(statusText.c_str());
-
             ImGui::Spacing();
-
             ImGui::ProgressBar(p, ImVec2(300, 25));
-
             ImGui::EndPopup();
         }
-
         ImGui::PopStyleVar(1);
         ImGui::PopStyleColor(1);
     }

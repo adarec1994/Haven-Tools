@@ -10,9 +10,7 @@
 #include <cmath>
 #include <set>
 #include <filesystem>
-
 namespace fs = std::filesystem;
-
 #ifdef _WIN32
 #define NOMINMAX
 #include <windows.h>
@@ -20,11 +18,9 @@ namespace fs = std::filesystem;
 #else
 #include <GL/gl.h>
 #endif
-
 bool loadPHY(const std::vector<uint8_t>& data, Model& model) {
     GFFFile gff;
     if (!gff.load(data)) return false;
-
     auto quatMul = [](float q1x, float q1y, float q1z, float q1w,
                       float q2x, float q2y, float q2z, float q2w,
                       float& rx, float& ry, float& rz, float& rw) {
@@ -33,7 +29,6 @@ bool loadPHY(const std::vector<uint8_t>& data, Model& model) {
         ry = q1w*q2y - q1x*q2z + q1y*q2w + q1z*q2x;
         rz = q1w*q2z + q1x*q2y - q1y*q2x + q1z*q2w;
     };
-
     auto quatRotate = [](float qx, float qy, float qz, float qw,
                          float vx, float vy, float vz,
                          float& rx, float& ry, float& rz) {
@@ -47,24 +42,21 @@ bool loadPHY(const std::vector<uint8_t>& data, Model& model) {
         ry = vy + 2.0f*(qw*cy + cy2);
         rz = vz + 2.0f*(qw*cz + cz2);
     };
-
     std::function<void(size_t, uint32_t, const std::string&)> processStruct =
         [&](size_t structIdx, uint32_t offset, const std::string& parentBoneName) {
         if (structIdx >= gff.structs().size()) return;
         const auto& st = gff.structs()[structIdx];
         std::string structType(st.structType);
         std::string currentBoneName = parentBoneName;
-
         if (structType == "node") {
             std::string name = gff.readStringByLabel(structIdx, 6000, offset);
             if (!name.empty()) currentBoneName = name;
         }
-
         if (structType == "shap") {
             CollisionShape shape;
             shape.name = gff.readStringByLabel(structIdx, 6241, offset);
             if (shape.name.empty()) shape.name = "collision_" + std::to_string(model.collisionShapes.size());
-
+            shape.boneName = currentBoneName;
             float localPosX = 0, localPosY = 0, localPosZ = 0;
             const GFFField* posField = gff.findField(structIdx, 6061);
             if (posField) {
@@ -73,7 +65,6 @@ bool loadPHY(const std::vector<uint8_t>& data, Model& model) {
                 localPosY = gff.readFloatAt(posOffset + 4);
                 localPosZ = gff.readFloatAt(posOffset + 8);
             }
-
             float localRotX = 0, localRotY = 0, localRotZ = 0, localRotW = 1;
             const GFFField* rotField = gff.findField(structIdx, 6060);
             if (rotField) {
@@ -83,7 +74,6 @@ bool loadPHY(const std::vector<uint8_t>& data, Model& model) {
                 localRotZ = gff.readFloatAt(rotOffset + 8);
                 localRotW = gff.readFloatAt(rotOffset + 12);
             }
-
             int boneIdx = model.skeleton.findBone(currentBoneName);
             if (boneIdx >= 0) {
                 const Bone& bone = model.skeleton.bones[boneIdx];
@@ -101,7 +91,6 @@ bool loadPHY(const std::vector<uint8_t>& data, Model& model) {
                 shape.rotX = localRotX; shape.rotY = localRotY; shape.rotZ = localRotZ; shape.rotW = localRotW;
                 shape.meshVertsWorldSpace = true;
             }
-
             const GFFField* shapeTypeField = gff.findField(structIdx, 6998);
             GFFStructRef dataRef;
             bool hasShapeData = false;
@@ -110,7 +99,6 @@ bool loadPHY(const std::vector<uint8_t>& data, Model& model) {
                 bool isStruct = (shapeTypeField->flags & 0x4000) != 0;
                 bool isRef = (shapeTypeField->flags & 0x2000) != 0;
                 uint32_t dataPos = gff.dataOffset() + shapeTypeField->dataOffset + offset;
-
                 if (isRef && !isList && !isStruct) {
                     uint16_t refStructIdx = gff.readUInt16At(dataPos);
                     uint32_t refOffset = gff.readUInt32At(dataPos + 4);
@@ -131,7 +119,6 @@ bool loadPHY(const std::vector<uint8_t>& data, Model& model) {
                     if (!shapeData.empty()) { dataRef = shapeData[0]; hasShapeData = true; }
                 }
             }
-
             bool shapeValid = false;
             if (hasShapeData && dataRef.structIndex < gff.structs().size()) {
                 std::string dataType(gff.structs()[dataRef.structIndex].structType);
@@ -200,24 +187,19 @@ bool loadPHY(const std::vector<uint8_t>& data, Model& model) {
             }
             if (shapeValid) model.collisionShapes.push_back(shape);
         }
-
         std::vector<GFFStructRef> children = gff.readStructList(structIdx, 6999, offset);
         for (const auto& child : children) processStruct(child.structIndex, child.offset, currentBoneName);
     };
-
     processStruct(0, 0, "");
     return !model.collisionShapes.empty();
 }
-
 static void loadTextureErfs(AppState& state) {
     if (state.textureErfsLoaded) return;
-
     state.textureErfs.clear();
     for (const auto& erfPath : state.erfFiles) {
         std::string filename = fs::path(erfPath).filename().string();
         std::string filenameLower = filename;
         std::transform(filenameLower.begin(), filenameLower.end(), filenameLower.begin(), ::tolower);
-
         if (filenameLower.find("texture") != std::string::npos) {
             auto erf = std::make_unique<ERFFile>();
             if (erf->open(erfPath) && erf->encryption() == 0) {
@@ -227,16 +209,13 @@ static void loadTextureErfs(AppState& state) {
     }
     state.textureErfsLoaded = true;
 }
-
 static void loadModelErfs(AppState& state) {
     if (state.modelErfsLoaded) return;
-
     state.modelErfs.clear();
     for (const auto& erfPath : state.erfFiles) {
         std::string filename = fs::path(erfPath).filename().string();
         std::string filenameLower = filename;
         std::transform(filenameLower.begin(), filenameLower.end(), filenameLower.begin(), ::tolower);
-
         if (filenameLower.find("modelhierarch") != std::string::npos) {
             auto erf = std::make_unique<ERFFile>();
             if (erf->open(erfPath) && erf->encryption() == 0) {
@@ -246,16 +225,13 @@ static void loadModelErfs(AppState& state) {
     }
     state.modelErfsLoaded = true;
 }
-
 static void loadMaterialErfs(AppState& state) {
     if (state.materialErfsLoaded) return;
-
     state.materialErfs.clear();
     for (const auto& erfPath : state.erfFiles) {
         std::string filename = fs::path(erfPath).filename().string();
         std::string filenameLower = filename;
         std::transform(filenameLower.begin(), filenameLower.end(), filenameLower.begin(), ::tolower);
-
         if (filenameLower.find("materialobject") != std::string::npos) {
             auto erf = std::make_unique<ERFFile>();
             if (erf->open(erfPath) && erf->encryption() == 0) {
@@ -265,11 +241,9 @@ static void loadMaterialErfs(AppState& state) {
     }
     state.materialErfsLoaded = true;
 }
-
 static std::vector<uint8_t> readFromModelErfs(AppState& state, const std::string& name) {
     std::string nameLower = name;
     std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), ::tolower);
-
     for (const auto& erf : state.modelErfs) {
         for (const auto& entry : erf->entries()) {
             std::string entryLower = entry.name;
@@ -281,11 +255,9 @@ static std::vector<uint8_t> readFromModelErfs(AppState& state, const std::string
     }
     return {};
 }
-
 static std::vector<uint8_t> readFromMaterialErfs(AppState& state, const std::string& name) {
     std::string nameLower = name;
     std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), ::tolower);
-
     for (const auto& erf : state.materialErfs) {
         for (const auto& entry : erf->entries()) {
             std::string entryLower = entry.name;
@@ -297,13 +269,10 @@ static std::vector<uint8_t> readFromMaterialErfs(AppState& state, const std::str
     }
     return {};
 }
-
 static uint32_t loadTextureByName(AppState& state, const std::string& texName, std::vector<uint8_t>* rgbaOut = nullptr, int* wOut = nullptr, int* hOut = nullptr) {
     if (texName.empty()) return 0;
-
     std::string texNameLower = texName;
     std::transform(texNameLower.begin(), texNameLower.end(), texNameLower.begin(), ::tolower);
-
     for (const auto& erf : state.textureErfs) {
         for (const auto& entry : erf->entries()) {
             std::string entryLower = entry.name;
@@ -321,17 +290,13 @@ static uint32_t loadTextureByName(AppState& state, const std::string& texName, s
     }
     return 0;
 }
-
 bool loadModelFromEntry(AppState& state, const ERFEntry& entry) {
     if (!state.currentErf) return false;
-
     loadTextureErfs(state);
     loadModelErfs(state);
     loadMaterialErfs(state);
-
     std::vector<uint8_t> data = state.currentErf->readEntry(entry);
     if (data.empty()) return false;
-
     Model model;
     if (!loadMSH(data, model)) {
         state.currentModel = Model();
@@ -339,22 +304,18 @@ bool loadModelFromEntry(AppState& state, const ERFEntry& entry) {
         state.hasModel = true;
         return false;
     }
-
     for (const auto& mat : state.currentModel.materials) {
         if (mat.diffuseTexId != 0) glDeleteTextures(1, &mat.diffuseTexId);
         if (mat.normalTexId != 0) glDeleteTextures(1, &mat.normalTexId);
         if (mat.specularTexId != 0) glDeleteTextures(1, &mat.specularTexId);
     }
-
     state.currentModel = model;
     state.currentModel.name = entry.name;
     state.hasModel = true;
     state.renderSettings.initMeshVisibility(model.meshes.size());
-
     std::string baseName = entry.name;
     size_t dotPos = baseName.rfind('.');
     if (dotPos != std::string::npos) baseName = baseName.substr(0, dotPos);
-
     std::vector<std::string> mmhCandidates = {baseName + ".mmh", baseName + "a.mmh"};
     size_t lastUnderscore = baseName.find_last_of('_');
     if (lastUnderscore != std::string::npos) {
@@ -362,7 +323,6 @@ bool loadModelFromEntry(AppState& state, const ERFEntry& entry) {
         variantA.insert(lastUnderscore, "a");
         mmhCandidates.push_back(variantA + ".mmh");
     }
-
     for (const auto& candidate : mmhCandidates) {
         std::vector<uint8_t> mmhData = readFromModelErfs(state, candidate);
         if (!mmhData.empty()) {
@@ -370,7 +330,6 @@ bool loadModelFromEntry(AppState& state, const ERFEntry& entry) {
             break;
         }
     }
-
     std::vector<std::string> phyCandidates = {baseName + ".phy", baseName + "a.phy"};
     if (lastUnderscore != std::string::npos) {
         std::string variantA = baseName;
@@ -384,12 +343,10 @@ bool loadModelFromEntry(AppState& state, const ERFEntry& entry) {
             break;
         }
     }
-
     std::set<std::string> materialNames;
     for (const auto& mesh : state.currentModel.meshes) {
         if (!mesh.materialName.empty()) materialNames.insert(mesh.materialName);
     }
-
     for (const std::string& matName : materialNames) {
         std::vector<uint8_t> maoData = readFromMaterialErfs(state, matName + ".mao");
         if (!maoData.empty()) {
@@ -403,22 +360,25 @@ bool loadModelFromEntry(AppState& state, const ERFEntry& entry) {
             state.currentModel.materials.push_back(mat);
         }
     }
-
     for (auto& mesh : state.currentModel.meshes) {
         if (!mesh.materialName.empty()) {
             mesh.materialIndex = state.currentModel.findMaterial(mesh.materialName);
         }
     }
-
     for (auto& mat : state.currentModel.materials) {
         if (!mat.diffuseMap.empty() && mat.diffuseTexId == 0) {
             mat.diffuseTexId = loadTextureByName(state, mat.diffuseMap, &mat.diffuseData, &mat.diffuseWidth, &mat.diffuseHeight);
         }
-        if (!mat.normalMap.empty() && mat.normalTexId == 0) mat.normalTexId = loadTextureByName(state, mat.normalMap);
-        if (!mat.specularMap.empty() && mat.specularTexId == 0) mat.specularTexId = loadTextureByName(state, mat.specularMap);
-        if (!mat.tintMap.empty() && mat.tintTexId == 0) mat.tintTexId = loadTextureByName(state, mat.tintMap);
+        if (!mat.normalMap.empty() && mat.normalTexId == 0) {
+            mat.normalTexId = loadTextureByName(state, mat.normalMap, &mat.normalData, &mat.normalWidth, &mat.normalHeight);
+        }
+        if (!mat.specularMap.empty() && mat.specularTexId == 0) {
+            mat.specularTexId = loadTextureByName(state, mat.specularMap, &mat.specularData, &mat.specularWidth, &mat.specularHeight);
+        }
+        if (!mat.tintMap.empty() && mat.tintTexId == 0) {
+            mat.tintTexId = loadTextureByName(state, mat.tintMap, &mat.tintData, &mat.tintWidth, &mat.tintHeight);
+        }
     }
-
     if (!state.currentModel.meshes.empty()) {
         float minX = state.currentModel.meshes[0].minX, maxX = state.currentModel.meshes[0].maxX;
         float minY = state.currentModel.meshes[0].minY, maxY = state.currentModel.meshes[0].maxY;
@@ -433,9 +393,7 @@ bool loadModelFromEntry(AppState& state, const ERFEntry& entry) {
         float radius = std::sqrt(dx*dx + dy*dy + dz*dz) / 2.0f;
         state.camera.lookAt(cx, cy, cz, radius * 2.5f);
     }
-
     findAnimationsForModel(state, baseName);
     if (!state.availableAnimFiles.empty()) state.showAnimWindow = true;
-
     return true;
 }

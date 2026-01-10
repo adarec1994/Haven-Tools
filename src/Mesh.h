@@ -4,18 +4,14 @@
 #include <cstdint>
 #include <array>
 #include <cmath>
-
 constexpr int MAX_BONES_PER_VERTEX = 4;
-
 struct Vertex {
     float x, y, z;
     float nx, ny, nz;
     float u, v;
-
     float boneWeights[MAX_BONES_PER_VERTEX] = {0, 0, 0, 0};
     int boneIndices[MAX_BONES_PER_VERTEX] = {-1, -1, -1, -1};
 };
-
 struct Material {
     std::string name;
     std::string maoSource;
@@ -24,13 +20,11 @@ struct Material {
     std::string normalMap;
     std::string specularMap;
     std::string tintMap;
-
     std::string ageDiffuseMap;
     std::string ageNormalMap;
     std::string tattooMap;
     std::string browStubbleMap;
     std::string browStubbleNormalMap;
-
     float specularPower = 50.0f;
     float opacity = 1.0f;
     uint32_t diffuseTexId = 0;
@@ -42,20 +36,24 @@ struct Material {
     uint32_t tattooTexId = 0;
     uint32_t browStubbleTexId = 0;
     uint32_t browStubbleNormalTexId = 0;
-
     std::vector<uint8_t> diffuseData;
     int diffuseWidth = 0, diffuseHeight = 0;
+    std::vector<uint8_t> normalData;
+    int normalWidth = 0, normalHeight = 0;
+    std::vector<uint8_t> specularData;
+    int specularWidth = 0, specularHeight = 0;
+    std::vector<uint8_t> tintData;
+    int tintWidth = 0, tintHeight = 0;
 };
-
 enum class CollisionShapeType {
     Box,
     Sphere,
     Capsule,
     Mesh
 };
-
 struct CollisionShape {
     std::string name;
+    std::string boneName;
     CollisionShapeType type = CollisionShapeType::Box;
     float posX = 0, posY = 0, posZ = 0;
     float rotX = 0, rotY = 0, rotZ = 0, rotW = 1;
@@ -66,7 +64,6 @@ struct CollisionShape {
     std::vector<uint32_t> meshIndices;
     bool meshVertsWorldSpace = false;
 };
-
 struct Bone {
     std::string name;
     std::string parentName;
@@ -78,7 +75,6 @@ struct Bone {
     float invBindPosX = 0, invBindPosY = 0, invBindPosZ = 0;
     float invBindRotX = 0, invBindRotY = 0, invBindRotZ = 0, invBindRotW = 1;
 };
-
 struct Skeleton {
     std::vector<Bone> bones;
     int findBone(const std::string& name) const {
@@ -88,7 +84,6 @@ struct Skeleton {
         return -1;
     }
 };
-
 struct Mesh {
     std::string name;
     std::string materialName;
@@ -99,11 +94,9 @@ struct Mesh {
     bool hasSkinning = false;
     float minX = 0, minY = 0, minZ = 0;
     float maxX = 0, maxY = 0, maxZ = 0;
-
     std::vector<int> skinningBoneMap;
     bool skinningCacheBuilt = false;
     bool skipInvBind = false;
-
     void calculateBounds() {
         if (vertices.empty()) return;
         minX = maxX = vertices[0].x;
@@ -128,7 +121,6 @@ struct Mesh {
         return std::sqrt(dx*dx + dy*dy + dz*dz) / 2.0f;
     }
 };
-
 struct Model {
     std::string name;
     std::vector<Mesh> meshes;
@@ -148,12 +140,10 @@ struct Model {
         return -1;
     }
 };
-
 struct AnimKeyframe {
     float time;
     float x, y, z, w;
 };
-
 struct AnimTrack {
     std::string boneName;
     int boneIndex = -1;
@@ -161,7 +151,6 @@ struct AnimTrack {
     bool isTranslation = false;
     std::vector<AnimKeyframe> keyframes;
 };
-
 struct Animation {
     std::string name;
     std::string filename;
@@ -169,5 +158,4 @@ struct Animation {
     float frameRate = 30.0f;
     std::vector<AnimTrack> tracks;
 };
-
 bool loadMSH(const std::vector<uint8_t>& data, Model& outModel);

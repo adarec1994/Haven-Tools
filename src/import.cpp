@@ -1,4 +1,5 @@
 #include "import.h"
+#include "ui_internal.h"
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -9,25 +10,20 @@
 #include <cfloat>
 #include <set>
 #include <functional>
-
 #define TINYGLTF_IMPLEMENTATION
 #define STB_IMAGE_IMPLEMENTATION
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "tiny_gltf.h"
-
 #include "msh_embedded.h"
 #include "mmh_embedded.h"
 #include "ani_embedded.h"
-
 #ifdef _WIN32
 #include <windows.h>
 #endif
-
 static std::string ToLower(std::string s) {
     std::transform(s.begin(), s.end(), s.begin(), ::tolower);
     return s;
 }
-
 static std::string CleanName(const std::string& input) {
     std::string result = input;
     size_t lastSlash = result.find_last_of("/\\");
@@ -36,32 +32,25 @@ static std::string CleanName(const std::string& input) {
     if (lastDot != std::string::npos) result = result.substr(0, lastDot);
     return ToLower(result);
 }
-
 DAOGraphicsTools::DAOGraphicsTools() {}
 DAOGraphicsTools::~DAOGraphicsTools() { Cleanup(); }
-
 bool DAOGraphicsTools::Initialize() {
     if (m_initialized) return true;
-
     m_workDir = fs::temp_directory_path() / "haven_tools";
     m_mshDir = m_workDir / "msh";
     m_mmhDir = m_workDir / "mmh";
     m_aniDir = m_workDir / "ani";
-
     fs::create_directories(m_mshDir);
     fs::create_directories(m_mmhDir);
     fs::create_directories(m_aniDir);
-
     if (!ExtractTools()) {
         std::cerr << "[DAOTools] Failed to extract tools" << std::endl;
         return false;
     }
-
     m_initialized = true;
     std::cout << "[DAOTools] Initialized at: " << m_workDir << std::endl;
     return true;
 }
-
 bool DAOGraphicsTools::ExtractTools() {
 #ifdef _WIN32
     auto writeFile = [](const fs::path& path, const unsigned char* data, unsigned int len) {
@@ -70,71 +59,57 @@ bool DAOGraphicsTools::ExtractTools() {
         out.write(reinterpret_cast<const char*>(data), len);
         return out.good();
     };
-
     bool ok = true;
     ok &= writeFile(m_mshDir / "GraphicsProcessorMSH.exe", msh_GraphicsProcessorMSH_exe, msh_GraphicsProcessorMSH_exe_len);
     ok &= writeFile(m_mshDir / "IlmImf.dll", msh_IlmImf_dll, msh_IlmImf_dll_len);
     ok &= writeFile(m_mshDir / "NxCharacter.dll", msh_NxCharacter_dll, msh_NxCharacter_dll_len);
     ok &= writeFile(m_mshDir / "NxCooking.dll", msh_NxCooking_dll, msh_NxCooking_dll_len);
     ok &= writeFile(m_mshDir / "SpeedTreeRT.dll", msh_SpeedTreeRT_dll, msh_SpeedTreeRT_dll_len);
-
     ok &= writeFile(m_mmhDir / "GraphicsProcessorMMH.exe", mmh_GraphicsProcessorMMH_exe, mmh_GraphicsProcessorMMH_exe_len);
     ok &= writeFile(m_mmhDir / "NxCharacter.dll", mmh_NxCharacter_dll, mmh_NxCharacter_dll_len);
     ok &= writeFile(m_mmhDir / "nxcooking.dll", mmh_nxcooking_dll, mmh_nxcooking_dll_len);
     ok &= writeFile(m_mmhDir / "SpeedTreeRT.dll", mmh_SpeedTreeRT_dll, mmh_SpeedTreeRT_dll_len);
     ok &= writeFile(m_mmhDir / "umbra.dll", mmh_umbra_dll, mmh_umbra_dll_len);
-
     return ok;
 #else
     return true;
 #endif
 }
-
 bool DAOGraphicsTools::RunProcessor(const fs::path& exePath, const fs::path& xmlPath) {
     std::string cmdLine = "\"" + exePath.string() + "\" \"" + xmlPath.string() + "\"";
     return RunProcessorWithCmd(exePath, cmdLine);
 }
-
 bool DAOGraphicsTools::RunProcessorWithCmd(const fs::path& exePath, const std::string& cmdLine) {
     if (!fs::exists(exePath)) {
         std::cerr << "[DAOTools] Processor not found: " << exePath << std::endl;
         return false;
     }
-
 #ifdef _WIN32
     std::cout << "[DAOTools] Running: " << cmdLine << std::endl;
-
     SECURITY_ATTRIBUTES sa = {};
     sa.nLength = sizeof(sa);
     sa.bInheritHandle = TRUE;
-
     HANDLE hStdOutRead, hStdOutWrite, hStdErrRead, hStdErrWrite;
     CreatePipe(&hStdOutRead, &hStdOutWrite, &sa, 0);
     CreatePipe(&hStdErrRead, &hStdErrWrite, &sa, 0);
     SetHandleInformation(hStdOutRead, HANDLE_FLAG_INHERIT, 0);
     SetHandleInformation(hStdErrRead, HANDLE_FLAG_INHERIT, 0);
-
     STARTUPINFOA si = {};
     si.cb = sizeof(si);
     si.dwFlags = STARTF_USESTDHANDLES;
     si.hStdOutput = hStdOutWrite;
     si.hStdError = hStdErrWrite;
     si.hStdInput = NULL;
-
     PROCESS_INFORMATION pi = {};
     std::string cmd = cmdLine;
     fs::path workDir = exePath.parent_path();
-
     if (CreateProcessA(NULL, &cmd[0], NULL, NULL, TRUE, 0, NULL, workDir.string().c_str(), &si, &pi)) {
         CloseHandle(hStdOutWrite);
         CloseHandle(hStdErrWrite);
-
         WaitForSingleObject(pi.hProcess, 30000);
-
         char buffer[4096];
         DWORD bytesRead;
         std::string stdoutStr, stderrStr;
-
         while (ReadFile(hStdOutRead, buffer, sizeof(buffer) - 1, &bytesRead, NULL) && bytesRead > 0) {
             buffer[bytesRead] = 0;
             stdoutStr += buffer;
@@ -143,22 +118,17 @@ bool DAOGraphicsTools::RunProcessorWithCmd(const fs::path& exePath, const std::s
             buffer[bytesRead] = 0;
             stderrStr += buffer;
         }
-
         CloseHandle(hStdOutRead);
         CloseHandle(hStdErrRead);
-
         if (!stdoutStr.empty()) std::cout << "[DAOTools] STDOUT: " << stdoutStr << std::endl;
         if (!stderrStr.empty()) std::cout << "[DAOTools] STDERR: " << stderrStr << std::endl;
-
         DWORD exitCode = 1;
         GetExitCodeProcess(pi.hProcess, &exitCode);
         std::cout << "[DAOTools] Exit code: " << exitCode << std::endl;
-
         CloseHandle(pi.hProcess);
         CloseHandle(pi.hThread);
         return exitCode == 0;
     }
-
     DWORD err = GetLastError();
     std::cerr << "[DAOTools] CreateProcess failed: " << err << std::endl;
     CloseHandle(hStdOutRead);
@@ -171,7 +141,6 @@ bool DAOGraphicsTools::RunProcessorWithCmd(const fs::path& exePath, const std::s
     return false;
 #endif
 }
-
 std::vector<uint8_t> DAOGraphicsTools::ReadBinaryFile(const fs::path& path) {
     std::ifstream file(path, std::ios::binary | std::ios::ate);
     if (!file) return {};
@@ -181,80 +150,71 @@ std::vector<uint8_t> DAOGraphicsTools::ReadBinaryFile(const fs::path& path) {
     file.read(reinterpret_cast<char*>(data.data()), size);
     return data;
 }
-
 std::vector<uint8_t> DAOGraphicsTools::ProcessMSH(const fs::path& xmlPath) {
     fs::path exePath = m_mshDir / "GraphicsProcessorMSH.exe";
     fs::path localXml = m_mshDir / xmlPath.filename();
     fs::copy_file(xmlPath, localXml, fs::copy_options::overwrite_existing);
-
     std::string outName = xmlPath.stem().string();
     if (outName.size() > 4 && outName.substr(outName.size() - 4) == ".msh") {
         outName = outName.substr(0, outName.size() - 4);
     }
     fs::path outPath = m_mshDir / (outName + ".msh");
     fs::remove(outPath);
-
     std::string cmdLine = "\"" + exePath.string() + "\" -platform pc mmdtogff \"" + localXml.string() + "\"";
     if (!RunProcessorWithCmd(exePath, cmdLine)) return {};
-
     if (!fs::exists(outPath)) {
         std::cerr << "[DAOTools] MSH output not created: " << outPath << std::endl;
         return {};
     }
-
     auto result = ReadBinaryFile(outPath);
     std::cout << "[DAOTools] Generated MSH: " << result.size() << " bytes" << std::endl;
     return result;
 }
-
 std::vector<uint8_t> DAOGraphicsTools::ProcessMMH(const fs::path& xmlPath) {
+    m_lastPHY.clear();
     fs::path exePath = m_mmhDir / "GraphicsProcessorMMH.exe";
     fs::path localXml = m_mmhDir / xmlPath.filename();
     fs::copy_file(xmlPath, localXml, fs::copy_options::overwrite_existing);
-
     std::string outName = xmlPath.stem().string();
     if (outName.size() > 4 && outName.substr(outName.size() - 4) == ".mmh") {
         outName = outName.substr(0, outName.size() - 4);
     }
     fs::path outPath = m_mmhDir / (outName + ".mmh");
+    fs::path phyPath = m_mmhDir / (outName + ".phy");
     fs::remove(outPath);
-
+    fs::remove(phyPath);
     if (!RunProcessor(exePath, localXml)) return {};
-
     if (!fs::exists(outPath)) {
         std::cerr << "[DAOTools] MMH output not created: " << outPath << std::endl;
         return {};
     }
-
+    if (fs::exists(phyPath)) {
+        m_lastPHY = ReadBinaryFile(phyPath);
+        std::cout << "[DAOTools] PHY file generated: " << m_lastPHY.size() << " bytes" << std::endl;
+    }
     auto result = ReadBinaryFile(outPath);
     std::cout << "[DAOTools] Generated MMH: " << result.size() << " bytes" << std::endl;
     return result;
 }
-
 void DAOGraphicsTools::Cleanup() {
     if (!m_workDir.empty() && fs::exists(m_workDir)) {
         std::error_code ec;
         fs::remove_all(m_workDir, ec);
     }
 }
-
 DAOImporter::DAOImporter() : m_backupCallback(nullptr), m_progressCallback(nullptr) {}
 DAOImporter::~DAOImporter() {}
-
 bool DAOImporter::BackupExists(const std::string& erfPath) {
     fs::path backupDir = fs::current_path() / "backups";
     std::string erfName = fs::path(erfPath).filename().string();
     return fs::exists(backupDir / (erfName + ".bak"));
 }
-
 std::string DAOImporter::GetBackupDir() {
     return (fs::current_path() / "backups").string();
 }
-
 void DAOImporter::ReportProgress(float progress, const std::string& status) {
     if (m_progressCallback) m_progressCallback(progress, status);
 }
-
 static std::string FindErfPath(const fs::path& root, const std::string& filename) {
     if (fs::exists(root / filename)) return (root / filename).string();
     try {
@@ -266,17 +226,14 @@ static std::string FindErfPath(const fs::path& root, const std::string& filename
     } catch (...) {}
     return "";
 }
-
 static std::vector<uint8_t> ConvertToDDS(const std::vector<uint8_t>& imageData, int width, int height, int channels) {
     std::vector<uint8_t> dds;
-
     auto writeU32 = [&](uint32_t v) {
         dds.push_back(v & 0xFF);
         dds.push_back((v >> 8) & 0xFF);
         dds.push_back((v >> 16) & 0xFF);
         dds.push_back((v >> 24) & 0xFF);
     };
-
     dds.push_back('D'); dds.push_back('D'); dds.push_back('S'); dds.push_back(' ');
     writeU32(124);
     writeU32(0x1 | 0x2 | 0x4 | 0x1000);
@@ -296,7 +253,6 @@ static std::vector<uint8_t> ConvertToDDS(const std::vector<uint8_t>& imageData, 
     writeU32(0xFF000000);
     writeU32(0x1000);
     for (int i = 0; i < 4; i++) writeU32(0);
-
     for (int y = 0; y < height; y++) {
         for (int x = 0; x < width; x++) {
             int srcIdx = (y * width + x) * channels;
@@ -312,32 +268,24 @@ static std::vector<uint8_t> ConvertToDDS(const std::vector<uint8_t>& imageData, 
     }
     return dds;
 }
-
 bool DAOImporter::ImportToDirectory(const std::string& glbPath, const std::string& targetDir) {
     ReportProgress(0.0f, "Initializing tools...");
-
     if (!m_tools.Initialize()) {
         std::cerr << "[Import] Failed to initialize graphics tools" << std::endl;
         return false;
     }
-
     ReportProgress(0.05f, "Loading GLB...");
     std::cout << "[Import] Processing: " << fs::path(glbPath).filename().string() << std::endl;
-
     DAOModelData modelData;
     if (!LoadGLB(glbPath, modelData)) return false;
-
     ReportProgress(0.1f, "Locating ERF files...");
-
     const fs::path baseDir(targetDir);
     fs::path corePath = baseDir / "packages" / "core" / "data";
     fs::path texturePath = baseDir / "packages" / "core" / "textures" / "high";
-
     auto resolvePath = [&](const std::string& filename) -> std::string {
         if (fs::exists(corePath / filename)) return (corePath / filename).string();
         return FindErfPath(baseDir, filename);
     };
-
     std::string meshErf = resolvePath("modelmeshdata.erf");
     std::string hierErf = resolvePath("modelhierarchies.erf");
     std::string matErf  = resolvePath("materialobjects.erf");
@@ -347,28 +295,23 @@ bool DAOImporter::ImportToDirectory(const std::string& glbPath, const std::strin
     } else {
         texErf = FindErfPath(baseDir, "texturepack.erf");
     }
-
     if (meshErf.empty() || hierErf.empty() || matErf.empty()) {
         std::cerr << "[Import] Error: Required ERFs not found." << std::endl;
         return false;
     }
-
     std::cout << "[Import] ERF locations:" << std::endl;
     std::cout << "  mesh: " << meshErf << std::endl;
     std::cout << "  hier: " << hierErf << std::endl;
     std::cout << "  mat:  " << matErf << std::endl;
     std::cout << "  tex:  " << (texErf.empty() ? "NOT FOUND" : texErf) << std::endl;
-
     std::string baseName = modelData.name;
     std::map<std::string, std::vector<uint8_t>> meshFiles, hierFiles, matFiles, texFiles;
-
     ReportProgress(0.2f, "Generating MSH XML...");
     fs::path mshXmlPath = m_tools.GetWorkDir() / (baseName + ".msh.xml");
     if (!WriteMSHXml(mshXmlPath, modelData)) {
         std::cerr << "[Import] Failed to write MSH XML" << std::endl;
         return false;
     }
-
     ReportProgress(0.3f, "Converting MSH...");
     std::string mshFile = baseName + ".msh";
     meshFiles[mshFile] = m_tools.ProcessMSH(mshXmlPath);
@@ -377,14 +320,12 @@ bool DAOImporter::ImportToDirectory(const std::string& glbPath, const std::strin
         return false;
     }
     std::cout << "  + Generated: " << mshFile << " (" << meshFiles[mshFile].size() << " bytes)" << std::endl;
-
     ReportProgress(0.4f, "Generating MMH XML...");
     fs::path mmhXmlPath = m_tools.GetWorkDir() / (baseName + ".mmh.xml");
     if (!WriteMMHXml(mmhXmlPath, modelData, mshFile)) {
         std::cerr << "[Import] Failed to write MMH XML" << std::endl;
         return false;
     }
-
     ReportProgress(0.5f, "Converting MMH...");
     std::string mmhFile = baseName + ".mmh";
     hierFiles[mmhFile] = m_tools.ProcessMMH(mmhXmlPath);
@@ -393,7 +334,12 @@ bool DAOImporter::ImportToDirectory(const std::string& glbPath, const std::strin
         return false;
     }
     std::cout << "  + Generated: " << mmhFile << " (" << hierFiles[mmhFile].size() << " bytes)" << std::endl;
-
+    auto phyData = m_tools.GetLastPHY();
+    if (!phyData.empty()) {
+        std::string phyFile = baseName + ".phy";
+        hierFiles[phyFile] = std::move(phyData);
+        std::cout << "  + Generated: " << phyFile << " (" << hierFiles[phyFile].size() << " bytes)" << std::endl;
+    }
     ReportProgress(0.6f, "Converting textures...");
     for (const auto& tex : modelData.textures) {
         if (tex.width > 0 && tex.height > 0 && !tex.data.empty() && !tex.ddsName.empty()) {
@@ -402,7 +348,6 @@ bool DAOImporter::ImportToDirectory(const std::string& glbPath, const std::strin
             std::cout << "  + Generated texture: " << tex.ddsName << " (" << tex.width << "x" << tex.height << ")" << std::endl;
         }
     }
-
     ReportProgress(0.65f, "Generating MAO files...");
     for (const auto& mat : modelData.materials) {
         std::string maoFile = mat.name + ".mao";
@@ -410,59 +355,45 @@ bool DAOImporter::ImportToDirectory(const std::string& glbPath, const std::strin
         matFiles[maoFile].assign(xml.begin(), xml.end());
         std::cout << "  + Generated: " << maoFile << std::endl;
     }
-
-    if (!modelData.collisionShapes.empty()) {
-        ReportProgress(0.67f, "Generating PHY file...");
-        std::string phyFile = baseName + ".phy";
-        std::vector<uint8_t> phyData = GeneratePHY(modelData);
-        if (!phyData.empty()) {
-            hierFiles[phyFile] = std::move(phyData);
-            std::cout << "  + Generated: " << phyFile << " (" << modelData.collisionShapes.size() << " shapes)" << std::endl;
-        }
-    }
-
     std::cout << "\n[Import] Updating ERF files..." << std::endl;
-
     ReportProgress(0.7f, "Refreshing modelmeshdata.erf...");
     bool ok1 = RepackERF(meshErf, meshFiles);
-
     ReportProgress(0.8f, "Refreshing modelhierarchies.erf...");
     bool ok2 = RepackERF(hierErf, hierFiles);
-
     ReportProgress(0.85f, "Refreshing materialobjects.erf...");
     bool ok3 = RepackERF(matErf, matFiles);
-
     bool ok4 = true;
     if (!texErf.empty() && !texFiles.empty()) {
         ReportProgress(0.9f, "Refreshing texturepack.erf...");
         ok4 = RepackERF(texErf, texFiles);
     }
-
     bool success = ok1 && ok2 && ok3 && ok4;
+    if (success) {
+        markModelAsImported(baseName + ".mmh");
+        markModelAsImported(baseName + ".msh");
+        if (!modelData.collisionShapes.empty()) {
+            markModelAsImported(baseName + ".phy");
+        }
+    }
     ReportProgress(1.0f, success ? "Import complete!" : "Import failed!");
-
     std::cout << "\n[Import] " << (success ? "SUCCESS" : "FAILED") << std::endl;
     return success;
 }
-
 bool DAOImporter::LoadGLB(const std::string& path, DAOModelData& outData) {
     tinygltf::Model model;
     tinygltf::TinyGLTF loader;
     std::string err, warn;
-
     if (!loader.LoadBinaryFromFile(&model, &err, &warn, path)) {
         std::cerr << "GLB Load Error: " << err << std::endl;
         return false;
     }
     outData.name = ToLower(fs::path(path).stem().string());
-
     std::cout << "\n=== GLB DEBUG ===" << std::endl;
     std::cout << "[GLB] File: " << path << std::endl;
     std::cout << "[GLB] Scenes: " << model.scenes.size() << std::endl;
     std::cout << "[GLB] Nodes: " << model.nodes.size() << std::endl;
     std::cout << "[GLB] Meshes: " << model.meshes.size() << std::endl;
     std::cout << "[GLB] Skins: " << model.skins.size() << std::endl;
-
     std::cout << "\n[GLB] Node hierarchy:" << std::endl;
     for (size_t i = 0; i < model.nodes.size(); ++i) {
         const auto& node = model.nodes[i];
@@ -478,7 +409,6 @@ bool DAOImporter::LoadGLB(const std::string& path, DAOModelData& outData) {
             std::cout << "]";
         }
         std::cout << std::endl;
-
         if (!node.translation.empty()) {
             std::cout << "    translation: [" << node.translation[0] << ", "
                       << node.translation[1] << ", " << node.translation[2] << "]" << std::endl;
@@ -495,13 +425,11 @@ bool DAOImporter::LoadGLB(const std::string& path, DAOModelData& outData) {
             std::cout << "    HAS MATRIX TRANSFORM (16 values)" << std::endl;
         }
     }
-
     if (!model.skins.empty()) {
         const auto& skin = model.skins[0];
         outData.skeleton.hasSkeleton = true;
         std::cout << "\n[GLB] Found skeleton with " << skin.joints.size() << " bones" << std::endl;
         std::cout << "[GLB] Skin skeleton root node: " << skin.skeleton << std::endl;
-
         std::vector<float> inverseBindMatrices;
         if (skin.inverseBindMatrices >= 0) {
             const auto& accessor = model.accessors[skin.inverseBindMatrices];
@@ -511,17 +439,14 @@ bool DAOImporter::LoadGLB(const std::string& path, DAOModelData& outData) {
                 buffer.data.data() + bufferView.byteOffset + accessor.byteOffset);
             inverseBindMatrices.assign(data, data + accessor.count * 16);
         }
-
         outData.skeleton.bones.resize(skin.joints.size());
         for (size_t i = 0; i < skin.joints.size(); ++i) {
             int nodeIdx = skin.joints[i];
             const auto& node = model.nodes[nodeIdx];
             ImportBone& bone = outData.skeleton.bones[i];
-
             bone.name = node.name.empty() ? "bone_" + std::to_string(i) : node.name;
             bone.index = static_cast<int>(i);
             bone.parentIndex = -1;
-
             if (!node.translation.empty()) {
                 bone.translation[0] = static_cast<float>(node.translation[0]);
                 bone.translation[1] = static_cast<float>(node.translation[1]);
@@ -529,7 +454,6 @@ bool DAOImporter::LoadGLB(const std::string& path, DAOModelData& outData) {
             } else {
                 bone.translation[0] = bone.translation[1] = bone.translation[2] = 0.0f;
             }
-
             if (!node.rotation.empty()) {
                 bone.rotation[0] = static_cast<float>(node.rotation[0]);
                 bone.rotation[1] = static_cast<float>(node.rotation[1]);
@@ -539,7 +463,6 @@ bool DAOImporter::LoadGLB(const std::string& path, DAOModelData& outData) {
                 bone.rotation[0] = bone.rotation[1] = bone.rotation[2] = 0.0f;
                 bone.rotation[3] = 1.0f;
             }
-
             if (!node.scale.empty()) {
                 bone.scale[0] = static_cast<float>(node.scale[0]);
                 bone.scale[1] = static_cast<float>(node.scale[1]);
@@ -547,14 +470,12 @@ bool DAOImporter::LoadGLB(const std::string& path, DAOModelData& outData) {
             } else {
                 bone.scale[0] = bone.scale[1] = bone.scale[2] = 1.0f;
             }
-
             if (i * 16 + 15 < inverseBindMatrices.size()) {
                 for (int j = 0; j < 16; ++j) {
                     bone.inverseBindMatrix[j] = inverseBindMatrices[i * 16 + j];
                 }
             }
         }
-
         for (size_t i = 0; i < skin.joints.size(); ++i) {
             int nodeIdx = skin.joints[i];
             for (size_t n = 0; n < model.nodes.size(); ++n) {
@@ -572,7 +493,6 @@ bool DAOImporter::LoadGLB(const std::string& path, DAOModelData& outData) {
                 }
             }
         }
-
         std::cout << "\n[GLB] Bone data (first 5):" << std::endl;
         for (size_t i = 0; i < std::min(size_t(5), outData.skeleton.bones.size()); ++i) {
             const auto& bone = outData.skeleton.bones[i];
@@ -581,7 +501,6 @@ bool DAOImporter::LoadGLB(const std::string& path, DAOModelData& outData) {
             std::cout << "    rot: [" << bone.rotation[0] << ", " << bone.rotation[1] << ", " << bone.rotation[2] << ", " << bone.rotation[3] << "]" << std::endl;
         }
     }
-
     for (size_t i = 0; i < model.images.size(); ++i) {
         const auto& img = model.images[i];
         if (img.width > 0 && img.height > 0 && !img.image.empty()) {
@@ -595,26 +514,21 @@ bool DAOImporter::LoadGLB(const std::string& path, DAOModelData& outData) {
             outData.textures.push_back(tex);
         }
     }
-
     auto getTextureImageIndex = [&](int textureIndex) -> int {
         if (textureIndex < 0 || textureIndex >= (int)model.textures.size()) return -1;
         return model.textures[textureIndex].source;
     };
-
     for (size_t i = 0; i < model.materials.size(); ++i) {
         const auto& gltfMat = model.materials[i];
         DAOModelData::Material mat;
         mat.name = CleanName(gltfMat.name.empty() ? "material_" + std::to_string(i) : gltfMat.name);
-
         mat.diffuseMap = mat.name + "_d.dds";
         mat.normalMap = mat.name + "_n.dds";
         mat.specularMap = mat.name + "_spec.dds";
-
         int diffuseIdx = getTextureImageIndex(gltfMat.pbrMetallicRoughness.baseColorTexture.index);
         int normalIdx = getTextureImageIndex(gltfMat.normalTexture.index);
         int specIdx = getTextureImageIndex(gltfMat.pbrMetallicRoughness.metallicRoughnessTexture.index);
         if (specIdx < 0) specIdx = getTextureImageIndex(gltfMat.occlusionTexture.index);
-
         if (diffuseIdx >= 0 && diffuseIdx < (int)outData.textures.size()) {
             outData.textures[diffuseIdx].ddsName = mat.diffuseMap;
         } else {
@@ -630,10 +544,8 @@ bool DAOImporter::LoadGLB(const std::string& path, DAOModelData& outData) {
         } else {
             mat.specularMap = "default_spec.dds";
         }
-
         outData.materials.push_back(mat);
     }
-
     if (outData.materials.empty()) {
         DAOModelData::Material defaultMat;
         defaultMat.name = outData.name;
@@ -642,30 +554,34 @@ bool DAOImporter::LoadGLB(const std::string& path, DAOModelData& outData) {
         defaultMat.specularMap = "default_spec.dds";
         outData.materials.push_back(defaultMat);
     }
-
     auto rotateByQuat = [](float& x, float& y, float& z, const float* q) {
-
         float qx = q[0], qy = q[1], qz = q[2], qw = q[3];
-
         float tx = 2.0f * (qy * z - qz * y);
         float ty = 2.0f * (qz * x - qx * z);
         float tz = 2.0f * (qx * y - qy * x);
-
         float nx = x + qw * tx + (qy * tz - qz * ty);
         float ny = y + qw * ty + (qz * tx - qx * tz);
         float nz = z + qw * tz + (qx * ty - qy * tx);
-
         x = nx; y = ny; z = nz;
     };
-
-    auto isCollisionMesh = [](const std::string& name) -> int {
-        if (name.substr(0, 4) == "UBX_") return 1;
-        if (name.substr(0, 4) == "USP_") return 2;
-        if (name.substr(0, 4) == "UCP_") return 3;
-        if (name.substr(0, 4) == "UCX_") return 4;
-        return 0;
+    auto isCollisionMesh = [](const std::string& name) -> bool {
+        if (name.size() < 4) return false;
+        char c0 = std::tolower((unsigned char)name[0]);
+        char c1 = std::tolower((unsigned char)name[1]);
+        char c2 = std::tolower((unsigned char)name[2]);
+        char c3 = name[3];
+        return (c0 == 'u' && c1 == 'c' && c2 == 'x' && c3 == '_');
     };
-
+    auto extractBoneName = [](const std::string& name, const std::string& modelName) -> std::string {
+        std::string prefix = "UCX_" + modelName + "_";
+        if (name.size() > prefix.size() && name.substr(0, prefix.size()) == prefix) {
+            return name.substr(prefix.size());
+        }
+        if (name.size() > 4) {
+            return name.substr(4);
+        }
+        return "";
+    };
     auto computeBounds = [](const std::vector<float>& verts, float& minX, float& maxX,
                            float& minY, float& maxY, float& minZ, float& maxZ) {
         minX = minY = minZ = 1e30f;
@@ -679,17 +595,51 @@ bool DAOImporter::LoadGLB(const std::string& path, DAOModelData& outData) {
             if (verts[i+2] > maxZ) maxZ = verts[i+2];
         }
     };
-
+    std::map<int, std::string> meshNodeNames;
+    std::map<int, int> meshNodeIndices;
+    for (size_t ni = 0; ni < model.nodes.size(); ++ni) {
+        const auto& node = model.nodes[ni];
+        if (node.mesh >= 0 && !node.name.empty()) {
+            meshNodeNames[node.mesh] = node.name;
+            meshNodeIndices[node.mesh] = (int)ni;
+        }
+    }
+    std::map<int, int> nodeParent;
+    for (size_t ni = 0; ni < model.nodes.size(); ++ni) {
+        for (int childIdx : model.nodes[ni].children) {
+            nodeParent[childIdx] = (int)ni;
+        }
+    }
+    std::set<int> skinJoints;
+    for (const auto& skin : model.skins) {
+        for (int j : skin.joints) {
+            skinJoints.insert(j);
+        }
+    }
+    auto findParentBone = [&](int nodeIdx) -> std::string {
+        int current = nodeIdx;
+        while (nodeParent.count(current)) {
+            int parent = nodeParent[current];
+            if (skinJoints.count(parent)) {
+                return model.nodes[parent].name;
+            }
+            current = parent;
+        }
+        return "";
+    };
+    std::cout << "[GLB] Processing " << model.meshes.size() << " meshes..." << std::endl;
     for (size_t meshIdx = 0; meshIdx < model.meshes.size(); ++meshIdx) {
         const auto& mesh = model.meshes[meshIdx];
-
-        int collisionType = isCollisionMesh(mesh.name);
-
+        std::string meshName = mesh.name;
+        if (meshNodeNames.count((int)meshIdx)) {
+            meshName = meshNodeNames[(int)meshIdx];
+        }
+        bool isCollision = isCollisionMesh(meshName);
+        std::cout << "[GLB] Mesh " << meshIdx << ": \"" << meshName << "\" collision=" << (isCollision ? "YES" : "no") << std::endl;
         for (size_t primIdx = 0; primIdx < mesh.primitives.size(); ++primIdx) {
             const auto& prim = mesh.primitives[primIdx];
             if (prim.mode != TINYGLTF_MODE_TRIANGLES) continue;
-
-            if (collisionType > 0) {
+            if (isCollision) {
                 auto getAccessor = [&](int idx) -> const tinygltf::Accessor* {
                     if (idx < 0 || idx >= (int)model.accessors.size()) return nullptr;
                     return &model.accessors[idx];
@@ -699,23 +649,19 @@ bool DAOImporter::LoadGLB(const std::string& path, DAOModelData& outData) {
                     const auto& bv = model.bufferViews[acc->bufferView];
                     return model.buffers[bv.buffer].data.data() + bv.byteOffset + acc->byteOffset;
                 };
-
                 const tinygltf::Accessor* posAcc = nullptr;
                 for (const auto& attr : prim.attributes) {
                     if (attr.first == "POSITION") posAcc = getAccessor(attr.second);
                 }
                 if (!posAcc) continue;
-
                 const float* positions = reinterpret_cast<const float*>(getBufferData(posAcc));
                 size_t vertCount = posAcc->count;
-
                 std::vector<float> verts(vertCount * 3);
                 for (size_t v = 0; v < vertCount; ++v) {
                     verts[v*3] = positions[v*3];
                     verts[v*3+1] = positions[v*3+1];
                     verts[v*3+2] = positions[v*3+2];
                 }
-
                 std::vector<uint32_t> indices;
                 if (prim.indices >= 0) {
                     const tinygltf::Accessor* idxAcc = getAccessor(prim.indices);
@@ -732,55 +678,34 @@ bool DAOImporter::LoadGLB(const std::string& path, DAOModelData& outData) {
                         for (size_t i = 0; i < idxCount; ++i) indices[i] = idxData[i];
                     }
                 }
-
                 float minX, maxX, minY, maxY, minZ, maxZ;
                 computeBounds(verts, minX, maxX, minY, maxY, minZ, maxZ);
                 float cx = (minX + maxX) / 2.0f;
                 float cy = (minY + maxY) / 2.0f;
                 float cz = (minZ + maxZ) / 2.0f;
-
                 DAOModelData::CollisionShape shape;
-                shape.name = mesh.name;
-                shape.posX = cx; shape.posY = cy; shape.posZ = cz;
-
-                switch (collisionType) {
-                    case 1:
-                        shape.type = DAOModelData::CollisionType::Box;
-                        shape.boxX = (maxX - minX) / 2.0f;
-                        shape.boxY = (maxY - minY) / 2.0f;
-                        shape.boxZ = (maxZ - minZ) / 2.0f;
-                        std::cout << "[GLB] Collision box: " << mesh.name << " size=("
-                                  << shape.boxX*2 << ", " << shape.boxY*2 << ", " << shape.boxZ*2 << ")" << std::endl;
-                        break;
-                    case 2:
-                        shape.type = DAOModelData::CollisionType::Sphere;
-                        shape.radius = std::max({maxX-minX, maxY-minY, maxZ-minZ}) / 2.0f;
-                        std::cout << "[GLB] Collision sphere: " << mesh.name << " radius=" << shape.radius << std::endl;
-                        break;
-                    case 3:
-                        shape.type = DAOModelData::CollisionType::Capsule;
-                        shape.height = maxZ - minZ;
-                        shape.radius = std::max(maxX-minX, maxY-minY) / 2.0f;
-                        std::cout << "[GLB] Collision capsule: " << mesh.name << " radius=" << shape.radius
-                                  << " height=" << shape.height << std::endl;
-                        break;
-                    case 4:
-                        shape.type = DAOModelData::CollisionType::Mesh;
-                        for (size_t i = 0; i < verts.size(); i += 3) {
-                            shape.meshVerts.push_back(verts[i] - cx);
-                            shape.meshVerts.push_back(verts[i+1] - cy);
-                            shape.meshVerts.push_back(verts[i+2] - cz);
-                        }
-                        shape.meshIndices = indices;
-                        std::cout << "[GLB] Collision mesh: " << mesh.name << " verts=" << vertCount
-                                  << " tris=" << indices.size()/3 << std::endl;
-                        break;
+                shape.name = meshName;
+                std::string boneName = "";
+                if (meshNodeIndices.count((int)meshIdx)) {
+                    boneName = findParentBone(meshNodeIndices[(int)meshIdx]);
                 }
-
+                if (boneName.empty()) {
+                    boneName = extractBoneName(meshName, outData.name);
+                }
+                shape.boneName = boneName;
+                shape.type = DAOModelData::CollisionType::Mesh;
+                shape.posX = cx; shape.posY = cy; shape.posZ = cz;
+                for (size_t i = 0; i < verts.size(); i += 3) {
+                    shape.meshVerts.push_back(verts[i] - cx);
+                    shape.meshVerts.push_back(verts[i+1] - cy);
+                    shape.meshVerts.push_back(verts[i+2] - cz);
+                }
+                shape.meshIndices = indices;
+                std::cout << "[GLB] Collision mesh: " << meshName << " bone=\"" << shape.boneName
+                          << "\" verts=" << vertCount << " tris=" << indices.size()/3 << std::endl;
                 outData.collisionShapes.push_back(shape);
                 continue;
             }
-
             DAOModelData::MeshPart part;
             std::string baseName = mesh.name.empty() ? outData.name : CleanName(mesh.name);
             if (mesh.primitives.size() > 1) {
@@ -788,34 +713,28 @@ bool DAOImporter::LoadGLB(const std::string& path, DAOModelData& outData) {
             } else {
                 part.name = baseName;
             }
-
             if (prim.material >= 0 && prim.material < (int)outData.materials.size()) {
                 part.materialName = outData.materials[prim.material].name;
             } else if (!outData.materials.empty()) {
                 part.materialName = outData.materials[0].name;
             }
-
             std::cout << "[GLB] Mesh " << meshIdx << " part " << primIdx << ": \"" << part.name
                       << "\" material: \"" << part.materialName << "\"" << std::endl;
-
             auto getAccessor = [&](int idx) -> const tinygltf::Accessor* {
                 if (idx < 0 || idx >= (int)model.accessors.size()) return nullptr;
                 return &model.accessors[idx];
             };
-
             auto getBufferData = [&](const tinygltf::Accessor* acc) -> const uint8_t* {
                 if (!acc) return nullptr;
                 const auto& bv = model.bufferViews[acc->bufferView];
                 return model.buffers[bv.buffer].data.data() + bv.byteOffset + acc->byteOffset;
             };
-
             const tinygltf::Accessor* posAcc = nullptr;
             const tinygltf::Accessor* normAcc = nullptr;
             const tinygltf::Accessor* uvAcc = nullptr;
             const tinygltf::Accessor* tanAcc = nullptr;
             const tinygltf::Accessor* jointsAcc = nullptr;
             const tinygltf::Accessor* weightsAcc = nullptr;
-
             for (const auto& attr : prim.attributes) {
                 if (attr.first == "POSITION") posAcc = getAccessor(attr.second);
                 else if (attr.first == "NORMAL") normAcc = getAccessor(attr.second);
@@ -824,28 +743,21 @@ bool DAOImporter::LoadGLB(const std::string& path, DAOModelData& outData) {
                 else if (attr.first == "JOINTS_0") jointsAcc = getAccessor(attr.second);
                 else if (attr.first == "WEIGHTS_0") weightsAcc = getAccessor(attr.second);
             }
-
             if (!posAcc) continue;
-
             part.hasSkinning = (jointsAcc != nullptr && weightsAcc != nullptr);
-
             const float* positions = reinterpret_cast<const float*>(getBufferData(posAcc));
             const float* normals = normAcc ? reinterpret_cast<const float*>(getBufferData(normAcc)) : nullptr;
             const float* uvs = uvAcc ? reinterpret_cast<const float*>(getBufferData(uvAcc)) : nullptr;
             const float* tangents = tanAcc ? reinterpret_cast<const float*>(getBufferData(tanAcc)) : nullptr;
             const uint8_t* jointsData = jointsAcc ? getBufferData(jointsAcc) : nullptr;
             const float* weightsData = weightsAcc ? reinterpret_cast<const float*>(getBufferData(weightsAcc)) : nullptr;
-
             size_t vertexCount = posAcc->count;
             part.vertices.resize(vertexCount);
-
             for (size_t v = 0; v < vertexCount; ++v) {
                 ImportVertex& vert = part.vertices[v];
-
                 vert.x = positions[v * 3];
                 vert.y = positions[v * 3 + 1];
                 vert.z = positions[v * 3 + 2];
-
                 if (normals) {
                     vert.nx = normals[v * 3];
                     vert.ny = normals[v * 3 + 1];
@@ -853,14 +765,12 @@ bool DAOImporter::LoadGLB(const std::string& path, DAOModelData& outData) {
                 } else {
                     vert.nx = 0; vert.ny = 1; vert.nz = 0;
                 }
-
                 if (uvs) {
                     vert.u = uvs[v * 2];
                     vert.v = uvs[v * 2 + 1];
                 } else {
                     vert.u = 0; vert.v = 0;
                 }
-
                 if (tangents) {
                     vert.tx = tangents[v * 4];
                     vert.ty = tangents[v * 4 + 1];
@@ -869,18 +779,14 @@ bool DAOImporter::LoadGLB(const std::string& path, DAOModelData& outData) {
                 } else {
                     float ax = 1.0f, ay = 0.0f, az = 0.0f;
                     if (std::abs(vert.nx) > 0.9f) { ax = 0.0f; ay = 1.0f; az = 0.0f; }
-
                     float tx = ay * vert.nz - az * vert.ny;
                     float ty = az * vert.nx - ax * vert.nz;
                     float tz = ax * vert.ny - ay * vert.nx;
-
                     float len = std::sqrt(tx*tx + ty*ty + tz*tz);
                     if (len > 0.0001f) { tx /= len; ty /= len; tz /= len; }
                     else { tx = 1.0f; ty = 0.0f; tz = 0.0f; }
-
                     vert.tx = tx; vert.ty = ty; vert.tz = tz; vert.tw = 1.0f;
                 }
-
                 if (part.hasSkinning && jointsData && weightsData) {
                     if (jointsAcc->componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE) {
                         vert.boneIndices[0] = jointsData[v * 4 + 0];
@@ -894,14 +800,12 @@ bool DAOImporter::LoadGLB(const std::string& path, DAOModelData& outData) {
                         vert.boneIndices[2] = joints16[v * 4 + 2];
                         vert.boneIndices[3] = joints16[v * 4 + 3];
                     }
-
                     vert.boneWeights[0] = weightsData[v * 4 + 0];
                     vert.boneWeights[1] = weightsData[v * 4 + 1];
                     vert.boneWeights[2] = weightsData[v * 4 + 2];
                     vert.boneWeights[3] = weightsData[v * 4 + 3];
                 }
             }
-
             if (part.hasSkinning) {
                 std::set<int> usedBones;
                 for (const auto& v : part.vertices) {
@@ -914,13 +818,11 @@ bool DAOImporter::LoadGLB(const std::string& path, DAOModelData& outData) {
                 part.bonesUsed.assign(usedBones.begin(), usedBones.end());
                 std::cout << "[GLB] Mesh '" << part.name << "' uses " << part.bonesUsed.size() << " bones" << std::endl;
             }
-
             if (prim.indices >= 0) {
                 const auto* idxAcc = getAccessor(prim.indices);
                 const uint8_t* idxData = getBufferData(idxAcc);
                 size_t idxCount = idxAcc->count;
                 part.indices.resize(idxCount);
-
                 if (idxAcc->componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT) {
                     const uint16_t* idx16 = reinterpret_cast<const uint16_t*>(idxData);
                     for (size_t i = 0; i < idxCount; ++i) part.indices[i] = idx16[i];
@@ -931,100 +833,73 @@ bool DAOImporter::LoadGLB(const std::string& path, DAOModelData& outData) {
                     for (size_t i = 0; i < idxCount; ++i) part.indices[i] = idxData[i];
                 }
             }
-
             outData.parts.push_back(part);
         }
     }
-
-    float minX = FLT_MAX, minY = FLT_MAX, minZ = FLT_MAX;
-    float maxX = -FLT_MAX, maxY = -FLT_MAX, maxZ = -FLT_MAX;
-    for (const auto& part : outData.parts) {
-        for (const auto& v : part.vertices) {
-            minX = std::min(minX, v.x); maxX = std::max(maxX, v.x);
-            minY = std::min(minY, v.y); maxY = std::max(maxY, v.y);
-            minZ = std::min(minZ, v.z); maxZ = std::max(maxZ, v.z);
-        }
-    }
-
-    float xSize = maxX - minX;
-    float ySize = maxY - minY;
-    float zSize = maxZ - minZ;
-
-    std::cout << "\n[GLB] Mesh bounding box:" << std::endl;
-    std::cout << "  X: [" << minX << " to " << maxX << "] size=" << xSize << std::endl;
-    std::cout << "  Y: [" << minY << " to " << maxY << "] size=" << ySize << std::endl;
-    std::cout << "  Z: [" << minZ << " to " << maxZ << "] size=" << zSize << std::endl;
-
-    bool needsRotation = false;
-    float correctionQuat[4] = {0, 0, 0, 1};
-
-    if (zSize > xSize * 1.5f && zSize > ySize * 1.5f) {
-        std::cout << "  [OK] Model is Z-up (correct orientation)" << std::endl;
-    } else if (ySize > xSize * 1.5f && ySize > zSize * 1.5f) {
-        std::cout << "  [FIX] Model is Y-up, applying +90° X rotation for Z-up" << std::endl;
-        correctionQuat[0] = 0.7071068f;
-        correctionQuat[1] = 0.0f;
-        correctionQuat[2] = 0.0f;
-        correctionQuat[3] = 0.7071068f;
-        needsRotation = true;
-    } else if (xSize > ySize * 1.5f && xSize > zSize * 1.5f) {
-        std::cout << "  [WARNING] Model has X as tallest axis (unusual orientation)" << std::endl;
-    } else {
-        std::cout << "  [INFO] No dominant vertical axis, keeping original orientation" << std::endl;
-    }
-
-    if (needsRotation) {
-        for (auto& part : outData.parts) {
-            for (auto& v : part.vertices) {
-                rotateByQuat(v.x, v.y, v.z, correctionQuat);
-                rotateByQuat(v.nx, v.ny, v.nz, correctionQuat);
-                rotateByQuat(v.tx, v.ty, v.tz, correctionQuat);
+    float rootRot[4] = {0, 0, 0, 1};
+    bool hasRootRotation = false;
+    for (const auto& node : model.nodes) {
+        if (!node.children.empty() && !node.rotation.empty()) {
+            bool hasMeshChildren = false;
+            for (int childIdx : node.children) {
+                if (childIdx >= 0 && childIdx < (int)model.nodes.size()) {
+                    if (model.nodes[childIdx].mesh >= 0) {
+                        hasMeshChildren = true;
+                        break;
+                    }
+                }
+            }
+            if (hasMeshChildren) {
+                rootRot[0] = (float)node.rotation[0];
+                rootRot[1] = (float)node.rotation[1];
+                rootRot[2] = (float)node.rotation[2];
+                rootRot[3] = (float)node.rotation[3];
+                hasRootRotation = true;
+                std::cout << "[GLB] Root rotation found: [" << rootRot[0] << ", " << rootRot[1] << ", " << rootRot[2] << ", " << rootRot[3] << "]" << std::endl;
+                break;
             }
         }
-        std::cout << "  [APPLIED] Rotation correction applied to all vertices" << std::endl;
     }
-
+    if (hasRootRotation) {
+        float invRot[4] = {-rootRot[0], -rootRot[1], -rootRot[2], rootRot[3]};
+        std::cout << "[GLB] Applying inverse rotation to undo Blender transform" << std::endl;
+        for (auto& part : outData.parts) {
+            for (auto& v : part.vertices) {
+                rotateByQuat(v.x, v.y, v.z, invRot);
+                rotateByQuat(v.nx, v.ny, v.nz, invRot);
+                rotateByQuat(v.tx, v.ty, v.tz, invRot);
+            }
+        }
+    }
     std::cout << "=== END GLB DEBUG ===\n" << std::endl;
-
-    return !outData.parts.empty();
+    return !outData.parts.empty() || !outData.collisionShapes.empty();
 }
-
 bool DAOImporter::WriteMSHXml(const fs::path& outputPath, const DAOModelData& model) {
     std::ofstream out(outputPath);
     if (!out) return false;
-
     out << std::fixed << std::setprecision(6);
-
     std::cout << "[MSH XML] Writing " << model.parts.size() << " mesh groups" << std::endl;
-
     out << "<?xml version=\"1.0\" ?>\n";
     out << "<ModelMeshData Name=\"" << model.name << ".MSH\" Version=\"1\">\n";
-
     for (size_t partIdx = 0; partIdx < model.parts.size(); ++partIdx) {
         const auto& part = model.parts[partIdx];
         size_t vertCount = part.vertices.size();
         size_t idxCount = part.indices.size();
-
         std::cout << "[MSH XML] Part " << partIdx << ": \"" << part.name << "\" verts=" << vertCount
                   << " indices=" << idxCount << " skinning=" << (part.hasSkinning ? "yes" : "no") << std::endl;
-
         out << "<MeshGroup Name=\"" << part.name << "\" Optimize=\"All\">\n";
-
         out << "<Data ElementCount=\"" << vertCount << "\" Semantic=\"POSITION\" Type=\"Float4\">\n<![CDATA[\n";
         for (const auto& v : part.vertices)
             out << v.x << " " << v.y << " " << v.z << " 1.0\n";
         out << "]]>\n</Data>\n";
-
         out << "<Data ElementCount=\"" << vertCount << "\" Semantic=\"TEXCOORD\" Type=\"Float2\">\n<![CDATA[\n";
         for (const auto& v : part.vertices)
             out << v.u << " " << (1.0f - v.v) << "\n";
         out << "]]>\n</Data>\n";
-
         out << "<Data ElementCount=\"" << vertCount << "\" Semantic=\"TANGENT\" Type=\"Float4\">\n<![CDATA[\n";
         for (const auto& v : part.vertices)
             out << v.tx << " " << v.ty << " " << v.tz << " 1.0\n";
         out << "]]>\n</Data>\n";
-
         out << "<Data ElementCount=\"" << vertCount << "\" Semantic=\"BINORMAL\" Type=\"Float4\">\n<![CDATA[\n";
         for (const auto& v : part.vertices) {
             float bx = v.ny * v.tz - v.nz * v.ty;
@@ -1033,75 +908,59 @@ bool DAOImporter::WriteMSHXml(const fs::path& outputPath, const DAOModelData& mo
             out << (bx * v.tw) << " " << (by * v.tw) << " " << (bz * v.tw) << " 1.0\n";
         }
         out << "]]>\n</Data>\n";
-
         out << "<Data ElementCount=\"" << vertCount << "\" Semantic=\"NORMAL\" Type=\"Float4\">\n<![CDATA[\n";
         for (const auto& v : part.vertices)
             out << v.nx << " " << v.ny << " " << v.nz << " 1.0\n";
         out << "]]>\n</Data>\n";
-
         if (part.hasSkinning) {
             out << "<Data ElementCount=\"" << vertCount << "\" Semantic=\"BLENDWEIGHT\" Type=\"Float4\">\n<![CDATA[\n";
             for (const auto& v : part.vertices)
                 out << v.boneWeights[0] << " " << v.boneWeights[1] << " "
                     << v.boneWeights[2] << " " << v.boneWeights[3] << "\n";
             out << "]]>\n</Data>\n";
-
             out << "<Data ElementCount=\"" << vertCount << "\" Semantic=\"BLENDINDICES\" Type=\"Short4\">\n<![CDATA[\n";
             for (const auto& v : part.vertices)
                 out << v.boneIndices[0] << " " << v.boneIndices[1] << " "
                     << v.boneIndices[2] << " " << v.boneIndices[3] << "\n";
             out << "]]>\n</Data>\n";
         }
-
         out << "<Data IndexCount=\"" << idxCount << "\" IndexType=\"Index32\" Semantic=\"Indices\">\n<![CDATA[\n";
         for (size_t i = 0; i + 2 < part.indices.size(); i += 3) {
             out << part.indices[i] << " " << part.indices[i + 1] << " " << part.indices[i + 2] << "\n";
         }
         out << "]]>\n</Data>\n";
-
         out << "</MeshGroup>\n";
     }
-
     out << "</ModelMeshData>\n";
     out.flush();
     return out.good();
 }
-
 bool DAOImporter::WriteMMHXml(const fs::path& outputPath, const DAOModelData& model, const std::string& mshFilename) {
     std::ofstream out(outputPath);
     if (!out) return false;
-
     out << std::fixed << std::setprecision(6);
-
     std::string materialName = model.materials.empty() ? model.name : model.materials[0].name;
     bool hasSkeleton = model.skeleton.hasSkeleton && !model.skeleton.bones.empty();
-
     out << "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n";
     out << "<ModelHierarchy Name=\"" << model.name << "\" ModelDataName=\"" << model.name << "\">\n";
-
     if (hasSkeleton) {
         std::function<void(int, int)> writeBone = [&](int boneIdx, int depth) {
             const ImportBone& bone = model.skeleton.bones[boneIdx];
             std::string indent(depth * 2, ' ');
-
             out << indent << "<Node Name=\"" << bone.name << "\" BoneIndex=\"" << bone.index << "\">\n";
             out << indent << "  <Translation>" << bone.translation[0] << " "
                 << bone.translation[1] << " " << bone.translation[2] << "</Translation>\n";
             out << indent << "  <Rotation>" << bone.rotation[0] << " " << bone.rotation[1] << " "
                 << bone.rotation[2] << " " << bone.rotation[3] << "</Rotation>\n";
-
             std::vector<int> children;
             for (size_t i = 0; i < model.skeleton.bones.size(); ++i) {
                 if (model.skeleton.bones[i].parentIndex == boneIdx) {
                     children.push_back(static_cast<int>(i));
                 }
             }
-
             for (int child : children) writeBone(child, depth + 1);
-
             out << indent << "</Node>\n";
         };
-
         bool hasGOB = false;
         int gobBoneIdx = -1;
         for (size_t i = 0; i < model.skeleton.bones.size(); ++i) {
@@ -1111,29 +970,23 @@ bool DAOImporter::WriteMMHXml(const fs::path& outputPath, const DAOModelData& mo
                 break;
             }
         }
-
         if (hasGOB) {
             writeBone(gobBoneIdx, 1);
         } else {
             out << "  <Node Name=\"GOB\" SoundMaterialType=\"0\">\n";
             out << "    <Translation>0 0 0</Translation>\n";
             out << "    <Rotation>0 0 0 1</Rotation>\n";
-
             for (size_t i = 0; i < model.skeleton.bones.size(); ++i) {
                 if (model.skeleton.bones[i].parentIndex == -1) {
                     writeBone(static_cast<int>(i), 2);
                 }
             }
         }
-
         int meshIndent = hasGOB ? 2 : 4;
         std::string meshIndentStr(meshIndent, ' ');
-
         for (size_t partIdx = 0; partIdx < model.parts.size(); ++partIdx) {
             const auto& part = model.parts[partIdx];
-
             std::set<int> partBonesUsed(part.bonesUsed.begin(), part.bonesUsed.end());
-
             out << meshIndentStr << "<NodeMesh Name=\"" << part.name << "\" ";
             if (!partBonesUsed.empty()) {
                 out << "BonesUsed=\"";
@@ -1152,7 +1005,6 @@ bool DAOImporter::WriteMMHXml(const fs::path& outputPath, const DAOModelData& mo
             out << meshIndentStr << "  <Rotation>0 0 0 1</Rotation>\n";
             out << meshIndentStr << "</NodeMesh>\n";
         }
-
         if (!hasGOB) {
             out << "  </Node>\n";
         }
@@ -1168,11 +1020,42 @@ bool DAOImporter::WriteMMHXml(const fs::path& outputPath, const DAOModelData& mo
             out << "  </NodeMesh>\n";
         }
     }
-
+    if (!model.collisionShapes.empty()) {
+        std::cout << "[MMH XML] Writing " << model.collisionShapes.size() << " collision shapes" << std::endl;
+        out << "  <CollisionObject Static=\"true\">\n";
+        for (const auto& shape : model.collisionShapes) {
+            std::cout << "[MMH XML] Collision: " << shape.name << " bone=\"" << shape.boneName
+                      << "\" verts=" << shape.meshVerts.size()/3 << std::endl;
+            out << "    <Shape Name=\"" << shape.name << "\" Type=\"Mesh\" ";
+            out << "AllowEmitterSpawn=\"1\" Fadeable=\"false\" ";
+            out << "GROUP_MASK_WALKABLE=\"false\" ";
+            out << "GROUP_MASK_NONWALKABLE=\"false\" ";
+            out << "GROUP_MASK_ITEMS=\"false\" ";
+            out << "GROUP_MASK_CREATURES=\"false\" ";
+            out << "GROUP_MASK_PLACEABLES=\"false\" ";
+            out << "GROUP_MASK_STATICGEOMETRY=\"true\" ";
+            out << "GROUP_MASK_TRIGGERS=\"false\" ";
+            out << "GROUP_MASK_TERRAIN_WALL=\"false\" ";
+            out << "Rotation=\"" << shape.rotX << " " << shape.rotY << " " << shape.rotZ << " " << shape.rotW << "\" ";
+            out << "Position=\"" << shape.posX << " " << shape.posY << " " << shape.posZ << " 1.0\" >\n";
+            size_t vertCount = shape.meshVerts.size() / 3;
+            out << "      <VertexData length=\"" << vertCount << "\">\n";
+            for (size_t i = 0; i < shape.meshVerts.size(); i += 3) {
+                out << "        " << shape.meshVerts[i] << " " << shape.meshVerts[i+1] << " " << shape.meshVerts[i+2] << "\n";
+            }
+            out << "      </VertexData>\n";
+            out << "      <IndexData>\n";
+            for (size_t i = 0; i + 2 < shape.meshIndices.size(); i += 3) {
+                out << "        " << shape.meshIndices[i] << " " << shape.meshIndices[i+1] << " " << shape.meshIndices[i+2] << "\n";
+            }
+            out << "      </IndexData>\n";
+            out << "    </Shape>\n";
+        }
+        out << "  </CollisionObject>\n";
+    }
     out << "</ModelHierarchy>\n";
     return out.good();
 }
-
 std::string DAOImporter::GenerateMAO(const std::string& matName, const std::string& diffuse,
                                       const std::string& normal, const std::string& specular) {
     std::stringstream ss;
@@ -1185,18 +1068,13 @@ std::string DAOImporter::GenerateMAO(const std::string& matName, const std::stri
     ss << "</MaterialObject>";
     return ss.str();
 }
-
-enum class ERFVersion { Unknown, V20, V22, V30 };
-
 bool DAOImporter::RepackERF(const std::string& erfPath, const std::map<std::string, std::vector<uint8_t>>& newFiles) {
     std::cout << "\n[RepackERF] === " << fs::path(erfPath).filename().string() << " ===" << std::endl;
     std::cout << "[RepackERF] Adding " << newFiles.size() << " files" << std::endl;
-
     if (!fs::exists(erfPath)) {
         std::cerr << "[RepackERF] ERROR: File does not exist!" << std::endl;
         return false;
     }
-
     std::vector<uint8_t> erfData;
     {
         std::ifstream in(erfPath, std::ios::binary | std::ios::ate);
@@ -1206,14 +1084,11 @@ bool DAOImporter::RepackERF(const std::string& erfPath, const std::map<std::stri
         erfData.resize(size);
         in.read(reinterpret_cast<char*>(erfData.data()), size);
     }
-
     if (erfData.size() < 32) return false;
-
     auto readU32 = [&](size_t offset) -> uint32_t {
         if (offset + 4 > erfData.size()) return 0;
         return *reinterpret_cast<uint32_t*>(&erfData[offset]);
     };
-
     auto readUtf16String = [&](size_t offset, size_t charCount) -> std::string {
         std::string result;
         for (size_t i = 0; i < charCount; ++i) {
@@ -1225,32 +1100,25 @@ bool DAOImporter::RepackERF(const std::string& erfPath, const std::map<std::stri
         }
         return result;
     };
-
     std::string magic = readUtf16String(0, 4);
     std::string version = readUtf16String(8, 4);
-
     if (magic != "ERF ") {
         std::cerr << "[RepackERF] ERROR: Invalid magic" << std::endl;
         return false;
     }
-
     ERFVersion erfVer = ERFVersion::Unknown;
-    if (version == "V2.0") erfVer = ERFVersion::V20;
-    else if (version == "V2.2") erfVer = ERFVersion::V22;
-
-    if (erfVer != ERFVersion::V20 && erfVer != ERFVersion::V22) {
+    if (version == "V2.0") erfVer = ERFVersion::V2_0;
+    else if (version == "V2.2") erfVer = ERFVersion::V2_2;
+    if (erfVer != ERFVersion::V2_0 && erfVer != ERFVersion::V2_2) {
         std::cerr << "[RepackERF] ERROR: Unsupported version: " << version << std::endl;
         return false;
     }
-
     uint32_t fileCount = readU32(16);
     uint32_t year = readU32(20);
     uint32_t day = readU32(24);
     uint32_t unknown = readU32(28);
-
     struct FileEntry { std::string name; uint32_t offset; uint32_t size; };
     std::vector<FileEntry> entries;
-
     size_t tableOffset = 32;
     for (uint32_t i = 0; i < fileCount; ++i) {
         size_t entryOff = tableOffset + i * 72;
@@ -1261,7 +1129,6 @@ bool DAOImporter::RepackERF(const std::string& erfPath, const std::map<std::stri
         e.size = readU32(entryOff + 68);
         entries.push_back(e);
     }
-
     for (const auto& [name, data] : newFiles) {
         std::string lowerName = ToLower(name);
         bool found = false;
@@ -1272,7 +1139,6 @@ bool DAOImporter::RepackERF(const std::string& erfPath, const std::map<std::stri
             entries.push_back({name, 0, static_cast<uint32_t>(data.size())});
         }
     }
-
     fs::path backupDir = fs::current_path() / "backups";
     fs::create_directories(backupDir);
     fs::path backupPath = backupDir / (fs::path(erfPath).filename().string() + ".bak");
@@ -1281,7 +1147,6 @@ bool DAOImporter::RepackERF(const std::string& erfPath, const std::map<std::stri
         if (m_backupCallback) doBackup = m_backupCallback(fs::path(erfPath).filename().string(), backupDir.string());
         if (doBackup) fs::copy_file(erfPath, backupPath);
     }
-
     std::vector<uint8_t> newErfData;
     auto writeU16 = [&](uint16_t v) {
         newErfData.push_back(v & 0xFF);
@@ -1298,29 +1163,23 @@ bool DAOImporter::RepackERF(const std::string& erfPath, const std::map<std::stri
             writeU16(i < str.size() ? static_cast<uint16_t>(static_cast<unsigned char>(str[i])) : 0);
         }
     };
-
     writeUtf16Fixed("ERF ", 4);
     writeUtf16Fixed(version, 4);
     writeU32(static_cast<uint32_t>(entries.size()));
     writeU32(year);
     writeU32(day);
     writeU32(unknown);
-
     size_t tableStart = newErfData.size();
     size_t dataStart = tableStart + entries.size() * 72;
     while (dataStart % 16 != 0) dataStart++;
     newErfData.resize(dataStart, 0);
-
     std::vector<std::pair<uint32_t, uint32_t>> offsets;
-
     for (auto& e : entries) {
         uint32_t offset = static_cast<uint32_t>(newErfData.size());
         uint32_t size = 0;
-
         std::string lowerName = ToLower(e.name);
         auto it = std::find_if(newFiles.begin(), newFiles.end(),
             [&](const auto& p) { return ToLower(p.first) == lowerName; });
-
         if (it != newFiles.end()) {
             size = static_cast<uint32_t>(it->second.size());
             newErfData.insert(newErfData.end(), it->second.begin(), it->second.end());
@@ -1332,7 +1191,6 @@ bool DAOImporter::RepackERF(const std::string& erfPath, const std::map<std::stri
         }
         offsets.push_back({offset, size});
     }
-
     for (size_t i = 0; i < entries.size(); ++i) {
         size_t entryOff = tableStart + i * 72;
         for (size_t c = 0; c < 32; ++c) {
@@ -1343,70 +1201,9 @@ bool DAOImporter::RepackERF(const std::string& erfPath, const std::map<std::stri
         memcpy(&newErfData[entryOff + 64], &offsets[i].first, 4);
         memcpy(&newErfData[entryOff + 68], &offsets[i].second, 4);
     }
-
     std::ofstream out(erfPath, std::ios::binary);
     if (!out) return false;
     out.write(reinterpret_cast<char*>(newErfData.data()), newErfData.size());
-
     std::cout << "[RepackERF] SUCCESS (" << newErfData.size() << " bytes)" << std::endl;
     return true;
-}
-
-std::vector<uint8_t> DAOImporter::GeneratePHY(const DAOModelData& model) {
-    if (model.collisionShapes.empty()) return {};
-
-    auto writeU32 = [](std::vector<uint8_t>& buf, uint32_t val) {
-        buf.push_back(val & 0xFF);
-        buf.push_back((val >> 8) & 0xFF);
-        buf.push_back((val >> 16) & 0xFF);
-        buf.push_back((val >> 24) & 0xFF);
-    };
-    auto writeU16 = [](std::vector<uint8_t>& buf, uint16_t val) {
-        buf.push_back(val & 0xFF);
-        buf.push_back((val >> 8) & 0xFF);
-    };
-    auto writeFloat = [](std::vector<uint8_t>& buf, float val) {
-        uint32_t bits;
-        std::memcpy(&bits, &val, 4);
-        buf.push_back(bits & 0xFF);
-        buf.push_back((bits >> 8) & 0xFF);
-        buf.push_back((bits >> 16) & 0xFF);
-        buf.push_back((bits >> 24) & 0xFF);
-    };
-
-    std::vector<uint8_t> data;
-
-    data.push_back('G'); data.push_back('F'); data.push_back('F'); data.push_back(' ');
-    data.push_back('V'); data.push_back('4'); data.push_back('.'); data.push_back('0');
-    data.push_back('P'); data.push_back('C'); data.push_back(' '); data.push_back(' ');
-    writeU32(data, 0);
-
-    std::cout << "[PHY] Generating collision data for " << model.collisionShapes.size() << " shapes" << std::endl;
-    for (const auto& shape : model.collisionShapes) {
-        switch (shape.type) {
-            case DAOModelData::CollisionType::Box:
-                std::cout << "  - Box: " << shape.name << " at (" << shape.posX << "," << shape.posY << "," << shape.posZ
-                          << ") size=(" << shape.boxX*2 << "," << shape.boxY*2 << "," << shape.boxZ*2 << ")" << std::endl;
-                break;
-            case DAOModelData::CollisionType::Sphere:
-                std::cout << "  - Sphere: " << shape.name << " at (" << shape.posX << "," << shape.posY << "," << shape.posZ
-                          << ") radius=" << shape.radius << std::endl;
-                break;
-            case DAOModelData::CollisionType::Capsule:
-                std::cout << "  - Capsule: " << shape.name << " at (" << shape.posX << "," << shape.posY << "," << shape.posZ
-                          << ") radius=" << shape.radius << " height=" << shape.height << std::endl;
-                break;
-            case DAOModelData::CollisionType::Mesh:
-                std::cout << "  - Mesh: " << shape.name << " at (" << shape.posX << "," << shape.posY << "," << shape.posZ
-                          << ") verts=" << shape.meshVerts.size()/3 << " tris=" << shape.meshIndices.size()/3 << std::endl;
-                break;
-        }
-    }
-
-    // TODO: Full GFF PHY generation requires proper struct/field encoding
-    // For now, return empty - this is a placeholder for future implementation
-    // The collision shapes are stored in modelData.collisionShapes and can be
-    // used by the game's physics system if a proper PHY writer is implemented
-
-    return {}; // Return empty for now - PHY generation is complex
 }
