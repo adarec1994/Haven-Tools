@@ -5,6 +5,7 @@
 struct ExportOptions {
     bool includeCollision = false;
     bool includeAnimations = true;
+    bool includeArmature = true;
     bool bakeCharacterSettings = false;
     float hairColor[3] = {0.4f, 0.25f, 0.15f};
     float skinColor[3] = {1.0f, 1.0f, 1.0f};

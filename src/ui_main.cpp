@@ -5,7 +5,7 @@
 #include "export.h"
 #include "update/about_text.h"
 #include "update/changelog_text.h"
-static const char* CURRENT_APP_VERSION = "1.12";
+static const char* CURRENT_APP_VERSION = "1.14";
 bool showSplash = true;
 static bool t_active = false;
 static float t_alpha = 0.0f;
@@ -22,6 +22,7 @@ static std::map<std::string, bool> s_animSelection;
 static bool s_selectAllAnims = true;
 static bool s_isFbxExport = false;
 static bool s_exportCollision = true;
+static bool s_exportArmature = true;
 static bool s_animListExpanded = false;
 static int s_fbxScaleIndex = 0;
 void runLoadingTask(AppState* statePtr) {
@@ -272,6 +273,7 @@ void runExportTask(AppState* statePtr) {
     state.preloadProgress = 0.95f;
     ExportOptions exportOpts;
     exportOpts.includeCollision = s_exportCollision;
+    exportOpts.includeArmature = s_exportArmature;
     exportOpts.includeAnimations = true;
     float scaleValues[] = { 1.0f, 10.0f, 100.0f, 1000.0f };
     exportOpts.fbxScale = scaleValues[s_fbxScaleIndex];
@@ -600,6 +602,7 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
         }
         if (s_isFbxExport) {
             ImGui::Separator();
+            ImGui::Checkbox("Include Armature", &s_exportArmature);
             const char* scaleOptions[] = { "x1", "x10", "x100", "x1000" };
             ImGui::Text("Scale:");
             ImGui::SameLine();

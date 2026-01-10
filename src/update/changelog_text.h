@@ -199,16 +199,26 @@ Note: Importing does not currently work on Linux.
 - Added filters between All/ Mods/ Core game/ and Awakening Expansion.
 - Added Weapons tab to character browser (WIP!)
 
-)";
-
-static const char* s_changelogLatest = R"(
 [Release 1.13]
 
 - Fixed a bug where a models root node would unexpectedly rotated.
 - Fixed a bug where models with submeshes would get merged when importing.
 - Added collision importing/ exporting.
--- You must follow the naming convention UCP_MeshName_01 for collision.
+-- You must follow the naming convention UCX_MeshName_01 for collision.
 - Added an option to delete models that have been imported from the .erf.
 - Updated 2da parsing.
 
+)";
+
+static const char* s_changelogLatest = R"(
+[Release 1.14]
+
+- Fixed shaders on export
+-- Now exports diffuse, specular, and normals. May need some adjustments to make it "look right."
+- Export to FBX now correctly creates the armature in Blender.
+-- 3DS max is still kind of buggy.
+-- FBX Importing is coming soon.
+- Added option to export a 1x, 10x, 100x, or 1000x scale for FBX.
+- Added option to export without a skeleton.
+-- You must follow the naming convention UCX_MeshName_01 for collision.
 )";

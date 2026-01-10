@@ -887,7 +887,7 @@ bool exportToFBX(const Model& model, const std::vector<Animation>& animations, c
     auto getAnimCurveNodeID = [](int a, int t, int c) -> int64_t { return 110000000LL + (int64_t)a * 100000 + (int64_t)t * 1000 + c; };
     auto getAnimCurveID = [](int a, int t, int c, int axis) -> int64_t { return 120000000LL + (int64_t)a * 1000000 + (int64_t)t * 10000 + (int64_t)c * 100 + axis; };
     auto getNodeAttrID = [](int i) -> int64_t { return 130000000LL + i; };
-    bool hasSkeleton = !model.skeleton.bones.empty();
+    bool hasSkeleton = !model.skeleton.bones.empty() && options.includeArmature;
     std::map<std::string, int> boneLookup;
     if (hasSkeleton) {
         for (size_t i = 0; i < model.skeleton.bones.size(); i++) {
@@ -1385,6 +1385,13 @@ bool exportToFBX(const Model& model, const std::vector<Animation>& animations, c
             polyIdx.push_back(-((int32_t)mesh.indices[i + 2]) - 1);
         }
         nw.beginNode("PolygonVertexIndex"); nw.beginProps(); nw.addPropI32Array(polyIdx); nw.endProps(); nw.endNodeNoNested();
+        std::vector<int32_t> edges;
+        for (size_t i = 0; i < mesh.indices.size(); i += 3) {
+            edges.push_back((int32_t)(i));
+            edges.push_back((int32_t)(i + 1));
+            edges.push_back((int32_t)(i + 2));
+        }
+        nw.beginNode("Edges"); nw.beginProps(); nw.addPropI32Array(edges); nw.endProps(); nw.endNodeNoNested();
         nw.beginNode("LayerElementNormal"); nw.beginProps(); nw.addPropI32(0); nw.endProps();
         nw.beginNode("Version"); nw.beginProps(); nw.addPropI32(102); nw.endProps(); nw.endNodeNoNested();
         nw.beginNode("Name"); nw.beginProps(); nw.addPropString(""); nw.endProps(); nw.endNodeNoNested();
@@ -1402,13 +1409,18 @@ bool exportToFBX(const Model& model, const std::vector<Animation>& animations, c
         nw.beginNode("Version"); nw.beginProps(); nw.addPropI32(101); nw.endProps(); nw.endNodeNoNested();
         nw.beginNode("Name"); nw.beginProps(); nw.addPropString("UVMap"); nw.endProps(); nw.endNodeNoNested();
         nw.beginNode("MappingInformationType"); nw.beginProps(); nw.addPropString("ByPolygonVertex"); nw.endProps(); nw.endNodeNoNested();
-        nw.beginNode("ReferenceInformationType"); nw.beginProps(); nw.addPropString("Direct"); nw.endProps(); nw.endNodeNoNested();
+        nw.beginNode("ReferenceInformationType"); nw.beginProps(); nw.addPropString("IndexToDirect"); nw.endProps(); nw.endNodeNoNested();
         std::vector<double> uvs;
+        std::vector<int32_t> uvIdx;
+        for (size_t vi = 0; vi < mesh.vertices.size(); vi++) {
+            uvs.push_back(mesh.vertices[vi].u);
+            uvs.push_back(mesh.vertices[vi].v);
+        }
         for (uint32_t idx : mesh.indices) {
-            uvs.push_back(mesh.vertices[idx].u);
-            uvs.push_back(mesh.vertices[idx].v);
+            uvIdx.push_back((int32_t)idx);
         }
         nw.beginNode("UV"); nw.beginProps(); nw.addPropF64Array(uvs); nw.endProps(); nw.endNodeNoNested();
+        nw.beginNode("UVIndex"); nw.beginProps(); nw.addPropI32Array(uvIdx); nw.endProps(); nw.endNodeNoNested();
         nw.endNode();
         nw.beginNode("LayerElementMaterial"); nw.beginProps(); nw.addPropI32(0); nw.endProps();
         nw.beginNode("Version"); nw.beginProps(); nw.addPropI32(101); nw.endProps(); nw.endNodeNoNested();

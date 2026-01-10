@@ -14,7 +14,7 @@ You can navigate through the files by clicking through the .erf's in the menu. M
 
 You can also design, or re-design, a custom character by going in to the Character Designer.
 
-Most of the features in this program are WIP and due to subject to change.
+Most of the features in this program are WIP and subject to change.
 
 If you have any questions, suggestions, or bugs to report, either leave a comment on the NexusMods page, or raise an issue in the issue tracker on the GitHub page.
 
