@@ -2,6 +2,7 @@
 #include "update/update.h"
 #include <thread>
 #include "import.h"
+#include "export.h"
 
 #include "update/about_text.h"
 #include "update/changelog_text.h"
@@ -27,6 +28,8 @@ static bool s_showExportOptions = false;
 static std::map<std::string, bool> s_animSelection;
 static bool s_selectAllAnims = true;
 static bool s_isFbxExport = false;
+static bool s_exportCollision = true;
+static bool s_animListExpanded = false;
 
 void runLoadingTask(AppState* statePtr) {
     AppState& state = *statePtr;
@@ -317,15 +320,24 @@ void runExportTask(AppState* statePtr) {
     state.preloadStatus = "Writing File...";
     state.preloadProgress = 0.95f;
 
+    ExportOptions exportOpts;
+    exportOpts.includeCollision = s_exportCollision;
+    exportOpts.includeAnimations = true;
+
     bool success = false;
     if (s_isFbxExport) {
-        success = exportToFBX(state.currentModel, exportAnims, s_pendingExportPath);
+        success = exportToFBX(state.currentModel, exportAnims, s_pendingExportPath, exportOpts);
     } else {
-        success = exportToGLB(state.currentModel, exportAnims, s_pendingExportPath);
+        success = exportToGLB(state.currentModel, exportAnims, s_pendingExportPath, exportOpts);
+    }
+
+    std::string exportInfo = std::to_string(exportAnims.size()) + " anims";
+    if (exportOpts.includeCollision && !state.currentModel.collisionShapes.empty()) {
+        exportInfo += ", " + std::to_string(state.currentModel.collisionShapes.size()) + " collision";
     }
 
     if (success) {
-        state.statusMessage = "Exported: " + s_pendingExportPath + " (" + std::to_string(exportAnims.size()) + " anims)";
+        state.statusMessage = "Exported: " + s_pendingExportPath + " (" + exportInfo + ")";
     } else {
         state.statusMessage = "Export failed!";
     }
@@ -654,19 +666,37 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
     }
 
     if (ImGui::BeginPopupModal("Export Options", &s_showExportOptions, ImGuiWindowFlags_AlwaysAutoResize)) {
-        ImGui::Text("Select Animations to Export:");
-        if (ImGui::Checkbox("Select All", &s_selectAllAnims)) {
-            for (auto& pair : s_animSelection) {
-                pair.second = s_selectAllAnims;
-            }
+        // Collision export option
+        bool hasCollision = !state.currentModel.collisionShapes.empty();
+        if (hasCollision) {
+            ImGui::Checkbox("Include Collision Shapes", &s_exportCollision);
+            ImGui::SameLine();
+            ImGui::TextDisabled("(%zu shapes)", state.currentModel.collisionShapes.size());
+        } else {
+            ImGui::TextDisabled("No collision shapes in model");
         }
         ImGui::Separator();
 
-        ImGui::BeginChild("AnimList", ImVec2(400, 300), true);
-        for (auto& pair : s_animSelection) {
-            ImGui::Checkbox(pair.first.c_str(), &pair.second);
+        // Collapsible animations section
+        int selectedCount = 0;
+        for (const auto& pair : s_animSelection) {
+            if (pair.second) selectedCount++;
         }
-        ImGui::EndChild();
+
+        std::string animHeader = "Animations (" + std::to_string(selectedCount) + "/" + std::to_string(s_animSelection.size()) + " selected)";
+        if (ImGui::CollapsingHeader(animHeader.c_str(), ImGuiTreeNodeFlags_DefaultOpen)) {
+            if (ImGui::Checkbox("Select All", &s_selectAllAnims)) {
+                for (auto& pair : s_animSelection) {
+                    pair.second = s_selectAllAnims;
+                }
+            }
+
+            ImGui::BeginChild("AnimList", ImVec2(400, 200), true);
+            for (auto& pair : s_animSelection) {
+                ImGui::Checkbox(pair.first.c_str(), &pair.second);
+            }
+            ImGui::EndChild();
+        }
         ImGui::Separator();
 
         if (ImGui::Button("Export", ImVec2(120, 0))) {

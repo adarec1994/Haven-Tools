@@ -18,10 +18,10 @@ struct GDAEditorState {
     std::string currentFile;
     GDAFile* editor = nullptr;
     int selectedRow = -1;
-    std::string statusMessage;
+    char rowFilter[128] = "";
     bool showBackupDialog = false;
     bool showRestoreDialog = false;
-    char rowFilter[128] = "";
+    std::string statusMessage;
     std::vector<std::string> gdaFilesInErf;
     int selectedGdaInErf = -1;
 

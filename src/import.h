@@ -59,10 +59,28 @@ struct DAOModelData {
         bool hasSkeleton = false;
     };
 
+    // Collision shapes imported from UE-named meshes
+    enum class CollisionType { Box, Sphere, Capsule, Mesh };
+    struct CollisionShape {
+        std::string name;
+        CollisionType type = CollisionType::Mesh;
+        float posX = 0, posY = 0, posZ = 0;
+        float rotX = 0, rotY = 0, rotZ = 0, rotW = 1;
+        // Box dimensions (half-extents)
+        float boxX = 1, boxY = 1, boxZ = 1;
+        // Sphere/Capsule
+        float radius = 1;
+        float height = 2; // For capsule
+        // Convex mesh data
+        std::vector<float> meshVerts;
+        std::vector<uint32_t> meshIndices;
+    };
+
     std::vector<MeshPart> parts;
     std::vector<Material> materials;
     std::vector<Texture> textures;
     Skeleton skeleton;
+    std::vector<CollisionShape> collisionShapes;
 };
 
 class DAOGraphicsTools {
@@ -114,6 +132,7 @@ private:
     bool WriteMMHXml(const fs::path& outputPath, const DAOModelData& model, const std::string& mshFilename);
     std::string GenerateMAO(const std::string& matName, const std::string& diffuse,
                             const std::string& normal, const std::string& specular);
+    std::vector<uint8_t> GeneratePHY(const DAOModelData& model);
     bool RepackERF(const std::string& erfPath, const std::map<std::string, std::vector<uint8_t>>& newFiles);
     void ReportProgress(float progress, const std::string& status);
 

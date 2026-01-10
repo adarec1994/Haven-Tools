@@ -110,6 +110,7 @@ endfunction()
 embed_directory(msh)
 embed_directory(mmh)
 embed_directory(ani)
+embed_directory(excel)
 
 add_executable(HavenTools
         src/main.cpp

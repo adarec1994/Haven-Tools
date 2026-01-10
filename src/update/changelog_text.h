@@ -191,9 +191,6 @@ Use: Browse to your DAO installation and select the .exe.
 
 Note: Importing does not currently work on Linux.
 
-)";
-
-static const char* s_changelogLatest = R"(
 [Release 1.12]
 
 - Fixed a bug with importing where models would not be added to the .erf
@@ -201,5 +198,18 @@ static const char* s_changelogLatest = R"(
 - Imported models now correctly display their textures and rigs.
 - Added filters between All/ Mods/ Core game/ and Awakening Expansion.
 - Added Weapons tab to character browser (WIP!)
+
+)";
+
+static const char* s_changelogLatest = R"(
+[Release 1.13]
+
+- Fixed a bug where a models root node would unexpectedly rotated.
+- Fixed a bug where models with submeshes would get merged when importing.
+- Added collision importing/ exporting.
+-- You must follow the naming convention UCP_MeshName_01 for collision.
+
+
+
 
 )";

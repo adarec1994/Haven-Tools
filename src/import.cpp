@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <iomanip>
 #include <cmath>
+#include <cfloat>
 #include <set>
 #include <functional>
 
@@ -410,6 +411,17 @@ bool DAOImporter::ImportToDirectory(const std::string& glbPath, const std::strin
         std::cout << "  + Generated: " << maoFile << std::endl;
     }
 
+    // Generate PHY file if collision shapes exist
+    if (!modelData.collisionShapes.empty()) {
+        ReportProgress(0.67f, "Generating PHY file...");
+        std::string phyFile = baseName + ".phy";
+        std::vector<uint8_t> phyData = GeneratePHY(modelData);
+        if (!phyData.empty()) {
+            hierFiles[phyFile] = std::move(phyData);
+            std::cout << "  + Generated: " << phyFile << " (" << modelData.collisionShapes.size() << " shapes)" << std::endl;
+        }
+    }
+
     std::cout << "\n[Import] Updating ERF files..." << std::endl;
 
     ReportProgress(0.7f, "Refreshing modelmeshdata.erf...");
@@ -445,10 +457,53 @@ bool DAOImporter::LoadGLB(const std::string& path, DAOModelData& outData) {
     }
     outData.name = ToLower(fs::path(path).stem().string());
 
+    // Debug: Print scene info
+    std::cout << "\n=== GLB DEBUG ===" << std::endl;
+    std::cout << "[GLB] File: " << path << std::endl;
+    std::cout << "[GLB] Scenes: " << model.scenes.size() << std::endl;
+    std::cout << "[GLB] Nodes: " << model.nodes.size() << std::endl;
+    std::cout << "[GLB] Meshes: " << model.meshes.size() << std::endl;
+    std::cout << "[GLB] Skins: " << model.skins.size() << std::endl;
+
+    // Debug: Print all nodes and their transforms
+    std::cout << "\n[GLB] Node hierarchy:" << std::endl;
+    for (size_t i = 0; i < model.nodes.size(); ++i) {
+        const auto& node = model.nodes[i];
+        std::cout << "  Node " << i << ": \"" << node.name << "\"";
+        if (node.mesh >= 0) std::cout << " [mesh=" << node.mesh << "]";
+        if (node.skin >= 0) std::cout << " [skin=" << node.skin << "]";
+        if (!node.children.empty()) {
+            std::cout << " children=[";
+            for (size_t c = 0; c < node.children.size(); ++c) {
+                if (c > 0) std::cout << ",";
+                std::cout << node.children[c];
+            }
+            std::cout << "]";
+        }
+        std::cout << std::endl;
+
+        if (!node.translation.empty()) {
+            std::cout << "    translation: [" << node.translation[0] << ", "
+                      << node.translation[1] << ", " << node.translation[2] << "]" << std::endl;
+        }
+        if (!node.rotation.empty()) {
+            std::cout << "    rotation: [" << node.rotation[0] << ", " << node.rotation[1]
+                      << ", " << node.rotation[2] << ", " << node.rotation[3] << "]" << std::endl;
+        }
+        if (!node.scale.empty()) {
+            std::cout << "    scale: [" << node.scale[0] << ", "
+                      << node.scale[1] << ", " << node.scale[2] << "]" << std::endl;
+        }
+        if (!node.matrix.empty()) {
+            std::cout << "    HAS MATRIX TRANSFORM (16 values)" << std::endl;
+        }
+    }
+
     if (!model.skins.empty()) {
         const auto& skin = model.skins[0];
         outData.skeleton.hasSkeleton = true;
-        std::cout << "[GLB] Found skeleton with " << skin.joints.size() << " bones" << std::endl;
+        std::cout << "\n[GLB] Found skeleton with " << skin.joints.size() << " bones" << std::endl;
+        std::cout << "[GLB] Skin skeleton root node: " << skin.skeleton << std::endl;
 
         std::vector<float> inverseBindMatrices;
         if (skin.inverseBindMatrices >= 0) {
@@ -520,6 +575,15 @@ bool DAOImporter::LoadGLB(const std::string& path, DAOModelData& outData) {
                 }
             }
         }
+
+        // Debug: Print first few bones
+        std::cout << "\n[GLB] Bone data (first 5):" << std::endl;
+        for (size_t i = 0; i < std::min(size_t(5), outData.skeleton.bones.size()); ++i) {
+            const auto& bone = outData.skeleton.bones[i];
+            std::cout << "  Bone " << i << ": \"" << bone.name << "\" parent=" << bone.parentIndex << std::endl;
+            std::cout << "    trans: [" << bone.translation[0] << ", " << bone.translation[1] << ", " << bone.translation[2] << "]" << std::endl;
+            std::cout << "    rot: [" << bone.rotation[0] << ", " << bone.rotation[1] << ", " << bone.rotation[2] << ", " << bone.rotation[3] << "]" << std::endl;
+        }
     }
 
     for (size_t i = 0; i < model.images.size(); ++i) {
@@ -583,18 +647,175 @@ bool DAOImporter::LoadGLB(const std::string& path, DAOModelData& outData) {
         outData.materials.push_back(defaultMat);
     }
 
-    for (const auto& mesh : model.meshes) {
-        for (const auto& prim : mesh.primitives) {
+    // Helper to apply quaternion rotation to a vector
+    auto rotateByQuat = [](float& x, float& y, float& z, const float* q) {
+        // q = [x, y, z, w]
+        float qx = q[0], qy = q[1], qz = q[2], qw = q[3];
+
+        // v' = q * v * q^-1
+        // Optimized formula:
+        float tx = 2.0f * (qy * z - qz * y);
+        float ty = 2.0f * (qz * x - qx * z);
+        float tz = 2.0f * (qx * y - qy * x);
+
+        float nx = x + qw * tx + (qy * tz - qz * ty);
+        float ny = y + qw * ty + (qz * tx - qx * tz);
+        float nz = z + qw * tz + (qx * ty - qy * tx);
+
+        x = nx; y = ny; z = nz;
+    };
+
+    // Helper to check if mesh name is a collision mesh (UE naming convention)
+    auto isCollisionMesh = [](const std::string& name) -> int {
+        // Returns: 0=not collision, 1=box, 2=sphere, 3=capsule, 4=convex mesh
+        if (name.substr(0, 4) == "UBX_") return 1;
+        if (name.substr(0, 4) == "USP_") return 2;
+        if (name.substr(0, 4) == "UCP_") return 3;
+        if (name.substr(0, 4) == "UCX_") return 4;
+        return 0;
+    };
+
+    // Helper to compute bounding box from vertices
+    auto computeBounds = [](const std::vector<float>& verts, float& minX, float& maxX,
+                           float& minY, float& maxY, float& minZ, float& maxZ) {
+        minX = minY = minZ = 1e30f;
+        maxX = maxY = maxZ = -1e30f;
+        for (size_t i = 0; i < verts.size(); i += 3) {
+            if (verts[i] < minX) minX = verts[i];
+            if (verts[i] > maxX) maxX = verts[i];
+            if (verts[i+1] < minY) minY = verts[i+1];
+            if (verts[i+1] > maxY) maxY = verts[i+1];
+            if (verts[i+2] < minZ) minZ = verts[i+2];
+            if (verts[i+2] > maxZ) maxZ = verts[i+2];
+        }
+    };
+
+    // Process each mesh - keep them as separate parts with their own materials
+    for (size_t meshIdx = 0; meshIdx < model.meshes.size(); ++meshIdx) {
+        const auto& mesh = model.meshes[meshIdx];
+
+        // Check if this is a collision mesh
+        int collisionType = isCollisionMesh(mesh.name);
+
+        for (size_t primIdx = 0; primIdx < mesh.primitives.size(); ++primIdx) {
+            const auto& prim = mesh.primitives[primIdx];
             if (prim.mode != TINYGLTF_MODE_TRIANGLES) continue;
 
+            // Handle collision mesh
+            if (collisionType > 0) {
+                auto getAccessor = [&](int idx) -> const tinygltf::Accessor* {
+                    if (idx < 0 || idx >= (int)model.accessors.size()) return nullptr;
+                    return &model.accessors[idx];
+                };
+                auto getBufferData = [&](const tinygltf::Accessor* acc) -> const uint8_t* {
+                    if (!acc) return nullptr;
+                    const auto& bv = model.bufferViews[acc->bufferView];
+                    return model.buffers[bv.buffer].data.data() + bv.byteOffset + acc->byteOffset;
+                };
+
+                const tinygltf::Accessor* posAcc = nullptr;
+                for (const auto& attr : prim.attributes) {
+                    if (attr.first == "POSITION") posAcc = getAccessor(attr.second);
+                }
+                if (!posAcc) continue;
+
+                const float* positions = reinterpret_cast<const float*>(getBufferData(posAcc));
+                size_t vertCount = posAcc->count;
+
+                // Read all vertices
+                std::vector<float> verts(vertCount * 3);
+                for (size_t v = 0; v < vertCount; ++v) {
+                    verts[v*3] = positions[v*3];
+                    verts[v*3+1] = positions[v*3+1];
+                    verts[v*3+2] = positions[v*3+2];
+                }
+
+                // Read indices
+                std::vector<uint32_t> indices;
+                if (prim.indices >= 0) {
+                    const tinygltf::Accessor* idxAcc = getAccessor(prim.indices);
+                    const uint8_t* idxData = getBufferData(idxAcc);
+                    size_t idxCount = idxAcc->count;
+                    indices.resize(idxCount);
+                    if (idxAcc->componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT) {
+                        const uint16_t* idx16 = reinterpret_cast<const uint16_t*>(idxData);
+                        for (size_t i = 0; i < idxCount; ++i) indices[i] = idx16[i];
+                    } else if (idxAcc->componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT) {
+                        const uint32_t* idx32 = reinterpret_cast<const uint32_t*>(idxData);
+                        for (size_t i = 0; i < idxCount; ++i) indices[i] = idx32[i];
+                    } else if (idxAcc->componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE) {
+                        for (size_t i = 0; i < idxCount; ++i) indices[i] = idxData[i];
+                    }
+                }
+
+                // Compute bounds for shape estimation
+                float minX, maxX, minY, maxY, minZ, maxZ;
+                computeBounds(verts, minX, maxX, minY, maxY, minZ, maxZ);
+                float cx = (minX + maxX) / 2.0f;
+                float cy = (minY + maxY) / 2.0f;
+                float cz = (minZ + maxZ) / 2.0f;
+
+                DAOModelData::CollisionShape shape;
+                shape.name = mesh.name;
+                shape.posX = cx; shape.posY = cy; shape.posZ = cz;
+
+                switch (collisionType) {
+                    case 1: // Box - UBX_
+                        shape.type = DAOModelData::CollisionType::Box;
+                        shape.boxX = (maxX - minX) / 2.0f;
+                        shape.boxY = (maxY - minY) / 2.0f;
+                        shape.boxZ = (maxZ - minZ) / 2.0f;
+                        std::cout << "[GLB] Collision box: " << mesh.name << " size=("
+                                  << shape.boxX*2 << ", " << shape.boxY*2 << ", " << shape.boxZ*2 << ")" << std::endl;
+                        break;
+                    case 2: // Sphere - USP_
+                        shape.type = DAOModelData::CollisionType::Sphere;
+                        shape.radius = std::max({maxX-minX, maxY-minY, maxZ-minZ}) / 2.0f;
+                        std::cout << "[GLB] Collision sphere: " << mesh.name << " radius=" << shape.radius << std::endl;
+                        break;
+                    case 3: // Capsule - UCP_
+                        shape.type = DAOModelData::CollisionType::Capsule;
+                        // Capsule: height is along Z, radius from X/Y
+                        shape.height = maxZ - minZ;
+                        shape.radius = std::max(maxX-minX, maxY-minY) / 2.0f;
+                        std::cout << "[GLB] Collision capsule: " << mesh.name << " radius=" << shape.radius
+                                  << " height=" << shape.height << std::endl;
+                        break;
+                    case 4: // Convex mesh - UCX_
+                        shape.type = DAOModelData::CollisionType::Mesh;
+                        // Store raw mesh data, centered at origin
+                        for (size_t i = 0; i < verts.size(); i += 3) {
+                            shape.meshVerts.push_back(verts[i] - cx);
+                            shape.meshVerts.push_back(verts[i+1] - cy);
+                            shape.meshVerts.push_back(verts[i+2] - cz);
+                        }
+                        shape.meshIndices = indices;
+                        std::cout << "[GLB] Collision mesh: " << mesh.name << " verts=" << vertCount
+                                  << " tris=" << indices.size()/3 << std::endl;
+                        break;
+                }
+
+                outData.collisionShapes.push_back(shape);
+                continue; // Skip adding to regular mesh parts
+            }
+
             DAOModelData::MeshPart part;
-            part.name = mesh.name.empty() ? outData.name : CleanName(mesh.name);
+            // Use mesh name, add primitive index only if multiple primitives in same mesh
+            std::string baseName = mesh.name.empty() ? outData.name : CleanName(mesh.name);
+            if (mesh.primitives.size() > 1) {
+                part.name = baseName + "_" + std::to_string(primIdx);
+            } else {
+                part.name = baseName;
+            }
 
             if (prim.material >= 0 && prim.material < (int)outData.materials.size()) {
                 part.materialName = outData.materials[prim.material].name;
             } else if (!outData.materials.empty()) {
                 part.materialName = outData.materials[0].name;
             }
+
+            std::cout << "[GLB] Mesh " << meshIdx << " part " << primIdx << ": \"" << part.name
+                      << "\" material: \"" << part.materialName << "\"" << std::endl;
 
             auto getAccessor = [&](int idx) -> const tinygltf::Accessor* {
                 if (idx < 0 || idx >= (int)model.accessors.size()) return nullptr;
@@ -734,6 +955,66 @@ bool DAOImporter::LoadGLB(const std::string& path, DAOModelData& outData) {
         }
     }
 
+    // Debug: Print mesh bounding box and check orientation
+    float minX = FLT_MAX, minY = FLT_MAX, minZ = FLT_MAX;
+    float maxX = -FLT_MAX, maxY = -FLT_MAX, maxZ = -FLT_MAX;
+    for (const auto& part : outData.parts) {
+        for (const auto& v : part.vertices) {
+            minX = std::min(minX, v.x); maxX = std::max(maxX, v.x);
+            minY = std::min(minY, v.y); maxY = std::max(maxY, v.y);
+            minZ = std::min(minZ, v.z); maxZ = std::max(maxZ, v.z);
+        }
+    }
+
+    float xSize = maxX - minX;
+    float ySize = maxY - minY;
+    float zSize = maxZ - minZ;
+
+    std::cout << "\n[GLB] Mesh bounding box:" << std::endl;
+    std::cout << "  X: [" << minX << " to " << maxX << "] size=" << xSize << std::endl;
+    std::cout << "  Y: [" << minY << " to " << maxY << "] size=" << ySize << std::endl;
+    std::cout << "  Z: [" << minZ << " to " << maxZ << "] size=" << zSize << std::endl;
+
+    // Dragon Age expects Z-up coordinate system
+    // Check if model needs rotation correction
+    bool needsRotation = false;
+    float correctionQuat[4] = {0, 0, 0, 1}; // Identity
+
+    if (zSize > xSize * 1.5f && zSize > ySize * 1.5f) {
+        // Z is tallest - model is already Z-up (correct for DAO)
+        std::cout << "  [OK] Model is Z-up (correct orientation)" << std::endl;
+    } else if (ySize > xSize * 1.5f && ySize > zSize * 1.5f) {
+        // Y is tallest - model is Y-up (typical GLB from Blender)
+        // Need to rotate +90 degrees around X to convert Y-up to Z-up
+        std::cout << "  [FIX] Model is Y-up, applying +90° X rotation for Z-up" << std::endl;
+        // Quaternion for +90° around X: [sin(45°), 0, 0, cos(45°)] = [0.707, 0, 0, 0.707]
+        correctionQuat[0] = 0.7071068f; // x
+        correctionQuat[1] = 0.0f;       // y
+        correctionQuat[2] = 0.0f;       // z
+        correctionQuat[3] = 0.7071068f; // w
+        needsRotation = true;
+    } else if (xSize > ySize * 1.5f && xSize > zSize * 1.5f) {
+        // X is tallest - model is lying on its side
+        std::cout << "  [WARNING] Model has X as tallest axis (unusual orientation)" << std::endl;
+    } else {
+        // No dominant axis - might be a prop or non-humanoid, leave as-is
+        std::cout << "  [INFO] No dominant vertical axis, keeping original orientation" << std::endl;
+    }
+
+    // Apply rotation correction if needed
+    if (needsRotation) {
+        for (auto& part : outData.parts) {
+            for (auto& v : part.vertices) {
+                rotateByQuat(v.x, v.y, v.z, correctionQuat);
+                rotateByQuat(v.nx, v.ny, v.nz, correctionQuat);
+                rotateByQuat(v.tx, v.ty, v.tz, correctionQuat);
+            }
+        }
+        std::cout << "  [APPLIED] Rotation correction applied to all vertices" << std::endl;
+    }
+
+    std::cout << "=== END GLB DEBUG ===\n" << std::endl;
+
     return !outData.parts.empty();
 }
 
@@ -743,86 +1024,75 @@ bool DAOImporter::WriteMSHXml(const fs::path& outputPath, const DAOModelData& mo
 
     out << std::fixed << std::setprecision(6);
 
-    size_t totalVerts = 0, totalIndices = 0;
-    bool hasSkinning = false;
-
-    for (const auto& part : model.parts) {
-        totalVerts += part.vertices.size();
-        totalIndices += part.indices.size();
-        if (part.hasSkinning) hasSkinning = true;
-    }
-
-    std::cout << "[MSH XML] Vertices: " << totalVerts << ", Indices: " << totalIndices
-              << ", Skinning: " << (hasSkinning ? "yes" : "no") << std::endl;
+    std::cout << "[MSH XML] Writing " << model.parts.size() << " mesh groups" << std::endl;
 
     out << "<?xml version=\"1.0\" ?>\n";
     out << "<ModelMeshData Name=\"" << model.name << ".MSH\" Version=\"1\">\n";
-    out << "<MeshGroup Name=\"" << model.name << "\" Optimize=\"All\">\n";
 
-    out << "<Data ElementCount=\"" << totalVerts << "\" Semantic=\"POSITION\" Type=\"Float4\">\n<![CDATA[\n";
-    for (const auto& part : model.parts)
+    // Write each part as a separate MeshGroup
+    for (size_t partIdx = 0; partIdx < model.parts.size(); ++partIdx) {
+        const auto& part = model.parts[partIdx];
+        size_t vertCount = part.vertices.size();
+        size_t idxCount = part.indices.size();
+
+        std::cout << "[MSH XML] Part " << partIdx << ": \"" << part.name << "\" verts=" << vertCount
+                  << " indices=" << idxCount << " skinning=" << (part.hasSkinning ? "yes" : "no") << std::endl;
+
+        out << "<MeshGroup Name=\"" << part.name << "\" Optimize=\"All\">\n";
+
+        out << "<Data ElementCount=\"" << vertCount << "\" Semantic=\"POSITION\" Type=\"Float4\">\n<![CDATA[\n";
         for (const auto& v : part.vertices)
             out << v.x << " " << v.y << " " << v.z << " 1.0\n";
-    out << "]]>\n</Data>\n";
+        out << "]]>\n</Data>\n";
 
-    out << "<Data ElementCount=\"" << totalVerts << "\" Semantic=\"TEXCOORD\" Type=\"Float2\">\n<![CDATA[\n";
-    for (const auto& part : model.parts)
+        out << "<Data ElementCount=\"" << vertCount << "\" Semantic=\"TEXCOORD\" Type=\"Float2\">\n<![CDATA[\n";
         for (const auto& v : part.vertices)
             out << v.u << " " << (1.0f - v.v) << "\n";
-    out << "]]>\n</Data>\n";
+        out << "]]>\n</Data>\n";
 
-    out << "<Data ElementCount=\"" << totalVerts << "\" Semantic=\"TANGENT\" Type=\"Float4\">\n<![CDATA[\n";
-    for (const auto& part : model.parts)
+        out << "<Data ElementCount=\"" << vertCount << "\" Semantic=\"TANGENT\" Type=\"Float4\">\n<![CDATA[\n";
         for (const auto& v : part.vertices)
             out << v.tx << " " << v.ty << " " << v.tz << " 1.0\n";
-    out << "]]>\n</Data>\n";
+        out << "]]>\n</Data>\n";
 
-    out << "<Data ElementCount=\"" << totalVerts << "\" Semantic=\"BINORMAL\" Type=\"Float4\">\n<![CDATA[\n";
-    for (const auto& part : model.parts) {
+        out << "<Data ElementCount=\"" << vertCount << "\" Semantic=\"BINORMAL\" Type=\"Float4\">\n<![CDATA[\n";
         for (const auto& v : part.vertices) {
             float bx = v.ny * v.tz - v.nz * v.ty;
             float by = v.nz * v.tx - v.nx * v.tz;
             float bz = v.nx * v.ty - v.ny * v.tx;
             out << (bx * v.tw) << " " << (by * v.tw) << " " << (bz * v.tw) << " 1.0\n";
         }
-    }
-    out << "]]>\n</Data>\n";
+        out << "]]>\n</Data>\n";
 
-    out << "<Data ElementCount=\"" << totalVerts << "\" Semantic=\"NORMAL\" Type=\"Float4\">\n<![CDATA[\n";
-    for (const auto& part : model.parts)
+        out << "<Data ElementCount=\"" << vertCount << "\" Semantic=\"NORMAL\" Type=\"Float4\">\n<![CDATA[\n";
         for (const auto& v : part.vertices)
             out << v.nx << " " << v.ny << " " << v.nz << " 1.0\n";
-    out << "]]>\n</Data>\n";
+        out << "]]>\n</Data>\n";
 
-    if (hasSkinning) {
-        out << "<Data ElementCount=\"" << totalVerts << "\" Semantic=\"BLENDWEIGHT\" Type=\"Float4\">\n<![CDATA[\n";
-        for (const auto& part : model.parts)
+        if (part.hasSkinning) {
+            out << "<Data ElementCount=\"" << vertCount << "\" Semantic=\"BLENDWEIGHT\" Type=\"Float4\">\n<![CDATA[\n";
             for (const auto& v : part.vertices)
                 out << v.boneWeights[0] << " " << v.boneWeights[1] << " "
                     << v.boneWeights[2] << " " << v.boneWeights[3] << "\n";
-        out << "]]>\n</Data>\n";
+            out << "]]>\n</Data>\n";
 
-        out << "<Data ElementCount=\"" << totalVerts << "\" Semantic=\"BLENDINDICES\" Type=\"Short4\">\n<![CDATA[\n";
-        for (const auto& part : model.parts)
+            out << "<Data ElementCount=\"" << vertCount << "\" Semantic=\"BLENDINDICES\" Type=\"Short4\">\n<![CDATA[\n";
             for (const auto& v : part.vertices)
                 out << v.boneIndices[0] << " " << v.boneIndices[1] << " "
                     << v.boneIndices[2] << " " << v.boneIndices[3] << "\n";
-        out << "]]>\n</Data>\n";
-    }
-
-    out << "<Data IndexCount=\"" << totalIndices << "\" IndexType=\"Index32\" Semantic=\"Indices\">\n<![CDATA[\n";
-    uint32_t indexOffset = 0;
-    for (const auto& part : model.parts) {
-        for (size_t i = 0; i + 2 < part.indices.size(); i += 3) {
-            out << (part.indices[i] + indexOffset) << " "
-                << (part.indices[i + 1] + indexOffset) << " "
-                << (part.indices[i + 2] + indexOffset) << "\n";
+            out << "]]>\n</Data>\n";
         }
-        indexOffset += static_cast<uint32_t>(part.vertices.size());
-    }
-    out << "]]>\n</Data>\n";
 
-    out << "</MeshGroup>\n</ModelMeshData>\n";
+        out << "<Data IndexCount=\"" << idxCount << "\" IndexType=\"Index32\" Semantic=\"Indices\">\n<![CDATA[\n";
+        for (size_t i = 0; i + 2 < part.indices.size(); i += 3) {
+            out << part.indices[i] << " " << part.indices[i + 1] << " " << part.indices[i + 2] << "\n";
+        }
+        out << "]]>\n</Data>\n";
+
+        out << "</MeshGroup>\n";
+    }
+
+    out << "</ModelMeshData>\n";
     out.flush();
     return out.good();
 }
@@ -863,49 +1133,77 @@ bool DAOImporter::WriteMMHXml(const fs::path& outputPath, const DAOModelData& mo
             out << indent << "</Node>\n";
         };
 
-        out << "  <Node Name=\"GOB\" SoundMaterialType=\"0\">\n";
-        out << "    <Translation>0 0 0</Translation>\n";
-        out << "    <Rotation>0 0 0 1</Rotation>\n";
-
+        // Check if model already has a root GOB bone
+        bool hasGOB = false;
+        int gobBoneIdx = -1;
         for (size_t i = 0; i < model.skeleton.bones.size(); ++i) {
-            if (model.skeleton.bones[i].parentIndex == -1) {
-                writeBone(static_cast<int>(i), 2);
+            if (model.skeleton.bones[i].name == "GOB" && model.skeleton.bones[i].parentIndex == -1) {
+                hasGOB = true;
+                gobBoneIdx = static_cast<int>(i);
+                break;
             }
         }
 
-        std::set<int> allBonesUsed;
-        for (const auto& part : model.parts) {
-            for (int bi : part.bonesUsed) allBonesUsed.insert(bi);
-        }
+        if (hasGOB) {
+            // Model has GOB - write skeleton starting from GOB
+            writeBone(gobBoneIdx, 1);
+        } else {
+            // No GOB - create wrapper
+            out << "  <Node Name=\"GOB\" SoundMaterialType=\"0\">\n";
+            out << "    <Translation>0 0 0</Translation>\n";
+            out << "    <Rotation>0 0 0 1</Rotation>\n";
 
-        out << "    <NodeMesh Name=\"" << model.name << "\" ";
-        if (!allBonesUsed.empty()) {
-            out << "BonesUsed=\"";
-            bool first = true;
-            for (int bi : allBonesUsed) {
-                if (!first) out << " ";
-                out << bi;
-                first = false;
+            for (size_t i = 0; i < model.skeleton.bones.size(); ++i) {
+                if (model.skeleton.bones[i].parentIndex == -1) {
+                    writeBone(static_cast<int>(i), 2);
+                }
             }
-            out << "\" ";
         }
-        out << "MeshGroupName=\"" << model.name << "\" ";
-        out << "MaterialObject=\"" << materialName << "\" ";
-        out << "CastRuntimeShadow=\"1\" ReceiveRuntimeShadow=\"1\">\n";
-        out << "      <Translation>0 0 0</Translation>\n";
-        out << "      <Rotation>0 0 0 1</Rotation>\n";
-        out << "    </NodeMesh>\n";
 
-        out << "  </Node>\n";
+        int meshIndent = hasGOB ? 2 : 4;
+        std::string meshIndentStr(meshIndent, ' ');
+
+        // Output one NodeMesh per mesh part (each with its own material)
+        for (size_t partIdx = 0; partIdx < model.parts.size(); ++partIdx) {
+            const auto& part = model.parts[partIdx];
+
+            // Get bones used by this specific part
+            std::set<int> partBonesUsed(part.bonesUsed.begin(), part.bonesUsed.end());
+
+            out << meshIndentStr << "<NodeMesh Name=\"" << part.name << "\" ";
+            if (!partBonesUsed.empty()) {
+                out << "BonesUsed=\"";
+                bool first = true;
+                for (int bi : partBonesUsed) {
+                    if (!first) out << " ";
+                    out << bi;
+                    first = false;
+                }
+                out << "\" ";
+            }
+            out << "MeshGroupName=\"" << part.name << "\" ";
+            out << "MaterialObject=\"" << part.materialName << "\" ";
+            out << "CastRuntimeShadow=\"1\" ReceiveRuntimeShadow=\"1\">\n";
+            out << meshIndentStr << "  <Translation>0 0 0</Translation>\n";
+            out << meshIndentStr << "  <Rotation>0 0 0 1</Rotation>\n";
+            out << meshIndentStr << "</NodeMesh>\n";
+        }
+
+        if (!hasGOB) {
+            out << "  </Node>\n";
+        }
     } else {
-        // Non-skinned mesh - use NodeMesh directly
-        out << "  <NodeMesh Name=\"" << model.name << "\" ";
-        out << "MeshGroupName=\"" << model.name << "\" ";
-        out << "MaterialObject=\"" << materialName << "\" ";
-        out << "CastRuntimeShadow=\"1\" ReceiveRuntimeShadow=\"1\">\n";
-        out << "    <Translation>0 0 0</Translation>\n";
-        out << "    <Rotation>0 0 0 1</Rotation>\n";
-        out << "  </NodeMesh>\n";
+        // Non-skinned mesh - output one NodeMesh per part
+        for (size_t partIdx = 0; partIdx < model.parts.size(); ++partIdx) {
+            const auto& part = model.parts[partIdx];
+            out << "  <NodeMesh Name=\"" << part.name << "\" ";
+            out << "MeshGroupName=\"" << part.name << "\" ";
+            out << "MaterialObject=\"" << part.materialName << "\" ";
+            out << "CastRuntimeShadow=\"1\" ReceiveRuntimeShadow=\"1\">\n";
+            out << "    <Translation>0 0 0</Translation>\n";
+            out << "    <Rotation>0 0 0 1</Rotation>\n";
+            out << "  </NodeMesh>\n";
+        }
     }
 
     out << "</ModelHierarchy>\n";
@@ -1089,4 +1387,70 @@ bool DAOImporter::RepackERF(const std::string& erfPath, const std::map<std::stri
 
     std::cout << "[RepackERF] SUCCESS (" << newErfData.size() << " bytes)" << std::endl;
     return true;
+}
+
+// Generate PHY file (GFF format) from collision shapes
+std::vector<uint8_t> DAOImporter::GeneratePHY(const DAOModelData& model) {
+    if (model.collisionShapes.empty()) return {};
+
+    // GFF V4.0 format helper functions
+    auto writeU32 = [](std::vector<uint8_t>& buf, uint32_t val) {
+        buf.push_back(val & 0xFF);
+        buf.push_back((val >> 8) & 0xFF);
+        buf.push_back((val >> 16) & 0xFF);
+        buf.push_back((val >> 24) & 0xFF);
+    };
+    auto writeU16 = [](std::vector<uint8_t>& buf, uint16_t val) {
+        buf.push_back(val & 0xFF);
+        buf.push_back((val >> 8) & 0xFF);
+    };
+    auto writeFloat = [](std::vector<uint8_t>& buf, float val) {
+        uint32_t bits;
+        std::memcpy(&bits, &val, 4);
+        buf.push_back(bits & 0xFF);
+        buf.push_back((bits >> 8) & 0xFF);
+        buf.push_back((bits >> 16) & 0xFF);
+        buf.push_back((bits >> 24) & 0xFF);
+    };
+
+    std::vector<uint8_t> data;
+
+    // GFF V4.0 Header (16 bytes)
+    data.push_back('G'); data.push_back('F'); data.push_back('F'); data.push_back(' ');
+    data.push_back('V'); data.push_back('4'); data.push_back('.'); data.push_back('0');
+    data.push_back('P'); data.push_back('C'); data.push_back(' '); data.push_back(' ');
+    writeU32(data, 0); // Platform flags
+
+    // For a minimal PHY, we need struct/field definitions
+    // This is a simplified version - full GFF is complex
+
+    // For now, just log that we're generating collision data
+    std::cout << "[PHY] Generating collision data for " << model.collisionShapes.size() << " shapes" << std::endl;
+    for (const auto& shape : model.collisionShapes) {
+        switch (shape.type) {
+            case DAOModelData::CollisionType::Box:
+                std::cout << "  - Box: " << shape.name << " at (" << shape.posX << "," << shape.posY << "," << shape.posZ
+                          << ") size=(" << shape.boxX*2 << "," << shape.boxY*2 << "," << shape.boxZ*2 << ")" << std::endl;
+                break;
+            case DAOModelData::CollisionType::Sphere:
+                std::cout << "  - Sphere: " << shape.name << " at (" << shape.posX << "," << shape.posY << "," << shape.posZ
+                          << ") radius=" << shape.radius << std::endl;
+                break;
+            case DAOModelData::CollisionType::Capsule:
+                std::cout << "  - Capsule: " << shape.name << " at (" << shape.posX << "," << shape.posY << "," << shape.posZ
+                          << ") radius=" << shape.radius << " height=" << shape.height << std::endl;
+                break;
+            case DAOModelData::CollisionType::Mesh:
+                std::cout << "  - Mesh: " << shape.name << " at (" << shape.posX << "," << shape.posY << "," << shape.posZ
+                          << ") verts=" << shape.meshVerts.size()/3 << " tris=" << shape.meshIndices.size()/3 << std::endl;
+                break;
+        }
+    }
+
+    // TODO: Full GFF PHY generation requires proper struct/field encoding
+    // For now, return empty - this is a placeholder for future implementation
+    // The collision shapes are stored in modelData.collisionShapes and can be
+    // used by the game's physics system if a proper PHY writer is implemented
+
+    return {}; // Return empty for now - PHY generation is complex
 }

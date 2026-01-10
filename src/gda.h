@@ -5,49 +5,27 @@
 #include <cstdint>
 #include <variant>
 #include <filesystem>
-#include <memory>
 
 namespace fs = std::filesystem;
 
-enum class GDAColumnType {
-    Int,
-    Float,
-    String,
-    Resource,
-    Bool
+enum class GDAType {
+    String = 0,
+    Int = 1,
+    Float = 2,
+    Bool = 3,
+    Resource = 4
 };
-
-using GDAValue = std::variant<int32_t, float, std::string, bool>;
 
 struct GDAColumn {
-    std::string name;
     uint32_t hash;
-    GDAColumnType type;
-    uint16_t flags;
-    uint32_t offset;
-    uint32_t size;
+    GDAType type;
+    std::string name;
 };
+
+using GDAValue = std::variant<std::string, int32_t, float, bool>;
 
 struct GDARow {
-    int32_t id;
     std::vector<GDAValue> values;
-};
-
-struct GDATable {
-    std::string name;
-    std::string sourceFile;
-    std::vector<GDAColumn> columns;
-    std::vector<GDARow> rows;
-
-    int findColumn(const std::string& name) const;
-    GDAValue getValue(int rowIndex, int colIndex) const;
-    GDAValue getValue(int rowIndex, const std::string& colName) const;
-    bool setValue(int rowIndex, int colIndex, const GDAValue& value);
-    bool setValue(int rowIndex, const std::string& colName, const GDAValue& value);
-    int findRowById(int32_t id) const;
-    int addRow(int32_t id);
-    bool removeRow(int rowIndex);
-    int32_t getNextAvailableId() const;
 };
 
 class GDAFile {
@@ -55,44 +33,31 @@ public:
     GDAFile();
     ~GDAFile();
 
-    bool load(const std::string& path);
     bool load(const std::vector<uint8_t>& data, const std::string& name = "");
-    bool save(const std::string& path);
-    std::vector<uint8_t> saveToMemory();
 
-    GDATable& table() { return m_table; }
-    const GDATable& table() const { return m_table; }
+    const std::vector<GDAColumn>& columns() const { return m_columns; }
+    const std::vector<GDARow>& rows() const { return m_rows; }
+    std::vector<GDARow>& rows() { return m_rows; }
 
     bool isLoaded() const { return m_loaded; }
     bool isModified() const { return m_modified; }
-    void setModified(bool modified) { m_modified = modified; }
+    void setModified(bool m) { m_modified = m; }
 
-    static bool createBackup(const std::string& gdaPath, const std::string& backupDir);
-    static bool restoreBackup(const std::string& gdaPath, const std::string& backupDir);
-    static bool backupExists(const std::string& gdaPath, const std::string& backupDir);
-    static std::string getBackupPath(const std::string& gdaPath, const std::string& backupDir);
+    const std::string& name() const { return m_name; }
 
-private:
-    bool parseGFF(const std::vector<uint8_t>& data);
-    std::vector<uint8_t> buildGFF();
+    int findColumn(const std::string& name) const;
+
     static uint32_t hashColumnName(const std::string& name);
 
-    GDATable m_table;
-    bool m_loaded;
-    bool m_modified;
-    std::vector<uint8_t> m_rawData;
-};
+private:
+    bool parseGDA(const std::vector<uint8_t>& data);
+    std::string readString(const std::vector<uint8_t>& data, uint32_t offset);
 
-struct ItemVariation {
-    int32_t id;
-    std::string label;
-    std::string modelType;
-    std::string modelSubType;
-    std::string modelVariation;
-    std::string iconName;
-    int32_t defaultMaterial;
-};
+    std::vector<GDAColumn> m_columns;
+    std::vector<GDARow> m_rows;
+    std::string m_name;
+    bool m_loaded = false;
+    bool m_modified = false;
 
-std::vector<std::string> getItemVariationTypes();
-ItemVariation parseItemVariationRow(const GDATable& table, int rowIndex);
-bool createItemVariationRow(GDATable& table, const ItemVariation& variation);
+    static const std::map<uint32_t, std::string> s_knownColumns;
+};

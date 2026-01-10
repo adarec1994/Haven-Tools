@@ -72,7 +72,168 @@ static int findSkeletonBone(const Skeleton& skeleton, const std::string& name) {
     return -1;
 }
 
-bool exportToGLB(const Model& model, const std::vector<Animation>& animations, const std::string& outputPath) {
+// Helper to generate box collision mesh vertices and indices
+static void generateBoxMesh(float hx, float hy, float hz,
+                            std::vector<float>& outVerts, std::vector<uint32_t>& outIndices) {
+    // 8 vertices of a box centered at origin with half-extents hx, hy, hz
+    float v[8][3] = {
+        {-hx, -hy, -hz}, { hx, -hy, -hz}, { hx,  hy, -hz}, {-hx,  hy, -hz},
+        {-hx, -hy,  hz}, { hx, -hy,  hz}, { hx,  hy,  hz}, {-hx,  hy,  hz}
+    };
+    for (int i = 0; i < 8; i++) {
+        outVerts.push_back(v[i][0]);
+        outVerts.push_back(v[i][1]);
+        outVerts.push_back(v[i][2]);
+    }
+    // 12 triangles (6 faces * 2 triangles)
+    uint32_t idx[] = {
+        0,1,2, 0,2,3, // front
+        4,6,5, 4,7,6, // back
+        0,4,5, 0,5,1, // bottom
+        2,6,7, 2,7,3, // top
+        0,3,7, 0,7,4, // left
+        1,5,6, 1,6,2  // right
+    };
+    for (int i = 0; i < 36; i++) outIndices.push_back(idx[i]);
+}
+
+// Helper to generate sphere collision mesh (UV sphere approximation)
+static void generateSphereMesh(float radius, std::vector<float>& outVerts, std::vector<uint32_t>& outIndices) {
+    const int segments = 16;
+    const int rings = 8;
+
+    // Top vertex
+    outVerts.push_back(0); outVerts.push_back(0); outVerts.push_back(radius);
+
+    for (int r = 1; r < rings; r++) {
+        float phi = 3.14159f * r / rings;
+        float z = radius * std::cos(phi);
+        float ringRadius = radius * std::sin(phi);
+        for (int s = 0; s < segments; s++) {
+            float theta = 2.0f * 3.14159f * s / segments;
+            outVerts.push_back(ringRadius * std::cos(theta));
+            outVerts.push_back(ringRadius * std::sin(theta));
+            outVerts.push_back(z);
+        }
+    }
+
+    // Bottom vertex
+    outVerts.push_back(0); outVerts.push_back(0); outVerts.push_back(-radius);
+
+    // Top cap
+    for (int s = 0; s < segments; s++) {
+        outIndices.push_back(0);
+        outIndices.push_back(1 + s);
+        outIndices.push_back(1 + (s + 1) % segments);
+    }
+
+    // Middle rings
+    for (int r = 0; r < rings - 2; r++) {
+        int ringStart = 1 + r * segments;
+        int nextRingStart = 1 + (r + 1) * segments;
+        for (int s = 0; s < segments; s++) {
+            int s1 = (s + 1) % segments;
+            outIndices.push_back(ringStart + s);
+            outIndices.push_back(nextRingStart + s);
+            outIndices.push_back(nextRingStart + s1);
+            outIndices.push_back(ringStart + s);
+            outIndices.push_back(nextRingStart + s1);
+            outIndices.push_back(ringStart + s1);
+        }
+    }
+
+    // Bottom cap
+    int lastVert = 1 + (rings - 1) * segments;
+    int lastRingStart = 1 + (rings - 2) * segments;
+    for (int s = 0; s < segments; s++) {
+        outIndices.push_back(lastVert);
+        outIndices.push_back(lastRingStart + (s + 1) % segments);
+        outIndices.push_back(lastRingStart + s);
+    }
+}
+
+// Helper to generate capsule collision mesh
+static void generateCapsuleMesh(float radius, float height,
+                                std::vector<float>& outVerts, std::vector<uint32_t>& outIndices) {
+    const int segments = 16;
+    const int capRings = 4;
+    float halfHeight = height / 2.0f;
+
+    // Top hemisphere
+    outVerts.push_back(0); outVerts.push_back(0); outVerts.push_back(halfHeight + radius);
+    for (int r = 1; r <= capRings; r++) {
+        float phi = 3.14159f / 2.0f * r / capRings;
+        float z = halfHeight + radius * std::cos(phi);
+        float ringRadius = radius * std::sin(phi);
+        for (int s = 0; s < segments; s++) {
+            float theta = 2.0f * 3.14159f * s / segments;
+            outVerts.push_back(ringRadius * std::cos(theta));
+            outVerts.push_back(ringRadius * std::sin(theta));
+            outVerts.push_back(z);
+        }
+    }
+
+    // Bottom hemisphere
+    for (int r = 0; r < capRings; r++) {
+        float phi = 3.14159f / 2.0f + 3.14159f / 2.0f * r / capRings;
+        float z = -halfHeight + radius * std::cos(phi);
+        float ringRadius = radius * std::sin(phi);
+        for (int s = 0; s < segments; s++) {
+            float theta = 2.0f * 3.14159f * s / segments;
+            outVerts.push_back(ringRadius * std::cos(theta));
+            outVerts.push_back(ringRadius * std::sin(theta));
+            outVerts.push_back(z);
+        }
+    }
+    outVerts.push_back(0); outVerts.push_back(0); outVerts.push_back(-halfHeight - radius);
+
+    // Generate indices
+    int totalRings = capRings * 2;
+    for (int s = 0; s < segments; s++) {
+        outIndices.push_back(0);
+        outIndices.push_back(1 + s);
+        outIndices.push_back(1 + (s + 1) % segments);
+    }
+    for (int r = 0; r < totalRings - 1; r++) {
+        int ringStart = 1 + r * segments;
+        int nextRingStart = 1 + (r + 1) * segments;
+        for (int s = 0; s < segments; s++) {
+            int s1 = (s + 1) % segments;
+            outIndices.push_back(ringStart + s);
+            outIndices.push_back(nextRingStart + s);
+            outIndices.push_back(nextRingStart + s1);
+            outIndices.push_back(ringStart + s);
+            outIndices.push_back(nextRingStart + s1);
+            outIndices.push_back(ringStart + s1);
+        }
+    }
+    int lastVert = 1 + totalRings * segments;
+    int lastRingStart = 1 + (totalRings - 1) * segments;
+    for (int s = 0; s < segments; s++) {
+        outIndices.push_back(lastVert);
+        outIndices.push_back(lastRingStart + (s + 1) % segments);
+        outIndices.push_back(lastRingStart + s);
+    }
+}
+
+// Helper to apply transform to vertices
+static void transformVerts(std::vector<float>& verts, float px, float py, float pz,
+                           float qx, float qy, float qz, float qw) {
+    for (size_t i = 0; i < verts.size(); i += 3) {
+        float x = verts[i], y = verts[i+1], z = verts[i+2];
+        float tx = 2.0f * (qy * z - qz * y);
+        float ty = 2.0f * (qz * x - qx * z);
+        float tz = 2.0f * (qx * y - qy * x);
+        float nx = x + qw * tx + (qy * tz - qz * ty);
+        float ny = y + qw * ty + (qz * tx - qx * tz);
+        float nz = z + qw * tz + (qx * ty - qy * tx);
+        verts[i] = nx + px;
+        verts[i+1] = ny + py;
+        verts[i+2] = nz + pz;
+    }
+}
+
+bool exportToGLB(const Model& model, const std::vector<Animation>& animations, const std::string& outputPath, const ExportOptions& options) {
     if (model.meshes.empty()) return false;
 
     std::vector<uint8_t> binBuffer;
@@ -204,6 +365,93 @@ bool exportToGLB(const Model& model, const std::vector<Animation>& animations, c
         accessors.push_back({idxView, use32bit ? COMPONENT_TYPE_UNSIGNED_INT : COMPONENT_TYPE_UNSIGNED_SHORT, (int)mesh.indices.size(), "SCALAR", {}, {}, 0});
 
         meshExports.push_back(md);
+    }
+
+    // Export collision shapes as meshes with UE naming convention
+    struct CollisionMeshData { std::string name; int posAcc, idxAcc; };
+    std::vector<CollisionMeshData> collisionExports;
+
+    if (options.includeCollision && !model.collisionShapes.empty()) {
+        // Get base model name for collision mesh naming
+        std::string baseName = model.name;
+        size_t dotPos = baseName.rfind('.');
+        if (dotPos != std::string::npos) baseName = baseName.substr(0, dotPos);
+
+        int boxCount = 0, sphereCount = 0, capsuleCount = 0, meshCount = 0;
+
+        for (const auto& shape : model.collisionShapes) {
+            std::vector<float> verts;
+            std::vector<uint32_t> indices;
+            std::string collisionName;
+
+            switch (shape.type) {
+                case CollisionShapeType::Box:
+                    generateBoxMesh(shape.boxX, shape.boxY, shape.boxZ, verts, indices);
+                    collisionName = "UBX_" + baseName + "_" + std::to_string(boxCount++);
+                    break;
+                case CollisionShapeType::Sphere:
+                    generateSphereMesh(shape.radius, verts, indices);
+                    collisionName = "USP_" + baseName + "_" + std::to_string(sphereCount++);
+                    break;
+                case CollisionShapeType::Capsule:
+                    generateCapsuleMesh(shape.radius, shape.height, verts, indices);
+                    collisionName = "UCP_" + baseName + "_" + std::to_string(capsuleCount++);
+                    break;
+                case CollisionShapeType::Mesh:
+                    // Use existing mesh vertices
+                    verts = shape.meshVerts;
+                    indices = shape.meshIndices;
+                    collisionName = "UCX_" + baseName + "_" + std::to_string(meshCount++);
+                    break;
+            }
+
+            if (verts.empty() || indices.empty()) continue;
+
+            // Apply shape transform (position and rotation)
+            if (!shape.meshVertsWorldSpace) {
+                transformVerts(verts, shape.posX, shape.posY, shape.posZ,
+                              shape.rotX, shape.rotY, shape.rotZ, shape.rotW);
+            }
+
+            // Compute bounding box
+            float minPos[3] = {1e30f, 1e30f, 1e30f};
+            float maxPos[3] = {-1e30f, -1e30f, -1e30f};
+            for (size_t i = 0; i < verts.size(); i += 3) {
+                if (verts[i] < minPos[0]) minPos[0] = verts[i];
+                if (verts[i+1] < minPos[1]) minPos[1] = verts[i+1];
+                if (verts[i+2] < minPos[2]) minPos[2] = verts[i+2];
+                if (verts[i] > maxPos[0]) maxPos[0] = verts[i];
+                if (verts[i+1] > maxPos[1]) maxPos[1] = verts[i+1];
+                if (verts[i+2] > maxPos[2]) maxPos[2] = verts[i+2];
+            }
+
+            // Write position buffer
+            size_t posOff = binBuffer.size();
+            for (size_t i = 0; i < verts.size(); i++) {
+                writeFloat(binBuffer, verts[i]);
+            }
+            int posView = (int)bufferViews.size();
+            bufferViews.push_back({posOff, binBuffer.size() - posOff, TARGET_ARRAY_BUFFER});
+            int posAcc = (int)accessors.size();
+            accessors.push_back({posView, COMPONENT_TYPE_FLOAT, (int)(verts.size() / 3), "VEC3",
+                                {minPos[0], minPos[1], minPos[2]}, {maxPos[0], maxPos[1], maxPos[2]}, 3});
+
+            // Write index buffer
+            size_t idxOff = binBuffer.size();
+            bool use32bit = (verts.size() / 3) > 65535;
+            for (uint32_t idx : indices) {
+                if (use32bit) writeU32(binBuffer, idx);
+                else writeU16(binBuffer, (uint16_t)idx);
+            }
+            padTo4(binBuffer);
+            int idxView = (int)bufferViews.size();
+            bufferViews.push_back({idxOff, binBuffer.size() - idxOff, TARGET_ELEMENT_ARRAY_BUFFER});
+            int idxAcc = (int)accessors.size();
+            accessors.push_back({idxView, use32bit ? COMPONENT_TYPE_UNSIGNED_INT : COMPONENT_TYPE_UNSIGNED_SHORT,
+                                (int)indices.size(), "SCALAR", {}, {}, 0});
+
+            collisionExports.push_back({collisionName, posAcc, idxAcc});
+        }
     }
 
     int ibmAccessor = -1;
@@ -456,10 +704,14 @@ bool exportToGLB(const Model& model, const std::vector<Animation>& animations, c
         if (i > 0) json += ",";
         json += std::to_string(i + 1);
     }
+    // Add collision mesh nodes as children
+    for (size_t i = 0; i < collisionExports.size(); i++) {
+        json += "," + std::to_string(model.meshes.size() + 1 + i);
+    }
     if (hasSkeleton) {
         for (size_t i = 0; i < model.skeleton.bones.size(); i++) {
             if (model.skeleton.bones[i].parentIndex < 0) {
-                json += "," + std::to_string(model.meshes.size() + 1 + i);
+                json += "," + std::to_string(model.meshes.size() + 1 + collisionExports.size() + i);
             }
         }
     }
@@ -469,6 +721,13 @@ bool exportToGLB(const Model& model, const std::vector<Animation>& animations, c
         json += ",{\"name\":\"" + escapeJson(model.meshes[i].name.empty() ? "Mesh" + std::to_string(i) : model.meshes[i].name) + "\"";
         json += ",\"mesh\":" + std::to_string(i);
         if (meshExports[i].hasSkin) json += ",\"skin\":0";
+        json += "}";
+    }
+
+    // Add collision mesh nodes
+    for (size_t i = 0; i < collisionExports.size(); i++) {
+        json += ",{\"name\":\"" + escapeJson(collisionExports[i].name) + "\"";
+        json += ",\"mesh\":" + std::to_string(model.meshes.size() + i);
         json += "}";
     }
 
@@ -486,7 +745,7 @@ bool exportToGLB(const Model& model, const std::vector<Animation>& animations, c
                 json += ",\"children\":[";
                 for (size_t c = 0; c < children.size(); c++) {
                     if (c > 0) json += ",";
-                    json += std::to_string(model.meshes.size() + 1 + children[c]);
+                    json += std::to_string(model.meshes.size() + 1 + collisionExports.size() + children[c]);
                 }
                 json += "]";
             }
@@ -511,18 +770,25 @@ bool exportToGLB(const Model& model, const std::vector<Animation>& animations, c
         if (md.matIdx >= 0) json += ",\"material\":" + std::to_string(md.matIdx);
         json += "}]}";
     }
+    // Add collision meshes
+    for (size_t i = 0; i < collisionExports.size(); i++) {
+        json += ",{\"name\":\"" + escapeJson(collisionExports[i].name) + "\"";
+        json += ",\"primitives\":[{\"attributes\":{\"POSITION\":" + std::to_string(collisionExports[i].posAcc);
+        json += "},\"indices\":" + std::to_string(collisionExports[i].idxAcc);
+        json += "}]}";
+    }
     json += "],";
 
     if (hasSkeleton) {
         json += "\"skins\":[{\"inverseBindMatrices\":" + std::to_string(ibmAccessor) + ",\"joints\":[";
         for (size_t i = 0; i < model.skeleton.bones.size(); i++) {
             if (i > 0) json += ",";
-            json += std::to_string(model.meshes.size() + 1 + i);
+            json += std::to_string(model.meshes.size() + 1 + collisionExports.size() + i);
         }
         json += "]";
         for (size_t i = 0; i < model.skeleton.bones.size(); i++) {
             if (model.skeleton.bones[i].parentIndex < 0) {
-                json += ",\"skeleton\":" + std::to_string(model.meshes.size() + 1 + i);
+                json += ",\"skeleton\":" + std::to_string(model.meshes.size() + 1 + collisionExports.size() + i);
                 break;
             }
         }
@@ -551,7 +817,7 @@ bool exportToGLB(const Model& model, const std::vector<Animation>& animations, c
             for (size_t ci = 0; ci < ae.channels.size(); ci++) {
                 if (ci > 0) json += ",";
                 json += "{\"sampler\":" + std::to_string(ci);
-                json += ",\"target\":{\"node\":" + std::to_string(model.meshes.size() + 1 + ae.channels[ci].first);
+                json += ",\"target\":{\"node\":" + std::to_string(model.meshes.size() + 1 + collisionExports.size() + ae.channels[ci].first);
                 json += ",\"path\":\"" + ae.channels[ci].second + "\"}}";
             }
             json += "]";
@@ -645,7 +911,7 @@ bool exportToGLB(const Model& model, const std::vector<Animation>& animations, c
     out.write(reinterpret_cast<const char*>(&binLen), 4);
     out.write(reinterpret_cast<const char*>(&binType), 4);
     out.write(reinterpret_cast<const char*>(binBuffer.data()), binBuffer.size());
-    
+
     return out.good();
 }
 
@@ -684,7 +950,7 @@ struct Mat4 {
     }
 };
 
-bool exportToFBX(const Model& model, const std::vector<Animation>& animations, const std::string& outputPath) {
+bool exportToFBX(const Model& model, const std::vector<Animation>& animations, const std::string& outputPath, const ExportOptions& options) {
     if (model.meshes.empty()) return false;
 
     std::vector<uint8_t> output;

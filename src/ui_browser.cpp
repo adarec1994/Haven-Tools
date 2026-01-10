@@ -80,6 +80,153 @@ static bool isImportedModel(const std::string& modelName) {
     return s_importedModels.find(nameLower) != s_importedModels.end();
 }
 
+// Remove a model from the imported list
+static void unmarkModelAsImported(const std::string& modelName) {
+    loadImportedModels();
+
+    std::string nameLower = modelName;
+    std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), ::tolower);
+    s_importedModels.erase(nameLower);
+
+    saveImportedModels();
+}
+
+// Delete confirmation state
+static bool s_showDeleteConfirm = false;
+static std::string s_deleteModelName;
+static CachedEntry s_deleteEntry;
+
+// Helper to delete entries from an ERF file
+static bool deleteFromERF(const std::string& erfPath, const std::vector<std::string>& namesToDelete) {
+    if (!fs::exists(erfPath)) return false;
+
+    // Read entire ERF
+    std::vector<uint8_t> erfData;
+    {
+        std::ifstream in(erfPath, std::ios::binary | std::ios::ate);
+        if (!in) return false;
+        size_t size = in.tellg();
+        in.seekg(0);
+        erfData.resize(size);
+        in.read(reinterpret_cast<char*>(erfData.data()), size);
+    }
+
+    if (erfData.size() < 32) return false;
+
+    auto readU32 = [&](size_t offset) -> uint32_t {
+        if (offset + 4 > erfData.size()) return 0;
+        return *reinterpret_cast<uint32_t*>(&erfData[offset]);
+    };
+
+    auto readUtf16String = [&](size_t offset, size_t charCount) -> std::string {
+        std::string result;
+        for (size_t i = 0; i < charCount; ++i) {
+            size_t pos = offset + i * 2;
+            if (pos + 2 > erfData.size()) break;
+            uint16_t ch = *reinterpret_cast<uint16_t*>(&erfData[pos]);
+            if (ch == 0) break;
+            if (ch < 128) result += static_cast<char>(ch);
+        }
+        return result;
+    };
+
+    std::string magic = readUtf16String(0, 4);
+    if (magic != "ERF ") return false;
+
+    uint32_t fileCount = readU32(16);
+    uint32_t year = readU32(20);
+    uint32_t day = readU32(24);
+    uint32_t unknown = readU32(28);
+
+    // Build set of names to delete (lowercase)
+    std::set<std::string> deleteSet;
+    for (const auto& name : namesToDelete) {
+        std::string lower = name;
+        std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
+        deleteSet.insert(lower);
+    }
+
+    // Parse entries and filter out ones to delete
+    struct FileEntry { std::string name; uint32_t offset; uint32_t size; };
+    std::vector<FileEntry> keepEntries;
+
+    size_t tableOffset = 32;
+    for (uint32_t i = 0; i < fileCount; ++i) {
+        size_t entryOff = tableOffset + i * 72;
+        if (entryOff + 72 > erfData.size()) break;
+        FileEntry e;
+        e.name = readUtf16String(entryOff, 32);
+        e.offset = readU32(entryOff + 64);
+        e.size = readU32(entryOff + 68);
+
+        std::string nameLower = e.name;
+        std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), ::tolower);
+
+        if (deleteSet.find(nameLower) == deleteSet.end()) {
+            keepEntries.push_back(e);
+        } else {
+            std::cout << "[Delete] Removing: " << e.name << std::endl;
+        }
+    }
+
+    if (keepEntries.size() == fileCount) {
+        // Nothing was deleted
+        return false;
+    }
+
+    // Rebuild ERF with remaining entries
+    std::vector<uint8_t> newErf;
+    newErf.reserve(erfData.size());
+
+    // Write header (32 bytes)
+    for (int i = 0; i < 32; ++i) newErf.push_back(erfData[i]);
+
+    // Update file count
+    uint32_t newCount = static_cast<uint32_t>(keepEntries.size());
+    *reinterpret_cast<uint32_t*>(&newErf[16]) = newCount;
+
+    // Write file table
+    size_t dataStart = 32 + keepEntries.size() * 72;
+    uint32_t currentOffset = static_cast<uint32_t>(dataStart);
+
+    for (auto& e : keepEntries) {
+        // Entry: 64 bytes name (UTF-16) + 4 bytes offset + 4 bytes size = 72 bytes
+        for (size_t c = 0; c < 32; ++c) {
+            if (c < e.name.size()) {
+                newErf.push_back(static_cast<uint8_t>(e.name[c]));
+                newErf.push_back(0);
+            } else {
+                newErf.push_back(0);
+                newErf.push_back(0);
+            }
+        }
+
+        // Write offset and size
+        uint32_t newOffset = currentOffset;
+        for (int b = 0; b < 4; ++b) newErf.push_back((newOffset >> (b * 8)) & 0xFF);
+        for (int b = 0; b < 4; ++b) newErf.push_back((e.size >> (b * 8)) & 0xFF);
+
+        currentOffset += e.size;
+    }
+
+    // Write file data
+    for (const auto& e : keepEntries) {
+        if (e.offset + e.size <= erfData.size()) {
+            for (uint32_t i = 0; i < e.size; ++i) {
+                newErf.push_back(erfData[e.offset + i]);
+            }
+        }
+    }
+
+    // Write to file
+    std::ofstream out(erfPath, std::ios::binary);
+    if (!out) return false;
+    out.write(reinterpret_cast<const char*>(newErf.data()), newErf.size());
+
+    std::cout << "[Delete] ERF rebuilt: " << keepEntries.size() << " entries (was " << fileCount << ")" << std::endl;
+    return true;
+}
+
 void drawMeshBrowserWindow(AppState& state) {
     loadMeshDatabase(state);
     ImGui::SetNextWindowSize(ImVec2(400, 500), ImGuiCond_FirstUseEver);
@@ -736,6 +883,17 @@ void drawBrowserWindow(AppState& state) {
                     config.fileName = defaultName;
                     ImGuiFileDialog::Instance()->OpenDialog("ExportGLB", "Export as GLB", ".glb", config);
                 }
+                // Only show delete option for imported models
+                if (isImportedModel(ce.name)) {
+                    ImGui::Separator();
+                    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.3f, 0.3f, 1.0f));
+                    if (ImGui::MenuItem("Delete Imported Model...")) {
+                        s_deleteModelName = ce.name;
+                        s_deleteEntry = ce;
+                        s_showDeleteConfirm = true;
+                    }
+                    ImGui::PopStyleColor();
+                }
                 ImGui::EndPopup();
             }
             if (isTexture && ImGui::BeginPopupContextItem()) {
@@ -813,5 +971,83 @@ void drawBrowserWindow(AppState& state) {
             state.statusMessage = "Dumped " + std::to_string(count) + " files.";
         }
         ImGuiFileDialog::Instance()->Close();
+    }
+
+    // Delete confirmation popup
+    if (s_showDeleteConfirm) {
+        ImGui::OpenPopup("Delete Imported Model?");
+        s_showDeleteConfirm = false;
+    }
+
+    if (ImGui::BeginPopupModal("Delete Imported Model?", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+        ImGui::Text("Are you sure you want to delete:");
+        ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.4f, 1.0f), "%s", s_deleteModelName.c_str());
+        ImGui::Spacing();
+        ImGui::TextColored(ImVec4(1.0f, 0.3f, 0.3f, 1.0f), "This cannot be undone!");
+        ImGui::Spacing();
+        ImGui::Separator();
+        ImGui::Spacing();
+
+        if (ImGui::Button("Yes, Delete", ImVec2(120, 0))) {
+            // Get base name without extension
+            std::string baseName = s_deleteModelName;
+            size_t dotPos = baseName.rfind('.');
+            if (dotPos != std::string::npos) baseName = baseName.substr(0, dotPos);
+
+            int deletedCount = 0;
+
+            // Delete from modelmeshdata.erf
+            for (const auto& erfPath : state.erfFiles) {
+                std::string erfLower = erfPath;
+                std::transform(erfLower.begin(), erfLower.end(), erfLower.begin(), ::tolower);
+                if (erfLower.find("modelmeshdata.erf") != std::string::npos) {
+                    if (deleteFromERF(erfPath, {baseName + ".msh"})) {
+                        deletedCount++;
+                    }
+                    break;
+                }
+            }
+
+            // Delete from modelhierarchies.erf
+            for (const auto& erfPath : state.erfFiles) {
+                std::string erfLower = erfPath;
+                std::transform(erfLower.begin(), erfLower.end(), erfLower.begin(), ::tolower);
+                if (erfLower.find("modelhierarchies.erf") != std::string::npos) {
+                    if (deleteFromERF(erfPath, {baseName + ".mmh"})) {
+                        deletedCount++;
+                    }
+                    break;
+                }
+            }
+
+            // Remove from imported models list
+            unmarkModelAsImported(s_deleteModelName);
+
+            // Clear current model if it matches the deleted one
+            std::string currentModelLower = state.currentModel.name;
+            std::transform(currentModelLower.begin(), currentModelLower.end(), currentModelLower.begin(), ::tolower);
+            std::string deletedModelLower = s_deleteModelName;
+            std::transform(deletedModelLower.begin(), deletedModelLower.end(), deletedModelLower.begin(), ::tolower);
+            if (currentModelLower == deletedModelLower || currentModelLower == baseName + ".msh") {
+                state.currentModel = Model();
+                state.hasModel = false;
+            }
+
+            // Clear browser cache to force refresh
+            state.mergedEntries.clear();
+            state.filteredEntryIndices.clear();
+            state.lastContentFilter.clear();
+
+            state.statusMessage = "Deleted " + baseName + " (" + std::to_string(deletedCount) + " ERF files updated)";
+            ImGui::CloseCurrentPopup();
+        }
+
+        ImGui::SameLine();
+
+        if (ImGui::Button("No, Cancel", ImVec2(120, 0))) {
+            ImGui::CloseCurrentPopup();
+        }
+
+        ImGui::EndPopup();
     }
 }
