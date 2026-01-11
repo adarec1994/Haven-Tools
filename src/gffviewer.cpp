@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <sstream>
 #include <iomanip>
+#include <cstring>
 static bool containsCI(const std::string& haystack, const std::string& needle) {
     if (needle.empty()) return true;
     std::string h = haystack, n = needle;
@@ -161,7 +162,7 @@ static std::string gff4TypeName(uint16_t typeId, uint16_t flags) {
     bool isRef = (flags & FLAG_REFERENCE) != 0;
     std::string name;
     if (isStruct) {
-        name = "Struct";
+        name = "Struct[" + std::to_string(typeId) + "]";
     } else {
         switch (typeId) {
             case 0: name = "UINT8"; break;
@@ -174,13 +175,12 @@ static std::string gff4TypeName(uint16_t typeId, uint16_t flags) {
             case 7: name = "INT64"; break;
             case 8: name = "FLOAT32"; break;
             case 9: name = "FLOAT64"; break;
-            case 10: name = "Vector3"; break;
-            case 11: name = "Vector4"; break;
-            case 12: name = "Quaternion"; break;
-            case 13: name = "String"; break;
-            case 14: name = "String"; break;
-            case 15: name = "Color4"; break;
-            case 16: name = "Matrix4x4"; break;
+            case 10: name = "Vector3f"; break;
+            case 12: name = "Vector4f"; break;
+            case 13: name = "Quaternionf"; break;
+            case 14: name = "ECString"; break;
+            case 15: name = "Color4f"; break;
+            case 16: name = "Matrix4x4f"; break;
             case 17: name = "TlkString"; break;
             default: name = "Type" + std::to_string(typeId); break;
         }
@@ -195,7 +195,7 @@ static void buildTreeFromGff4Struct(GffViewerState& state, uint32_t structIndex,
     const GFFStruct& st = state.gff4->structs()[structIndex];
     for (size_t i = 0; i < st.fields.size(); ++i) {
         const GFFField& field = st.fields[i];
-        std::string label = std::to_string(field.label);  
+        std::string label = std::to_string(field.label);
         std::string path = basePath.empty() ? label : basePath + "." + label;
         GffViewerState::TreeNode node;
         node.label = label;
@@ -208,37 +208,114 @@ static void buildTreeFromGff4Struct(GffViewerState& state, uint32_t structIndex,
         bool isList = (field.flags & FLAG_LIST) != 0;
         bool isStruct = (field.flags & FLAG_STRUCT) != 0;
         bool isRef = (field.flags & FLAG_REFERENCE) != 0;
-        if (isStruct || isList) {
+
+        uint32_t embeddedStructIdx = field.typeId;
+
+        if (isList) {
             node.isExpandable = true;
-            if (isList) {
-                auto items = state.gff4->readStructList(structIndex, field.label, baseOffset);
-                node.childCount = items.size();
-                node.value = "List[" + std::to_string(items.size()) + "]";
-            } else if (isRef) {
-                auto ref = state.gff4->readStructRef(structIndex, field.label, baseOffset);
-                node.childCount = 1;
-                node.value = "Ref -> Struct " + std::to_string(ref.structIndex);
+            auto items = state.gff4->readStructList(structIndex, field.label, baseOffset);
+            node.childCount = items.size();
+            node.value = "List[" + std::to_string(items.size()) + "]";
+        } else if (isStruct && isRef) {
+            node.isExpandable = true;
+            auto ref = state.gff4->readStructRef(structIndex, field.label, baseOffset);
+            node.childCount = 1;
+            node.value = "Ref -> " + std::string(state.gff4->structs()[ref.structIndex].structType);
+        } else if (isStruct && !isRef) {
+            node.isExpandable = true;
+            uint32_t embStructOffset = baseOffset + field.dataOffset;
+            if (embeddedStructIdx < state.gff4->structs().size()) {
+                node.childCount = state.gff4->structs()[embeddedStructIdx].fields.size();
+                node.value = std::string(state.gff4->structs()[embeddedStructIdx].structType);
             } else {
-                node.childCount = 1;
-                node.value = "Embedded";
+                node.childCount = 0;
+                node.value = "Struct " + std::to_string(embeddedStructIdx);
             }
         } else {
             node.isExpandable = false;
             node.childCount = 0;
+            uint32_t dataPos = state.gff4->dataOffset() + baseOffset + field.dataOffset;
+            const auto& raw = state.gff4->rawData();
             switch (field.typeId) {
-                case 4: 
-                    node.value = std::to_string(state.gff4->readUInt32ByLabel(structIndex, field.label, baseOffset));
+                case 0:
+                    node.value = std::to_string(state.gff4->readUInt8At(dataPos));
                     break;
-                case 5: 
-                    node.value = std::to_string(state.gff4->readInt32ByLabel(structIndex, field.label, baseOffset));
+                case 1:
+                    node.value = std::to_string((int8_t)state.gff4->readUInt8At(dataPos));
                     break;
-                case 8: 
-                    node.value = std::to_string(state.gff4->readFloatByLabel(structIndex, field.label, baseOffset));
+                case 2:
+                    node.value = std::to_string(state.gff4->readUInt16At(dataPos));
                     break;
-                case 13: 
-                case 14: 
+                case 3:
+                    node.value = std::to_string(state.gff4->readInt16At(dataPos));
+                    break;
+                case 4:
+                    node.value = std::to_string(state.gff4->readUInt32At(dataPos));
+                    break;
+                case 5:
+                    node.value = std::to_string(state.gff4->readInt32At(dataPos));
+                    break;
+                case 6: {
+                    uint64_t val = 0;
+                    if (dataPos + 8 <= raw.size()) {
+                        std::memcpy(&val, &raw[dataPos], 8);
+                    }
+                    node.value = std::to_string(val);
+                    break;
+                }
+                case 7: {
+                    int64_t val = 0;
+                    if (dataPos + 8 <= raw.size()) {
+                        std::memcpy(&val, &raw[dataPos], 8);
+                    }
+                    node.value = std::to_string(val);
+                    break;
+                }
+                case 8:
+                    node.value = std::to_string(state.gff4->readFloatAt(dataPos));
+                    break;
+                case 9: {
+                    double val = 0;
+                    if (dataPos + 8 <= raw.size()) {
+                        std::memcpy(&val, &raw[dataPos], 8);
+                    }
+                    node.value = std::to_string(val);
+                    break;
+                }
+                case 10: {
+                    float x = state.gff4->readFloatAt(dataPos);
+                    float y = state.gff4->readFloatAt(dataPos + 4);
+                    float z = state.gff4->readFloatAt(dataPos + 8);
+                    std::ostringstream oss;
+                    oss << std::fixed << std::setprecision(3) << x << ", " << y << ", " << z;
+                    node.value = oss.str();
+                    break;
+                }
+                case 12:
+                case 13:
+                case 15: {
+                    float a = state.gff4->readFloatAt(dataPos);
+                    float b = state.gff4->readFloatAt(dataPos + 4);
+                    float c = state.gff4->readFloatAt(dataPos + 8);
+                    float d = state.gff4->readFloatAt(dataPos + 12);
+                    std::ostringstream oss;
+                    oss << std::fixed << std::setprecision(3) << a << ", " << b << ", " << c << ", " << d;
+                    node.value = oss.str();
+                    break;
+                }
+                case 14:
                     node.value = "\"" + state.gff4->readStringByLabel(structIndex, field.label, baseOffset) + "\"";
                     break;
+                case 16: {
+                    node.value = "Matrix4x4";
+                    break;
+                }
+                case 17: {
+                    uint32_t tlkLabel = state.gff4->readUInt32At(dataPos);
+                    uint32_t tlkOffset = state.gff4->readUInt32At(dataPos + 4);
+                    node.value = "TlkString(" + std::to_string(tlkLabel) + ")";
+                    break;
+                }
                 default:
                     node.value = "(type " + std::to_string(field.typeId) + ")";
                     break;
@@ -267,10 +344,15 @@ static void buildTreeFromGff4Struct(GffViewerState& state, uint32_t structIndex,
                         buildTreeFromGff4Struct(state, items[j].structIndex, items[j].offset, depth + 2, itemPath);
                     }
                 }
-            } else if (isRef) {
+            } else if (isStruct && isRef) {
                 auto ref = state.gff4->readStructRef(structIndex, field.label, baseOffset);
                 if (ref.structIndex < state.gff4->structs().size()) {
                     buildTreeFromGff4Struct(state, ref.structIndex, ref.offset, depth + 1, path);
+                }
+            } else if (isStruct && !isRef) {
+                uint32_t embStructOffset = baseOffset + field.dataOffset;
+                if (embeddedStructIdx < state.gff4->structs().size()) {
+                    buildTreeFromGff4Struct(state, embeddedStructIdx, embStructOffset, depth + 1, path);
                 }
             }
         }

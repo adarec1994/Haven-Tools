@@ -668,32 +668,19 @@ void drawBrowserWindow(AppState& state) {
             if (ImGui::Selectable(label, idx == state.selectedEntryIndex, ImGuiSelectableFlags_AllowDoubleClick)) {
                 state.selectedEntryIndex = idx;
                 if (ImGui::IsMouseDoubleClicked(0)) {
-                    if (isTerrainFile) {
-                        state.currentErf = std::make_unique<ERFFile>();
-                        state.currentErf->open(state.erfFiles[ce.erfIdx]);
-                        g_terrainLoader.clear();
-                        if (g_terrainLoader.loadFromERF(*state.currentErf, ce.name)) {
-                            g_terrainLoader.createGLBuffers();
-                            const auto& terrain = g_terrainLoader.getTerrain();
-                            size_t totalVerts = 0, totalTris = 0;
-                            for (const auto& sector : terrain.sectors) {
-                                totalVerts += sector.vertices.size();
-                                totalTris += sector.indices.size() / 3;
-                            }
-                            state.statusMessage = "Loaded terrain: " + std::to_string(terrain.sectors.size()) +
-                                                  " sectors, " + std::to_string(totalVerts) + " verts";
-                            state.showTerrain = true;
-                            state.currentModel = Model();
-                            state.showRenderSettings = true;
-                        } else {
-                            state.statusMessage = "Failed to load terrain";
-                        }
-                    } else {
-                        ERFFile erf;
-                        if (erf.open(state.erfFiles[ce.erfIdx])) {
-                            if (ce.entryIdx < erf.entries().size()) {
-                                const auto& entry = erf.entries()[ce.entryIdx];
-                                if (isModel) {
+                    ERFFile erf;
+                    if (erf.open(state.erfFiles[ce.erfIdx])) {
+                        if (ce.entryIdx < erf.entries().size()) {
+                            const auto& entry = erf.entries()[ce.entryIdx];
+                            if (isTerrainFile) {
+                                auto terrainData = erf.readEntry(entry);
+                                if (!terrainData.empty() && isGffData(terrainData)) {
+                                    if (loadGffData(state.gffViewer, terrainData, ce.name, state.erfFiles[ce.erfIdx])) {
+                                        state.gffViewer.showWindow = true;
+                                        state.statusMessage = "Opened TMSH: " + ce.name;
+                                    }
+                                }
+                            } else if (isModel) {
                                     state.showTerrain = false;
                                     if (state.showHeadSelector && state.pendingBodyMsh != ce.name) {
                                         state.showHeadSelector = false;
@@ -800,7 +787,6 @@ void drawBrowserWindow(AppState& state) {
                         }
                     }
                 }
-            }
             bool isAudio = (state.selectedErfName == "[Audio]" || state.selectedErfName == "[VoiceOver]") &&
                            (ce.name.size() > 4 && (ce.name.substr(ce.name.size() - 4) == ".fsb" ));
             if (isAudio && ImGui::IsMouseDoubleClicked(0) && idx == state.selectedEntryIndex) {

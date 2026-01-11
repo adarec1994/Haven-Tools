@@ -111,6 +111,7 @@ embed_directory(msh)
 embed_directory(mmh)
 embed_directory(ani)
 embed_directory(excel)
+embed_directory(hashes)
 
 add_executable(HavenTools
         src/main.cpp

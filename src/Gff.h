@@ -4,8 +4,10 @@
 #include <cstdint>
 #include <fstream>
 #include <map>
-#include <sstream>
+#include <functional>
 #include <cstring>
+#include <sstream>
+#include <iomanip>
 
 enum GFFFieldFlags : uint16_t {
     FLAG_LIST = 0x8000,
@@ -58,9 +60,18 @@ public:
 
     const GFFHeader& header() const { return m_header; }
     const std::vector<GFFStruct>& structs() const { return m_structs; }
+    const std::vector<uint8_t>& rawData() const { return m_data; }
 
     const GFFField* findField(const GFFStruct& st, uint32_t label) const;
     const GFFField* findField(uint32_t structIndex, uint32_t label) const;
+
+    static std::string getLabel(uint32_t hash);
+    static void initLabelCache();
+
+    std::string getFieldDisplayValue(const GFFField& field) const;
+
+    using GFF4Visitor = std::function<void(const std::string& path, const std::string& label, const std::string& typeName, const std::string& value, int depth, bool isComplex)>;
+    void walk(GFF4Visitor visitor) const;
 
     std::string readStringByLabel(uint32_t structIndex, uint32_t label, uint32_t baseOffset = 0);
     int32_t readInt32ByLabel(uint32_t structIndex, uint32_t label, uint32_t baseOffset = 0);
@@ -68,13 +79,10 @@ public:
     float readFloatByLabel(uint32_t structIndex, uint32_t label, uint32_t baseOffset = 0);
 
     GFFStructRef readStructRef(uint32_t structIndex, uint32_t label, uint32_t baseOffset = 0);
-
     std::vector<GFFStructRef> readStructList(uint32_t structIndex, uint32_t label, uint32_t baseOffset = 0);
-
     uint32_t getListDataOffset(uint32_t structIndex, uint32_t label, uint32_t baseOffset = 0);
 
     uint32_t dataOffset() const { return m_header.dataOffset; }
-    const std::vector<uint8_t>& rawData() const { return m_data; }
 
     template<typename T>
     T readAt(uint32_t pos) const {
@@ -94,6 +102,10 @@ public:
 private:
     bool parseHeader();
     bool parseStructs();
+
+    std::string readRawString(size_t offset) const;
+    std::string readLocString(size_t offset) const;
+    void walkStruct(uint32_t structIdx, GFF4Visitor visitor, const std::string& basePath, int depth) const;
 
     GFFHeader m_header;
     std::vector<GFFStruct> m_structs;
