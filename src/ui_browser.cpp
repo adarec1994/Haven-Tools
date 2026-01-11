@@ -1,4 +1,29 @@
 #include "ui_internal.h"
+#include "terrain_loader.h"
+#include "GffViewer.h"
+#include <cstring>
+
+static bool isGffData(const std::vector<uint8_t>& data) {
+    if (data.size() < 12) return false;
+    if (memcmp(data.data(), "GFF ", 4) == 0) return true;
+    if (data.size() >= 8 && memcmp(data.data() + 4, "V3.2", 4) == 0) return true;
+    return false;
+}
+
+static bool isGffFile(const std::string& name) {
+    if (name.size() < 4) return false;
+    std::string ext = name.substr(name.size() - 4);
+    std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
+    static const std::vector<std::string> gffExtensions = {
+        ".utc", ".uti", ".utp", ".utd", ".uts", ".utm", ".utt", ".utw", ".ute",
+        ".dlg", ".jrl", ".fac", ".ifo", ".are", ".git", ".gic", ".gui",
+        ".plt", ".ptm", ".ptt", ".qst", ".stg", ".cre", ".bic", ".cam", ".caf", ".cut", ".ldf"
+    };
+    for (const auto& gffExt : gffExtensions) {
+        if (ext == gffExt) return true;
+    }
+    return false;
+}
 static std::string GetErfSource(const std::string& erfPath) {
     std::string pathLower = erfPath;
     std::transform(pathLower.begin(), pathLower.end(), pathLower.begin(), ::tolower);
@@ -626,102 +651,149 @@ void drawBrowserWindow(AppState& state) {
                 return;
             }
             bool isModel = isModelFile(ce.name), isMao = isMaoFile(ce.name), isPhy = isPhyFile(ce.name);
+            bool isTerrainFile = isTerrain(ce.name);
             bool isTexture = ce.name.size() > 4 && ce.name.substr(ce.name.size() - 4) == ".dds";
             bool isAudioFile = ce.name.size() > 4 && (ce.name.substr(ce.name.size() - 4) == ".fsb" );
             bool isGda = ce.name.size() > 4 && ce.name.substr(ce.name.size() - 4) == ".gda";
+            bool isGff = isGffFile(ce.name);
             if (isModel) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.4f, 1.0f, 0.4f, 1.0f));
+            else if (isTerrainFile) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.6f, 0.4f, 0.2f, 1.0f));
             else if (isMao) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.8f, 0.4f, 1.0f));
             else if (isPhy) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.4f, 1.0f, 1.0f));
             else if (isTexture) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.4f, 0.8f, 1.0f, 1.0f));
             else if (isAudioFile) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.6f, 0.2f, 1.0f));
             else if (isGda) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.2f, 1.0f, 1.0f, 1.0f));
+            else if (isGff) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.5f, 0.8f, 1.0f));
             char label[256]; snprintf(label, sizeof(label), "%s##%d", ce.name.c_str(), idx);
             if (ImGui::Selectable(label, idx == state.selectedEntryIndex, ImGuiSelectableFlags_AllowDoubleClick)) {
                 state.selectedEntryIndex = idx;
                 if (ImGui::IsMouseDoubleClicked(0)) {
-                    ERFFile erf;
-                    if (erf.open(state.erfFiles[ce.erfIdx])) {
-                        if (ce.entryIdx < erf.entries().size()) {
-                            const auto& entry = erf.entries()[ce.entryIdx];
-                            if (isModel) {
-                                if (state.showHeadSelector && state.pendingBodyMsh != ce.name) {
-                                    state.showHeadSelector = false;
-                                }
-                                auto heads = findAssociatedHeads(state, ce.name);
-                                auto eyes = findAssociatedEyes(state, ce.name);
-                                state.currentErf = std::make_unique<ERFFile>();
-                                state.currentErf->open(state.erfFiles[ce.erfIdx]);
-                                state.currentModelAnimations.clear();
-                                loadMeshDatabase(state);
-                                std::string mshLower = ce.name;
-                                std::transform(mshLower.begin(), mshLower.end(), mshLower.begin(), ::tolower);
-                                for (const auto& me : state.meshBrowser.allMeshes) {
-                                    std::string dbLower = me.mshFile;
-                                    std::transform(dbLower.begin(), dbLower.end(), dbLower.begin(), ::tolower);
-                                    if (dbLower == mshLower) {
-                                        state.currentModelAnimations = me.animations;
-                                        break;
+                    if (isTerrainFile) {
+                        state.currentErf = std::make_unique<ERFFile>();
+                        state.currentErf->open(state.erfFiles[ce.erfIdx]);
+                        g_terrainLoader.clear();
+                        if (g_terrainLoader.loadFromERF(*state.currentErf, ce.name)) {
+                            g_terrainLoader.createGLBuffers();
+                            const auto& terrain = g_terrainLoader.getTerrain();
+                            size_t totalVerts = 0, totalTris = 0;
+                            for (const auto& sector : terrain.sectors) {
+                                totalVerts += sector.vertices.size();
+                                totalTris += sector.indices.size() / 3;
+                            }
+                            state.statusMessage = "Loaded terrain: " + std::to_string(terrain.sectors.size()) +
+                                                  " sectors, " + std::to_string(totalVerts) + " verts";
+                            state.showTerrain = true;
+                            state.currentModel = Model();
+                            state.showRenderSettings = true;
+                        } else {
+                            state.statusMessage = "Failed to load terrain";
+                        }
+                    } else {
+                        ERFFile erf;
+                        if (erf.open(state.erfFiles[ce.erfIdx])) {
+                            if (ce.entryIdx < erf.entries().size()) {
+                                const auto& entry = erf.entries()[ce.entryIdx];
+                                if (isModel) {
+                                    state.showTerrain = false;
+                                    if (state.showHeadSelector && state.pendingBodyMsh != ce.name) {
+                                        state.showHeadSelector = false;
                                     }
-                                }
-                                if (loadModelFromEntry(state, entry)) {
-                                    state.statusMessage = "Loaded: " + ce.name;
-                                    if (!heads.empty()) {
-                                        loadAndMergeHead(state, heads[0].first);
-                                        state.statusMessage += " + " + heads[0].second;
-                                        if (heads.size() > 1) {
-                                            state.availableHeads.clear();
-                                            state.availableHeadNames.clear();
-                                            for (const auto& h : heads) {
-                                                state.availableHeads.push_back(h.first);
-                                                state.availableHeadNames.push_back(h.second);
-                                            }
-                                            state.pendingBodyMsh = ce.name;
-                                            state.pendingBodyEntry = ce;
-                                            state.selectedHeadIndex = 0;
-                                            state.showHeadSelector = true;
+                                    auto heads = findAssociatedHeads(state, ce.name);
+                                    auto eyes = findAssociatedEyes(state, ce.name);
+                                    state.currentErf = std::make_unique<ERFFile>();
+                                    state.currentErf->open(state.erfFiles[ce.erfIdx]);
+                                    state.currentModelAnimations.clear();
+                                    loadMeshDatabase(state);
+                                    std::string mshLower = ce.name;
+                                    std::transform(mshLower.begin(), mshLower.end(), mshLower.begin(), ::tolower);
+                                    for (const auto& me : state.meshBrowser.allMeshes) {
+                                        std::string dbLower = me.mshFile;
+                                        std::transform(dbLower.begin(), dbLower.end(), dbLower.begin(), ::tolower);
+                                        if (dbLower == mshLower) {
+                                            state.currentModelAnimations = me.animations;
+                                            break;
                                         }
                                     }
-                                    if (!eyes.empty()) {
-                                        loadAndMergeHead(state, eyes[0].first);
-                                        state.statusMessage += " + " + eyes[0].second;
+                                    if (loadModelFromEntry(state, entry)) {
+                                        state.statusMessage = "Loaded: " + ce.name;
+                                        if (!heads.empty()) {
+                                            loadAndMergeHead(state, heads[0].first);
+                                            state.statusMessage += " + " + heads[0].second;
+                                            if (heads.size() > 1) {
+                                                state.availableHeads.clear();
+                                                state.availableHeadNames.clear();
+                                                for (const auto& h : heads) {
+                                                    state.availableHeads.push_back(h.first);
+                                                    state.availableHeadNames.push_back(h.second);
+                                                }
+                                                state.pendingBodyMsh = ce.name;
+                                                state.pendingBodyEntry = ce;
+                                                state.selectedHeadIndex = 0;
+                                                state.showHeadSelector = true;
+                                            }
+                                        }
+                                        if (!eyes.empty()) {
+                                            loadAndMergeHead(state, eyes[0].first);
+                                            state.statusMessage += " + " + eyes[0].second;
+                                        }
                                     }
-                                }
-                                else state.statusMessage = "Failed to parse: " + ce.name;
-                                state.showRenderSettings = true;
-                            } else if (isMao) {
-                                auto data = erf.readEntry(entry);
-                                if (!data.empty()) {
-                                    state.maoContent = std::string(data.begin(), data.end());
-                                    state.maoFileName = ce.name;
-                                    state.showMaoViewer = true;
-                                }
-                            } else if (isTexture) {
-                                auto data = erf.readEntry(entry);
-                                if (!data.empty()) {
-                                    std::string nameLower = ce.name;
-                                    std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), ::tolower);
-                                    state.textureCache[nameLower] = data;
-                                    state.previewTextureId = loadDDSTexture(data);
-                                    state.previewTextureName = ce.name;
-                                    state.showTexturePreview = true;
-                                    state.previewMeshIndex = -1;
-                                    state.statusMessage = "Previewing: " + ce.name;
-                                }
-                            } else if (isGda) {
-                                auto data = erf.readEntry(entry);
-                                if (!data.empty()) {
-                                    delete state.gdaEditor.editor;
-                                    state.gdaEditor.editor = new GDAFile();
-                                    if (state.gdaEditor.editor->load(data, ce.name)) {
-                                        state.gdaEditor.currentFile = state.erfFiles[ce.erfIdx] + ":" + ce.name;
-                                        state.gdaEditor.selectedRow = -1;
-                                        state.gdaEditor.statusMessage = "Loaded: " + ce.name;
-                                        state.gdaEditor.showWindow = true;
-                                        state.statusMessage = "Opened GDA: " + ce.name;
-                                    } else {
-                                        state.gdaEditor.statusMessage = "Failed to parse GDA";
+                                    else state.statusMessage = "Failed to parse: " + ce.name;
+                                    state.showRenderSettings = true;
+                                } else if (isMao) {
+                                    auto data = erf.readEntry(entry);
+                                    if (!data.empty()) {
+                                        state.maoContent = std::string(data.begin(), data.end());
+                                        state.maoFileName = ce.name;
+                                        state.showMaoViewer = true;
+                                    }
+                                } else if (isTexture) {
+                                    auto data = erf.readEntry(entry);
+                                    if (!data.empty()) {
+                                        std::string nameLower = ce.name;
+                                        std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), ::tolower);
+                                        state.textureCache[nameLower] = data;
+                                        state.previewTextureId = loadDDSTexture(data);
+                                        state.previewTextureName = ce.name;
+                                        state.showTexturePreview = true;
+                                        state.previewMeshIndex = -1;
+                                        state.statusMessage = "Previewing: " + ce.name;
+                                    }
+                                } else if (isGda) {
+                                    auto data = erf.readEntry(entry);
+                                    if (!data.empty()) {
                                         delete state.gdaEditor.editor;
-                                        state.gdaEditor.editor = nullptr;
+                                        state.gdaEditor.editor = new GDAFile();
+                                        if (state.gdaEditor.editor->load(data, ce.name)) {
+                                            state.gdaEditor.currentFile = state.erfFiles[ce.erfIdx] + ":" + ce.name;
+                                            state.gdaEditor.selectedRow = -1;
+                                            state.gdaEditor.statusMessage = "Loaded: " + ce.name;
+                                            state.gdaEditor.showWindow = true;
+                                            state.statusMessage = "Opened GDA: " + ce.name;
+                                        } else {
+                                            state.gdaEditor.statusMessage = "Failed to parse GDA";
+                                            delete state.gdaEditor.editor;
+                                            state.gdaEditor.editor = nullptr;
+                                        }
+                                    }
+                                } else if (isGff) {
+                                    auto data = erf.readEntry(entry);
+                                    if (!data.empty()) {
+                                        if (loadGffData(state.gffViewer, data, ce.name, state.erfFiles[ce.erfIdx])) {
+                                            state.gffViewer.showWindow = true;
+                                            state.statusMessage = "Opened GFF: " + ce.name;
+                                        } else {
+                                            state.statusMessage = "Failed to parse GFF: " + ce.name;
+                                        }
+                                    }
+                                } else {
+                                    auto data = erf.readEntry(entry);
+                                    if (!data.empty() && isGffData(data)) {
+                                        if (loadGffData(state.gffViewer, data, ce.name, state.erfFiles[ce.erfIdx])) {
+                                            state.gffViewer.showWindow = true;
+                                            state.statusMessage = "Opened GFF: " + ce.name;
+                                        } else {
+                                            state.statusMessage = "Failed to parse GFF: " + ce.name;
+                                        }
                                     }
                                 }
                             }
@@ -869,7 +941,7 @@ void drawBrowserWindow(AppState& state) {
                 }
                 ImGui::EndPopup();
             }
-            if (isModel || isMao || isPhy || isTexture || isAudioFile || isGda) ImGui::PopStyleColor();
+            if (isModel || isTerrainFile || isMao || isPhy || isTexture || isAudioFile || isGda || isGff) ImGui::PopStyleColor();
         });
         ImGui::EndChild();
     } else ImGui::Text("Select an ERF file");

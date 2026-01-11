@@ -162,6 +162,14 @@ add_executable(HavenTools
         src/gda.cpp
         src/gda.h
         src/ui_gda.cpp
+        src/level_loader.cpp
+        src/level_loader.h
+        src/terrain_loader.cpp
+        src/terrain_loader.h
+        src/gff32.cpp
+        src/gff32.h
+        src/gffviewer.cpp
+        src/gffviewer.h
 )
 
 target_include_directories(HavenTools PRIVATE

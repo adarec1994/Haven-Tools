@@ -4,6 +4,8 @@
 #include <iostream>
 #include <cstring>
 #include <algorithm>
+#include "terrain_loader.h"
+
 #ifdef _WIN32
 #define NOMINMAX
 #include <windows.h>
@@ -472,6 +474,9 @@ void renderModel(Model& model, const Camera& camera, const RenderSettings& setti
         glColor3f(0, 0, 1); glVertex3f(0, 0, 0); glVertex3f(0, 0, 2);
         glEnd();
         glLineWidth(1.0f);
+    }
+    if (g_terrainLoader.isLoaded()) {
+        renderTerrain();
     }
     if (!model.meshes.empty()) {
         if (settings.wireframe) {

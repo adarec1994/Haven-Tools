@@ -1105,6 +1105,7 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
     if (state.showAudioPlayer) drawAudioPlayer(state);
     if (state.showFSBBrowser) drawFSBBrowserWindow(state);
     draw2DAEditorWindow(state);
+    drawGffViewerWindow(state.gffViewer);
     if (state.showHeadSelector) {
         ImGui::SetNextWindowSize(ImVec2(300, 0), ImGuiCond_FirstUseEver);
         ImGui::Begin("Select Head", &state.showHeadSelector, ImGuiWindowFlags_AlwaysAutoResize);

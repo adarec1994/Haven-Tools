@@ -9,6 +9,7 @@
 #include "erf.h"
 #include "mor_loader.h"
 #include "tnt_loader.h"
+#include "GffViewer.h"
 
 class ERFFile;
 class GDAFile;
@@ -163,6 +164,7 @@ struct MeshBrowserState {
     char meshFilter[64] = "";
 };
 struct AppState {
+    bool showTerrain = false;
     bool showBrowser = true;
     bool showRenderSettings = false;
     bool showMaoViewer = false;
@@ -354,6 +356,7 @@ struct AppState {
     char fsbSampleFilter[128] = "";
 
     GDAEditorState gdaEditor;
+    GffViewerState gffViewer;
 };
 std::string getExeDir();
 void ensureExtractDir(const std::string& exeDir);
