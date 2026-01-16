@@ -32,3 +32,7 @@ Usage:
 Browse to your DAO installation and select the .exe. 
 
 Explore without bloating your pc with a bunch of files, preview, and export as you wish! 
+
+Contact:
+
+You can contact me on Nexus, or drop me a discord DM @ java7670
