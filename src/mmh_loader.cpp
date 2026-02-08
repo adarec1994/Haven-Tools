@@ -10,13 +10,6 @@
 #include <functional>
 #include <cmath>
 
-#ifdef _WIN32
-#define NOMINMAX
-#include <windows.h>
-#include <GL/gl.h>
-#else
-#include <GL/gl.h>
-#endif
 
 Material parseMAO(const std::string& maoContent, const std::string& materialName) {
     Material mat;

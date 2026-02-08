@@ -287,10 +287,20 @@ std::string GFFFile::readStringByLabel(uint32_t structIndex, uint32_t label, uin
     std::string result;
     result.reserve(length);
 
-    for (uint32_t i = 0; i < length && strPos + 1 < m_data.size(); i++) {
-        char c = static_cast<char>(m_data[strPos]);
-        strPos += 1;
-        if (c != '\0') result += c;
+    if (field->typeId == 14) {
+        // ECString: UTF-16LE, length is character count, 2 bytes per char
+        for (uint32_t i = 0; i < length && strPos + 2 <= m_data.size(); i++) {
+            uint16_t wc = readAt<uint16_t>(strPos);
+            strPos += 2;
+            if (wc != 0 && wc < 128) result += static_cast<char>(wc);
+        }
+    } else {
+        // Type 10/11: UTF-8, length is byte count
+        for (uint32_t i = 0; i < length && strPos < m_data.size(); i++) {
+            char c = static_cast<char>(m_data[strPos]);
+            strPos += 1;
+            if (c != '\0') result += c;
+        }
     }
 
     return result;
@@ -455,6 +465,24 @@ std::string GFFFile::getFieldDisplayValue(const GFFField& field) const {
             int32_t relOffset = readAt<int32_t>(dataPos);
             if (relOffset < 0) return "";
             return readRawString(m_header.dataOffset + relOffset);
+        }
+        case 14:
+        {
+            // ECString: UTF-16LE
+            int32_t relOffset = readAt<int32_t>(dataPos);
+            if (relOffset < 0) return "";
+            uint32_t strPos = m_header.dataOffset + relOffset;
+            if (strPos + 4 > m_data.size()) return "";
+            uint32_t length = readAt<uint32_t>(strPos);
+            strPos += 4;
+            std::string result;
+            result.reserve(length);
+            for (uint32_t i = 0; i < length && strPos + 2 <= m_data.size(); i++) {
+                uint16_t wc = readAt<uint16_t>(strPos);
+                strPos += 2;
+                if (wc != 0 && wc < 128) result += static_cast<char>(wc);
+            }
+            return result;
         }
         case 12:
         {

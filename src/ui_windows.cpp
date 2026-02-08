@@ -144,11 +144,10 @@ void drawRenderSettingsWindow(AppState& state) {
         if (!state.currentModel.skeleton.bones.empty()) {
             ImGui::Separator();
             if (ImGui::TreeNode("Skeleton", "Skeleton (%zu bones)", state.currentModel.skeleton.bones.size())) {
+                if (ImGui::IsKeyPressed(ImGuiKey_Escape)) state.selectedBoneIndex = -1;
                 if (state.selectedBoneIndex >= 0) {
                     ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Selected: %s",
                         state.currentModel.skeleton.bones[state.selectedBoneIndex].name.c_str());
-                    ImGui::SameLine();
-                    if (ImGui::SmallButton("Clear")) state.selectedBoneIndex = -1;
                 } else {
                     ImGui::TextDisabled("Click a bone to highlight it");
                 }

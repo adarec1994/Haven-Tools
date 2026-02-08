@@ -2,7 +2,8 @@
 #include "types.h"
 #include "Mesh.h"
 
-void loadGLExtensions();
+void initRenderer();
+void cleanupRenderer();
 
 void buildSkinningCache(Mesh& mesh, const Model& model);
 
@@ -16,3 +17,5 @@ void drawSolidCapsule(float radius, float height, int slices, int stacks);
 void transformVertexBySkeleton(const Vertex& v, const Mesh& mesh, const Model& model,
                                float& outX, float& outY, float& outZ,
                                float& outNX, float& outNY, float& outNZ);
+
+inline void loadGLExtensions() {}

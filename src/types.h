@@ -43,8 +43,8 @@ struct Camera {
     void lookAt(float tx, float ty, float tz, float dist) {
         x = tx;
         y = tz + dist * 0.5f;
-        z = ty + dist;
-        yaw = 0.0f;
+        z = ty - dist;
+        yaw = 3.14159f;
         pitch = -0.2f;
         moveSpeed = dist * 0.5f;
         if (moveSpeed < 1.0f) moveSpeed = 1.0f;

@@ -208,9 +208,6 @@ Note: Importing does not currently work on Linux.
 - Added an option to delete models that have been imported from the .erf.
 - Updated 2da parsing.
 
-)";
-
-static const char* s_changelogLatest = R"(
 [Release 1.14]
 
 - Fixed shaders on export
@@ -221,4 +218,21 @@ static const char* s_changelogLatest = R"(
 - Added option to export a 1x, 10x, 100x, or 1000x scale for FBX.
 - Added option to export without a skeleton.
 -- You must follow the naming convention UCX_MeshName_01 for collision.
+)";
+
+static const char* s_changelogLatest = R"(
+[Release 2.0]
+
+Thank you for downloading or updating to version 2.0!
+
+- Converted the render pipeline from OpenGL to DX11!
+-- Linux users will now need to build using wine as Proton is not currently supported.
+-- This improves performance and stability.
+
+- Controls update:
+-- Added vertical panning with Q/E
+
+- UI Updates:
+-- Updated the skeleton rendering to be cleaner
+
 )";

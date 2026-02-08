@@ -411,6 +411,8 @@ void handleInput(AppState& state, GLFWwindow* window, ImGuiIO& io) {
         if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) state.camera.moveRight(speed);
         if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) state.camera.moveUp(speed);
         if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS) state.camera.moveUp(-speed);
+        if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) state.camera.moveUp(speed);
+        if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) state.camera.moveUp(-speed);
     }
 }
 void drawSplashScreen(AppState& state, int displayW, int displayH) {
@@ -1081,7 +1083,7 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
         ImGui::Text(" | ");
         ImGui::SameLine();
         if (state.hasModel) {
-            ImGui::Text("| %s | RMB: Look | WASD: Move", state.currentModel.name.c_str());
+            ImGui::Text("| %s | RMB: Look | WASD: Move | E/Q: Up/Down", state.currentModel.name.c_str());
         }
         const char* ver = Update::GetInstalledVersionText();
         float verW = ImGui::CalcTextSize(ver).x;

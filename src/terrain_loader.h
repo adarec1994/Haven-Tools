@@ -19,10 +19,6 @@ struct TerrainSector {
     float sectorSize;
     std::vector<TerrainVertex> vertices;
     std::vector<uint32_t> indices;
-    uint32_t vao = 0;
-    uint32_t vbo = 0;
-    uint32_t ibo = 0;
-    bool buffersCreated = false;
 };
 
 struct TerrainWorld {
@@ -46,8 +42,6 @@ public:
     TerrainWorld& getTerrain() { return m_terrain; }
     bool isLoaded() const { return !m_terrain.sectors.empty(); }
     void clear();
-    void createGLBuffers();
-    void destroyGLBuffers();
 private:
     TerrainWorld m_terrain;
     bool parseTMSH(const std::vector<uint8_t>& data, TerrainSector& sector);
@@ -59,4 +53,4 @@ private:
 
 extern TerrainLoader g_terrainLoader;
 bool isTerrain(const std::string& name);
-void renderTerrain();
+void renderTerrain(const float* mvp);

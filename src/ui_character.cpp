@@ -698,7 +698,7 @@ static Model* getOrLoadPart(AppState& state, const std::string& partFile) {
             if (isHairMat) {
                 std::vector<uint8_t> texData = loadTextureData(state, mat.diffuseMap);
                 if (!texData.empty()) {
-                    mat.diffuseTexId = loadDDSTextureHair(texData);
+                    mat.diffuseTexId = createTextureFromDDSHair(texData);
                 }
             } else {
                 mat.diffuseTexId = loadTexByName(state, mat.diffuseMap, &mat.diffuseData, &mat.diffuseWidth, &mat.diffuseHeight);

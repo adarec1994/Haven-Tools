@@ -739,7 +739,7 @@ void drawBrowserWindow(AppState& state) {
                                         std::string nameLower = ce.name;
                                         std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), ::tolower);
                                         state.textureCache[nameLower] = data;
-                                        state.previewTextureId = loadDDSTexture(data);
+                                        state.previewTextureId = createTextureFromDDS(data);
                                         state.previewTextureName = ce.name;
                                         state.showTexturePreview = true;
                                         state.previewMeshIndex = -1;

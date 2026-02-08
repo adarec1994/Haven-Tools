@@ -4,20 +4,14 @@
 #include "animation.h"
 #include "Gff.h"
 #include "erf.h"
-#include <iostream>
+#include "Shaders/d3d_context.h"
 #include <algorithm>
 #include <functional>
 #include <cmath>
 #include <set>
 #include <filesystem>
 namespace fs = std::filesystem;
-#ifdef _WIN32
-#define NOMINMAX
-#include <windows.h>
-#include <GL/gl.h>
-#else
-#include <GL/gl.h>
-#endif
+
 bool loadPHY(const std::vector<uint8_t>& data, Model& model) {
     GFFFile gff;
     if (!gff.load(data)) return false;
@@ -193,6 +187,7 @@ bool loadPHY(const std::vector<uint8_t>& data, Model& model) {
     processStruct(0, 0, "");
     return !model.collisionShapes.empty();
 }
+
 static void loadTextureErfs(AppState& state) {
     if (state.textureErfsLoaded) return;
     state.textureErfs.clear();
@@ -209,6 +204,7 @@ static void loadTextureErfs(AppState& state) {
     }
     state.textureErfsLoaded = true;
 }
+
 static void loadModelErfs(AppState& state) {
     if (state.modelErfsLoaded) return;
     state.modelErfs.clear();
@@ -225,6 +221,7 @@ static void loadModelErfs(AppState& state) {
     }
     state.modelErfsLoaded = true;
 }
+
 static void loadMaterialErfs(AppState& state) {
     if (state.materialErfsLoaded) return;
     state.materialErfs.clear();
@@ -241,6 +238,7 @@ static void loadMaterialErfs(AppState& state) {
     }
     state.materialErfsLoaded = true;
 }
+
 static std::vector<uint8_t> readFromModelErfs(AppState& state, const std::string& name) {
     std::string nameLower = name;
     std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), ::tolower);
@@ -248,48 +246,122 @@ static std::vector<uint8_t> readFromModelErfs(AppState& state, const std::string
         for (const auto& entry : erf->entries()) {
             std::string entryLower = entry.name;
             std::transform(entryLower.begin(), entryLower.end(), entryLower.begin(), ::tolower);
-            if (entryLower == nameLower) {
-                return erf->readEntry(entry);
-            }
+            if (entryLower == nameLower) return erf->readEntry(entry);
         }
     }
     return {};
 }
+
 static std::vector<uint8_t> readFromMaterialErfs(AppState& state, const std::string& name) {
     std::string nameLower = name;
     std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), ::tolower);
-    for (const auto& erf : state.materialErfs) {
-        for (const auto& entry : erf->entries()) {
-            std::string entryLower = entry.name;
-            std::transform(entryLower.begin(), entryLower.end(), entryLower.begin(), ::tolower);
-            if (entryLower == nameLower) {
-                return erf->readEntry(entry);
+    std::string noExtLower = nameLower;
+    size_t dp = noExtLower.rfind('.');
+    if (dp != std::string::npos) noExtLower = noExtLower.substr(0, dp);
+
+
+    const std::vector<std::unique_ptr<ERFFile>>* erfSets[] = {
+        &state.materialErfs, &state.modelErfs, &state.textureErfs
+    };
+    for (const auto* erfs : erfSets) {
+        for (const auto& erf : *erfs) {
+            for (const auto& entry : erf->entries()) {
+                std::string entryLower = entry.name;
+                std::transform(entryLower.begin(), entryLower.end(), entryLower.begin(), ::tolower);
+                std::string entryNoExt = entryLower;
+                size_t edp = entryNoExt.rfind('.');
+                if (edp != std::string::npos) entryNoExt = entryNoExt.substr(0, edp);
+                if (entryLower == nameLower || entryNoExt == noExtLower) return erf->readEntry(entry);
             }
         }
     }
-    return {};
-}
-static uint32_t loadTextureByName(AppState& state, const std::string& texName, std::vector<uint8_t>* rgbaOut = nullptr, int* wOut = nullptr, int* hOut = nullptr) {
-    if (texName.empty()) return 0;
-    std::string texNameLower = texName;
-    std::transform(texNameLower.begin(), texNameLower.end(), texNameLower.begin(), ::tolower);
-    for (const auto& erf : state.textureErfs) {
-        for (const auto& entry : erf->entries()) {
+
+    if (state.currentErf) {
+        for (const auto& entry : state.currentErf->entries()) {
             std::string entryLower = entry.name;
             std::transform(entryLower.begin(), entryLower.end(), entryLower.begin(), ::tolower);
-            if (entryLower == texNameLower) {
-                std::vector<uint8_t> texData = erf->readEntry(entry);
-                if (!texData.empty()) {
-                    if (rgbaOut && wOut && hOut) {
-                        decodeDDSToRGBA(texData, *rgbaOut, *wOut, *hOut);
-                    }
-                    return loadDDSTexture(texData);
+            std::string entryNoExt = entryLower;
+            size_t edp = entryNoExt.rfind('.');
+            if (edp != std::string::npos) entryNoExt = entryNoExt.substr(0, edp);
+            if (entryLower == nameLower || entryNoExt == noExtLower) return state.currentErf->readEntry(entry);
+        }
+    }
+
+    for (const auto& erfPath : state.erfFiles) {
+        ERFFile erf;
+        if (erf.open(erfPath) && erf.encryption() == 0) {
+            for (const auto& entry : erf.entries()) {
+                std::string entryLower = entry.name;
+                std::transform(entryLower.begin(), entryLower.end(), entryLower.begin(), ::tolower);
+                std::string entryNoExt = entryLower;
+                size_t edp = entryNoExt.rfind('.');
+                if (edp != std::string::npos) entryNoExt = entryNoExt.substr(0, edp);
+                if (entryLower == nameLower || entryNoExt == noExtLower) {
+                    return erf.readEntry(entry);
                 }
             }
         }
     }
+    return {};
+}
+
+static uint32_t loadTextureByName(AppState& state, const std::string& texName,
+                                  std::vector<uint8_t>* rgbaOut = nullptr,
+                                  int* wOut = nullptr, int* hOut = nullptr) {
+    if (texName.empty()) return 0;
+    std::string texNameLower = texName;
+    std::transform(texNameLower.begin(), texNameLower.end(), texNameLower.begin(), ::tolower);
+
+    std::string withDdsLower = texNameLower;
+    if (withDdsLower.size() < 4 || withDdsLower.substr(withDdsLower.size() - 4) != ".dds")
+        withDdsLower += ".dds";
+    std::string noExtLower = texNameLower;
+    size_t dp = noExtLower.rfind('.');
+    if (dp != std::string::npos) noExtLower = noExtLower.substr(0, dp);
+
+    auto tryLoadFromErf = [&](ERFFile& erf) -> uint32_t {
+        for (const auto& entry : erf.entries()) {
+            std::string entryLower = entry.name;
+            std::transform(entryLower.begin(), entryLower.end(), entryLower.begin(), ::tolower);
+            std::string entryNoExt = entryLower;
+            size_t edp = entryNoExt.rfind('.');
+            if (edp != std::string::npos) entryNoExt = entryNoExt.substr(0, edp);
+            if (entryLower == texNameLower || entryLower == withDdsLower || entryNoExt == noExtLower) {
+                std::vector<uint8_t> texData = erf.readEntry(entry);
+                if (!texData.empty()) {
+                    if (rgbaOut && wOut && hOut) decodeDDSToRGBA(texData, *rgbaOut, *wOut, *hOut);
+                    return createTextureFromDDS(texData);
+                }
+            }
+        }
+        return 0;
+    };
+
+
+    const std::vector<std::unique_ptr<ERFFile>>* erfSets[] = {
+        &state.textureErfs, &state.materialErfs, &state.modelErfs
+    };
+    for (const auto* erfs : erfSets) {
+        for (const auto& erf : *erfs) {
+            uint32_t id = tryLoadFromErf(*erf);
+            if (id != 0) return id;
+        }
+    }
+    if (state.currentErf) {
+        uint32_t id = tryLoadFromErf(*state.currentErf);
+        if (id != 0) return id;
+    }
+
+    for (const auto& erfPath : state.erfFiles) {
+        ERFFile erf;
+        if (erf.open(erfPath) && erf.encryption() == 0) {
+            uint32_t id = tryLoadFromErf(erf);
+            if (id != 0) return id;
+        }
+    }
     return 0;
 }
+
 bool loadModelFromEntry(AppState& state, const ERFEntry& entry) {
     if (!state.currentErf) return false;
     loadTextureErfs(state);
@@ -304,11 +376,19 @@ bool loadModelFromEntry(AppState& state, const ERFEntry& entry) {
         state.hasModel = true;
         return false;
     }
+
     for (const auto& mat : state.currentModel.materials) {
-        if (mat.diffuseTexId != 0) glDeleteTextures(1, &mat.diffuseTexId);
-        if (mat.normalTexId != 0) glDeleteTextures(1, &mat.normalTexId);
-        if (mat.specularTexId != 0) glDeleteTextures(1, &mat.specularTexId);
+        if (mat.diffuseTexId != 0)          destroyTexture(mat.diffuseTexId);
+        if (mat.normalTexId != 0)           destroyTexture(mat.normalTexId);
+        if (mat.specularTexId != 0)         destroyTexture(mat.specularTexId);
+        if (mat.tintTexId != 0)             destroyTexture(mat.tintTexId);
+        if (mat.ageDiffuseTexId != 0)       destroyTexture(mat.ageDiffuseTexId);
+        if (mat.ageNormalTexId != 0)        destroyTexture(mat.ageNormalTexId);
+        if (mat.tattooTexId != 0)           destroyTexture(mat.tattooTexId);
+        if (mat.browStubbleTexId != 0)      destroyTexture(mat.browStubbleTexId);
+        if (mat.browStubbleNormalTexId != 0) destroyTexture(mat.browStubbleNormalTexId);
     }
+
     state.currentModel = model;
     state.currentModel.name = entry.name;
     state.hasModel = true;
@@ -316,6 +396,7 @@ bool loadModelFromEntry(AppState& state, const ERFEntry& entry) {
     std::string baseName = entry.name;
     size_t dotPos = baseName.rfind('.');
     if (dotPos != std::string::npos) baseName = baseName.substr(0, dotPos);
+
     std::vector<std::string> mmhCandidates = {baseName + ".mmh", baseName + "a.mmh"};
     size_t lastUnderscore = baseName.find_last_of('_');
     if (lastUnderscore != std::string::npos) {
@@ -323,13 +404,18 @@ bool loadModelFromEntry(AppState& state, const ERFEntry& entry) {
         variantA.insert(lastUnderscore, "a");
         mmhCandidates.push_back(variantA + ".mmh");
     }
+    bool mmhFound = false;
     for (const auto& candidate : mmhCandidates) {
         std::vector<uint8_t> mmhData = readFromModelErfs(state, candidate);
         if (!mmhData.empty()) {
             loadMMH(mmhData, state.currentModel);
+            mmhFound = true;
             break;
         }
     }
+    if (!mmhFound) {
+    }
+
     std::vector<std::string> phyCandidates = {baseName + ".phy", baseName + "a.phy"};
     if (lastUnderscore != std::string::npos) {
         std::string variantA = baseName;
@@ -338,11 +424,9 @@ bool loadModelFromEntry(AppState& state, const ERFEntry& entry) {
     }
     for (const auto& candidate : phyCandidates) {
         std::vector<uint8_t> phyData = readFromModelErfs(state, candidate);
-        if (!phyData.empty()) {
-            loadPHY(phyData, state.currentModel);
-            break;
-        }
+        if (!phyData.empty()) { loadPHY(phyData, state.currentModel); break; }
     }
+
     std::set<std::string> materialNames;
     for (const auto& mesh : state.currentModel.meshes) {
         if (!mesh.materialName.empty()) materialNames.insert(mesh.materialName);
@@ -361,9 +445,8 @@ bool loadModelFromEntry(AppState& state, const ERFEntry& entry) {
         }
     }
     for (auto& mesh : state.currentModel.meshes) {
-        if (!mesh.materialName.empty()) {
+        if (!mesh.materialName.empty())
             mesh.materialIndex = state.currentModel.findMaterial(mesh.materialName);
-        }
     }
     for (auto& mat : state.currentModel.materials) {
         if (!mat.diffuseMap.empty() && mat.diffuseTexId == 0) {
@@ -379,6 +462,7 @@ bool loadModelFromEntry(AppState& state, const ERFEntry& entry) {
             mat.tintTexId = loadTextureByName(state, mat.tintMap, &mat.tintData, &mat.tintWidth, &mat.tintHeight);
         }
     }
+
     if (!state.currentModel.meshes.empty()) {
         float minX = state.currentModel.meshes[0].minX, maxX = state.currentModel.meshes[0].maxX;
         float minY = state.currentModel.meshes[0].minY, maxY = state.currentModel.meshes[0].maxY;

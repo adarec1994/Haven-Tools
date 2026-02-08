@@ -232,14 +232,14 @@ uint32_t loadTexByNameCached(AppState& state, const std::string& texName,
         if (rgbaOut && wOut && hOut) {
             decodeDDSToRGBA(it->second, *rgbaOut, *wOut, *hOut);
         }
-        return loadDDSTexture(it->second);
+        return createTextureFromDDS(it->second);
     }
     it = state.textureCache.find(texNameLower);
     if (it != state.textureCache.end() && !it->second.empty()) {
         if (rgbaOut && wOut && hOut) {
             decodeDDSToRGBA(it->second, *rgbaOut, *wOut, *hOut);
         }
-        return loadDDSTexture(it->second);
+        return createTextureFromDDS(it->second);
     }
     for (const auto& erf : state.textureErfs) {
         for (const auto& entry : erf->entries()) {
@@ -251,7 +251,7 @@ uint32_t loadTexByNameCached(AppState& state, const std::string& texName,
                     if (rgbaOut && wOut && hOut) {
                         decodeDDSToRGBA(texData, *rgbaOut, *wOut, *hOut);
                     }
-                    return loadDDSTexture(texData);
+                    return createTextureFromDDS(texData);
                 }
             }
         }
@@ -274,7 +274,7 @@ uint32_t loadTexByName(AppState& state, const std::string& texName,
                     if (rgbaOut && wOut && hOut) {
                         decodeDDSToRGBA(texData, *rgbaOut, *wOut, *hOut);
                     }
-                    return loadDDSTexture(texData);
+                    return createTextureFromDDS(texData);
                 }
             }
         }

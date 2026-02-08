@@ -48,20 +48,13 @@ add_library(imgui_lib STATIC
         ${imgui_SOURCE_DIR}/imgui_tables.cpp
         ${imgui_SOURCE_DIR}/imgui_widgets.cpp
         ${imgui_SOURCE_DIR}/backends/imgui_impl_glfw.cpp
-        ${imgui_SOURCE_DIR}/backends/imgui_impl_opengl3.cpp
+        ${imgui_SOURCE_DIR}/backends/imgui_impl_dx11.cpp
 )
 target_include_directories(imgui_lib PUBLIC
         ${imgui_SOURCE_DIR}
         ${imgui_SOURCE_DIR}/backends
 )
-target_link_libraries(imgui_lib PUBLIC glfw)
-
-if(WIN32)
-    target_link_libraries(imgui_lib PUBLIC opengl32)
-else()
-    find_package(OpenGL REQUIRED)
-    target_link_libraries(imgui_lib PUBLIC OpenGL::GL)
-endif()
+target_link_libraries(imgui_lib PUBLIC glfw d3d11 dxgi d3dcompiler)
 
 add_library(imguifiledialog_lib STATIC
         ${imguifiledialog_SOURCE_DIR}/ImGuiFileDialog.cpp
@@ -150,8 +143,8 @@ add_executable(HavenTools
         src/mor_loader.h
         src/tnt_loader.cpp
         src/tnt_loader.h
-        src/shader.cpp
-        src/shader.h
+        src/Shaders/shader.cpp
+        src/Shaders/shader.h
         src/version.h
         src/update/app.rc
         src/update/update.cpp
@@ -171,6 +164,8 @@ add_executable(HavenTools
         src/gff32.h
         src/gffviewer.cpp
         src/gffviewer.h
+        src/Shaders/D3d_Context.cpp
+        src/Shaders/D3d_Context.h
 )
 
 target_include_directories(HavenTools PRIVATE

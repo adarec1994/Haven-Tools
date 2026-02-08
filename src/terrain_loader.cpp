@@ -1,4 +1,6 @@
 #include "terrain_loader.h"
+#include "Shaders/d3d_context.h"
+#include "Shaders/shader.h"
 #include <algorithm>
 #include <cmath>
 #include <cstring>
@@ -13,8 +15,107 @@ bool isTerrain(const std::string& name) {
     return ext == ".tmsh";
 }
 
-void renderTerrain() {
+struct TerrainSimpleVertex {
+    float x, y, z;
+    float nx, ny, nz;
+};
+
+void renderTerrain(const float* mvp) {
+    if (!g_terrainLoader.isLoaded()) return;
+    if (!shadersAvailable()) return;
+
+    D3DContext& d3d = getD3DContext();
+    auto& shader = getSimpleShader();
+    if (!shader.valid) return;
+
+    const TerrainWorld& terrain = g_terrainLoader.getTerrain();
+
+    for (const auto& sector : terrain.sectors) {
+        if (sector.vertices.empty()) continue;
+
+        std::vector<TerrainSimpleVertex> triVerts;
+
+        if (!sector.indices.empty()) {
+            triVerts.reserve(sector.indices.size());
+            for (uint32_t idx : sector.indices) {
+                if (idx < sector.vertices.size()) {
+                    const auto& v = sector.vertices[idx];
+                    triVerts.push_back({ v.x, v.y, v.z, v.nx, v.ny, v.nz });
+                }
+            }
+        } else {
+            uint32_t vertCount = (uint32_t)sector.vertices.size();
+            uint32_t gridN = (uint32_t)std::round(std::sqrt((double)vertCount));
+
+            if (gridN > 1 && gridN * gridN == vertCount) {
+                triVerts.reserve((gridN - 1) * (gridN - 1) * 6);
+                for (uint32_t row = 0; row + 1 < gridN; row++) {
+                    for (uint32_t col = 0; col + 1 < gridN; col++) {
+                        uint32_t i00 = row * gridN + col;
+                        uint32_t i10 = row * gridN + col + 1;
+                        uint32_t i01 = (row + 1) * gridN + col;
+                        uint32_t i11 = (row + 1) * gridN + col + 1;
+
+                        const auto& v00 = sector.vertices[i00];
+                        const auto& v10 = sector.vertices[i10];
+                        const auto& v01 = sector.vertices[i01];
+                        const auto& v11 = sector.vertices[i11];
+
+                        triVerts.push_back({ v00.x, v00.y, v00.z, v00.nx, v00.ny, v00.nz });
+                        triVerts.push_back({ v10.x, v10.y, v10.z, v10.nx, v10.ny, v10.nz });
+                        triVerts.push_back({ v01.x, v01.y, v01.z, v01.nx, v01.ny, v01.nz });
+
+                        triVerts.push_back({ v10.x, v10.y, v10.z, v10.nx, v10.ny, v10.nz });
+                        triVerts.push_back({ v11.x, v11.y, v11.z, v11.nx, v11.ny, v11.nz });
+                        triVerts.push_back({ v01.x, v01.y, v01.z, v01.nx, v01.ny, v01.nz });
+                    }
+                }
+            } else {
+                uint32_t triCount = vertCount / 3;
+                triVerts.reserve(triCount * 3);
+                for (uint32_t i = 0; i + 2 < vertCount; i += 3) {
+                    const auto& v0 = sector.vertices[i];
+                    const auto& v1 = sector.vertices[i + 1];
+                    const auto& v2 = sector.vertices[i + 2];
+                    triVerts.push_back({ v0.x, v0.y, v0.z, v0.nx, v0.ny, v0.nz });
+                    triVerts.push_back({ v1.x, v1.y, v1.z, v1.nx, v1.ny, v1.nz });
+                    triVerts.push_back({ v2.x, v2.y, v2.z, v2.nx, v2.ny, v2.nz });
+                }
+            }
+        }
+
+        if (triVerts.empty()) continue;
+
+        DynamicVertexBuffer vb;
+        if (!vb.create(d3d.device, (uint32_t)triVerts.size(), sizeof(TerrainSimpleVertex)))
+            continue;
+
+        vb.update(d3d.context, triVerts.data(), (uint32_t)triVerts.size());
+
+        CBSimple cb;
+        for (int i = 0; i < 4; i++)
+            for (int j = 0; j < 4; j++)
+                cb.modelViewProj[j * 4 + i] = mvp[i * 4 + j];
+        cb.color[0] = 0.45f; cb.color[1] = 0.55f;
+        cb.color[2] = 0.35f; cb.color[3] = 1.0f;
+        updateSimpleCB(cb);
+
+        d3d.context->IASetInputLayout(shader.inputLayout);
+        UINT stride = sizeof(TerrainSimpleVertex), offset = 0;
+        d3d.context->IASetVertexBuffers(0, 1, &vb.buffer, &stride, &offset);
+        d3d.context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+        d3d.context->VSSetShader(shader.vs, nullptr, 0);
+        d3d.context->PSSetShader(shader.ps, nullptr, 0);
+        ID3D11Buffer* cbs[] = { getSimpleCB() };
+        d3d.context->VSSetConstantBuffers(0, 1, cbs);
+        d3d.context->PSSetConstantBuffers(0, 1, cbs);
+
+        d3d.context->Draw((UINT)triVerts.size(), 0);
+
+        vb.destroy();
+    }
 }
+
 
 TerrainLoader::TerrainLoader() {}
 TerrainLoader::~TerrainLoader() {}
@@ -254,6 +355,3 @@ bool TerrainLoader::parseTMSH(const std::vector<uint8_t>& data, TerrainSector& s
 
 void TerrainLoader::computeNormals(TerrainSector& sector) {
 }
-
-void TerrainLoader::createGLBuffers() {}
-void TerrainLoader::destroyGLBuffers() {}

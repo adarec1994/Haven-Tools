@@ -6,6 +6,7 @@
 #include "erf.h"
 #include "export.h"
 #include "dds_loader.h"
+#include "Shaders/d3d_context.h"
 #include "Gff.h"
 #include "Gff32.h"
 #include "GffViewer.h"
