@@ -77,7 +77,6 @@ void drawAudioPlayer(AppState& state);
 void drawTexturePreview(AppState& state);
 void drawUvViewer(AppState& state);
 void drawAnimWindow(AppState& state, ImGuiIO& io);
-void drawFSBBrowserWindow(AppState& state);
 void drawGffViewerWindow(GffViewerState& state);
 void filterEncryptedErfs(AppState& state);
 void buildCharacterLists(AppState& state);

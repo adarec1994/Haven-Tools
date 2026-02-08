@@ -285,39 +285,46 @@ void drawAudioPlayer(AppState& state) {
     float btnGap = 6.0f;
     float totalBtnW = btnSize * 3 + btnGap * 2;
     float btnStartX = (panelW - totalBtnW) * 0.5f;
-    float fontSize = ImGui::GetFontSize();
 
-    auto centeredIconButton = [&](const char* icon, const char* id, ImVec2 pos) -> bool {
-        ImVec2 iconSize = ImGui::CalcTextSize(icon);
-        ImVec2 pad((btnSize - iconSize.x) * 0.5f, (btnSize - fontSize) * 0.5f);
-        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, pad);
+    auto iconButton = [&](const char* icon, const char* id, ImVec2 pos) -> bool {
         ImGui::SetCursorScreenPos(pos);
-        char label[64];
-        snprintf(label, sizeof(label), "%s%s", icon, id);
-        bool clicked = ImGui::Button(label, ImVec2(btnSize, btnSize));
-        ImGui::PopStyleVar();
+        ImGui::InvisibleButton(id, ImVec2(btnSize, btnSize));
+        bool hovered = ImGui::IsItemHovered();
+        bool active = ImGui::IsItemActive();
+        bool clicked = ImGui::IsItemClicked();
+
+        ImU32 bg;
+        if (active) bg = ImGui::GetColorU32(ImGuiCol_ButtonActive);
+        else if (hovered) bg = ImGui::GetColorU32(ImGuiCol_ButtonHovered);
+        else bg = ImGui::GetColorU32(ImGuiCol_Button);
+        dl->AddRectFilled(pos, ImVec2(pos.x + btnSize, pos.y + btnSize), bg);
+
+        ImVec2 iconSize = ImGui::CalcTextSize(icon);
+        ImVec2 textPos(pos.x + (btnSize - iconSize.x) * 0.5f, pos.y + (btnSize - iconSize.y) * 0.5f);
+        dl->AddText(textPos, ImGui::GetColorU32(ImGuiCol_Text), icon);
+
         return clicked;
     };
 
-    if (centeredIconButton(ICON_FA_BACKWARD_STEP, "##restart", ImVec2(wp.x + btnStartX, rowY - 2.0f))) {
+    if (iconButton(ICON_FA_BACKWARD_STEP, "##restart", ImVec2(wp.x + btnStartX, rowY - 2.0f))) {
         setAudioPosition(0);
         if (!state.audioPlaying) { resumeAudio(); state.audioPlaying = true; }
     }
 
     if (state.audioPlaying && playing) {
-        if (centeredIconButton(ICON_FA_PAUSE, "##pause", ImVec2(wp.x + btnStartX + btnSize + btnGap, rowY - 2.0f))) {
+        if (iconButton(ICON_FA_PAUSE, "##pause", ImVec2(wp.x + btnStartX + btnSize + btnGap, rowY - 2.0f))) {
             pauseAudio();
             state.audioPlaying = false;
         }
     } else {
-        if (centeredIconButton(ICON_FA_PLAY, "##play", ImVec2(wp.x + btnStartX + btnSize + btnGap, rowY - 2.0f))) {
+        if (iconButton(ICON_FA_PLAY, "##play", ImVec2(wp.x + btnStartX + btnSize + btnGap, rowY - 2.0f))) {
             if (pos >= length - 100) setAudioPosition(0);
             else resumeAudio();
             state.audioPlaying = true;
         }
     }
 
-    if (centeredIconButton(ICON_FA_STOP, "##stop", ImVec2(wp.x + btnStartX + (btnSize + btnGap) * 2, rowY - 2.0f))) {
+    if (iconButton(ICON_FA_STOP, "##stop", ImVec2(wp.x + btnStartX + (btnSize + btnGap) * 2, rowY - 2.0f))) {
         stopAudio();
         state.audioPlaying = false;
         state.showAudioPlayer = false;
@@ -529,162 +536,5 @@ void drawAnimWindow(AppState& state, ImGuiIO& io) {
     if (state.animPlaying && state.currentAnim.duration > 0) {
         state.animTime += io.DeltaTime * state.animSpeed;
         if (state.animTime > state.currentAnim.duration) state.animTime = 0.0f;
-    }
-}
-
-void drawFSBBrowserWindow(AppState& state) {
-    if (!state.showFSBBrowser) return;
-
-    ImGui::SetNextWindowPos(ImVec2(400, 200), ImGuiCond_FirstUseEver);
-    ImGui::SetNextWindowSize(ImVec2(500, 400), ImGuiCond_FirstUseEver);
-
-    if (!ImGui::Begin("Sound Bank Browser", &state.showFSBBrowser)) {
-        ImGui::End();
-        return;
-    }
-
-    std::string filename = fs::path(state.currentFSBPath).filename().string();
-    ImGui::Text("File: %s", filename.c_str());
-    ImGui::Text("Samples: %zu", state.currentFSBSamples.size());
-    ImGui::Separator();
-
-    ImGui::InputText("Filter", state.fsbSampleFilter, sizeof(state.fsbSampleFilter));
-    std::string filterLower = state.fsbSampleFilter;
-    std::transform(filterLower.begin(), filterLower.end(), filterLower.begin(), ::tolower);
-
-    if (ImGui::Button("Export All to WAV")) {
-        IGFD::FileDialogConfig config;
-        #ifdef _WIN32
-        char* userProfile = getenv("USERPROFILE");
-        if (userProfile) config.path = std::string(userProfile) + "\\Documents";
-        else config.path = ".";
-        #else
-        char* home = getenv("HOME");
-        if (home) config.path = std::string(home) + "/Documents";
-        else config.path = ".";
-        #endif
-        ImGuiFileDialog::Instance()->OpenDialog("ExportAllFSBSamples", "Select Output Folder", nullptr, config);
-    }
-    ImGui::SameLine();
-    if (state.selectedFSBSample >= 0 && ImGui::Button("Export Selected")) {
-        IGFD::FileDialogConfig config;
-        #ifdef _WIN32
-        char* userProfile = getenv("USERPROFILE");
-        if (userProfile) config.path = std::string(userProfile) + "\\Documents";
-        else config.path = ".";
-        #else
-        char* home = getenv("HOME");
-        if (home) config.path = std::string(home) + "/Documents";
-        else config.path = ".";
-        #endif
-        std::string defaultName = state.currentFSBSamples[state.selectedFSBSample].name;
-        size_t dotPos = defaultName.rfind('.');
-        if (dotPos != std::string::npos) defaultName = defaultName.substr(0, dotPos);
-        defaultName += ".wav";
-        config.fileName = defaultName;
-        ImGuiFileDialog::Instance()->OpenDialog("ExportFSBSample", "Save WAV", ".wav", config);
-    }
-
-    if (isAudioPlaying()) {
-        ImGui::SameLine();
-        if (ImGui::Button("Stop")) {
-            stopAudio();
-        }
-    }
-
-    ImGui::Separator();
-    ImGui::Text("Double-click to play, right-click to export");
-    ImGui::BeginChild("SampleList", ImVec2(0, 0), true);
-
-    for (int i = 0; i < (int)state.currentFSBSamples.size(); i++) {
-        const auto& sample = state.currentFSBSamples[i];
-
-        if (!filterLower.empty()) {
-            std::string nameLower = sample.name;
-            std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), ::tolower);
-            if (nameLower.find(filterLower) == std::string::npos) continue;
-        }
-
-        char label[512];
-        int mins = (int)(sample.duration / 60);
-        int secs = (int)(sample.duration) % 60;
-        snprintf(label, sizeof(label), "%s [%d:%02d] %dHz##%d",
-                 sample.name.c_str(), mins, secs, sample.sampleRate, i);
-
-        bool selected = (state.selectedFSBSample == i);
-        if (ImGui::Selectable(label, selected, ImGuiSelectableFlags_AllowDoubleClick)) {
-            state.selectedFSBSample = i;
-            if (ImGui::IsMouseDoubleClicked(0)) {
-                auto wavData = extractFSB4SampleToWav(state.currentFSBPath, i);
-                if (!wavData.empty()) {
-                    playWavFromMemory(wavData);
-                    state.currentAudioName = sample.name;
-                    state.audioPlaying = true;
-                    state.showAudioPlayer = true;
-                }
-            }
-        }
-
-        if (ImGui::BeginPopupContextItem()) {
-            if (ImGui::MenuItem("Play")) {
-                auto wavData = extractFSB4SampleToWav(state.currentFSBPath, i);
-                if (!wavData.empty()) {
-                    playWavFromMemory(wavData);
-                    state.currentAudioName = sample.name;
-                    state.audioPlaying = true;
-                }
-            }
-            if (ImGui::MenuItem("Export to WAV...")) {
-                state.selectedFSBSample = i;
-                IGFD::FileDialogConfig config;
-                #ifdef _WIN32
-                char* userProfile = getenv("USERPROFILE");
-                if (userProfile) config.path = std::string(userProfile) + "\\Documents";
-                else config.path = ".";
-                #else
-                char* home = getenv("HOME");
-                if (home) config.path = std::string(home) + "/Documents";
-                else config.path = ".";
-                #endif
-                std::string defaultName = sample.name;
-                size_t dotPos = defaultName.rfind('.');
-                if (dotPos != std::string::npos) defaultName = defaultName.substr(0, dotPos);
-                defaultName += ".wav";
-                config.fileName = defaultName;
-                ImGuiFileDialog::Instance()->OpenDialog("ExportFSBSample", "Save WAV", ".wav", config);
-            }
-            ImGui::EndPopup();
-        }
-    }
-
-    ImGui::EndChild();
-    ImGui::End();
-
-    if (ImGuiFileDialog::Instance()->Display("ExportFSBSample", ImGuiWindowFlags_NoCollapse, ImVec2(500, 400))) {
-        if (ImGuiFileDialog::Instance()->IsOk() && state.selectedFSBSample >= 0) {
-            std::string outPath = ImGuiFileDialog::Instance()->GetFilePathName();
-            if (saveFSB4SampleToWav(state.currentFSBPath, state.selectedFSBSample, outPath)) {
-                state.statusMessage = "Exported: " + state.currentFSBSamples[state.selectedFSBSample].name;
-            }
-        }
-        ImGuiFileDialog::Instance()->Close();
-    }
-
-    if (ImGuiFileDialog::Instance()->Display("ExportAllFSBSamples", ImGuiWindowFlags_NoCollapse, ImVec2(500, 400))) {
-        if (ImGuiFileDialog::Instance()->IsOk()) {
-            std::string outDir = ImGuiFileDialog::Instance()->GetCurrentPath();
-            int exported = 0;
-            for (int i = 0; i < (int)state.currentFSBSamples.size(); i++) {
-                std::string name = state.currentFSBSamples[i].name;
-                size_t dotPos = name.rfind('.');
-                if (dotPos != std::string::npos) name = name.substr(0, dotPos);
-                std::string outPath = outDir + "/" + name + ".wav";
-                if (saveFSB4SampleToWav(state.currentFSBPath, i, outPath)) {
-                    exported++;
-                }
-            }
-            state.statusMessage = "Exported " + std::to_string(exported) + " samples";
-        }
-        ImGuiFileDialog::Instance()->Close();
     }
 }

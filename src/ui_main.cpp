@@ -1186,7 +1186,6 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
     if (state.showUvViewer && state.hasModel && state.selectedMeshForUv >= 0 && state.selectedMeshForUv < (int)state.currentModel.meshes.size()) drawUvViewer(state);
     if (state.showAnimWindow && state.hasModel) drawAnimWindow(state, io);
     if (state.showAudioPlayer) drawAudioPlayer(state);
-    if (state.showFSBBrowser) drawFSBBrowserWindow(state);
     draw2DAEditorWindow(state);
     drawGffViewerWindow(state.gffViewer);
     if (state.showHeadSelector) {
