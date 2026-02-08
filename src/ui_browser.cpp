@@ -337,9 +337,11 @@ void drawBrowserWindow(AppState& state) {
         if (!state.statusMessage.empty()) { ImGui::SameLine(); ImGui::Text("%s", state.statusMessage.c_str()); }
         ImGui::EndMenuBar();
     }
-    ImGui::Columns(2, "browser_columns");
+    float totalW = ImGui::GetContentRegionAvail().x;
+    float totalH = ImGui::GetContentRegionAvail().y;
+    float leftW = 200.0f;
+    ImGui::BeginChild("LeftPane", ImVec2(leftW, totalH), false);
     ImGui::Text("Files");
-    ImGui::Separator();
     ImGui::BeginChild("ERFList", ImVec2(0, 0), true);
     if (!state.audioFilesLoaded && !state.selectedFolder.empty()) {
         scanAudioFiles(state);
@@ -516,7 +518,9 @@ void drawBrowserWindow(AppState& state) {
         }
     }
     ImGui::EndChild();
-    ImGui::NextColumn();
+    ImGui::EndChild();
+    ImGui::SameLine();
+    ImGui::BeginChild("RightPane", ImVec2(0, totalH), false);
     if (!state.selectedErfName.empty() && !state.mergedEntries.empty()) {
         bool hasTextures = false, hasModels = false;
         bool isAudioCategory = (state.selectedErfName == "[Audio]" || state.selectedErfName == "[VoiceOver]");
@@ -804,30 +808,32 @@ void drawBrowserWindow(AppState& state) {
                         state.currentFSBSamples = samples;
                         state.selectedFSBSample = -1;
                         state.fsbSampleFilter[0] = '\0';
-                        state.showFSBBrowser = true;
-                        state.statusMessage = "Sound bank: " + std::to_string(samples.size()) + " samples";
                          if (samples.size() == 1) {
                             stopAudio();
                             state.audioPlaying = false;
+                            std::string sampleName = samples[0].name.empty() ? ce.name : samples[0].name;
                             auto mp3Data = extractFSB4toMP3Data(fullPath);
                             if (!mp3Data.empty()) {
-                                state.currentAudioName = ce.name;
+                                state.currentAudioName = sampleName;
                                 if (playAudioFromMemory(mp3Data)) {
                                     state.audioPlaying = true;
                                     state.showAudioPlayer = true;
-                                    state.statusMessage = "Playing: " + ce.name;
+                                    state.statusMessage = "Playing: " + sampleName;
                                 }
                             } else {
                                 auto wavData = extractFSB4SampleToWav(fullPath, 0);
                                 if (!wavData.empty()) {
-                                    state.currentAudioName = ce.name;
+                                    state.currentAudioName = sampleName;
                                     if (playWavFromMemory(wavData)) {
                                         state.audioPlaying = true;
                                         state.showAudioPlayer = true;
-                                        state.statusMessage = "Playing: " + ce.name;
+                                        state.statusMessage = "Playing: " + sampleName;
                                     }
                                 }
                             }
+                         } else {
+                            state.showFSBBrowser = true;
+                            state.statusMessage = "Sound bank: " + std::to_string(samples.size()) + " samples";
                          }
                     } else {
                         state.statusMessage = "Failed to parse FSB file";
@@ -931,7 +937,7 @@ void drawBrowserWindow(AppState& state) {
         });
         ImGui::EndChild();
     } else ImGui::Text("Select an ERF file");
-    ImGui::Columns(1);
+    ImGui::EndChild();
     ImGui::End();
     if (ImGuiFileDialog::Instance()->Display("DumpAllFiles", ImGuiWindowFlags_NoCollapse, ImVec2(500, 400))) {
         if (ImGuiFileDialog::Instance()->IsOk()) {

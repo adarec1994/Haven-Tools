@@ -144,7 +144,7 @@ void drawRenderSettingsWindow(AppState& state) {
         if (!state.currentModel.skeleton.bones.empty()) {
             ImGui::Separator();
             if (ImGui::TreeNode("Skeleton", "Skeleton (%zu bones)", state.currentModel.skeleton.bones.size())) {
-                if (ImGui::IsKeyPressed(ImGuiKey_Escape)) state.selectedBoneIndex = -1;
+                if (ImGui::IsKeyPressed(state.keybinds.deselectBone)) state.selectedBoneIndex = -1;
                 if (state.selectedBoneIndex >= 0) {
                     ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Selected: %s",
                         state.currentModel.skeleton.bones[state.selectedBoneIndex].name.c_str());
@@ -199,14 +199,6 @@ void drawMaoViewer(AppState& state) {
 }
 
 void drawAudioPlayer(AppState& state) {
-    ImGui::SetNextWindowPos(ImVec2(20, 600), ImGuiCond_FirstUseEver);
-    ImGui::SetNextWindowSize(ImVec2(400, 120), ImGuiCond_FirstUseEver);
-
-    ImGui::Begin("Audio Player", &state.showAudioPlayer, ImGuiWindowFlags_NoCollapse);
-
-    ImGui::Text("%s", state.currentAudioName.c_str());
-    ImGui::Separator();
-
     int length = getAudioLength();
     int pos = getAudioPosition();
     bool playing = isAudioPlaying();
@@ -216,39 +208,124 @@ void drawAudioPlayer(AppState& state) {
     }
 
     float progress = (length > 0) ? (float)pos / (float)length : 0.0f;
-
     int totalSec = length / 1000;
     int curSec = pos / 1000;
-    char timeStr[64];
-    snprintf(timeStr, sizeof(timeStr), "%d:%02d / %d:%02d", curSec / 60, curSec % 60, totalSec / 60, totalSec % 60);
 
-    ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
-    if (ImGui::SliderFloat("##Progress", &progress, 0.0f, 1.0f, timeStr)) {
-        setAudioPosition((int)(progress * length));
+    float panelW = 420.0f;
+    float panelH = 72.0f;
+
+    ImGuiViewport* vp = ImGui::GetMainViewport();
+    ImVec2 panelPos(vp->Pos.x + (vp->Size.x - panelW) * 0.5f, vp->Pos.y + vp->Size.y - panelH - 16.0f);
+
+    ImGui::SetNextWindowPos(panelPos, ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(panelW, panelH));
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 8.0f);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(12, 8));
+    ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.10f, 0.10f, 0.12f, 0.92f));
+    ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.3f, 0.3f, 0.35f, 0.5f));
+
+    ImGui::Begin("##AudioPlayer", &state.showAudioPlayer,
+        ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
+        ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoSavedSettings);
+
+    ImDrawList* dl = ImGui::GetWindowDrawList();
+    ImVec2 wp = ImGui::GetWindowPos();
+    ImVec2 ws = ImGui::GetWindowSize();
+
+    std::string displayName = state.currentAudioName;
+    float nameMaxW = panelW - 24.0f;
+    ImVec2 nameSize = ImGui::CalcTextSize(displayName.c_str());
+    if (nameSize.x > nameMaxW) {
+        while (displayName.size() > 4 && ImGui::CalcTextSize((displayName + "...").c_str()).x > nameMaxW)
+            displayName.pop_back();
+        displayName += "...";
+        nameSize = ImGui::CalcTextSize(displayName.c_str());
+    }
+    ImGui::SetCursorPosX((panelW - nameSize.x) * 0.5f);
+    ImGui::TextColored(ImVec4(0.85f, 0.85f, 0.88f, 1.0f), "%s", displayName.c_str());
+
+    float barX = wp.x + 12.0f;
+    float barW = ws.x - 24.0f;
+    float barY = wp.y + 32.0f;
+    float barH = 4.0f;
+
+    dl->AddRectFilled(ImVec2(barX, barY), ImVec2(barX + barW, barY + barH),
+        IM_COL32(50, 50, 55, 200), 2.0f);
+    if (progress > 0.0f) {
+        dl->AddRectFilled(ImVec2(barX, barY), ImVec2(barX + barW * progress, barY + barH),
+            IM_COL32(80, 160, 255, 255), 2.0f);
     }
 
+    float handleX = barX + barW * progress;
+    dl->AddCircleFilled(ImVec2(handleX, barY + barH * 0.5f), 5.0f, IM_COL32(200, 220, 255, 255));
+
+    ImGui::SetCursorScreenPos(ImVec2(barX, barY - 4.0f));
+    ImGui::InvisibleButton("##seekbar", ImVec2(barW, barH + 8.0f));
+    if (ImGui::IsItemActive()) {
+        float mx = ImGui::GetMousePos().x;
+        float newProgress = (mx - barX) / barW;
+        if (newProgress < 0.0f) newProgress = 0.0f;
+        if (newProgress > 1.0f) newProgress = 1.0f;
+        setAudioPosition((int)(newProgress * length));
+    }
+    if (ImGui::IsItemHovered()) ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
+
+    float rowY = barY + barH + 6.0f;
+    char timeCur[16], timeTotal[16];
+    snprintf(timeCur, sizeof(timeCur), "%d:%02d", curSec / 60, curSec % 60);
+    snprintf(timeTotal, sizeof(timeTotal), "%d:%02d", totalSec / 60, totalSec % 60);
+
+    ImGui::SetCursorScreenPos(ImVec2(barX, rowY));
+    ImGui::TextColored(ImVec4(0.6f, 0.6f, 0.65f, 1.0f), "%s", timeCur);
+
+    ImVec2 totalSize = ImGui::CalcTextSize(timeTotal);
+    ImGui::SetCursorScreenPos(ImVec2(barX + barW - totalSize.x, rowY));
+    ImGui::TextColored(ImVec4(0.6f, 0.6f, 0.65f, 1.0f), "%s", timeTotal);
+
+    float btnSize = 22.0f;
+    float btnGap = 6.0f;
+    float totalBtnW = btnSize * 3 + btnGap * 2;
+    float btnStartX = (panelW - totalBtnW) * 0.5f;
+
+    ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 4.0f);
+    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.3f, 0.3f, 0.38f, 0.6f));
+    ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.15f, 0.15f, 0.2f, 0.8f));
+    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.85f, 0.85f, 0.9f, 1.0f));
+
+    ImGui::SetCursorScreenPos(ImVec2(wp.x + btnStartX, rowY - 2.0f));
+    if (ImGui::Button(ICON_FA_BACKWARD_STEP "##restart", ImVec2(btnSize, btnSize))) {
+        setAudioPosition(0);
+        if (!state.audioPlaying) { resumeAudio(); state.audioPlaying = true; }
+    }
+
+    ImGui::SetCursorScreenPos(ImVec2(wp.x + btnStartX + btnSize + btnGap, rowY - 2.0f));
     if (state.audioPlaying && playing) {
-        if (ImGui::Button("Pause")) {
+        if (ImGui::Button(ICON_FA_PAUSE "##pause", ImVec2(btnSize, btnSize))) {
             pauseAudio();
             state.audioPlaying = false;
         }
     } else {
-        if (ImGui::Button("Play")) {
-            if (pos >= length - 100) {
-                setAudioPosition(0);
-            } else {
-                resumeAudio();
-            }
+        if (ImGui::Button(ICON_FA_PLAY "##play", ImVec2(btnSize, btnSize))) {
+            if (pos >= length - 100) setAudioPosition(0);
+            else resumeAudio();
             state.audioPlaying = true;
         }
     }
-    ImGui::SameLine();
-    if (ImGui::Button("Stop")) {
+
+    ImGui::SetCursorScreenPos(ImVec2(wp.x + btnStartX + (btnSize + btnGap) * 2, rowY - 2.0f));
+    if (ImGui::Button(ICON_FA_STOP "##stop", ImVec2(btnSize, btnSize))) {
         stopAudio();
         state.audioPlaying = false;
+        state.showAudioPlayer = false;
     }
 
+    ImGui::PopStyleColor(4);
+    ImGui::PopStyleVar();
+
     ImGui::End();
+    ImGui::PopStyleColor(2);
+    ImGui::PopStyleVar(2);
 
     if (!state.showAudioPlayer) {
         stopAudio();

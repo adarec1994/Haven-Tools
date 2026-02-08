@@ -5,6 +5,7 @@
 #include <cmath>
 #include <map>
 #include <unordered_map>
+#include "imgui.h"
 #include "Mesh.h"
 #include "erf.h"
 #include "mor_loader.h"
@@ -13,6 +14,16 @@
 
 class ERFFile;
 class GDAFile;
+
+struct Keybinds {
+    ImGuiKey moveForward   = ImGuiKey_W;
+    ImGuiKey moveBackward  = ImGuiKey_S;
+    ImGuiKey moveLeft      = ImGuiKey_A;
+    ImGuiKey moveRight     = ImGuiKey_D;
+    ImGuiKey panUp         = ImGuiKey_E;
+    ImGuiKey panDown       = ImGuiKey_Q;
+    ImGuiKey deselectBone  = ImGuiKey_Escape;
+};
 
 struct GDAEditorState {
     bool showWindow = false;
@@ -86,9 +97,9 @@ struct RenderSettings {
     bool wireframe = false;
     bool showAxes = true;
     bool showGrid = true;
-    bool showCollision = true;
+    bool showCollision = false;
     bool collisionWireframe = true;
-    bool showSkeleton = true;
+    bool showSkeleton = false;
     bool showBoneNames = false;
     bool showTextures = true;
     bool useNormalMaps = true;
@@ -171,6 +182,8 @@ struct AppState {
     bool showUvViewer = false;
     bool showAnimWindow = false;
     bool showMeshBrowser = false;
+    bool showKeybinds = false;
+    Keybinds keybinds;
     std::string lastRunVersion;
     std::string maoContent;
     std::string maoFileName;

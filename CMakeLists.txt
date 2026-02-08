@@ -106,6 +106,32 @@ embed_directory(ani)
 embed_directory(excel)
 embed_directory(hashes)
 
+file(GLOB FA_SOLID_FILES "${CMAKE_SOURCE_DIR}/src/Assets/otfs/*Solid*" "${CMAKE_SOURCE_DIR}/src/Assets/otfs/*solid*")
+list(LENGTH FA_SOLID_FILES FA_COUNT)
+if(FA_COUNT GREATER 0)
+    list(GET FA_SOLID_FILES 0 FA_SOLID_FILE)
+    file(READ "${FA_SOLID_FILE}" FA_DATA HEX)
+    string(LENGTH "${FA_DATA}" FA_HEX_LEN)
+    math(EXPR FA_LEN "${FA_HEX_LEN} / 2")
+    string(REGEX REPLACE "([0-9a-f][0-9a-f])" "0x\\1," FA_ARRAY "${FA_DATA}")
+    string(REGEX REPLACE ",$" "" FA_ARRAY "${FA_ARRAY}")
+    file(WRITE "${CMAKE_BINARY_DIR}/fa_solid_embedded.h"
+            "#pragma once
+static unsigned char fa_solid_otf[] = {
+${FA_ARRAY}
+};
+static unsigned int fa_solid_otf_len = ${FA_LEN};
+")
+    message(STATUS "Embedded FontAwesome Solid: ${FA_SOLID_FILE} (${FA_LEN} bytes)")
+else()
+    file(WRITE "${CMAKE_BINARY_DIR}/fa_solid_embedded.h"
+            "#pragma once
+static unsigned char fa_solid_otf[] = {0};
+static unsigned int fa_solid_otf_len = 0;
+")
+    message(WARNING "FontAwesome Solid font not found in src/Assets/otfs/")
+endif()
+
 add_executable(HavenTools
         src/main.cpp
         src/types.cpp
@@ -166,6 +192,7 @@ add_executable(HavenTools
         src/gffviewer.h
         src/Shaders/D3d_Context.cpp
         src/Shaders/D3d_Context.h
+        src/Fonts/IconsFontAwesome6.h
 )
 
 target_include_directories(HavenTools PRIVATE

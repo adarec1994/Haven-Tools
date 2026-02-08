@@ -692,17 +692,44 @@ void renderModel(Model& model, const Camera& camera, const RenderSettings& setti
         for (const auto& shape : model.collisionShapes) {
             float cr = 0.0f, cg = 1.0f, cb = 1.0f, ca = wireframe ? 1.0f : 0.3f;
 
-            float shapeMat[16]; mat4Identity(shapeMat);
-            mat4Translate(shapeMat, shape.posX, shape.posY, shape.posZ);
-            float rotW = shape.rotW;
-            if (rotW > 1.0f) rotW = 1.0f;
-            if (rotW < -1.0f) rotW = -1.0f;
-            if (rotW < 0.9999f && rotW > -0.9999f) {
-                float angle = 2.0f * acosf(rotW);
-                float s = sqrtf(1.0f - rotW * rotW);
-                if (s > 0.001f)
-                    mat4RotateAxis(shapeMat, angle, shape.rotX / s, shape.rotY / s, shape.rotZ / s);
+            float wpx = shape.posX, wpy = shape.posY, wpz = shape.posZ;
+            float wrx = shape.rotX, wry = shape.rotY, wrz = shape.rotZ, wrw = shape.rotW;
+
+            if (shape.boneIndex >= 0 && shape.boneIndex < (int)model.skeleton.bones.size()) {
+                const Bone& bone = model.skeleton.bones[shape.boneIndex];
+                float bqx = bone.worldRotX, bqy = bone.worldRotY, bqz = bone.worldRotZ, bqw = bone.worldRotW;
+                float lx = shape.localPosX, ly = shape.localPosY, lz = shape.localPosZ;
+                float cx2 = bqy*lz - bqz*ly, cy2 = bqz*lx - bqx*lz, cz2 = bqx*ly - bqy*lx;
+                float cx3 = bqy*cz2 - bqz*cy2, cy3 = bqz*cx2 - bqx*cz2, cz3 = bqx*cy2 - bqy*cx2;
+                wpx = bone.worldPosX + lx + 2.0f*(bqw*cx2 + cx3);
+                wpy = bone.worldPosY + ly + 2.0f*(bqw*cy2 + cy3);
+                wpz = bone.worldPosZ + lz + 2.0f*(bqw*cz2 + cz3);
+                wrw = bqw*shape.localRotW - bqx*shape.localRotX - bqy*shape.localRotY - bqz*shape.localRotZ;
+                wrx = bqw*shape.localRotX + bqx*shape.localRotW + bqy*shape.localRotZ - bqz*shape.localRotY;
+                wry = bqw*shape.localRotY - bqx*shape.localRotZ + bqy*shape.localRotW + bqz*shape.localRotX;
+                wrz = bqw*shape.localRotZ + bqx*shape.localRotY - bqy*shape.localRotX + bqz*shape.localRotW;
             }
+
+            float qx = wrx, qy = wry, qz = wrz, qw = wrw;
+            float qlen = sqrtf(qx*qx + qy*qy + qz*qz + qw*qw);
+            if (qlen > 0.0001f) { qx/=qlen; qy/=qlen; qz/=qlen; qw/=qlen; }
+
+            float shapeMat[16];
+            memset(shapeMat, 0, 64);
+            shapeMat[0]  = 1.0f - 2.0f*(qy*qy + qz*qz);
+            shapeMat[1]  = 2.0f*(qx*qy + qw*qz);
+            shapeMat[2]  = 2.0f*(qx*qz - qw*qy);
+            shapeMat[4]  = 2.0f*(qx*qy - qw*qz);
+            shapeMat[5]  = 1.0f - 2.0f*(qx*qx + qz*qz);
+            shapeMat[6]  = 2.0f*(qy*qz + qw*qx);
+            shapeMat[8]  = 2.0f*(qx*qz + qw*qy);
+            shapeMat[9]  = 2.0f*(qy*qz - qw*qx);
+            shapeMat[10] = 1.0f - 2.0f*(qx*qx + qy*qy);
+            shapeMat[12] = wpx;
+            shapeMat[13] = wpy;
+            shapeMat[14] = wpz;
+            shapeMat[15] = 1.0f;
+
             float shapeMVP[16];
             mat4Multiply(shapeMat, mvp, shapeMVP);
 

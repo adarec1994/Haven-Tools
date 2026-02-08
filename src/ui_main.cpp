@@ -404,15 +404,12 @@ void handleInput(AppState& state, GLFWwindow* window, ImGuiIO& io) {
     if (!io.WantCaptureKeyboard) {
         float deltaTime = io.DeltaTime;
         float speed = state.camera.moveSpeed * deltaTime;
-        if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) speed *= 3.0f;
-        if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) state.camera.moveForward(speed);
-        if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) state.camera.moveForward(-speed);
-        if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) state.camera.moveRight(-speed);
-        if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) state.camera.moveRight(speed);
-        if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) state.camera.moveUp(speed);
-        if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS) state.camera.moveUp(-speed);
-        if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) state.camera.moveUp(speed);
-        if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) state.camera.moveUp(-speed);
+        if (ImGui::IsKeyDown(state.keybinds.moveForward)) state.camera.moveForward(speed);
+        if (ImGui::IsKeyDown(state.keybinds.moveBackward)) state.camera.moveForward(-speed);
+        if (ImGui::IsKeyDown(state.keybinds.moveLeft)) state.camera.moveRight(-speed);
+        if (ImGui::IsKeyDown(state.keybinds.moveRight)) state.camera.moveRight(speed);
+        if (ImGui::IsKeyDown(state.keybinds.panUp)) state.camera.moveUp(speed);
+        if (ImGui::IsKeyDown(state.keybinds.panDown)) state.camera.moveUp(-speed);
     }
 }
 void drawSplashScreen(AppState& state, int displayW, int displayH) {
@@ -444,6 +441,76 @@ void drawSplashScreen(AppState& state, int displayW, int displayH) {
 void preloadErfs(AppState& state) {
     runLoadingTask(&state);
 }
+static int s_listeningBind = -1;
+
+static void drawKeybindRow(const char* label, ImGuiKey& key, int id) {
+    ImGui::TableNextRow();
+    ImGui::TableNextColumn();
+    ImGui::TextUnformatted(label);
+    ImGui::TableNextColumn();
+    ImGui::PushID(id);
+    if (s_listeningBind == id) {
+        ImGui::Button("Press a key...", ImVec2(140, 0));
+        for (int k = ImGuiKey_NamedKey_BEGIN; k < ImGuiKey_NamedKey_END; k++) {
+            if (ImGui::IsKeyPressed((ImGuiKey)k)) {
+                key = (ImGuiKey)k;
+                s_listeningBind = -1;
+                break;
+            }
+        }
+    } else {
+        if (ImGui::Button(ImGui::GetKeyName(key), ImVec2(140, 0))) {
+            s_listeningBind = id;
+        }
+    }
+    ImGui::PopID();
+}
+
+void drawKeybindsWindow(AppState& state) {
+    ImGui::SetNextWindowSize(ImVec2(340, 0), ImGuiCond_FirstUseEver);
+    ImGui::Begin("Keybinds", &state.showKeybinds, ImGuiWindowFlags_AlwaysAutoResize);
+
+    if (s_listeningBind >= 0 && ImGui::IsKeyPressed(ImGuiKey_Escape)) {
+        s_listeningBind = -1;
+    }
+
+    if (ImGui::BeginTable("##keybinds", 2, ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerH)) {
+
+        ImGui::TableNextRow();
+        ImGui::TableNextColumn();
+        ImGui::TextColored(ImVec4(0.6f, 0.8f, 1.0f, 1.0f), "Movement");
+        ImGui::TableNextColumn();
+
+        drawKeybindRow("Forward",     state.keybinds.moveForward,  0);
+        drawKeybindRow("Backward",    state.keybinds.moveBackward, 1);
+        drawKeybindRow("Left",        state.keybinds.moveLeft,     2);
+        drawKeybindRow("Right",       state.keybinds.moveRight,    3);
+        drawKeybindRow("Pan Up",      state.keybinds.panUp,        4);
+        drawKeybindRow("Pan Down",    state.keybinds.panDown,      5);
+
+        ImGui::TableNextRow();
+        ImGui::TableNextColumn();
+        ImGui::TextColored(ImVec4(0.6f, 0.8f, 1.0f, 1.0f), "General");
+        ImGui::TableNextColumn();
+
+        drawKeybindRow("Deselect", state.keybinds.deselectBone, 6);
+
+        ImGui::EndTable();
+    }
+
+    ImGui::Spacing();
+    if (ImGui::Button("Reset to Defaults")) {
+        state.keybinds = Keybinds();
+        saveSettings(state);
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Save")) {
+        saveSettings(state);
+    }
+
+    ImGui::End();
+}
+
 void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
     int displayW, displayH;
     glfwGetFramebufferSize(window, &displayW, &displayH);
@@ -1056,6 +1123,12 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
             ImGui::MenuItem("2DA/GDA Editor", nullptr, &state.gdaEditor.showWindow);
             ImGui::EndMenu();
         }
+        if (ImGui::BeginMenu("Settings")) {
+            if (ImGui::MenuItem("Keybinds")) {
+                state.showKeybinds = true;
+            }
+            ImGui::EndMenu();
+        }
         ImGui::Text(" | ");
         ImGui::Text("Mode:");
         ImGui::SameLine();
@@ -1083,7 +1156,14 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
         ImGui::Text(" | ");
         ImGui::SameLine();
         if (state.hasModel) {
-            ImGui::Text("| %s | RMB: Look | WASD: Move | E/Q: Up/Down", state.currentModel.name.c_str());
+            ImGui::Text("| %s | RMB: Look | %s%s%s%s: Move | %s/%s: Pan",
+                state.currentModel.name.c_str(),
+                ImGui::GetKeyName(state.keybinds.moveForward),
+                ImGui::GetKeyName(state.keybinds.moveLeft),
+                ImGui::GetKeyName(state.keybinds.moveBackward),
+                ImGui::GetKeyName(state.keybinds.moveRight),
+                ImGui::GetKeyName(state.keybinds.panUp),
+                ImGui::GetKeyName(state.keybinds.panDown));
         }
         const char* ver = Update::GetInstalledVersionText();
         float verW = ImGui::CalcTextSize(ver).x;
@@ -1100,6 +1180,7 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
         drawCharacterDesigner(state, io);
     }
     if (state.showRenderSettings) drawRenderSettingsWindow(state);
+    if (state.showKeybinds) drawKeybindsWindow(state);
     if (state.showMaoViewer) drawMaoViewer(state);
     if (state.showTexturePreview && state.previewTextureId != 0) drawTexturePreview(state);
     if (state.showUvViewer && state.hasModel && state.selectedMeshForUv >= 0 && state.selectedMeshForUv < (int)state.currentModel.meshes.size()) drawUvViewer(state);

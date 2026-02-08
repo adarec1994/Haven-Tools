@@ -19,6 +19,7 @@
 #endif
 #include <GLFW/glfw3.h>
 #include "imgui.h"
+#include "Fonts/IconsFontAwesome6.h"
 #include "ImGuiFileDialog.h"
 #include <algorithm>
 #include <filesystem>
@@ -70,6 +71,7 @@ void drawImportMenu(AppState& state);
 void drawBrowserWindow(AppState& state);
 void markModelAsImported(const std::string& modelName);
 void drawRenderSettingsWindow(AppState& state);
+void drawKeybindsWindow(AppState& state);
 void drawMaoViewer(AppState& state);
 void drawAudioPlayer(AppState& state);
 void drawTexturePreview(AppState& state);

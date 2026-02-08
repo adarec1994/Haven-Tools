@@ -172,15 +172,15 @@ std::vector<FSBSampleInfo> parseFSB4Samples(const std::string& fsbPath) {
 
     const size_t FSB_HEADER_SIZE = 0x30;
 
-    size_t headerSizePerSample = (numSamples > 0) ? (sampleHeadersSize / numSamples) : 0;
-    if (headerSizePerSample < 0x40) headerSizePerSample = 0x50;
-
     size_t dataStart = FSB_HEADER_SIZE + sampleHeadersSize;
     size_t currentDataOffset = dataStart;
+    size_t headerOffset = FSB_HEADER_SIZE;
 
     for (uint32_t i = 0; i < numSamples; i++) {
-        size_t headerOffset = FSB_HEADER_SIZE + (i * headerSizePerSample);
         if (headerOffset + 0x40 > fileSize) break;
+
+        uint16_t thisHeaderSize = *reinterpret_cast<uint16_t*>(&data[headerOffset]);
+        if (thisHeaderSize < 0x40) thisHeaderSize = 0x50;
 
         FSBSampleInfo info;
         char name[31] = {0};
@@ -200,6 +200,7 @@ std::vector<FSBSampleInfo> parseFSB4Samples(const std::string& fsbPath) {
         else info.duration = 0.0f;
 
         samples.push_back(info);
+        headerOffset += thisHeaderSize;
     }
     return samples;
 }

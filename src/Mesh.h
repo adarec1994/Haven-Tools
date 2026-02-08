@@ -54,7 +54,10 @@ enum class CollisionShapeType {
 struct CollisionShape {
     std::string name;
     std::string boneName;
+    int boneIndex = -1;
     CollisionShapeType type = CollisionShapeType::Box;
+    float localPosX = 0, localPosY = 0, localPosZ = 0;
+    float localRotX = 0, localRotY = 0, localRotZ = 0, localRotW = 1;
     float posX = 0, posY = 0, posZ = 0;
     float rotX = 0, rotY = 0, rotZ = 0, rotW = 1;
     float boxX = 1, boxY = 1, boxZ = 1;

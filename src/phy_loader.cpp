@@ -68,7 +68,10 @@ bool loadPHY(const std::vector<uint8_t>& data, Model& model) {
                 localRotZ = gff.readFloatAt(rotOffset + 8);
                 localRotW = gff.readFloatAt(rotOffset + 12);
             }
+            shape.localPosX = localPosX; shape.localPosY = localPosY; shape.localPosZ = localPosZ;
+            shape.localRotX = localRotX; shape.localRotY = localRotY; shape.localRotZ = localRotZ; shape.localRotW = localRotW;
             int boneIdx = model.skeleton.findBone(currentBoneName);
+            shape.boneIndex = boneIdx;
             if (boneIdx >= 0) {
                 const Bone& bone = model.skeleton.bones[boneIdx];
                 float rx, ry, rz;

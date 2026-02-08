@@ -231,8 +231,16 @@ Thank you for downloading or updating to version 2.0!
 
 - Controls update:
 -- Added vertical panning with Q/E
+-- Controls can be rebound in the Keybind settings.
 
 - UI Updates:
 -- Updated the skeleton rendering to be cleaner
+-- Updated UI positions to be cleaner.
+-- Added settings -> keybinds to the top toolbar.
+-- Updated the audio playback to use a cleaner UI.
+
+- Bug fixes:
+-- Fixed a bug with a rogue separator in the ERF browser.
+-- Fixed a bug in audio banks where it spat out garbage data or cut off the file names.
 
 )";
