@@ -16,14 +16,16 @@ struct GffViewerState {
         std::string label;
         std::string typeName;
         std::string value;
-        int depth;
-        bool isExpandable;
-        bool isExpanded;
-        size_t childCount;
+        int depth = 0;
+        bool isExpandable = false;
+        bool isExpanded = false;
+        size_t childCount = 0;
         std::string path;
-        uint32_t structIndex;
-        uint32_t fieldIndex;
-        uint32_t baseOffset;
+        uint32_t structIndex = 0;
+        uint32_t fieldIndex = 0;
+        uint32_t baseOffset = 0;
+        uint32_t numericLabel = 0;  // raw GFF4 field label ID for Index column
+        bool isListItem = false;    // true for list items (show index, not label ID)
     };
     std::vector<TreeNode> flattenedTree;
     std::set<std::string> expandedPaths;
