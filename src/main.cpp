@@ -95,10 +95,10 @@ int main(int argc, char** argv) {
         if (state.hasModel) {
             if (state.animPlaying && state.currentAnim.duration > 0)
                 applyAnimation(state.currentModel, state.currentAnim, state.animTime, state.basePoseBones);
-            renderModel(state.currentModel, state.camera, state.renderSettings, display_w, display_h, state.animPlaying, state.selectedBoneIndex);
+            renderModel(state.currentModel, state.camera, state.renderSettings, display_w, display_h, state.animPlaying, state.selectedBoneIndex, state.selectedLevelChunk);
         } else {
             Model empty;
-            renderModel(empty, state.camera, state.renderSettings, display_w, display_h, false, -1);
+            renderModel(empty, state.camera, state.renderSettings, display_w, display_h, false, -1, -1);
         }
 
         ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());

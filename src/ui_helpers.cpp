@@ -206,13 +206,48 @@ std::vector<uint8_t> readFromCache(AppState& state, const std::string& name, con
 std::vector<uint8_t> readFromErfs(const std::vector<std::unique_ptr<ERFFile>>& erfs, const std::string& name) {
     std::string nameLower = name;
     std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), ::tolower);
+
+    // Strip path portion
+    std::string baseNameLower = nameLower;
+    size_t lastSlash = baseNameLower.find_last_of("/\\");
+    if (lastSlash != std::string::npos) baseNameLower = baseNameLower.substr(lastSlash + 1);
+
+    // Version without extension
+    std::string noExtLower = baseNameLower;
+    size_t dotPos = noExtLower.rfind('.');
+    if (dotPos != std::string::npos) noExtLower = noExtLower.substr(0, dotPos);
+
+    // Pass 1: exact match
     for (const auto& erf : erfs) {
         for (const auto& entry : erf->entries()) {
             std::string entryLower = entry.name;
             std::transform(entryLower.begin(), entryLower.end(), entryLower.begin(), ::tolower);
-            if (entryLower == nameLower) {
-                return erf->readEntry(entry);
-            }
+            if (entryLower == nameLower) return erf->readEntry(entry);
+        }
+    }
+    // Pass 2: basename match
+    for (const auto& erf : erfs) {
+        for (const auto& entry : erf->entries()) {
+            std::string entryLower = entry.name;
+            std::transform(entryLower.begin(), entryLower.end(), entryLower.begin(), ::tolower);
+            std::string entryBase = entryLower;
+            size_t sl = entryBase.find_last_of("/\\");
+            if (sl != std::string::npos) entryBase = entryBase.substr(sl + 1);
+            if (entryBase == baseNameLower) return erf->readEntry(entry);
+        }
+    }
+    // Pass 3: match without extension on both sides
+    for (const auto& erf : erfs) {
+        for (const auto& entry : erf->entries()) {
+            std::string entryLower = entry.name;
+            std::transform(entryLower.begin(), entryLower.end(), entryLower.begin(), ::tolower);
+            std::string entryBase = entryLower;
+            size_t sl = entryBase.find_last_of("/\\");
+            if (sl != std::string::npos) entryBase = entryBase.substr(sl + 1);
+            std::string entryNoExt = entryBase;
+            size_t dp = entryNoExt.rfind('.');
+            if (dp != std::string::npos) entryNoExt = entryNoExt.substr(0, dp);
+            if (entryNoExt == noExtLower) return erf->readEntry(entry);
         }
     }
     return {};
@@ -377,11 +412,18 @@ void loadAndMergeHead(AppState& state, const std::string& headMshFile) {
     for (const std::string& matName : headMaterialNames) {
         int existingIdx = state.currentModel.findMaterial(matName);
         if (existingIdx >= 0) continue;
-        std::vector<uint8_t> maoData = readFromErfs(state.materialErfs, matName + ".mao");
+        std::string maoLookup = matName;
+        {
+            std::string lower = matName;
+            std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
+            if (lower.size() < 4 || lower.substr(lower.size() - 4) != ".mao")
+                maoLookup += ".mao";
+        }
+        std::vector<uint8_t> maoData = readFromErfs(state.materialErfs, maoLookup);
         if (!maoData.empty()) {
             std::string maoContent(maoData.begin(), maoData.end());
             Material mat = parseMAO(maoContent, matName);
-            mat.maoSource = matName + ".mao";
+            mat.maoSource = maoLookup;
             mat.maoContent = maoContent;
             state.currentModel.materials.push_back(mat);
         } else {

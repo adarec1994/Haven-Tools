@@ -194,6 +194,8 @@ add_executable(HavenTools
         src/Shaders/D3d_Context.h
         src/Fonts/IconsFontAwesome6.h
         src/Gff4FieldNames.h
+        src/Rml_Loader.cpp
+        src/Rml_Loader.h
 )
 
 target_include_directories(HavenTools PRIVATE

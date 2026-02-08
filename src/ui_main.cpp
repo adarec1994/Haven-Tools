@@ -30,6 +30,21 @@ void runLoadingTask(AppState* statePtr) {
     state.preloadStatus = "Scanning game folders...";
     state.preloadProgress = 0.0f;
     state.erfFiles = scanForERFFiles(state.selectedFolder);
+    state.rimFiles.clear();
+    try {
+        for (const auto& entry : fs::recursive_directory_iterator(state.selectedFolder,
+                fs::directory_options::skip_permission_denied)) {
+            if (!entry.is_regular_file()) continue;
+            std::string ext = entry.path().extension().string();
+            std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
+            if (ext == ".lvl") {
+                state.erfFiles.push_back(entry.path().string());
+            } else if (ext == ".rim") {
+                state.rimFiles.push_back(entry.path().string());
+            }
+        }
+    } catch (...) {}
+    std::sort(state.rimFiles.begin(), state.rimFiles.end());
     state.preloadStatus = "Filtering encrypted files...";
     state.preloadProgress = 0.05f;
     filterEncryptedErfs(state);
@@ -53,12 +68,15 @@ void runLoadingTask(AppState* statePtr) {
     for (const auto& erfPath : erfPaths) {
         std::string filename = fs::path(erfPath).filename().string();
         state.preloadStatus = filename;
-        ERFFile erf;
-        if (!erf.open(erfPath)) {
+
+        std::string extLower = fs::path(erfPath).extension().string();
+        std::transform(extLower.begin(), extLower.end(), extLower.begin(), ::tolower);
+        if (extLower == ".lvl") {
             processed++;
             state.preloadProgress = 0.1f + ((float)processed / (float)totalErfs) * 0.8f;
             continue;
         }
+
         std::string pathLower = erfPath;
         std::transform(pathLower.begin(), pathLower.end(), pathLower.begin(), ::tolower);
         bool isModel = pathLower.find("model") != std::string::npos ||
@@ -67,6 +85,20 @@ void runLoadingTask(AppState* statePtr) {
                        pathLower.find("chargen") != std::string::npos;
         bool isMaterial = pathLower.find("material") != std::string::npos;
         bool isTexture = pathLower.find("texture") != std::string::npos;
+
+        if (!isModel && !isMaterial && !isTexture) {
+            processed++;
+            state.preloadProgress = 0.1f + ((float)processed / (float)totalErfs) * 0.8f;
+            continue;
+        }
+
+        ERFFile erf;
+        if (!erf.open(erfPath)) {
+            processed++;
+            state.preloadProgress = 0.1f + ((float)processed / (float)totalErfs) * 0.8f;
+            continue;
+        }
+
         for (const auto& entry : erf.entries()) {
             std::string nameLower = entry.name;
             std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), ::tolower);
@@ -299,7 +331,20 @@ void runExportTask(AppState* statePtr) {
     t_phase = 0;
     t_alpha = 0.0f;
 }
+static float s_scrollAccum = 0.0f;
+static GLFWscrollfun s_prevScrollCb = nullptr;
+static bool s_scrollHooked = false;
+
+static void scrollCallbackWrapper(GLFWwindow* window, double x, double y) {
+    s_scrollAccum += (float)y;
+    if (s_prevScrollCb) s_prevScrollCb(window, x, y);
+}
+
 void handleInput(AppState& state, GLFWwindow* window, ImGuiIO& io) {
+    if (!s_scrollHooked) {
+        s_prevScrollCb = glfwSetScrollCallback(window, scrollCallbackWrapper);
+        s_scrollHooked = true;
+    }
     static bool settingsLoaded = false;
     if (!settingsLoaded) {
         loadSettings(state);
@@ -378,7 +423,126 @@ void handleInput(AppState& state, GLFWwindow* window, ImGuiIO& io) {
                 state.selectedBoneIndex = closestBone;
             }
         }
+        // Chunk selection via ray-AABB (when not in skeleton mode)
+        if (leftPressed && !wasLeftPressed && state.hasModel && !state.renderSettings.showSkeleton
+            && state.currentModel.meshes.size() > 1) {
+            int width, height;
+            glfwGetFramebufferSize(window, &width, &height);
+            float aspect = (float)width / (float)height;
+            float fov = 45.0f * 3.14159f / 180.0f;
+            float nearPlane = 0.1f;
+            float top = nearPlane * std::tan(fov / 2.0f);
+            float right = top * aspect;
+            float ndcX = (2.0f * (float)mx / width) - 1.0f;
+            float ndcY = 1.0f - (2.0f * (float)my / height);
+            float rayX = ndcX * right / nearPlane;
+            float rayY = ndcY * top / nearPlane;
+            float rayZ = -1.0f;
+            float cp = std::cos(-state.camera.pitch);
+            float sp = std::sin(-state.camera.pitch);
+            float cyw = std::cos(-state.camera.yaw);
+            float syw = std::sin(-state.camera.yaw);
+            float rx1 = rayX;
+            float ry1 = rayY * cp - rayZ * sp;
+            float rz1 = rayY * sp + rayZ * cp;
+            float dirX = rx1 * cyw + rz1 * syw;
+            float dirY = ry1;
+            float dirZ = -rx1 * syw + rz1 * cyw;
+            float len = std::sqrt(dirX*dirX + dirY*dirY + dirZ*dirZ);
+            dirX /= len; dirY /= len; dirZ /= len;
+            float origX = state.camera.x;
+            float origY = state.camera.y;
+            float origZ = state.camera.z;
+
+            int closestChunk = -1;
+            float closestT = 1e30f;
+
+            // Collect AABB hit candidates first
+            struct AABBHit { int meshIdx; float t; };
+            std::vector<AABBHit> candidates;
+
+            for (size_t mi = 0; mi < state.currentModel.meshes.size(); mi++) {
+                if (mi < state.renderSettings.meshVisible.size() && state.renderSettings.meshVisible[mi] == 0) continue;
+                const auto& m = state.currentModel.meshes[mi];
+                // RotateX(-90°) maps model (x,y,z) → camera world (x, z, -y)
+                float bminX = m.minX, bmaxX = m.maxX;
+                float bminY = m.minZ, bmaxY = m.maxZ;
+                float bminZ = -m.maxY, bmaxZ = -m.minY;
+                // Ray-AABB slab test
+                float tmin = -1e30f, tmax = 1e30f;
+                float invD, t1, t2, ts;
+                if (std::abs(dirX) > 1e-8f) {
+                    invD = 1.0f / dirX;
+                    t1 = (bminX - origX) * invD;
+                    t2 = (bmaxX - origX) * invD;
+                    if (t1 > t2) { ts = t1; t1 = t2; t2 = ts; }
+                    tmin = std::max(tmin, t1);
+                    tmax = std::min(tmax, t2);
+                } else if (origX < bminX || origX > bmaxX) continue;
+                if (std::abs(dirY) > 1e-8f) {
+                    invD = 1.0f / dirY;
+                    t1 = (bminY - origY) * invD;
+                    t2 = (bmaxY - origY) * invD;
+                    if (t1 > t2) { ts = t1; t1 = t2; t2 = ts; }
+                    tmin = std::max(tmin, t1);
+                    tmax = std::min(tmax, t2);
+                } else if (origY < bminY || origY > bmaxY) continue;
+                if (std::abs(dirZ) > 1e-8f) {
+                    invD = 1.0f / dirZ;
+                    t1 = (bminZ - origZ) * invD;
+                    t2 = (bmaxZ - origZ) * invD;
+                    if (t1 > t2) { ts = t1; t1 = t2; t2 = ts; }
+                    tmin = std::max(tmin, t1);
+                    tmax = std::min(tmax, t2);
+                } else if (origZ < bminZ || origZ > bmaxZ) continue;
+                if (tmin <= tmax && tmax > 0.0f) {
+                    float hitT = (tmin > 0.0f) ? tmin : tmax;
+                    candidates.push_back({(int)mi, hitT});
+                }
+            }
+
+            // Triangle-level test on AABB candidates
+            for (const auto& cand : candidates) {
+                const auto& m = state.currentModel.meshes[cand.meshIdx];
+                for (size_t ti = 0; ti + 2 < m.indices.size(); ti += 3) {
+                    const auto& v0 = m.vertices[m.indices[ti]];
+                    const auto& v1 = m.vertices[m.indices[ti+1]];
+                    const auto& v2 = m.vertices[m.indices[ti+2]];
+                    // Transform vertices: (x,y,z) → (x, z, -y)
+                    float ax = v0.x, ay = v0.z, az = -v0.y;
+                    float bx = v1.x, by = v1.z, bz = -v1.y;
+                    float cx = v2.x, cy = v2.z, cz = -v2.y;
+                    // Möller–Trumbore
+                    float e1x = bx-ax, e1y = by-ay, e1z = bz-az;
+                    float e2x = cx-ax, e2y = cy-ay, e2z = cz-az;
+                    float px = dirY*e2z - dirZ*e2y;
+                    float py = dirZ*e2x - dirX*e2z;
+                    float pz = dirX*e2y - dirY*e2x;
+                    float det = e1x*px + e1y*py + e1z*pz;
+                    if (std::abs(det) < 1e-8f) continue;
+                    float invDet = 1.0f / det;
+                    float tx = origX-ax, ty = origY-ay, tz = origZ-az;
+                    float u = (tx*px + ty*py + tz*pz) * invDet;
+                    if (u < 0.0f || u > 1.0f) continue;
+                    float qx = ty*e1z - tz*e1y;
+                    float qy = tz*e1x - tx*e1z;
+                    float qz = tx*e1y - ty*e1x;
+                    float v = (dirX*qx + dirY*qy + dirZ*qz) * invDet;
+                    if (v < 0.0f || u + v > 1.0f) continue;
+                    float tt = (e2x*qx + e2y*qy + e2z*qz) * invDet;
+                    if (tt > 0.0f && tt < closestT) {
+                        closestT = tt;
+                        closestChunk = cand.meshIdx;
+                    }
+                }
+            }
+            state.selectedLevelChunk = closestChunk;
+        }
         wasLeftPressed = leftPressed;
+    }
+    {
+        double mx, my;
+        glfwGetCursorPos(window, &mx, &my);
         if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS) {
             ImGui::SetWindowFocus(nullptr);
             if (state.isPanning) {
@@ -388,13 +552,15 @@ void handleInput(AppState& state, GLFWwindow* window, ImGuiIO& io) {
             }
             state.isPanning = true;
             glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-            float scroll = io.MouseWheel;
+            float scroll = s_scrollAccum;
+            s_scrollAccum = 0.0f;
             if (scroll != 0.0f) {
-                state.camera.moveSpeed *= (scroll > 0) ? 1.2f : 0.8f;
+                state.camera.moveSpeed *= (scroll > 0) ? 1.5f : (1.0f / 1.5f);
                 if (state.camera.moveSpeed < 0.1f) state.camera.moveSpeed = 0.1f;
-                if (state.camera.moveSpeed > 100.0f) state.camera.moveSpeed = 100.0f;
+                if (state.camera.moveSpeed > 10000.0f) state.camera.moveSpeed = 10000.0f;
             }
         } else {
+            s_scrollAccum = 0.0f;
             if (state.isPanning) glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
             state.isPanning = false;
         }
@@ -1165,6 +1331,20 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
                 ImGui::GetKeyName(state.keybinds.panUp),
                 ImGui::GetKeyName(state.keybinds.panDown));
         }
+        ImGui::SameLine();
+        ImGui::Text(" | ");
+        ImGui::SameLine();
+        char speedBuf[32];
+        snprintf(speedBuf, sizeof(speedBuf), "Speed: %.1f", state.camera.moveSpeed);
+        if (ImGui::SmallButton(speedBuf)) {
+            ImGui::OpenPopup("##SpeedPopup");
+        }
+        if (ImGui::BeginPopup("##SpeedPopup")) {
+            ImGui::Text("Camera Speed");
+            ImGui::SetNextItemWidth(200);
+            ImGui::SliderFloat("##speedslider", &state.camera.moveSpeed, 0.1f, 10000.0f, "%.1f", ImGuiSliderFlags_Logarithmic);
+            ImGui::EndPopup();
+        }
         const char* ver = Update::GetInstalledVersionText();
         float verW = ImGui::CalcTextSize(ver).x;
         float right = ImGui::GetWindowContentRegionMax().x;
@@ -1184,6 +1364,7 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
     if (state.showMaoViewer) drawMaoViewer(state);
     if (state.showTexturePreview && state.previewTextureId != 0) drawTexturePreview(state);
     if (state.showUvViewer && state.hasModel && state.selectedMeshForUv >= 0 && state.selectedMeshForUv < (int)state.currentModel.meshes.size()) drawUvViewer(state);
+    if (state.showHeightmap && state.heightmapTexId) drawHeightmapViewer(state);
     if (state.showAnimWindow && state.hasModel) drawAnimWindow(state, io);
     if (state.showAudioPlayer) drawAudioPlayer(state);
     draw2DAEditorWindow(state);

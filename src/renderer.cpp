@@ -424,7 +424,7 @@ static void drawSimpleTris(const std::vector<SimpleVertex>& verts, const float* 
 
 
 void renderModel(Model& model, const Camera& camera, const RenderSettings& settings,
-                 int width, int height, bool animating, int selectedBone) {
+                 int width, int height, bool animating, int selectedBone, int selectedChunk) {
 
     if (!s_rendererInit) initRenderer();
     if (!shadersAvailable()) return;
@@ -434,7 +434,7 @@ void renderModel(Model& model, const Camera& camera, const RenderSettings& setti
     float proj[16], view[16], mvp[16];
     float aspect = (float)width / (float)height;
     float fov = 45.0f * 3.14159f / 180.0f;
-    mat4Perspective(proj, fov, aspect, 0.1f, 1000.0f);
+    mat4Perspective(proj, fov, aspect, 0.1f, 500000.0f);
 
     mat4Identity(view);
     mat4RotateX(view, -90.0f * 3.14159f / 180.0f);
@@ -597,6 +597,13 @@ void renderModel(Model& model, const Camera& camera, const RenderSettings& setti
                     perMat.tintColor[2] = settings.skinColor[2]; perMat.tintColor[3] = 1.0f;
                 } else {
                     perMat.tintColor[0] = perMat.tintColor[1] = perMat.tintColor[2] = perMat.tintColor[3] = 1.0f;
+                }
+                // Green highlight for selected level chunk
+                if (selectedChunk >= 0 && (int)meshIdx == selectedChunk) {
+                    perMat.tintColor[0] = 0.6f;
+                    perMat.tintColor[1] = 1.0f;
+                    perMat.tintColor[2] = 0.6f;
+                    perMat.tintColor[3] = 1.0f;
                 }
                 memcpy(perMat.tintZone1, zone1, 12); perMat.tintZone1[3] = 0;
                 memcpy(perMat.tintZone2, zone2, 12); perMat.tintZone2[3] = 0;

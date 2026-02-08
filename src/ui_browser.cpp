@@ -1,7 +1,9 @@
 #include "ui_internal.h"
 #include "terrain_loader.h"
+#include "rml_loader.h"
 #include "GffViewer.h"
 #include <cstring>
+#include <fstream>
 
 static bool isGffData(const std::vector<uint8_t>& data) {
     if (data.size() < 12) return false;
@@ -53,7 +55,6 @@ static void loadImportedModels() {
         std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
         s_importedModels.insert(lower);
     }
-    std::cout << "[Browser] Loaded " << s_importedModels.size() << " imported models from file" << std::endl;
 }
 static void saveImportedModels() {
     std::ofstream file(getImportedModelsPath());
@@ -64,7 +65,6 @@ static void saveImportedModels() {
     for (const auto& name : s_importedModels) {
         file << name << "\n";
     }
-    std::cout << "[Browser] Saved " << s_importedModels.size() << " imported models to file" << std::endl;
 }
 void markModelAsImported(const std::string& modelName) {
     loadImportedModels();
@@ -143,7 +143,6 @@ static bool deleteFromERF(const std::string& erfPath, const std::vector<std::str
         if (deleteSet.find(nameLower) == deleteSet.end()) {
             keepEntries.push_back(e);
         } else {
-            std::cout << "[Delete] Removing: " << e.name << std::endl;
         }
     }
     if (keepEntries.size() == fileCount) {
@@ -181,7 +180,6 @@ static bool deleteFromERF(const std::string& erfPath, const std::vector<std::str
     std::ofstream out(erfPath, std::ios::binary);
     if (!out) return false;
     out.write(reinterpret_cast<const char*>(newErf.data()), newErf.size());
-    std::cout << "[Delete] ERF rebuilt: " << keepEntries.size() << " entries (was " << fileCount << ")" << std::endl;
     return true;
 }
 void drawMeshBrowserWindow(AppState& state) {
@@ -339,7 +337,9 @@ void drawBrowserWindow(AppState& state) {
     }
     float totalW = ImGui::GetContentRegionAvail().x;
     float totalH = ImGui::GetContentRegionAvail().y;
-    float leftW = 200.0f;
+    if (state.leftPaneWidth < 100.0f) state.leftPaneWidth = 100.0f;
+    if (state.leftPaneWidth > totalW - 100.0f) state.leftPaneWidth = totalW - 100.0f;
+    float leftW = state.leftPaneWidth;
     ImGui::BeginChild("LeftPane", ImVec2(leftW, totalH), false);
     ImGui::Text("Files");
     ImGui::BeginChild("ERFList", ImVec2(0, 0), true);
@@ -354,6 +354,8 @@ void drawBrowserWindow(AppState& state) {
             state.mergedEntries.clear();
             state.filteredEntryIndices.clear();
             state.lastContentFilter.clear();
+            state.showRIMBrowser = false;
+            state.rimEntries.clear();
             for (size_t i = 0; i < state.audioFiles.size(); i++) {
                 CachedEntry ce;
                 if (state.audioFiles[i].find("__HEADER__") == 0) {
@@ -377,6 +379,8 @@ void drawBrowserWindow(AppState& state) {
             state.mergedEntries.clear();
             state.filteredEntryIndices.clear();
             state.lastContentFilter.clear();
+            state.showRIMBrowser = false;
+            state.rimEntries.clear();
             for (size_t i = 0; i < state.voiceOverFiles.size(); i++) {
                 CachedEntry ce;
                 if (state.voiceOverFiles[i].find("__HEADER__") == 0) {
@@ -393,7 +397,15 @@ void drawBrowserWindow(AppState& state) {
         }
     }
     ImGui::Separator();
-    for (const auto& [filename, indices] : state.erfsByName) {
+
+    auto isExtraFile = [](const std::string& name) {
+        if (name.size() < 4) return false;
+        std::string ext = name.substr(name.size() - 4);
+        std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
+        return ext == ".lvl";
+    };
+
+    auto drawErfEntry = [&](const std::string& filename, const std::vector<size_t>& indices) {
         bool isSelected = (state.selectedErfName == filename);
         std::string filenameLower = filename;
         std::transform(filenameLower.begin(), filenameLower.end(), filenameLower.begin(), ::tolower);
@@ -408,6 +420,10 @@ void drawBrowserWindow(AppState& state) {
                 state.lastContentFilter.clear();
                 s_meshDataSourceFilter = 0;
                 s_hierDataSourceFilter = 0;
+                state.showRIMBrowser = false;
+                state.rimEntries.clear();
+                state.showFSBBrowser = false;
+                state.currentFSBSamples.clear();
                 std::set<std::string> seenNames;
                 for (size_t erfIdx : indices) {
                     std::string source = GetErfSource(state.erfFiles[erfIdx]);
@@ -516,19 +532,80 @@ void drawBrowserWindow(AppState& state) {
             }
             ImGui::Unindent();
         }
+    };
+
+    for (const auto& [filename, indices] : state.erfsByName) {
+        if (!isExtraFile(filename)) drawErfEntry(filename, indices);
     }
+
+    bool hasExtra = false;
+    for (const auto& [filename, indices] : state.erfsByName) {
+        if (isExtraFile(filename)) { hasExtra = true; break; }
+    }
+    if (hasExtra) {
+        ImGui::Separator();
+        for (const auto& [filename, indices] : state.erfsByName) {
+            if (isExtraFile(filename)) drawErfEntry(filename, indices);
+        }
+    }
+
+    if (!state.rimFiles.empty()) {
+        ImGui::Separator();
+        bool rimSelected = (state.selectedErfName == "[RIM]");
+        char rimLabel[64];
+        snprintf(rimLabel, sizeof(rimLabel), "RIM Files (%zu)", state.rimFiles.size());
+        if (ImGui::Selectable(rimLabel, rimSelected)) {
+            if (!rimSelected) {
+                state.selectedErfName = "[RIM]";
+                state.selectedEntryIndex = -1;
+                state.mergedEntries.clear();
+                state.filteredEntryIndices.clear();
+                state.lastContentFilter.clear();
+                state.showRIMBrowser = false;
+                state.rimEntries.clear();
+                state.showFSBBrowser = false;
+                state.currentFSBSamples.clear();
+                for (size_t i = 0; i < state.rimFiles.size(); i++) {
+                    CachedEntry ce;
+                    size_t lastSlash = state.rimFiles[i].find_last_of("/\\");
+                    ce.name = (lastSlash != std::string::npos) ? state.rimFiles[i].substr(lastSlash + 1) : state.rimFiles[i];
+                    ce.erfIdx = i;
+                    ce.entryIdx = 0;
+                    state.mergedEntries.push_back(ce);
+                }
+                state.statusMessage = std::to_string(state.rimFiles.size()) + " RIM files";
+            }
+        }
+    }
+
     ImGui::EndChild();
     ImGui::EndChild();
-    ImGui::SameLine();
+
+    ImGui::SameLine(0, 0);
+    ImGui::PushStyleColor(ImGuiCol_Button, ImGui::GetStyleColorVec4(ImGuiCol_Separator));
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImGui::GetStyleColorVec4(ImGuiCol_SeparatorHovered));
+    ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImGui::GetStyleColorVec4(ImGuiCol_SeparatorActive));
+    ImGui::Button("##splitter", ImVec2(4.0f, totalH));
+    ImGui::PopStyleColor(3);
+    if (ImGui::IsItemActive()) {
+        state.leftPaneWidth += ImGui::GetIO().MouseDelta.x;
+        if (state.leftPaneWidth < 100.0f) state.leftPaneWidth = 100.0f;
+        if (state.leftPaneWidth > totalW - 100.0f) state.leftPaneWidth = totalW - 100.0f;
+    }
+    if (ImGui::IsItemHovered() || ImGui::IsItemActive())
+        ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeEW);
+
+    ImGui::SameLine(0, 0);
     ImGui::BeginChild("RightPane", ImVec2(0, totalH), false);
     if (!state.selectedErfName.empty() && !state.mergedEntries.empty()) {
-        bool hasTextures = false, hasModels = false;
+        bool hasTextures = false, hasModels = false, hasTerrain = false;
         bool isAudioCategory = (state.selectedErfName == "[Audio]" || state.selectedErfName == "[VoiceOver]");
         for (const auto& ce : state.mergedEntries) {
             if (ce.name.find("__HEADER__") == 0) continue;
             if (ce.name.size() > 4 && ce.name.substr(ce.name.size() - 4) == ".dds") hasTextures = true;
             if (isModelFile(ce.name)) hasModels = true;
-            if (hasTextures && hasModels) break;
+            if (isTerrain(ce.name)) hasTerrain = true;
+            if (hasTextures && hasModels && hasTerrain) break;
         }
         ImGui::Text("Contents (%zu)", state.mergedEntries.size());
         ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
@@ -644,10 +721,64 @@ void drawBrowserWindow(AppState& state) {
             }
         }
         bool showFSBPanel = state.showFSBBrowser && !state.currentFSBSamples.empty();
+        bool showRIMPanel = state.showRIMBrowser && !state.rimEntries.empty();
+        bool showSubPanel = showFSBPanel || showRIMPanel;
         float availW = ImGui::GetContentRegionAvail().x;
-        float entryListW = showFSBPanel ? availW * 0.5f : 0.0f;
+        float entryListW = showSubPanel ? availW * 0.5f : 0.0f;
 
         ImGui::BeginChild("EntryList", ImVec2(entryListW, 0), true);
+        if (hasTerrain) {
+            std::string loadLabel = ">> Load " + state.selectedErfName;
+            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.4f, 1.0f, 0.6f, 1.0f));
+            if (ImGui::Selectable(loadLabel.c_str(), state.showTerrain)) {
+                g_terrainLoader.clear();
+                for (size_t erfIdx : state.erfsByName[state.selectedErfName]) {
+                    ERFFile erf;
+                    if (erf.open(state.erfFiles[erfIdx])) {
+                        if (g_terrainLoader.loadFromERF(erf, "")) {
+                            state.showTerrain = true;
+                            state.hasModel = false;
+                            state.currentModel = Model();
+                            auto& t = g_terrainLoader.getTerrain();
+                            float cx = (t.minX + t.maxX) * 0.5f;
+                            float cy = (t.minY + t.maxY) * 0.5f;
+                            float cz = (t.minZ + t.maxZ) * 0.5f;
+                            float span = std::max(t.maxX - t.minX, t.maxY - t.minY);
+                            state.camera.lookAt(cx, cy, cz, span * 0.8f);
+                            state.camera.moveSpeed = span * 0.1f;
+                            state.statusMessage = "Loaded terrain: " +
+                                std::to_string(t.sectors.size()) + " sectors, " +
+                                std::to_string(t.water.size()) + " water";
+                        }
+                    }
+                }
+            }
+            if (ImGui::BeginPopupContextItem("##terrainCtx")) {
+                if (ImGui::MenuItem("View Heightmap")) {
+                    if (!g_terrainLoader.isLoaded()) {
+                        for (size_t erfIdx : state.erfsByName[state.selectedErfName]) {
+                            ERFFile erf;
+                            if (erf.open(state.erfFiles[erfIdx]))
+                                g_terrainLoader.loadFromERF(erf, "");
+                        }
+                    }
+                    if (g_terrainLoader.isLoaded()) {
+                        if (state.heightmapTexId) destroyTexture(state.heightmapTexId);
+                        int w, h;
+                        auto rgba = g_terrainLoader.generateHeightmap(w, h, 1024);
+                        if (!rgba.empty()) {
+                            state.heightmapTexId = createTexture2D(rgba.data(), w, h);
+                            state.heightmapW = w;
+                            state.heightmapH = h;
+                            state.showHeightmap = true;
+                        }
+                    }
+                }
+                ImGui::EndPopup();
+            }
+            ImGui::PopStyleColor();
+            ImGui::Separator();
+        }
         drawVirtualList((int)state.filteredEntryIndices.size(), [&](int i) {
             int idx = state.filteredEntryIndices[i];
             const CachedEntry& ce = state.mergedEntries[idx];
@@ -675,6 +806,29 @@ void drawBrowserWindow(AppState& state) {
             char label[256]; snprintf(label, sizeof(label), "%s##%d", ce.name.c_str(), idx);
             if (ImGui::Selectable(label, idx == state.selectedEntryIndex, ImGuiSelectableFlags_AllowDoubleClick)) {
                 state.selectedEntryIndex = idx;
+
+                bool isRimClick = (state.selectedErfName == "[RIM]");
+                if (isRimClick) {
+                    if (ce.erfIdx < state.rimFiles.size()) {
+                        std::string rimPath = state.rimFiles[ce.erfIdx];
+                        ERFFile rimErf;
+                        if (rimErf.open(rimPath)) {
+                            state.currentRIMPath = rimPath;
+                            state.rimEntries.clear();
+                            state.selectedRIMEntry = -1;
+                            state.rimEntryFilter[0] = '\0';
+                            for (size_t ei = 0; ei < rimErf.entries().size(); ei++) {
+                                CachedEntry re;
+                                re.name = rimErf.entries()[ei].name;
+                                re.erfIdx = (size_t)0;
+                                re.entryIdx = ei;
+                                state.rimEntries.push_back(re);
+                            }
+                            state.showRIMBrowser = true;
+                            state.statusMessage = ce.name + ": " + std::to_string(state.rimEntries.size()) + " entries";
+                        }
+                    }
+                }
 
                 bool isAudio = (state.selectedErfName == "[Audio]" || state.selectedErfName == "[VoiceOver]") &&
                                (ce.name.size() > 4 && (ce.name.substr(ce.name.size() - 4) == ".fsb" ));
@@ -739,6 +893,7 @@ void drawBrowserWindow(AppState& state) {
                                 }
                             } else if (isModel) {
                                     state.showTerrain = false;
+                                    g_terrainLoader.clear();
                                     if (state.showHeadSelector && state.pendingBodyMsh != ce.name) {
                                         state.showHeadSelector = false;
                                     }
@@ -865,6 +1020,28 @@ void drawBrowserWindow(AppState& state) {
                     config.fileName = defaultName;
                     ImGuiFileDialog::Instance()->OpenDialog("ConvertSelectedAudio", "Save MP3", ".mp3", config);
                 }
+                ImGui::Separator();
+                if (ImGui::MenuItem("Open with GFF Viewer")) {
+                    std::string fullPath;
+                    if (state.selectedErfName == "[Audio]" && ce.erfIdx < state.audioFiles.size())
+                        fullPath = state.audioFiles[ce.erfIdx];
+                    else if (state.selectedErfName == "[VoiceOver]" && ce.erfIdx < state.voiceOverFiles.size())
+                        fullPath = state.voiceOverFiles[ce.erfIdx];
+                    if (!fullPath.empty()) {
+                        std::ifstream ifs(fullPath, std::ios::binary);
+                        if (ifs) {
+                            std::vector<uint8_t> data((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
+                            if (!data.empty() && isGffData(data)) {
+                                if (loadGffData(state.gffViewer, data, ce.name, fullPath)) {
+                                    state.gffViewer.showWindow = true;
+                                    state.statusMessage = "Opened: " + ce.name;
+                                }
+                            } else {
+                                state.statusMessage = "Not a valid GFF file: " + ce.name;
+                            }
+                        }
+                    }
+                }
                 ImGui::EndPopup();
             }
             if (isModel && ImGui::BeginPopupContextItem()) {
@@ -897,6 +1074,23 @@ void drawBrowserWindow(AppState& state) {
                         s_showDeleteConfirm = true;
                     }
                     ImGui::PopStyleColor();
+                }
+                ImGui::Separator();
+                if (ImGui::MenuItem("Open with GFF Viewer")) {
+                    ERFFile erf;
+                    if (ce.erfIdx < state.erfFiles.size() && erf.open(state.erfFiles[ce.erfIdx])) {
+                        if (ce.entryIdx < erf.entries().size()) {
+                            auto data = erf.readEntry(erf.entries()[ce.entryIdx]);
+                            if (!data.empty() && isGffData(data)) {
+                                if (loadGffData(state.gffViewer, data, ce.name, state.erfFiles[ce.erfIdx])) {
+                                    state.gffViewer.showWindow = true;
+                                    state.statusMessage = "Opened: " + ce.name;
+                                }
+                            } else {
+                                state.statusMessage = "Not a valid GFF file: " + ce.name;
+                            }
+                        }
+                    }
                 }
                 ImGui::EndPopup();
             }
@@ -936,6 +1130,43 @@ void drawBrowserWindow(AppState& state) {
                     defaultName += ".png";
                     config.fileName = defaultName;
                     ImGuiFileDialog::Instance()->OpenDialog("ExportTexPNG", "Export as PNG", ".png", config);
+                }
+                ImGui::Separator();
+                if (ImGui::MenuItem("Open with GFF Viewer")) {
+                    ERFFile erf;
+                    if (ce.erfIdx < state.erfFiles.size() && erf.open(state.erfFiles[ce.erfIdx])) {
+                        if (ce.entryIdx < erf.entries().size()) {
+                            auto data = erf.readEntry(erf.entries()[ce.entryIdx]);
+                            if (!data.empty() && isGffData(data)) {
+                                if (loadGffData(state.gffViewer, data, ce.name, state.erfFiles[ce.erfIdx])) {
+                                    state.gffViewer.showWindow = true;
+                                    state.statusMessage = "Opened: " + ce.name;
+                                }
+                            } else {
+                                state.statusMessage = "Not a valid GFF file: " + ce.name;
+                            }
+                        }
+                    }
+                }
+                ImGui::EndPopup();
+            }
+            if (!isAudio && !isModel && !isTexture && ImGui::BeginPopupContextItem()) {
+                if (ImGui::MenuItem("Open with GFF Viewer")) {
+                    ERFFile erf;
+                    size_t erfIdx = ce.erfIdx;
+                    if (erfIdx < state.erfFiles.size() && erf.open(state.erfFiles[erfIdx])) {
+                        if (ce.entryIdx < erf.entries().size()) {
+                            auto data = erf.readEntry(erf.entries()[ce.entryIdx]);
+                            if (!data.empty() && isGffData(data)) {
+                                if (loadGffData(state.gffViewer, data, ce.name, state.erfFiles[erfIdx])) {
+                                    state.gffViewer.showWindow = true;
+                                    state.statusMessage = "Opened: " + ce.name;
+                                }
+                            } else {
+                                state.statusMessage = "Not a valid GFF file: " + ce.name;
+                            }
+                        }
+                    }
                 }
                 ImGui::EndPopup();
             }
@@ -1078,6 +1309,495 @@ void drawBrowserWindow(AppState& state) {
             ImGui::EndChild();
             ImGui::EndChild();
         }
+
+        if (showRIMPanel) {
+            ImGui::SameLine();
+            ImGui::BeginChild("RIMPanel", ImVec2(0, 0), true);
+
+            std::string rimFilename = fs::path(state.currentRIMPath).filename().string();
+            ImGui::Text("%s (%zu entries)", rimFilename.c_str(), state.rimEntries.size());
+
+            if (ImGui::Button("Close")) {
+                state.showRIMBrowser = false;
+                state.rimEntries.clear();
+                state.selectedRIMEntry = -1;
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("Dump All")) {
+                IGFD::FileDialogConfig config;
+                #ifdef _WIN32
+                char* userProfile = getenv("USERPROFILE");
+                if (userProfile) config.path = std::string(userProfile) + "\\Documents";
+                else config.path = ".";
+                #else
+                char* home = getenv("HOME");
+                if (home) config.path = std::string(home) + "/Documents";
+                else config.path = ".";
+                #endif
+                ImGuiFileDialog::Instance()->OpenDialog("DumpAllRIM", "Select Output Folder", nullptr, config);
+            }
+
+            int mshCount = 0;
+            for (const auto& re : state.rimEntries) {
+                std::string nameLower = re.name;
+                std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), ::tolower);
+                if (nameLower.size() > 4 && nameLower.substr(nameLower.size() - 4) == ".msh")
+                    mshCount++;
+            }
+            if (mshCount > 0) {
+                ImGui::SameLine();
+                char loadLabel[64];
+                snprintf(loadLabel, sizeof(loadLabel), "Load Level (%d)", mshCount);
+                if (ImGui::Button(loadLabel)) {
+                    state.showTerrain = false;
+                    g_terrainLoader.clear();
+                    state.currentErf = std::make_unique<ERFFile>();
+                    if (state.currentErf->open(state.currentRIMPath)) {
+
+                        state.textureErfsLoaded = false;
+                        state.modelErfsLoaded = false;
+                        state.materialErfsLoaded = false;
+                        state.textureErfs.clear();
+                        state.modelErfs.clear();
+                        state.materialErfs.clear();
+                        clearPropCache();
+                        ensureBaseErfsLoaded(state);
+
+
+                        auto rimForModel = std::make_unique<ERFFile>();
+                        auto rimForMat = std::make_unique<ERFFile>();
+                        rimForModel->open(state.currentRIMPath);
+                        rimForMat->open(state.currentRIMPath);
+                        state.modelErfs.push_back(std::move(rimForModel));
+                        state.materialErfs.push_back(std::move(rimForMat));
+
+
+                        std::string rimDir = fs::path(state.currentRIMPath).parent_path().string();
+                        int gpuPushed = 0;
+                        for (const auto& dirEntry : fs::directory_iterator(rimDir)) {
+                            if (!dirEntry.is_regular_file()) continue;
+                            std::string fname = dirEntry.path().filename().string();
+                            std::string fnameLower = fname;
+                            std::transform(fnameLower.begin(), fnameLower.end(), fnameLower.begin(), ::tolower);
+                            if (fnameLower.size() > 8 && fnameLower.substr(fnameLower.size() - 8) == ".gpu.rim") {
+                                auto g1 = std::make_unique<ERFFile>();
+                                auto g2 = std::make_unique<ERFFile>();
+                                if (g1->open(dirEntry.path().string()) && g2->open(dirEntry.path().string())) {
+                                    state.textureErfs.push_back(std::move(g1));
+                                    state.materialErfs.push_back(std::move(g2));
+                                    gpuPushed += 2;
+                                }
+                            }
+                        }
+
+
+                        for (const auto& dirEntry : fs::directory_iterator(rimDir)) {
+                            if (!dirEntry.is_regular_file()) continue;
+                            std::string dpath = dirEntry.path().string();
+                            if (dpath == state.currentRIMPath) continue;
+                            std::string fname = dirEntry.path().filename().string();
+                            std::string fnameLower = fname;
+                            std::transform(fnameLower.begin(), fnameLower.end(), fnameLower.begin(), ::tolower);
+
+                            if (fnameLower.size() > 4 && fnameLower.substr(fnameLower.size() - 4) == ".rim" &&
+                                fnameLower.find(".gpu.rim") == std::string::npos) {
+                                auto sibRim = std::make_unique<ERFFile>();
+                                if (sibRim->open(dpath)) {
+                                    state.materialErfs.push_back(std::move(sibRim));
+                                    gpuPushed++;
+                                }
+                            }
+                        }
+
+
+                        for (const auto& mat : state.currentModel.materials) {
+                            if (mat.diffuseTexId != 0)     destroyTexture(mat.diffuseTexId);
+                            if (mat.normalTexId != 0)      destroyTexture(mat.normalTexId);
+                            if (mat.specularTexId != 0)    destroyTexture(mat.specularTexId);
+                            if (mat.tintTexId != 0)        destroyTexture(mat.tintTexId);
+                        }
+                        state.currentModel = Model();
+                        state.currentModel.name = fs::path(state.currentRIMPath).stem().string() + " (level)";
+                        state.hasModel = true;
+                        state.selectedLevelChunk = -1;
+                        state.currentModelAnimations.clear();
+
+
+                        int loaded = 0;
+                        for (const auto& re : state.rimEntries) {
+                            std::string nameLower = re.name;
+                            std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), ::tolower);
+                            if (nameLower.size() < 4 || nameLower.substr(nameLower.size() - 4) != ".msh") continue;
+                            if (re.entryIdx < state.currentErf->entries().size()) {
+                                const auto& erfEntry = state.currentErf->entries()[re.entryIdx];
+                                if (mergeModelEntry(state, erfEntry))
+                                    loaded++;
+                            }
+                        }
+
+
+
+                        int propsLoaded = 0;
+                        buildErfIndex(state);
+                        for (const auto& re : state.rimEntries) {
+                            std::string nameLower = re.name;
+                            std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), ::tolower);
+                            if (nameLower.size() < 4 || nameLower.substr(nameLower.size() - 4) != ".rml") continue;
+                            if (re.entryIdx >= state.currentErf->entries().size()) continue;
+
+                            const auto& erfEntry = state.currentErf->entries()[re.entryIdx];
+                            std::vector<uint8_t> rmlData = state.currentErf->readEntry(erfEntry);
+                            if (rmlData.empty()) continue;
+
+                            RMLData rml;
+                            if (!parseRML(rmlData, rml)) continue;
+
+
+                            for (const auto& prop : rml.props) {
+                                std::string name = prop.modelFile.empty() ? prop.modelName : prop.modelFile;
+                                if (name.empty()) continue;
+
+
+                                float worldX = rml.roomPosX + prop.posX;
+                                float worldY = rml.roomPosY + prop.posY;
+                                float worldZ = rml.roomPosZ + prop.posZ;
+
+
+                                if (mergeModelByName(state, name, worldX, worldY, worldZ,
+                                                     prop.orientX, prop.orientY, prop.orientZ, prop.orientW,
+                                                     prop.scale)) {
+                                    propsLoaded++;
+                                }
+                            }
+                        }
+
+
+                        {
+                            std::string rimDir = fs::path(state.currentRIMPath).parent_path().string();
+                            for (const auto& dirEntry : fs::directory_iterator(rimDir)) {
+                                if (!dirEntry.is_regular_file()) continue;
+                                std::string fname = dirEntry.path().filename().string();
+                                std::string fnameLower = fname;
+                                std::transform(fnameLower.begin(), fnameLower.end(), fnameLower.begin(), ::tolower);
+
+                                if (fnameLower.size() > 4 && fnameLower.substr(fnameLower.size() - 4) == ".rim" &&
+                                    fnameLower.find(".gpu.") == std::string::npos &&
+                                    dirEntry.path().string() != state.currentRIMPath) {
+                                    ERFFile siblingRim;
+                                    if (!siblingRim.open(dirEntry.path().string())) continue;
+                                    for (const auto& entry : siblingRim.entries()) {
+                                        std::string eLower = entry.name;
+                                        std::transform(eLower.begin(), eLower.end(), eLower.begin(), ::tolower);
+                                        if (eLower.size() < 4 || eLower.substr(eLower.size() - 4) != ".rml") continue;
+
+                                        std::vector<uint8_t> rmlData = siblingRim.readEntry(entry);
+                                        if (rmlData.empty()) continue;
+
+                                        RMLData rml;
+                                        if (!parseRML(rmlData, rml)) continue;
+
+                                        for (const auto& prop : rml.props) {
+                                            std::string name = prop.modelFile.empty() ? prop.modelName : prop.modelFile;
+                                            if (name.empty()) continue;
+
+                                            float worldX = rml.roomPosX + prop.posX;
+                                            float worldY = rml.roomPosY + prop.posY;
+                                            float worldZ = rml.roomPosZ + prop.posZ;
+
+                                            if (mergeModelByName(state, name, worldX, worldY, worldZ,
+                                                                 prop.orientX, prop.orientY, prop.orientZ, prop.orientW,
+                                                                 prop.scale)) {
+                                                propsLoaded++;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        finalizeLevelMaterials(state);
+
+                        if (!state.currentModel.meshes.empty()) {
+                            float minX = 1e30f, maxX = -1e30f;
+                            float minY = 1e30f, maxY = -1e30f;
+                            float minZ = 1e30f, maxZ = -1e30f;
+                            for (const auto& mesh : state.currentModel.meshes) {
+                                if (mesh.minX < minX) minX = mesh.minX;
+                                if (mesh.maxX > maxX) maxX = mesh.maxX;
+                                if (mesh.minY < minY) minY = mesh.minY;
+                                if (mesh.maxY > maxY) maxY = mesh.maxY;
+                                if (mesh.minZ < minZ) minZ = mesh.minZ;
+                                if (mesh.maxZ > maxZ) maxZ = mesh.maxZ;
+                            }
+                            float cx = (minX + maxX) / 2.0f, cy = (minY + maxY) / 2.0f, cz = (minZ + maxZ) / 2.0f;
+                            float dx = maxX - minX, dy = maxY - minY, dz = maxZ - minZ;
+                            float radius = std::sqrt(dx*dx + dy*dy + dz*dz) / 2.0f;
+                            state.camera.lookAt(cx, cy, cz, radius * 2.5f);
+                            state.camera.moveSpeed = radius * 0.1f;
+                        }
+
+                        state.statusMessage = "Loaded level: " + std::to_string(loaded) + " terrain, " +
+                            std::to_string(propsLoaded) + " props, " +
+                            std::to_string(state.currentModel.materials.size()) + " materials";
+                        state.showRenderSettings = true;
+
+
+
+
+
+
+                    }
+
+
+                }
+            }
+
+            ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+            ImGui::InputText("##rimFilter", state.rimEntryFilter, sizeof(state.rimEntryFilter));
+
+            ImGui::BeginChild("RIMEntryList", ImVec2(0, 0), true);
+            std::string rimFilterLower = state.rimEntryFilter;
+            std::transform(rimFilterLower.begin(), rimFilterLower.end(), rimFilterLower.begin(), ::tolower);
+
+            static std::vector<int> s_filteredRimIndices;
+            static std::string s_lastRimFilter;
+            static size_t s_lastRimCount = 0;
+            if (rimFilterLower != s_lastRimFilter || state.rimEntries.size() != s_lastRimCount) {
+                s_lastRimFilter = rimFilterLower;
+                s_lastRimCount = state.rimEntries.size();
+                s_filteredRimIndices.clear();
+                s_filteredRimIndices.reserve(state.rimEntries.size());
+                for (int i = 0; i < (int)state.rimEntries.size(); i++) {
+                    if (!rimFilterLower.empty()) {
+                        std::string nameLower = state.rimEntries[i].name;
+                        std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), ::tolower);
+                        if (nameLower.find(rimFilterLower) == std::string::npos) continue;
+                    }
+                    s_filteredRimIndices.push_back(i);
+                }
+            }
+
+            ImGuiListClipper clipper;
+            clipper.Begin((int)s_filteredRimIndices.size());
+            while (clipper.Step()) {
+                for (int fi = clipper.DisplayStart; fi < clipper.DisplayEnd; fi++) {
+                    int i = s_filteredRimIndices[fi];
+                    const auto& re = state.rimEntries[i];
+
+                    bool isGff = isGffFile(re.name);
+                    bool isModel = isModelFile(re.name);
+                    bool isMao = isMaoFile(re.name);
+                    bool isPhy = isPhyFile(re.name);
+                    bool isTexture = re.name.size() > 4 && re.name.substr(re.name.size() - 4) == ".dds";
+                    if (isModel) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.4f, 1.0f, 0.4f, 1.0f));
+                    else if (isMao) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.8f, 0.4f, 1.0f));
+                    else if (isPhy) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.4f, 1.0f, 1.0f));
+                    else if (isTexture) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.4f, 0.8f, 1.0f, 1.0f));
+                    else if (isGff) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.5f, 0.8f, 1.0f));
+
+                    char label[256];
+                    snprintf(label, sizeof(label), "%s##rim%d", re.name.c_str(), i);
+                    bool selected = (state.selectedRIMEntry == i);
+                    if (ImGui::Selectable(label, selected, ImGuiSelectableFlags_AllowDoubleClick)) {
+                        state.selectedRIMEntry = i;
+                        if (ImGui::IsMouseDoubleClicked(0)) {
+                            if (isModel) {
+
+                                state.showTerrain = false;
+                                g_terrainLoader.clear();
+                                state.currentErf = std::make_unique<ERFFile>();
+                                if (state.currentErf->open(state.currentRIMPath)) {
+
+                                    ensureBaseErfsLoaded(state);
+
+                                    auto rimForModel = std::make_unique<ERFFile>();
+                                    auto rimForMat = std::make_unique<ERFFile>();
+                                    rimForModel->open(state.currentRIMPath);
+                                    rimForMat->open(state.currentRIMPath);
+                                    state.modelErfs.push_back(std::move(rimForModel));
+                                    state.materialErfs.push_back(std::move(rimForMat));
+
+
+                                    std::string rimDir = fs::path(state.currentRIMPath).parent_path().string();
+                                    int gpuPushed = 0;
+                                    for (const auto& dirEntry : fs::directory_iterator(rimDir)) {
+                                        if (!dirEntry.is_regular_file()) continue;
+                                        std::string fname = dirEntry.path().filename().string();
+                                        std::string fnameLower = fname;
+                                        std::transform(fnameLower.begin(), fnameLower.end(), fnameLower.begin(), ::tolower);
+                                        if (fnameLower.size() > 8 && fnameLower.substr(fnameLower.size() - 8) == ".gpu.rim") {
+                                            std::string gpuPath = dirEntry.path().string();
+                                            auto g1 = std::make_unique<ERFFile>();
+                                            auto g2 = std::make_unique<ERFFile>();
+                                            if (g1->open(gpuPath) && g2->open(gpuPath)) {
+                                                state.textureErfs.push_back(std::move(g1));
+                                                state.materialErfs.push_back(std::move(g2));
+                                                gpuPushed += 2;
+                                            }
+                                        }
+                                    }
+
+                                    if (re.entryIdx < state.currentErf->entries().size()) {
+                                        const auto& entry = state.currentErf->entries()[re.entryIdx];
+                                        state.currentModelAnimations.clear();
+                                        if (loadModelFromEntry(state, entry)) {
+                                            state.statusMessage = "Loaded: " + re.name + " (from RIM)";
+                                            if (gpuPushed) state.statusMessage += " + gpu.rim";
+                                            state.showRenderSettings = true;
+                                        } else {
+                                            state.statusMessage = "Failed to parse: " + re.name;
+                                        }
+                                    }
+
+
+                                    for (int p = 0; p < gpuPushed / 2; p++) {
+                                        state.materialErfs.pop_back();
+                                        state.textureErfs.pop_back();
+                                    }
+                                    state.modelErfs.pop_back();
+                                    state.materialErfs.pop_back();
+                                }
+                            } else if (isTexture) {
+                                ERFFile rimErf;
+                                if (rimErf.open(state.currentRIMPath)) {
+                                    if (re.entryIdx < rimErf.entries().size()) {
+                                        auto data = rimErf.readEntry(rimErf.entries()[re.entryIdx]);
+                                        if (!data.empty()) {
+                                            std::string nameLower = re.name;
+                                            std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), ::tolower);
+                                            state.textureCache[nameLower] = data;
+                                            state.previewTextureId = createTextureFromDDS(data);
+                                            state.previewTextureName = re.name;
+                                            state.showTexturePreview = true;
+                                            state.previewMeshIndex = -1;
+                                            state.statusMessage = "Preview: " + re.name;
+                                        }
+                                    }
+                                }
+                            } else if (isMao) {
+                                ERFFile rimErf;
+                                if (rimErf.open(state.currentRIMPath)) {
+                                    if (re.entryIdx < rimErf.entries().size()) {
+                                        auto data = rimErf.readEntry(rimErf.entries()[re.entryIdx]);
+                                        if (!data.empty()) {
+                                            state.maoContent = std::string(data.begin(), data.end());
+                                            state.maoFileName = re.name;
+                                            state.showMaoViewer = true;
+                                            state.statusMessage = "Opened MAO: " + re.name;
+                                        }
+                                    }
+                                }
+                            } else {
+                                ERFFile rimErf;
+                                if (rimErf.open(state.currentRIMPath)) {
+                                    if (re.entryIdx < rimErf.entries().size()) {
+                                        auto data = rimErf.readEntry(rimErf.entries()[re.entryIdx]);
+                                        if (!data.empty() && isGffData(data)) {
+                                            if (loadGffData(state.gffViewer, data, re.name, state.currentRIMPath)) {
+                                                state.gffViewer.showWindow = true;
+                                                state.statusMessage = "Opened: " + re.name;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    if (ImGui::BeginPopupContextItem()) {
+                        if (isModel && ImGui::MenuItem("Load Model")) {
+                            state.showTerrain = false;
+                            g_terrainLoader.clear();
+                            state.currentErf = std::make_unique<ERFFile>();
+                            if (state.currentErf->open(state.currentRIMPath)) {
+                                ensureBaseErfsLoaded(state);
+
+                                auto rimForModel = std::make_unique<ERFFile>();
+                                auto rimForMat = std::make_unique<ERFFile>();
+                                rimForModel->open(state.currentRIMPath);
+                                rimForMat->open(state.currentRIMPath);
+                                state.modelErfs.push_back(std::move(rimForModel));
+                                state.materialErfs.push_back(std::move(rimForMat));
+
+                                std::string rimDir = fs::path(state.currentRIMPath).parent_path().string();
+                                int gpuPushed = 0;
+                                for (const auto& dirEntry : fs::directory_iterator(rimDir)) {
+                                    if (!dirEntry.is_regular_file()) continue;
+                                    std::string fname = dirEntry.path().filename().string();
+                                    std::string fnameLower = fname;
+                                    std::transform(fnameLower.begin(), fnameLower.end(), fnameLower.begin(), ::tolower);
+                                    if (fnameLower.size() > 8 && fnameLower.substr(fnameLower.size() - 8) == ".gpu.rim") {
+                                        std::string gpuPath = dirEntry.path().string();
+                                        auto g1 = std::make_unique<ERFFile>();
+                                        auto g2 = std::make_unique<ERFFile>();
+                                        if (g1->open(gpuPath) && g2->open(gpuPath)) {
+                                            state.textureErfs.push_back(std::move(g1));
+                                            state.materialErfs.push_back(std::move(g2));
+                                            gpuPushed += 2;
+                                        }
+                                    }
+                                }
+
+                                if (re.entryIdx < state.currentErf->entries().size()) {
+                                    const auto& entry = state.currentErf->entries()[re.entryIdx];
+                                    state.currentModelAnimations.clear();
+                                    if (loadModelFromEntry(state, entry)) {
+                                        state.statusMessage = "Loaded: " + re.name + " (from RIM)";
+                                        if (gpuPushed) state.statusMessage += " + gpu.rim";
+                                        state.showRenderSettings = true;
+                                    } else {
+                                        state.statusMessage = "Failed to parse: " + re.name;
+                                    }
+                                }
+                                for (int p = 0; p < gpuPushed / 2; p++) {
+                                    state.materialErfs.pop_back();
+                                    state.textureErfs.pop_back();
+                                }
+                                state.modelErfs.pop_back();
+                                state.materialErfs.pop_back();
+                            }
+                        }
+                        if (ImGui::MenuItem("Open with GFF Viewer")) {
+                            ERFFile rimErf;
+                            if (rimErf.open(state.currentRIMPath)) {
+                                if (re.entryIdx < rimErf.entries().size()) {
+                                    auto data = rimErf.readEntry(rimErf.entries()[re.entryIdx]);
+                                    if (!data.empty() && isGffData(data)) {
+                                        if (loadGffData(state.gffViewer, data, re.name, state.currentRIMPath)) {
+                                            state.gffViewer.showWindow = true;
+                                            state.statusMessage = "Opened: " + re.name;
+                                        }
+                                    } else {
+                                        state.statusMessage = "Not a valid GFF file: " + re.name;
+                                    }
+                                }
+                            }
+                        }
+                        if (ImGui::MenuItem("Extract...")) {
+                            IGFD::FileDialogConfig config;
+                            #ifdef _WIN32
+                            char* userProfile = getenv("USERPROFILE");
+                            if (userProfile) config.path = std::string(userProfile) + "\\Documents";
+                            else config.path = ".";
+                            #else
+                            char* home = getenv("HOME");
+                            if (home) config.path = std::string(home) + "/Documents";
+                            else config.path = ".";
+                            #endif
+                            config.fileName = re.name;
+                            state.selectedRIMEntry = i;
+                            ImGuiFileDialog::Instance()->OpenDialog("ExtractRIMEntry", "Save File", ".*", config);
+                        }
+                        ImGui::EndPopup();
+                    }
+
+                    if (isModel || isMao || isPhy || isTexture || isGff) ImGui::PopStyleColor();
+                }
+            }
+
+            ImGui::EndChild();
+            ImGui::EndChild();
+        }
     } else ImGui::Text("Select an ERF file");
     ImGui::EndChild();
     ImGui::End();
@@ -1193,6 +1913,39 @@ void drawBrowserWindow(AppState& state) {
                 }
             }
             state.statusMessage = "Exported " + std::to_string(exported) + " samples";
+        }
+        ImGuiFileDialog::Instance()->Close();
+    }
+
+    if (ImGuiFileDialog::Instance()->Display("DumpAllRIM", ImGuiWindowFlags_NoCollapse, ImVec2(500, 400))) {
+        if (ImGuiFileDialog::Instance()->IsOk()) {
+            std::string outDir = ImGuiFileDialog::Instance()->GetCurrentPath();
+            ERFFile rimErf;
+            int count = 0;
+            if (rimErf.open(state.currentRIMPath)) {
+                for (const auto& entry : rimErf.entries()) {
+                    std::string outPath = outDir + "/" + entry.name;
+                    if (rimErf.extractEntry(entry, outPath)) count++;
+                }
+            }
+            state.statusMessage = "Dumped " + std::to_string(count) + " files from RIM";
+        }
+        ImGuiFileDialog::Instance()->Close();
+    }
+
+    if (ImGuiFileDialog::Instance()->Display("ExtractRIMEntry", ImGuiWindowFlags_NoCollapse, ImVec2(500, 400))) {
+        if (ImGuiFileDialog::Instance()->IsOk() && state.selectedRIMEntry >= 0 &&
+            state.selectedRIMEntry < (int)state.rimEntries.size()) {
+            std::string outPath = ImGuiFileDialog::Instance()->GetFilePathName();
+            ERFFile rimErf;
+            if (rimErf.open(state.currentRIMPath)) {
+                size_t entryIdx = state.rimEntries[state.selectedRIMEntry].entryIdx;
+                if (entryIdx < rimErf.entries().size()) {
+                    if (rimErf.extractEntry(rimErf.entries()[entryIdx], outPath)) {
+                        state.statusMessage = "Extracted: " + state.rimEntries[state.selectedRIMEntry].name;
+                    }
+                }
+            }
         }
         ImGuiFileDialog::Instance()->Close();
     }

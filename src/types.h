@@ -190,6 +190,7 @@ struct AppState {
     int selectedMeshForUv = -1;
     std::string selectedFolder;
     std::vector<std::string> erfFiles;
+    std::vector<std::string> rimFiles;
     std::vector<size_t> filteredErfIndices;
     std::map<std::string, std::vector<size_t>> erfsByName;
     std::string selectedErfName;
@@ -203,6 +204,7 @@ struct AppState {
     std::string extractPath;
     std::string lastDialogPath;
     char contentFilter[128] = "";
+    float leftPaneWidth = 200.0f;
     CachedEntry pendingTextureExport;
     bool pendingTexExportPng = false;
     bool pendingTexExportDds = false;
@@ -226,11 +228,16 @@ struct AppState {
     std::vector<Bone> basePoseBones;
     char animFilter[64] = "";
     int selectedBoneIndex = -1;
+    int selectedLevelChunk = -1;
     bool showTexturePreview = false;
     int previewTextureId = 0;
     std::string previewTextureName;
     int previewMeshIndex = -1;
     bool showUvOverlay = false;
+    bool showHeightmap = false;
+    uint32_t heightmapTexId = 0;
+    int heightmapW = 0;
+    int heightmapH = 0;
     bool pendingExport = false;
     CachedEntry pendingExportEntry;
     MeshBrowserState meshBrowser;
@@ -367,6 +374,11 @@ struct AppState {
     std::vector<FSBSampleInfo> currentFSBSamples;
     int selectedFSBSample = -1;
     char fsbSampleFilter[128] = "";
+    bool showRIMBrowser = false;
+    std::string currentRIMPath;
+    std::vector<CachedEntry> rimEntries;
+    int selectedRIMEntry = -1;
+    char rimEntryFilter[128] = "";
 
     GDAEditorState gdaEditor;
     GffViewerState gffViewer;

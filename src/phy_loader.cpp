@@ -1,6 +1,7 @@
 #include "mmh_loader.h"
 #include "model_loader.h"
 #include "dds_loader.h"
+#include "rml_loader.h"
 #include "animation.h"
 #include "Gff.h"
 #include "erf.h"
@@ -9,6 +10,7 @@
 #include <functional>
 #include <cmath>
 #include <set>
+#include <unordered_map>
 #include <filesystem>
 namespace fs = std::filesystem;
 
@@ -242,6 +244,12 @@ static void loadMaterialErfs(AppState& state) {
     state.materialErfsLoaded = true;
 }
 
+void ensureBaseErfsLoaded(AppState& state) {
+    loadTextureErfs(state);
+    loadModelErfs(state);
+    loadMaterialErfs(state);
+}
+
 static std::vector<uint8_t> readFromModelErfs(AppState& state, const std::string& name) {
     std::string nameLower = name;
     std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), ::tolower);
@@ -314,6 +322,7 @@ static uint32_t loadTextureByName(AppState& state, const std::string& texName,
     if (texName.empty()) return 0;
     std::string texNameLower = texName;
     std::transform(texNameLower.begin(), texNameLower.end(), texNameLower.begin(), ::tolower);
+
 
     std::string withDdsLower = texNameLower;
     if (withDdsLower.size() < 4 || withDdsLower.substr(withDdsLower.size() - 4) != ".dds")
@@ -395,6 +404,7 @@ bool loadModelFromEntry(AppState& state, const ERFEntry& entry) {
     state.currentModel = model;
     state.currentModel.name = entry.name;
     state.hasModel = true;
+    state.selectedLevelChunk = -1;
     state.renderSettings.initMeshVisibility(model.meshes.size());
     std::string baseName = entry.name;
     size_t dotPos = baseName.rfind('.');
@@ -435,7 +445,15 @@ bool loadModelFromEntry(AppState& state, const ERFEntry& entry) {
         if (!mesh.materialName.empty()) materialNames.insert(mesh.materialName);
     }
     for (const std::string& matName : materialNames) {
-        std::vector<uint8_t> maoData = readFromMaterialErfs(state, matName + ".mao");
+
+        std::string maoLookup = matName;
+        {
+            std::string lower = matName;
+            std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
+            if (lower.size() < 4 || lower.substr(lower.size() - 4) != ".mao")
+                maoLookup += ".mao";
+        }
+        std::vector<uint8_t> maoData = readFromMaterialErfs(state, maoLookup);
         if (!maoData.empty()) {
             std::string maoContent(maoData.begin(), maoData.end());
             Material mat = parseMAO(maoContent, matName);
@@ -483,4 +501,327 @@ bool loadModelFromEntry(AppState& state, const ERFEntry& entry) {
     findAnimationsForModel(state, baseName);
     if (!state.availableAnimFiles.empty()) state.showAnimWindow = true;
     return true;
+}
+
+bool mergeModelEntry(AppState& state, const ERFEntry& entry) {
+    if (!state.currentErf) return false;
+    std::vector<uint8_t> data = state.currentErf->readEntry(entry);
+    if (data.empty()) return false;
+    Model tempModel;
+    if (!loadMSH(data, tempModel)) return false;
+
+
+    std::string baseName = entry.name;
+    size_t dotPos = baseName.rfind('.');
+    if (dotPos != std::string::npos) baseName = baseName.substr(0, dotPos);
+
+    std::vector<std::string> mmhCandidates = {baseName + ".mmh", baseName + "a.mmh"};
+    size_t lastUnderscore = baseName.find_last_of('_');
+    if (lastUnderscore != std::string::npos) {
+        std::string variantA = baseName;
+        variantA.insert(lastUnderscore, "a");
+        mmhCandidates.push_back(variantA + ".mmh");
+    }
+    bool mmhFound = false;
+    for (const auto& candidate : mmhCandidates) {
+        std::vector<uint8_t> mmhData = readFromModelErfs(state, candidate);
+        if (!mmhData.empty()) {
+            loadMMH(mmhData, tempModel);
+            mmhFound = true;
+            break;
+        }
+    }
+    if (!mmhFound) {
+    }
+
+
+    for (const auto& mesh : tempModel.meshes) {
+    }
+
+
+    std::set<std::string> newMaterials;
+    for (const auto& mesh : tempModel.meshes) {
+        if (!mesh.materialName.empty() && state.currentModel.findMaterial(mesh.materialName) < 0) {
+            newMaterials.insert(mesh.materialName);
+        }
+    }
+
+
+    for (auto& mesh : tempModel.meshes) {
+        state.currentModel.meshes.push_back(std::move(mesh));
+    }
+    state.renderSettings.initMeshVisibility(state.currentModel.meshes.size());
+
+
+    for (const std::string& matName : newMaterials) {
+        std::string maoLookup = matName;
+        {
+            std::string lower = matName;
+            std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
+            if (lower.size() < 4 || lower.substr(lower.size() - 4) != ".mao")
+                maoLookup += ".mao";
+        }
+        std::vector<uint8_t> maoData = readFromMaterialErfs(state, maoLookup);
+        if (!maoData.empty()) {
+            std::string maoContent(maoData.begin(), maoData.end());
+            Material mat = parseMAO(maoContent, matName);
+            mat.maoContent = maoContent;
+            state.currentModel.materials.push_back(mat);
+        } else {
+            Material mat;
+            mat.name = matName;
+            state.currentModel.materials.push_back(mat);
+        }
+    }
+
+
+    for (auto& mesh : state.currentModel.meshes) {
+        if (!mesh.materialName.empty())
+            mesh.materialIndex = state.currentModel.findMaterial(mesh.materialName);
+    }
+
+
+    for (auto& mat : state.currentModel.materials) {
+        if (!mat.diffuseMap.empty() && mat.diffuseTexId == 0) {
+            mat.diffuseTexId = loadTextureByName(state, mat.diffuseMap, &mat.diffuseData, &mat.diffuseWidth, &mat.diffuseHeight);
+        }
+        if (!mat.normalMap.empty() && mat.normalTexId == 0)
+            mat.normalTexId = loadTextureByName(state, mat.normalMap, &mat.normalData, &mat.normalWidth, &mat.normalHeight);
+        if (!mat.specularMap.empty() && mat.specularTexId == 0)
+            mat.specularTexId = loadTextureByName(state, mat.specularMap, &mat.specularData, &mat.specularWidth, &mat.specularHeight);
+        if (!mat.tintMap.empty() && mat.tintTexId == 0)
+            mat.tintTexId = loadTextureByName(state, mat.tintMap, &mat.tintData, &mat.tintWidth, &mat.tintHeight);
+    }
+
+    return true;
+}
+
+
+struct ErfIndexEntry {
+    ERFFile* erf;
+    size_t entryIdx;
+};
+
+static std::unordered_map<std::string, ErfIndexEntry> s_erfIndex;
+static bool s_erfIndexBuilt = false;
+static std::vector<std::unique_ptr<ERFFile>> s_indexedErfs;
+
+void buildErfIndex(AppState& state) {
+    s_erfIndex.clear();
+    s_indexedErfs.clear();
+
+    auto indexErfSet = [&](const std::vector<std::unique_ptr<ERFFile>>& erfs) {
+        for (const auto& erf : erfs) {
+            const auto& entries = erf->entries();
+            for (size_t i = 0; i < entries.size(); i++) {
+                std::string key = entries[i].name;
+                std::transform(key.begin(), key.end(), key.begin(), ::tolower);
+                if (s_erfIndex.find(key) == s_erfIndex.end())
+                    s_erfIndex[key] = {erf.get(), i};
+            }
+        }
+    };
+
+    indexErfSet(state.modelErfs);
+    indexErfSet(state.materialErfs);
+    indexErfSet(state.textureErfs);
+
+    if (state.currentErf) {
+        const auto& entries = state.currentErf->entries();
+        for (size_t i = 0; i < entries.size(); i++) {
+            std::string key = entries[i].name;
+            std::transform(key.begin(), key.end(), key.begin(), ::tolower);
+            if (s_erfIndex.find(key) == s_erfIndex.end())
+                s_erfIndex[key] = {state.currentErf.get(), i};
+        }
+    }
+
+    for (const auto& erfPath : state.erfFiles) {
+        auto erf = std::make_unique<ERFFile>();
+        if (erf->open(erfPath) && erf->encryption() == 0) {
+            const auto& entries = erf->entries();
+            for (size_t i = 0; i < entries.size(); i++) {
+                std::string key = entries[i].name;
+                std::transform(key.begin(), key.end(), key.begin(), ::tolower);
+                if (s_erfIndex.find(key) == s_erfIndex.end())
+                    s_erfIndex[key] = {erf.get(), i};
+            }
+            s_indexedErfs.push_back(std::move(erf));
+        }
+    }
+
+    s_erfIndexBuilt = true;
+}
+
+static std::vector<uint8_t> readFromErfIndex(const std::string& name) {
+    std::string key = name;
+    std::transform(key.begin(), key.end(), key.begin(), ::tolower);
+    auto it = s_erfIndex.find(key);
+    if (it != s_erfIndex.end()) {
+        const auto& entries = it->second.erf->entries();
+        if (it->second.entryIdx < entries.size())
+            return it->second.erf->readEntry(entries[it->second.entryIdx]);
+    }
+
+    std::string noExt = key;
+    size_t dp = noExt.rfind('.');
+    std::string ext = (dp != std::string::npos) ? key.substr(dp) : "";
+    if (dp != std::string::npos) noExt = key.substr(0, dp);
+
+    if (!ext.empty()) {
+        for (const auto& [k, v] : s_erfIndex) {
+            std::string kNoExt = k;
+            size_t kdp = kNoExt.rfind('.');
+            if (kdp != std::string::npos) kNoExt = k.substr(0, kdp);
+            if (kNoExt == noExt) {
+                const auto& entries = v.erf->entries();
+                if (v.entryIdx < entries.size())
+                    return v.erf->readEntry(entries[v.entryIdx]);
+            }
+        }
+    }
+    return {};
+}
+
+static std::vector<uint8_t> readFromAnyErf(AppState& state, const std::string& name) {
+    if (s_erfIndexBuilt) return readFromErfIndex(name);
+
+    std::string nameLower = name;
+    std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), ::tolower);
+
+    auto tryErfSet = [&](const std::vector<std::unique_ptr<ERFFile>>& erfs) -> std::vector<uint8_t> {
+        for (const auto& erf : erfs) {
+            for (const auto& entry : erf->entries()) {
+                std::string entryLower = entry.name;
+                std::transform(entryLower.begin(), entryLower.end(), entryLower.begin(), ::tolower);
+                if (entryLower == nameLower) return erf->readEntry(entry);
+            }
+        }
+        return {};
+    };
+
+    auto result = tryErfSet(state.modelErfs);
+    if (!result.empty()) return result;
+    result = tryErfSet(state.materialErfs);
+    if (!result.empty()) return result;
+    result = tryErfSet(state.textureErfs);
+    if (!result.empty()) return result;
+
+    if (state.currentErf) {
+        for (const auto& entry : state.currentErf->entries()) {
+            std::string entryLower = entry.name;
+            std::transform(entryLower.begin(), entryLower.end(), entryLower.begin(), ::tolower);
+            if (entryLower == nameLower) return state.currentErf->readEntry(entry);
+        }
+    }
+
+    return {};
+}
+
+static std::unordered_map<std::string, Model> s_propModelCache;
+static std::set<std::string> s_propMissingModels;
+
+void clearPropCache() {
+    s_propModelCache.clear();
+    s_propMissingModels.clear();
+    s_erfIndex.clear();
+    s_indexedErfs.clear();
+    s_erfIndexBuilt = false;
+}
+
+bool mergeModelByName(AppState& state, const std::string& modelName,
+                      float px, float py, float pz,
+                      float qx, float qy, float qz, float qw,
+                      float scale) {
+
+    std::string nameLower = modelName;
+    std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), ::tolower);
+
+    if (s_propMissingModels.count(nameLower)) return false;
+
+    auto cacheIt = s_propModelCache.find(nameLower);
+    if (cacheIt == s_propModelCache.end()) {
+        std::string mshName = modelName + ".msh";
+        std::vector<uint8_t> mshData = readFromAnyErf(state, mshName);
+        if (mshData.empty()) {
+            s_propMissingModels.insert(nameLower);
+            return false;
+        }
+
+        Model tempModel;
+        if (!loadMSH(mshData, tempModel)) {
+            s_propMissingModels.insert(nameLower);
+            return false;
+        }
+
+        std::vector<std::string> mmhCandidates = {modelName + ".mmh", modelName + "a.mmh"};
+        for (const auto& candidate : mmhCandidates) {
+            std::vector<uint8_t> mmhData = readFromAnyErf(state, candidate);
+            if (!mmhData.empty()) {
+                loadMMH(mmhData, tempModel);
+                break;
+            }
+        }
+
+        s_propModelCache[nameLower] = tempModel;
+        cacheIt = s_propModelCache.find(nameLower);
+    }
+
+    Model instance = cacheIt->second;
+    transformModelVertices(instance, px, py, pz, qx, qy, qz, qw, scale);
+
+    for (auto& mesh : instance.meshes) {
+        state.currentModel.meshes.push_back(std::move(mesh));
+    }
+
+    return true;
+}
+
+void finalizeLevelMaterials(AppState& state) {
+    std::set<std::string> newMaterials;
+    for (const auto& mesh : state.currentModel.meshes) {
+        if (!mesh.materialName.empty() && state.currentModel.findMaterial(mesh.materialName) < 0) {
+            newMaterials.insert(mesh.materialName);
+        }
+    }
+
+    for (const std::string& matName : newMaterials) {
+        std::string maoLookup = matName;
+        {
+            std::string lower = matName;
+            std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
+            if (lower.size() < 4 || lower.substr(lower.size() - 4) != ".mao")
+                maoLookup += ".mao";
+        }
+        std::vector<uint8_t> maoData = readFromMaterialErfs(state, maoLookup);
+        if (maoData.empty()) maoData = readFromAnyErf(state, maoLookup);
+        if (!maoData.empty()) {
+            std::string maoContent(maoData.begin(), maoData.end());
+            Material mat = parseMAO(maoContent, matName);
+            mat.maoContent = maoContent;
+            state.currentModel.materials.push_back(mat);
+        } else {
+            Material mat;
+            mat.name = matName;
+            state.currentModel.materials.push_back(mat);
+        }
+    }
+
+    for (auto& mesh : state.currentModel.meshes) {
+        if (!mesh.materialName.empty())
+            mesh.materialIndex = state.currentModel.findMaterial(mesh.materialName);
+    }
+
+    for (auto& mat : state.currentModel.materials) {
+        if (!mat.diffuseMap.empty() && mat.diffuseTexId == 0)
+            mat.diffuseTexId = loadTextureByName(state, mat.diffuseMap, &mat.diffuseData, &mat.diffuseWidth, &mat.diffuseHeight);
+        if (!mat.normalMap.empty() && mat.normalTexId == 0)
+            mat.normalTexId = loadTextureByName(state, mat.normalMap, &mat.normalData, &mat.normalWidth, &mat.normalHeight);
+        if (!mat.specularMap.empty() && mat.specularTexId == 0)
+            mat.specularTexId = loadTextureByName(state, mat.specularMap, &mat.specularData, &mat.specularWidth, &mat.specularHeight);
+        if (!mat.tintMap.empty() && mat.tintTexId == 0)
+            mat.tintTexId = loadTextureByName(state, mat.tintMap, &mat.tintData, &mat.tintWidth, &mat.tintHeight);
+    }
+
+    state.renderSettings.initMeshVisibility(state.currentModel.meshes.size());
 }

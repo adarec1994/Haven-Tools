@@ -3,6 +3,7 @@
 #include "dds_loader.h"
 #include "animation.h"
 #include "Gff.h"
+#include "gff32.h"
 #include "erf.h"
 #include <algorithm>
 #include <map>
@@ -14,6 +15,80 @@
 Material parseMAO(const std::string& maoContent, const std::string& materialName) {
     Material mat;
     mat.name = materialName;
+
+
+    std::vector<uint8_t> rawBytes(maoContent.begin(), maoContent.end());
+    if (rawBytes.size() >= 8 && GFF32::GFF32File::isGFF32(rawBytes)) {
+        GFF32::GFF32File gff32;
+        if (gff32.load(rawBytes) && gff32.root()) {
+            const auto& root = *gff32.root();
+
+            for (const auto& fieldName : root.fieldOrder) {
+                auto it = root.fields.find(fieldName);
+                if (it == root.fields.end()) continue;
+                const auto& field = it->second;
+
+
+                if (field.typeId != GFF32::TypeID::ExoString &&
+                    field.typeId != GFF32::TypeID::ResRef) continue;
+
+                const std::string* valPtr = std::get_if<std::string>(&field.value);
+                if (!valPtr || valPtr->empty()) continue;
+                std::string resName = *valPtr;
+
+                std::string labelLower = fieldName;
+                std::transform(labelLower.begin(), labelLower.end(), labelLower.begin(), ::tolower);
+                std::string resLower = resName;
+                std::transform(resLower.begin(), resLower.end(), resLower.begin(), ::tolower);
+
+
+
+                if (labelLower.find("diffuse") != std::string::npos ||
+                    labelLower.find("packedtexture") != std::string::npos ||
+                    labelLower.find("palette") != std::string::npos) {
+                    if (mat.diffuseMap.empty()) mat.diffuseMap = resName;
+                } else if (labelLower.find("normalmap") != std::string::npos ||
+                           labelLower.find("normal") != std::string::npos) {
+                    if (mat.normalMap.empty()) mat.normalMap = resName;
+                } else if (labelLower.find("specular") != std::string::npos) {
+                    if (mat.specularMap.empty()) mat.specularMap = resName;
+                } else if (labelLower.find("tint") != std::string::npos) {
+                    if (mat.tintMap.empty()) mat.tintMap = resName;
+                } else if (labelLower.find("lowlod") != std::string::npos) {
+                    if (mat.diffuseMap.empty()) mat.diffuseMap = resName;
+                } else if (labelLower.find("texture") != std::string::npos) {
+
+                    if (resLower.find("_n.") != std::string::npos ||
+                        resLower.find("_nrm") != std::string::npos ||
+                        resLower.find("_n_") != std::string::npos) {
+                        if (mat.normalMap.empty()) mat.normalMap = resName;
+                    } else if (resLower.find("_s.") != std::string::npos ||
+                               resLower.find("_spec") != std::string::npos) {
+                        if (mat.specularMap.empty()) mat.specularMap = resName;
+                    } else {
+                        if (mat.diffuseMap.empty()) mat.diffuseMap = resName;
+                    }
+                }
+            }
+
+
+            if (mat.diffuseMap.empty()) {
+                for (const auto& fieldName : root.fieldOrder) {
+                    auto it = root.fields.find(fieldName);
+                    if (it == root.fields.end()) continue;
+                    const auto& field = it->second;
+                    if (field.typeId != GFF32::TypeID::ResRef) continue;
+                    const std::string* valPtr = std::get_if<std::string>(&field.value);
+                    if (!valPtr || valPtr->empty()) continue;
+                    mat.diffuseMap = *valPtr;
+                    break;
+                }
+            }
+        }
+        return mat;
+    }
+
+
 
     size_t pos = 0;
     while ((pos = maoContent.find("<Texture", pos)) != std::string::npos) {
@@ -51,7 +126,16 @@ Material parseMAO(const std::string& maoContent, const std::string& materialName
             std::string resNameLower = resName;
             std::transform(resNameLower.begin(), resNameLower.end(), resNameLower.begin(), ::tolower);
 
-            if (texNameLower.find("agediffuse") != std::string::npos ||
+
+            if (texNameLower.find("corneanormal") != std::string::npos ||
+                texNameLower.find("lightmap") != std::string::npos ||
+                texNameLower.find("emotionsmask") != std::string::npos ||
+                texNameLower.find("emotionsnormal") != std::string::npos ||
+                texNameLower.find("reliefmap") != std::string::npos ||
+                texNameLower.find("maskv") != std::string::npos ||
+                texNameLower.find("maska") != std::string::npos) {
+
+            } else if (texNameLower.find("agediffuse") != std::string::npos ||
                 texNameLower.find("age_diffuse") != std::string::npos ||
                 texNameLower.find("agediffusemap") != std::string::npos) {
                 mat.ageDiffuseMap = resName;
@@ -65,14 +149,12 @@ Material parseMAO(const std::string& maoContent, const std::string& materialName
                 mat.browStubbleNormalMap = resName;
             } else if (texNameLower.find("browstubble") != std::string::npos) {
                 mat.browStubbleMap = resName;
-            } else if (texNameLower.find("corneanormal") != std::string::npos ||
-                       texNameLower.find("lightmap") != std::string::npos ||
-                       texNameLower.find("emotionsmask") != std::string::npos ||
-                       texNameLower.find("emotionsnormal") != std::string::npos) {
             } else if (texNameLower.find("diffuse") != std::string::npos ||
-                       texNameLower.find("packedtexture") != std::string::npos) {
+                       texNameLower.find("packedtexture") != std::string::npos ||
+                       texNameLower == "palette") {
                 mat.diffuseMap = resName;
-            } else if (texNameLower.find("normalmap") != std::string::npos) {
+            } else if (texNameLower.find("normalmap") != std::string::npos ||
+                       texNameLower == "normal") {
                 if (mat.normalMap.empty()) {
                     mat.normalMap = resName;
                 }
@@ -81,22 +163,29 @@ Material parseMAO(const std::string& maoContent, const std::string& materialName
             } else if (texNameLower.find("tintmask") != std::string::npos ||
                        texNameLower.find("tint") != std::string::npos) {
                 mat.tintMap = resName;
-            } else if (mat.diffuseMap.empty()) {
+            } else if (texNameLower.find("lowlod") != std::string::npos) {
+
+                if (mat.diffuseMap.empty()) {
+                    mat.diffuseMap = resName;
+                }
+            } else {
+
                 if (resNameLower.find("_d.") != std::string::npos ||
                     resNameLower.find("0d.") != std::string::npos ||
                     resNameLower.find("_d_") != std::string::npos) {
-                    mat.diffuseMap = resName;
+                    if (mat.diffuseMap.empty()) mat.diffuseMap = resName;
                 } else if (resNameLower.find("_n.") != std::string::npos ||
-                           resNameLower.find("0n.") != std::string::npos) {
-                    if (mat.normalMap.empty()) {
-                        mat.normalMap = resName;
-                    }
+                           resNameLower.find("0n.") != std::string::npos ||
+                           resNameLower.find("_nrm") != std::string::npos) {
+                    if (mat.normalMap.empty()) mat.normalMap = resName;
                 } else if (resNameLower.find("_s.") != std::string::npos ||
                            resNameLower.find("0s.") != std::string::npos) {
-                    mat.specularMap = resName;
+                    if (mat.specularMap.empty()) mat.specularMap = resName;
                 } else if (resNameLower.find("_t.") != std::string::npos ||
                            resNameLower.find("0t.") != std::string::npos) {
-                    mat.tintMap = resName;
+                    if (mat.tintMap.empty()) mat.tintMap = resName;
+                } else if (mat.diffuseMap.empty()) {
+                    mat.diffuseMap = resName;
                 }
             }
         }

@@ -233,12 +233,17 @@ Thank you for downloading or updating to version 2.0!
 -- Added vertical panning with Q/E.
 -- Controls can be rebound in the Keybind settings.
 
+- Additional formats:
+-- Added .LVL file's to the list of files that can be loaded.
+-- Added .RIM file's to the list of files that can be loaded.
+-- Added terrain rendering in .LVL files (part of the single player resources pack)
+
 - UI Updates:
 -- Updated the skeleton rendering to be cleaner.
 -- Updated UI positions to be cleaner.
 -- Added settings -> keybinds to the top toolbar.
 -- Updated the audio playback to use a cleaner UI.
--- Updated the Gff viewer. All files can now be opened using it.
+-- Rewrote the Gff viewer ~ much clearer and functional UI.
 
 - Bug fixes:
 -- Fixed a bug with a rogue separator in the ERF browser.

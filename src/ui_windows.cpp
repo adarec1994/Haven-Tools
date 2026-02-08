@@ -4,6 +4,12 @@ void drawRenderSettingsWindow(AppState& state) {
     ImGui::SetNextWindowPos(ImVec2(20, 40), ImGuiCond_FirstUseEver);
     ImGui::SetNextWindowSizeConstraints(ImVec2(300, 100), ImVec2(500, 800));
 
+    // Global ESC to deselect chunk
+    if (ImGui::IsKeyPressed(ImGuiKey_Escape)) {
+        state.selectedLevelChunk = -1;
+        state.selectedBoneIndex = -1;
+    }
+
     ImGui::Begin("Render Settings", &state.showRenderSettings, ImGuiWindowFlags_AlwaysAutoResize);
     ImGui::Checkbox("Wireframe", &state.renderSettings.wireframe);
     ImGui::Checkbox("Show Axes", &state.renderSettings.showAxes);
@@ -21,7 +27,7 @@ void drawRenderSettingsWindow(AppState& state) {
     }
     ImGui::Separator();
     ImGui::Text("Camera Speed: %.1f", state.camera.moveSpeed);
-    ImGui::SliderFloat("##speed", &state.camera.moveSpeed, 0.1f, 100.0f, "%.1f");
+    ImGui::SliderFloat("##speed", &state.camera.moveSpeed, 0.1f, 10000.0f, "%.1f", ImGuiSliderFlags_Logarithmic);
     if (state.hasModel) {
         ImGui::Separator();
         size_t totalVerts = 0, totalTris = 0;
@@ -31,6 +37,13 @@ void drawRenderSettingsWindow(AppState& state) {
             state.renderSettings.initMeshVisibility(state.currentModel.meshes.size());
         if (state.currentModel.meshes.size() >= 1) {
             ImGui::Separator(); ImGui::Text("Meshes:");
+            if (state.selectedLevelChunk >= 0 && state.selectedLevelChunk < (int)state.currentModel.meshes.size()) {
+                const auto& selMesh = state.currentModel.meshes[state.selectedLevelChunk];
+                ImGui::TextColored(ImVec4(0.5f, 1.0f, 0.5f, 1.0f), "Selected: %s",
+                    selMesh.name.empty() ? ("Mesh " + std::to_string(state.selectedLevelChunk)).c_str() : selMesh.name.c_str());
+            } else {
+                ImGui::TextDisabled("Click a mesh in the viewport to select it");
+            }
             float listHeight = std::min(300.0f, state.currentModel.meshes.size() * 50.0f + 20.0f);
             ImGui::BeginChild("MeshList", ImVec2(0, listHeight), true);
             for (size_t i = 0; i < state.currentModel.meshes.size(); i++) {
@@ -39,7 +52,18 @@ void drawRenderSettingsWindow(AppState& state) {
                 bool visible = state.renderSettings.meshVisible[i] != 0;
                 if (ImGui::Checkbox("##vis", &visible)) state.renderSettings.meshVisible[i] = visible ? 1 : 0;
                 ImGui::SameLine();
-                ImGui::Text("%s", mesh.name.empty() ? ("Mesh " + std::to_string(i)).c_str() : mesh.name.c_str());
+                bool isSelected = (state.selectedLevelChunk == (int)i);
+                if (isSelected) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.5f, 1.0f, 0.5f, 1.0f));
+                std::string label = mesh.name.empty() ? ("Mesh " + std::to_string(i)) : mesh.name;
+                if (ImGui::Selectable(label.c_str(), isSelected, ImGuiSelectableFlags_AllowDoubleClick)) {
+                    state.selectedLevelChunk = isSelected ? -1 : (int)i;  // Toggle
+                }
+                if (isSelected) {
+                    ImGui::PopStyleColor();
+                    // Auto-scroll to selected item when selected from viewport
+                    if (ImGui::IsWindowAppearing() || !ImGui::IsItemVisible())
+                        ImGui::SetScrollHereY(0.5f);
+                }
                 ImGui::Indent();
                 ImGui::TextDisabled("%zu verts, %zu tris", mesh.vertices.size(), mesh.indices.size() / 3);
                 if (!mesh.materialName.empty()) {
@@ -144,7 +168,10 @@ void drawRenderSettingsWindow(AppState& state) {
         if (!state.currentModel.skeleton.bones.empty()) {
             ImGui::Separator();
             if (ImGui::TreeNode("Skeleton", "Skeleton (%zu bones)", state.currentModel.skeleton.bones.size())) {
-                if (ImGui::IsKeyPressed(state.keybinds.deselectBone)) state.selectedBoneIndex = -1;
+                if (ImGui::IsKeyPressed(state.keybinds.deselectBone)) {
+                    state.selectedBoneIndex = -1;
+                    state.selectedLevelChunk = -1;
+                }
                 if (state.selectedBoneIndex >= 0) {
                     ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Selected: %s",
                         state.currentModel.skeleton.bones[state.selectedBoneIndex].name.c_str());
@@ -388,12 +415,15 @@ void drawTexturePreview(AppState& state) {
     ImDrawList* drawList = ImGui::GetWindowDrawList();
     drawList->AddRectFilled(canvasPos, ImVec2(canvasPos.x + size, canvasPos.y + size), IM_COL32(40, 40, 40, 255));
     if (state.previewTextureId != 0) {
-        drawList->AddImage(
-            (ImTextureID)(intptr_t)state.previewTextureId,
-            canvasPos,
-            ImVec2(canvasPos.x + size, canvasPos.y + size),
-            ImVec2(0, 0), ImVec2(1, 1)
-        );
+        auto* srv = getTextureSRV(state.previewTextureId);
+        if (srv) {
+            drawList->AddImage(
+                (ImTextureID)srv,
+                canvasPos,
+                ImVec2(canvasPos.x + size, canvasPos.y + size),
+                ImVec2(0, 0), ImVec2(1, 1)
+            );
+        }
     }
     if (state.showUvOverlay && state.previewMeshIndex >= 0 &&
         state.previewMeshIndex < (int)state.currentModel.meshes.size()) {
@@ -536,5 +566,42 @@ void drawAnimWindow(AppState& state, ImGuiIO& io) {
     if (state.animPlaying && state.currentAnim.duration > 0) {
         state.animTime += io.DeltaTime * state.animSpeed;
         if (state.animTime > state.currentAnim.duration) state.animTime = 0.0f;
+    }
+}
+
+void drawHeightmapViewer(AppState& state) {
+    ImGui::SetNextWindowPos(ImVec2(550, 40), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(540, 580), ImGuiCond_FirstUseEver);
+
+    ImGui::Begin("Heightmap", &state.showHeightmap);
+    if (state.heightmapTexId && state.heightmapW > 0 && state.heightmapH > 0) {
+        ImGui::Text("%dx%d", state.heightmapW, state.heightmapH);
+        ImGui::Separator();
+        ImVec2 avail = ImGui::GetContentRegionAvail();
+        float aspect = (float)state.heightmapW / (float)state.heightmapH;
+        float drawW, drawH;
+        if (avail.x / aspect <= avail.y) {
+            drawW = avail.x;
+            drawH = avail.x / aspect;
+        } else {
+            drawH = avail.y;
+            drawW = avail.y * aspect;
+        }
+        ImVec2 pos = ImGui::GetCursorScreenPos();
+        ImDrawList* dl = ImGui::GetWindowDrawList();
+        dl->AddRectFilled(pos, ImVec2(pos.x + drawW, pos.y + drawH), IM_COL32(20, 20, 25, 255));
+        auto* srv = getTextureSRV(state.heightmapTexId);
+        if (srv) {
+            dl->AddImage(
+                (ImTextureID)srv,
+                pos, ImVec2(pos.x + drawW, pos.y + drawH));
+        }
+        ImGui::Dummy(ImVec2(drawW, drawH));
+    }
+    ImGui::End();
+
+    if (!state.showHeightmap && state.heightmapTexId) {
+        destroyTexture(state.heightmapTexId);
+        state.heightmapTexId = 0;
     }
 }

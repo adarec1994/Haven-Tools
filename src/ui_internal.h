@@ -57,6 +57,15 @@ std::vector<std::pair<std::string, std::string>> findAssociatedHeads(AppState& s
 std::vector<std::pair<std::string, std::string>> findAssociatedEyes(AppState& state, const std::string& bodyMsh);
 void loadMeshDatabase(AppState& state);
 bool loadModelFromEntry(AppState& state, const ERFEntry& entry);
+bool mergeModelEntry(AppState& state, const ERFEntry& entry);
+bool mergeModelByName(AppState& state, const std::string& modelName,
+                      float px, float py, float pz,
+                      float qx, float qy, float qz, float qw,
+                      float scale);
+void finalizeLevelMaterials(AppState& state);
+void buildErfIndex(AppState& state);
+void clearPropCache();
+void ensureBaseErfsLoaded(AppState& state);
 std::vector<uint8_t> readFromErfs(const std::vector<std::unique_ptr<ERFFile>>& erfs, const std::string& name);
 std::vector<uint8_t> readFromCache(AppState& state, const std::string& name, const std::string& ext);
 uint32_t loadTexByNameCached(AppState& state, const std::string& texName,
@@ -77,6 +86,7 @@ void drawAudioPlayer(AppState& state);
 void drawTexturePreview(AppState& state);
 void drawUvViewer(AppState& state);
 void drawAnimWindow(AppState& state, ImGuiIO& io);
+void drawHeightmapViewer(AppState& state);
 void drawGffViewerWindow(GffViewerState& state);
 void filterEncryptedErfs(AppState& state);
 void buildCharacterLists(AppState& state);
