@@ -219,10 +219,6 @@ void drawAudioPlayer(AppState& state) {
 
     ImGui::SetNextWindowPos(panelPos, ImGuiCond_FirstUseEver);
     ImGui::SetNextWindowSize(ImVec2(panelW, panelH));
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 8.0f);
-    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(12, 8));
-    ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.10f, 0.10f, 0.12f, 0.92f));
-    ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.3f, 0.3f, 0.35f, 0.5f));
 
     ImGui::Begin("##AudioPlayer", &state.showAudioPlayer,
         ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
@@ -242,22 +238,24 @@ void drawAudioPlayer(AppState& state) {
         nameSize = ImGui::CalcTextSize(displayName.c_str());
     }
     ImGui::SetCursorPosX((panelW - nameSize.x) * 0.5f);
-    ImGui::TextColored(ImVec4(0.85f, 0.85f, 0.88f, 1.0f), "%s", displayName.c_str());
+    ImGui::Text("%s", displayName.c_str());
 
     float barX = wp.x + 12.0f;
     float barW = ws.x - 24.0f;
     float barY = wp.y + 32.0f;
     float barH = 4.0f;
 
-    dl->AddRectFilled(ImVec2(barX, barY), ImVec2(barX + barW, barY + barH),
-        IM_COL32(50, 50, 55, 200), 2.0f);
+    ImU32 colFrameBg = ImGui::GetColorU32(ImGuiCol_FrameBg);
+    ImU32 colCheckMark = ImGui::GetColorU32(ImGuiCol_CheckMark);
+    ImU32 colText = ImGui::GetColorU32(ImGuiCol_Text);
+
+    dl->AddRectFilled(ImVec2(barX, barY), ImVec2(barX + barW, barY + barH), colFrameBg);
     if (progress > 0.0f) {
-        dl->AddRectFilled(ImVec2(barX, barY), ImVec2(barX + barW * progress, barY + barH),
-            IM_COL32(80, 160, 255, 255), 2.0f);
+        dl->AddRectFilled(ImVec2(barX, barY), ImVec2(barX + barW * progress, barY + barH), colCheckMark);
     }
 
     float handleX = barX + barW * progress;
-    dl->AddCircleFilled(ImVec2(handleX, barY + barH * 0.5f), 5.0f, IM_COL32(200, 220, 255, 255));
+    dl->AddCircleFilled(ImVec2(handleX, barY + barH * 0.5f), 5.0f, colText);
 
     ImGui::SetCursorScreenPos(ImVec2(barX, barY - 4.0f));
     ImGui::InvisibleButton("##seekbar", ImVec2(barW, barH + 8.0f));
@@ -275,57 +273,57 @@ void drawAudioPlayer(AppState& state) {
     snprintf(timeCur, sizeof(timeCur), "%d:%02d", curSec / 60, curSec % 60);
     snprintf(timeTotal, sizeof(timeTotal), "%d:%02d", totalSec / 60, totalSec % 60);
 
+    ImVec4 dimText = ImGui::GetStyleColorVec4(ImGuiCol_TextDisabled);
     ImGui::SetCursorScreenPos(ImVec2(barX, rowY));
-    ImGui::TextColored(ImVec4(0.6f, 0.6f, 0.65f, 1.0f), "%s", timeCur);
+    ImGui::TextColored(dimText, "%s", timeCur);
 
     ImVec2 totalSize = ImGui::CalcTextSize(timeTotal);
     ImGui::SetCursorScreenPos(ImVec2(barX + barW - totalSize.x, rowY));
-    ImGui::TextColored(ImVec4(0.6f, 0.6f, 0.65f, 1.0f), "%s", timeTotal);
+    ImGui::TextColored(dimText, "%s", timeTotal);
 
     float btnSize = 22.0f;
     float btnGap = 6.0f;
     float totalBtnW = btnSize * 3 + btnGap * 2;
     float btnStartX = (panelW - totalBtnW) * 0.5f;
+    float fontSize = ImGui::GetFontSize();
 
-    ImGui::PushStyleVar(ImGuiStyleVar_FrameRounding, 4.0f);
-    ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.0f, 0.0f, 0.0f, 0.0f));
-    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.3f, 0.3f, 0.38f, 0.6f));
-    ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.15f, 0.15f, 0.2f, 0.8f));
-    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.85f, 0.85f, 0.9f, 1.0f));
+    auto centeredIconButton = [&](const char* icon, const char* id, ImVec2 pos) -> bool {
+        ImVec2 iconSize = ImGui::CalcTextSize(icon);
+        ImVec2 pad((btnSize - iconSize.x) * 0.5f, (btnSize - fontSize) * 0.5f);
+        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, pad);
+        ImGui::SetCursorScreenPos(pos);
+        char label[64];
+        snprintf(label, sizeof(label), "%s%s", icon, id);
+        bool clicked = ImGui::Button(label, ImVec2(btnSize, btnSize));
+        ImGui::PopStyleVar();
+        return clicked;
+    };
 
-    ImGui::SetCursorScreenPos(ImVec2(wp.x + btnStartX, rowY - 2.0f));
-    if (ImGui::Button(ICON_FA_BACKWARD_STEP "##restart", ImVec2(btnSize, btnSize))) {
+    if (centeredIconButton(ICON_FA_BACKWARD_STEP, "##restart", ImVec2(wp.x + btnStartX, rowY - 2.0f))) {
         setAudioPosition(0);
         if (!state.audioPlaying) { resumeAudio(); state.audioPlaying = true; }
     }
 
-    ImGui::SetCursorScreenPos(ImVec2(wp.x + btnStartX + btnSize + btnGap, rowY - 2.0f));
     if (state.audioPlaying && playing) {
-        if (ImGui::Button(ICON_FA_PAUSE "##pause", ImVec2(btnSize, btnSize))) {
+        if (centeredIconButton(ICON_FA_PAUSE, "##pause", ImVec2(wp.x + btnStartX + btnSize + btnGap, rowY - 2.0f))) {
             pauseAudio();
             state.audioPlaying = false;
         }
     } else {
-        if (ImGui::Button(ICON_FA_PLAY "##play", ImVec2(btnSize, btnSize))) {
+        if (centeredIconButton(ICON_FA_PLAY, "##play", ImVec2(wp.x + btnStartX + btnSize + btnGap, rowY - 2.0f))) {
             if (pos >= length - 100) setAudioPosition(0);
             else resumeAudio();
             state.audioPlaying = true;
         }
     }
 
-    ImGui::SetCursorScreenPos(ImVec2(wp.x + btnStartX + (btnSize + btnGap) * 2, rowY - 2.0f));
-    if (ImGui::Button(ICON_FA_STOP "##stop", ImVec2(btnSize, btnSize))) {
+    if (centeredIconButton(ICON_FA_STOP, "##stop", ImVec2(wp.x + btnStartX + (btnSize + btnGap) * 2, rowY - 2.0f))) {
         stopAudio();
         state.audioPlaying = false;
         state.showAudioPlayer = false;
     }
 
-    ImGui::PopStyleColor(4);
-    ImGui::PopStyleVar();
-
     ImGui::End();
-    ImGui::PopStyleColor(2);
-    ImGui::PopStyleVar(2);
 
     if (!state.showAudioPlayer) {
         stopAudio();
