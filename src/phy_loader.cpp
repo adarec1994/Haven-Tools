@@ -6,6 +6,7 @@
 #include "Gff.h"
 #include "erf.h"
 #include "Shaders/d3d_context.h"
+#include "renderer.h"
 #include <algorithm>
 #include <functional>
 #include <cmath>
@@ -399,7 +400,12 @@ bool loadModelFromEntry(AppState& state, const ERFEntry& entry) {
         if (mat.tattooTexId != 0)           destroyTexture(mat.tattooTexId);
         if (mat.browStubbleTexId != 0)      destroyTexture(mat.browStubbleTexId);
         if (mat.browStubbleNormalTexId != 0) destroyTexture(mat.browStubbleNormalTexId);
+        if (mat.paletteTexId != 0)          destroyTexture(mat.paletteTexId);
+        if (mat.palNormalTexId != 0)        destroyTexture(mat.palNormalTexId);
+        if (mat.maskVTexId != 0)            destroyTexture(mat.maskVTexId);
+        if (mat.maskATexId != 0)            destroyTexture(mat.maskATexId);
     }
+    destroyLevelBuffers();
 
     state.currentModel = model;
     state.currentModel.name = entry.name;
@@ -481,6 +487,14 @@ bool loadModelFromEntry(AppState& state, const ERFEntry& entry) {
         }
         if (!mat.tintMap.empty() && mat.tintTexId == 0) {
             mat.tintTexId = loadTextureByName(state, mat.tintMap, &mat.tintData, &mat.tintWidth, &mat.tintHeight);
+        }
+        if (mat.isTerrain) {
+            mat.paletteTexId = mat.diffuseTexId;
+            mat.palNormalTexId = mat.normalTexId;
+            if (!mat.maskVMap.empty() && mat.maskVTexId == 0)
+                mat.maskVTexId = loadTextureByName(state, mat.maskVMap, nullptr, nullptr, nullptr);
+            if (!mat.maskAMap.empty() && mat.maskATexId == 0)
+                mat.maskATexId = loadTextureByName(state, mat.maskAMap, nullptr, nullptr, nullptr);
         }
     }
 
@@ -591,6 +605,14 @@ bool mergeModelEntry(AppState& state, const ERFEntry& entry) {
             mat.specularTexId = loadTextureByName(state, mat.specularMap, &mat.specularData, &mat.specularWidth, &mat.specularHeight);
         if (!mat.tintMap.empty() && mat.tintTexId == 0)
             mat.tintTexId = loadTextureByName(state, mat.tintMap, &mat.tintData, &mat.tintWidth, &mat.tintHeight);
+        if (mat.isTerrain) {
+            mat.paletteTexId = mat.diffuseTexId;
+            mat.palNormalTexId = mat.normalTexId;
+            if (!mat.maskVMap.empty() && mat.maskVTexId == 0)
+                mat.maskVTexId = loadTextureByName(state, mat.maskVMap, nullptr, nullptr, nullptr);
+            if (!mat.maskAMap.empty() && mat.maskATexId == 0)
+                mat.maskATexId = loadTextureByName(state, mat.maskAMap, nullptr, nullptr, nullptr);
+        }
     }
 
     return true;
@@ -821,6 +843,14 @@ void finalizeLevelMaterials(AppState& state) {
             mat.specularTexId = loadTextureByName(state, mat.specularMap, &mat.specularData, &mat.specularWidth, &mat.specularHeight);
         if (!mat.tintMap.empty() && mat.tintTexId == 0)
             mat.tintTexId = loadTextureByName(state, mat.tintMap, &mat.tintData, &mat.tintWidth, &mat.tintHeight);
+        if (mat.isTerrain) {
+            mat.paletteTexId = mat.diffuseTexId;
+            mat.palNormalTexId = mat.normalTexId;
+            if (!mat.maskVMap.empty() && mat.maskVTexId == 0)
+                mat.maskVTexId = loadTextureByName(state, mat.maskVMap, nullptr, nullptr, nullptr);
+            if (!mat.maskAMap.empty() && mat.maskATexId == 0)
+                mat.maskATexId = loadTextureByName(state, mat.maskAMap, nullptr, nullptr, nullptr);
+        }
     }
 
     state.renderSettings.initMeshVisibility(state.currentModel.meshes.size());

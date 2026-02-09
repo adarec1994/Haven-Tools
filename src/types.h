@@ -288,6 +288,7 @@ struct AppState {
         int totalTerrain = 0;
         int totalProps = 0;
         std::string stageLabel;
+        std::vector<size_t> terrainQueue;
         std::vector<PropWork> propQueue;
     };
     LevelLoadState levelLoad;

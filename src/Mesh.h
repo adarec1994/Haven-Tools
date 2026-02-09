@@ -44,6 +44,24 @@ struct Material {
     int specularWidth = 0, specularHeight = 0;
     std::vector<uint8_t> tintData;
     int tintWidth = 0, tintHeight = 0;
+
+    bool isTerrain = false;
+    std::string paletteMap;
+    std::string palNormalMap;
+    std::string maskVMap;
+    std::string maskAMap;
+    uint32_t paletteTexId = 0;
+    uint32_t palNormalTexId = 0;
+    uint32_t maskVTexId = 0;
+    uint32_t maskATexId = 0;
+    float palDim[4] = {0.5f, 0.25f, 2.0f, 4.0f};     // cellW, cellH, numCols, numRows
+    float palParam[4] = {0.0625f, 0.03125f, 0.375f, 0.1875f}; // padX, padY, usableW, usableH
+    float uvScales[8] = {24.0f, 24.0f, 24.0f, 24.0f, 24.0f, 24.0f, 24.0f, 24.0f};
+
+    bool isWater = false;
+    float waveParams[12] = {};    // 3 waves: dirX, dirY, speed, unused (from mat_vVSHWaterParams)
+    float waterColor[4] = {0.1f, 0.15f, 0.2f, 0.0f};   // from mat_vPSHWaterParams[0]
+    float waterVisual[4] = {1.0f, 1.0f, 50.0f, 2.0f};   // from mat_vPSHWaterParams[1]
 };
 enum class CollisionShapeType {
     Box,

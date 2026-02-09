@@ -154,8 +154,253 @@ void cleanupRenderer() {
     s_triBuffer.destroy();
     s_modelBuffer.destroy();
     if (s_modelIndexBuffer) { s_modelIndexBuffer->Release(); s_modelIndexBuffer = nullptr; }
+    destroyLevelBuffers();
     cleanupShaderSystem();
     s_rendererInit = false;
+}
+
+// ============ Static Level Buffer System ============
+
+struct StaticMeshDraw {
+    uint32_t startIndex;
+    uint32_t indexCount;
+    int32_t  baseVertex;
+    int materialIndex;
+    float minX, minY, minZ;
+    float maxX, maxY, maxZ;
+};
+
+static ID3D11Buffer* s_levelVB = nullptr;
+static ID3D11Buffer* s_levelIB = nullptr;
+static std::vector<StaticMeshDraw> s_levelDraws;
+static bool s_levelBaked = false;
+
+void destroyLevelBuffers() {
+    if (s_levelVB) { s_levelVB->Release(); s_levelVB = nullptr; }
+    if (s_levelIB) { s_levelIB->Release(); s_levelIB = nullptr; }
+    s_levelDraws.clear();
+    s_levelBaked = false;
+}
+
+void bakeLevelBuffers(Model& model) {
+    destroyLevelBuffers();
+    if (model.meshes.empty()) return;
+
+    D3DContext& d3d = getD3DContext();
+    if (!d3d.valid) return;
+
+    uint32_t totalVerts = 0, totalIndices = 0;
+    for (const auto& mesh : model.meshes) {
+        totalVerts += (uint32_t)mesh.vertices.size();
+        totalIndices += (uint32_t)mesh.indices.size();
+    }
+    if (totalVerts == 0) return;
+
+    std::vector<ModelVertex> allVerts(totalVerts);
+    std::vector<uint32_t> allIndices(totalIndices);
+
+    uint32_t vertOff = 0, idxOff = 0;
+    for (const auto& mesh : model.meshes) {
+        StaticMeshDraw draw;
+        draw.startIndex = idxOff;
+        draw.indexCount = (uint32_t)mesh.indices.size();
+        draw.baseVertex = (int32_t)vertOff;
+        draw.materialIndex = mesh.materialIndex;
+        draw.minX = mesh.minX; draw.minY = mesh.minY; draw.minZ = mesh.minZ;
+        draw.maxX = mesh.maxX; draw.maxY = mesh.maxY; draw.maxZ = mesh.maxZ;
+        s_levelDraws.push_back(draw);
+
+        for (size_t i = 0; i < mesh.vertices.size(); i++) {
+            const Vertex& v = mesh.vertices[i];
+            allVerts[vertOff + i] = { v.x, v.y, v.z, v.nx, v.ny, v.nz, v.u, 1.0f - v.v };
+        }
+        memcpy(&allIndices[idxOff], mesh.indices.data(), mesh.indices.size() * sizeof(uint32_t));
+
+        vertOff += (uint32_t)mesh.vertices.size();
+        idxOff += (uint32_t)mesh.indices.size();
+    }
+
+    std::sort(s_levelDraws.begin(), s_levelDraws.end(),
+        [](const StaticMeshDraw& a, const StaticMeshDraw& b) {
+            return a.materialIndex < b.materialIndex;
+        });
+
+    D3D11_BUFFER_DESC vbd = {};
+    vbd.Usage = D3D11_USAGE_IMMUTABLE;
+    vbd.ByteWidth = totalVerts * sizeof(ModelVertex);
+    vbd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+    D3D11_SUBRESOURCE_DATA vInit = {};
+    vInit.pSysMem = allVerts.data();
+    if (FAILED(d3d.device->CreateBuffer(&vbd, &vInit, &s_levelVB))) return;
+
+    D3D11_BUFFER_DESC ibd = {};
+    ibd.Usage = D3D11_USAGE_IMMUTABLE;
+    ibd.ByteWidth = totalIndices * sizeof(uint32_t);
+    ibd.BindFlags = D3D11_BIND_INDEX_BUFFER;
+    D3D11_SUBRESOURCE_DATA iInit = {};
+    iInit.pSysMem = allIndices.data();
+    if (FAILED(d3d.device->CreateBuffer(&ibd, &iInit, &s_levelIB))) {
+        s_levelVB->Release(); s_levelVB = nullptr; return;
+    }
+
+    // Free CPU-side vertex/index data from meshes to save RAM
+    for (auto& mesh : model.meshes) {
+        mesh.vertices.clear();
+        mesh.vertices.shrink_to_fit();
+        mesh.indices.clear();
+        mesh.indices.shrink_to_fit();
+    }
+
+    s_levelBaked = true;
+}
+
+bool isLevelBaked() { return s_levelBaked; }
+
+static void extractFrustumPlanes(const float* m, float planes[6][4]) {
+    // Row-major MVP: plane = row3 +/- rowN
+    planes[0][0]=m[3]+m[0];  planes[0][1]=m[7]+m[4];  planes[0][2]=m[11]+m[8];  planes[0][3]=m[15]+m[12]; // left
+    planes[1][0]=m[3]-m[0];  planes[1][1]=m[7]-m[4];  planes[1][2]=m[11]-m[8];  planes[1][3]=m[15]-m[12]; // right
+    planes[2][0]=m[3]+m[1];  planes[2][1]=m[7]+m[5];  planes[2][2]=m[11]+m[9];  planes[2][3]=m[15]+m[13]; // bottom
+    planes[3][0]=m[3]-m[1];  planes[3][1]=m[7]-m[5];  planes[3][2]=m[11]-m[9];  planes[3][3]=m[15]-m[13]; // top
+    planes[4][0]=m[3]+m[2];  planes[4][1]=m[7]+m[6];  planes[4][2]=m[11]+m[10]; planes[4][3]=m[15]+m[14]; // near
+    planes[5][0]=m[3]-m[2];  planes[5][1]=m[7]-m[6];  planes[5][2]=m[11]-m[10]; planes[5][3]=m[15]-m[14]; // far
+    for (int i = 0; i < 6; i++) {
+        float len = sqrtf(planes[i][0]*planes[i][0] + planes[i][1]*planes[i][1] + planes[i][2]*planes[i][2]);
+        if (len > 0.0001f) { planes[i][0]/=len; planes[i][1]/=len; planes[i][2]/=len; planes[i][3]/=len; }
+    }
+}
+
+static bool aabbInFrustum(const float planes[6][4], float mnX, float mnY, float mnZ, float mxX, float mxY, float mxZ) {
+    for (int i = 0; i < 6; i++) {
+        float px = planes[i][0] > 0 ? mxX : mnX;
+        float py = planes[i][1] > 0 ? mxY : mnY;
+        float pz = planes[i][2] > 0 ? mxZ : mnZ;
+        if (planes[i][0]*px + planes[i][1]*py + planes[i][2]*pz + planes[i][3] < 0)
+            return false;
+    }
+    return true;
+}
+
+static float s_waterTime = 0.0f;
+
+static void renderLevelStatic(const Model& model, const float* mvp, const float* view,
+                               const float* viewPos, const RenderSettings& settings) {
+    if (!s_levelBaked || !s_levelVB || !s_levelIB) return;
+    D3DContext& d3d = getD3DContext();
+
+    s_waterTime += 1.0f / 60.0f;  // ~60fps assumed tick
+
+    float planes[6][4];
+    extractFrustumPlanes(mvp, planes);
+
+    bool useShaders = !settings.wireframe && settings.showTextures;
+
+    // Bind VB/IB once
+    UINT stride = sizeof(ModelVertex), offset = 0;
+    d3d.context->IASetVertexBuffers(0, 1, &s_levelVB, &stride, &offset);
+    d3d.context->IASetIndexBuffer(s_levelIB, DXGI_FORMAT_R32_UINT, 0);
+    d3d.context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+    // Set shader once
+    auto& modelShader = getModelShader();
+    d3d.context->IASetInputLayout(modelShader.inputLayout);
+    d3d.context->VSSetShader(modelShader.vs, nullptr, 0);
+    d3d.context->PSSetShader(modelShader.ps, nullptr, 0);
+
+    ID3D11Buffer* vsCBs[] = { getPerFrameCB() };
+    ID3D11Buffer* psCBs[] = { getPerFrameCB(), getPerMaterialCB(), getTerrainCB(), getWaterCB() };
+    d3d.context->VSSetConstantBuffers(0, 1, vsCBs);
+    d3d.context->PSSetConstantBuffers(0, 4, psCBs);
+    d3d.context->PSSetSamplers(0, 1, &d3d.samplerLinear);
+
+    float blendFactor[4] = {0,0,0,0};
+
+    // Two passes: 0 = opaque/terrain, 1 = water (alpha)
+    for (int pass = 0; pass < 2; pass++) {
+        if (pass == 0)
+            d3d.context->OMSetBlendState(d3d.bsOpaque, blendFactor, 0xFFFFFFFF);
+        else
+            d3d.context->OMSetBlendState(d3d.bsAlpha, blendFactor, 0xFFFFFFFF);
+
+        int lastMatIdx = -999;
+
+        for (const auto& draw : s_levelDraws) {
+            // Frustum cull
+            if (!aabbInFrustum(planes, draw.minX, draw.minY, draw.minZ,
+                                        draw.maxX, draw.maxY, draw.maxZ))
+                continue;
+
+            const Material* mat = nullptr;
+            if (draw.materialIndex >= 0 && draw.materialIndex < (int)model.materials.size())
+                mat = &model.materials[draw.materialIndex];
+
+            bool isWaterMat = mat && mat->isWater;
+
+            // Pass 0: skip water. Pass 1: only water.
+            if (pass == 0 && isWaterMat) continue;
+            if (pass == 1 && !isWaterMat) continue;
+
+            // Only update material state when it changes
+            if (draw.materialIndex != lastMatIdx) {
+                lastMatIdx = draw.materialIndex;
+
+                bool hasDiffuse  = mat && mat->diffuseTexId != 0 && settings.showTextures;
+                bool hasNormal   = mat && mat->normalTexId != 0 && settings.useNormalMaps;
+                bool hasSpecular = mat && mat->specularTexId != 0 && settings.useSpecularMaps;
+                bool hasTint     = mat && mat->tintTexId != 0 && settings.useTintMaps;
+                bool isTerrain   = mat && mat->isTerrain && mat->paletteTexId != 0 && mat->maskVTexId != 0;
+
+                CBPerMaterial perMat = {};
+                perMat.tintColor[0] = perMat.tintColor[1] = perMat.tintColor[2] = perMat.tintColor[3] = 1.0f;
+                perMat.useDiffuse  = (useShaders && (hasDiffuse || isTerrain)) ? 1 : 0;
+                perMat.useNormal   = (useShaders && hasNormal) ? 1 : 0;
+                perMat.useSpecular = (useShaders && hasSpecular) ? 1 : 0;
+                perMat.useTint     = (useShaders && hasTint) ? 1 : 0;
+                updatePerMaterialCB(perMat);
+
+                CBTerrain terrCB = {};
+                if (isTerrain) {
+                    memcpy(terrCB.palDim, mat->palDim, 16);
+                    memcpy(terrCB.palParam, mat->palParam, 16);
+                    memcpy(terrCB.uvScales, mat->uvScales, 32);
+                    terrCB.isTerrain = 1;
+                }
+                updateTerrainCB(terrCB);
+
+                CBWater waterCB = {};
+                if (isWaterMat) {
+                    memcpy(waterCB.wave0, &mat->waveParams[0], 16);
+                    memcpy(waterCB.wave1, &mat->waveParams[4], 16);
+                    memcpy(waterCB.wave2, &mat->waveParams[8], 16);
+                    memcpy(waterCB.waterColor, mat->waterColor, 16);
+                    memcpy(waterCB.waterVisual, mat->waterVisual, 16);
+                    waterCB.time = s_waterTime;
+                    waterCB.isWater = 1;
+                }
+                updateWaterCB(waterCB);
+
+                ID3D11ShaderResourceView* srvs[9] = {};
+                if (isTerrain && useShaders) {
+                    srvs[0] = getTextureSRV(mat->paletteTexId);
+                    srvs[1] = mat->palNormalTexId ? getTextureSRV(mat->palNormalTexId) : nullptr;
+                    srvs[2] = getTextureSRV(mat->maskVTexId);
+                    srvs[3] = mat->maskATexId ? getTextureSRV(mat->maskATexId) : nullptr;
+                } else {
+                    if (useShaders && hasDiffuse)  srvs[0] = getTextureSRV(mat->diffuseTexId);
+                    if (useShaders && hasNormal)   srvs[1] = getTextureSRV(mat->normalTexId);
+                    if (useShaders && hasSpecular) srvs[2] = getTextureSRV(mat->specularTexId);
+                    if (useShaders && hasTint)     srvs[3] = getTextureSRV(mat->tintTexId);
+                }
+                d3d.context->PSSetShaderResources(0, 9, srvs);
+            }
+
+            d3d.context->DrawIndexed(draw.indexCount, draw.startIndex, draw.baseVertex);
+        }
+    }
+
+    d3d.context->OMSetBlendState(d3d.bsOpaque, blendFactor, 0xFFFFFFFF);
+    ID3D11ShaderResourceView* nullSRVs[9] = {};
+    d3d.context->PSSetShaderResources(0, 9, nullSRVs);
 }
 
 
@@ -490,6 +735,10 @@ void renderModel(Model& model, const Camera& camera, const RenderSettings& setti
         perFrame.specularPower = 32.0f;
         updatePerFrameCB(perFrame);
 
+        if (s_levelBaked) {
+            renderLevelStatic(model, mvp, view, viewPos, settings);
+        } else {
+
         bool useShaders = !settings.wireframe && settings.showTextures;
 
         for (int pass = 0; pass < 2; pass++) {
@@ -628,20 +877,37 @@ void renderModel(Model& model, const Camera& camera, const RenderSettings& setti
                 perMat.useTattoo   = (useShaders && hasTattoo) ? 1 : 0;
                 updatePerMaterialCB(perMat);
 
+                bool isTerrain = mat && mat->isTerrain && mat->paletteTexId != 0 && mat->maskVTexId != 0;
+                CBTerrain terrCB = {};
+                if (isTerrain) {
+                    memcpy(terrCB.palDim, mat->palDim, 16);
+                    memcpy(terrCB.palParam, mat->palParam, 16);
+                    memcpy(terrCB.uvScales, mat->uvScales, 32);
+                    terrCB.isTerrain = 1;
+                }
+                updateTerrainCB(terrCB);
+
                 ID3D11ShaderResourceView* srvs[9] = {};
-                if (useShaders && hasDiffuse)  srvs[0] = getTextureSRV(mat->diffuseTexId);
-                if (useShaders && hasNormal)   srvs[1] = getTextureSRV(mat->normalTexId);
-                if (useShaders && hasSpecular) srvs[2] = getTextureSRV(mat->specularTexId);
-                if (useShaders && hasTint)     srvs[3] = getTextureSRV(mat->tintTexId);
-                if (useShaders && hasAge) {
-                    srvs[4] = getTextureSRV(mat->ageDiffuseTexId);
-                    srvs[5] = getTextureSRV(mat->ageNormalTexId);
+                if (isTerrain && useShaders) {
+                    srvs[0] = getTextureSRV(mat->paletteTexId);
+                    srvs[1] = mat->palNormalTexId ? getTextureSRV(mat->palNormalTexId) : nullptr;
+                    srvs[2] = getTextureSRV(mat->maskVTexId);
+                    srvs[3] = mat->maskATexId ? getTextureSRV(mat->maskATexId) : nullptr;
+                } else {
+                    if (useShaders && hasDiffuse)  srvs[0] = getTextureSRV(mat->diffuseTexId);
+                    if (useShaders && hasNormal)   srvs[1] = getTextureSRV(mat->normalTexId);
+                    if (useShaders && hasSpecular) srvs[2] = getTextureSRV(mat->specularTexId);
+                    if (useShaders && hasTint)     srvs[3] = getTextureSRV(mat->tintTexId);
+                    if (useShaders && hasAge) {
+                        srvs[4] = getTextureSRV(mat->ageDiffuseTexId);
+                        srvs[5] = getTextureSRV(mat->ageNormalTexId);
+                    }
+                    if (useShaders && hasStubble) {
+                        srvs[6] = getTextureSRV(mat->browStubbleTexId);
+                        srvs[7] = getTextureSRV(mat->browStubbleNormalTexId);
+                    }
+                    if (useShaders && hasTattoo) srvs[8] = getTextureSRV(mat->tattooTexId);
                 }
-                if (useShaders && hasStubble) {
-                    srvs[6] = getTextureSRV(mat->browStubbleTexId);
-                    srvs[7] = getTextureSRV(mat->browStubbleNormalTexId);
-                }
-                if (useShaders && hasTattoo) srvs[8] = getTextureSRV(mat->tattooTexId);
                 d3d.context->PSSetShaderResources(0, 9, srvs);
                 d3d.context->PSSetSamplers(0, 1, &d3d.samplerLinear);
 
@@ -650,9 +916,9 @@ void renderModel(Model& model, const Camera& camera, const RenderSettings& setti
                 d3d.context->VSSetShader(modelShader.vs, nullptr, 0);
                 d3d.context->PSSetShader(modelShader.ps, nullptr, 0);
                 ID3D11Buffer* vsCBs[] = { getPerFrameCB() };
-                ID3D11Buffer* psCBs[] = { getPerFrameCB(), getPerMaterialCB() };
+                ID3D11Buffer* psCBs[] = { getPerFrameCB(), getPerMaterialCB(), getTerrainCB(), getWaterCB() };
                 d3d.context->VSSetConstantBuffers(0, 1, vsCBs);
-                d3d.context->PSSetConstantBuffers(0, 2, psCBs);
+                d3d.context->PSSetConstantBuffers(0, 4, psCBs);
 
                 std::vector<ModelVertex> vertData(mesh.vertices.size());
                 for (size_t vi = 0; vi < mesh.vertices.size(); vi++) {
@@ -686,6 +952,7 @@ void renderModel(Model& model, const Camera& camera, const RenderSettings& setti
 
         d3d.context->RSSetState(d3d.rsNoCull);
         d3d.context->OMSetBlendState(d3d.bsOpaque, blendFactor, 0xFFFFFFFF);
+        } // end else (dynamic path)
     }
 
     if (settings.showCollision && !model.collisionShapes.empty()) {

@@ -5,6 +5,10 @@
 void initRenderer();
 void cleanupRenderer();
 
+void bakeLevelBuffers(Model& model);
+void destroyLevelBuffers();
+bool isLevelBaked();
+
 void buildSkinningCache(Mesh& mesh, const Model& model);
 
 void renderModel(Model& model, const Camera& camera, const RenderSettings& settings,

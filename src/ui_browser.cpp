@@ -1,4 +1,5 @@
 #include "ui_internal.h"
+#include "renderer.h"
 #include "terrain_loader.h"
 #include "rml_loader.h"
 #include "GffViewer.h"
@@ -329,7 +330,22 @@ void drawBrowserWindow(AppState& state) {
 
         if (ll.stage == 1) {
             buildErfIndex(state);
+            ll.terrainQueue.clear();
             ll.propQueue.clear();
+
+            for (size_t i = 0; i < state.rimEntries.size(); i++) {
+                std::string nameLower = state.rimEntries[i].name;
+                std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), ::tolower);
+                if (nameLower.size() < 4 || nameLower.substr(nameLower.size() - 4) != ".msh") continue;
+
+                size_t lastUnderscore = nameLower.rfind('_');
+                if (lastUnderscore != std::string::npos && lastUnderscore + 1 < nameLower.size() - 4) {
+                    std::string lodStr = nameLower.substr(lastUnderscore + 1, nameLower.size() - 4 - lastUnderscore - 1);
+                    if (lodStr == "1" || lodStr == "2" || lodStr == "3") continue;
+                }
+                ll.terrainQueue.push_back(i);
+            }
+            ll.totalTerrain = (int)ll.terrainQueue.size();
 
             auto collectProps = [&](ERFFile& rim) {
                 for (const auto& entry : rim.entries()) {
@@ -343,6 +359,13 @@ void drawBrowserWindow(AppState& state) {
                     for (const auto& prop : rml.props) {
                         std::string name = prop.modelFile.empty() ? prop.modelName : prop.modelFile;
                         if (name.empty()) continue;
+                        std::string nameLow = name;
+                        std::transform(nameLow.begin(), nameLow.end(), nameLow.begin(), ::tolower);
+                        size_t lastUs = nameLow.rfind('_');
+                        if (lastUs != std::string::npos && lastUs + 1 < nameLow.size()) {
+                            std::string suffix = nameLow.substr(lastUs + 1);
+                            if (suffix == "1" || suffix == "2" || suffix == "3") continue;
+                        }
                         AppState::PropWork pw;
                         pw.modelName = name;
                         pw.px = rml.roomPosX + prop.posX;
@@ -375,9 +398,27 @@ void drawBrowserWindow(AppState& state) {
             ll.totalProps = (int)ll.propQueue.size();
             ll.itemIndex = 0;
             ll.stage = 2;
-            ll.stageLabel = "Loading props...";
+            ll.stageLabel = "Loading terrain...";
         }
         else if (ll.stage == 2) {
+            int processed = 0;
+            for (int i = ll.itemIndex; i < ll.totalTerrain && processed < BATCH_SIZE; i++) {
+                size_t rimIdx = ll.terrainQueue[i];
+                if (state.rimEntries[rimIdx].entryIdx < state.currentErf->entries().size()) {
+                    const auto& erfEntry = state.currentErf->entries()[state.rimEntries[rimIdx].entryIdx];
+                    if (mergeModelEntry(state, erfEntry))
+                        ll.terrainLoaded++;
+                }
+                ll.itemIndex = i + 1;
+                processed++;
+            }
+            if (ll.itemIndex >= ll.totalTerrain) {
+                ll.itemIndex = 0;
+                ll.stage = 3;
+                ll.stageLabel = "Loading props...";
+            }
+        }
+        else if (ll.stage == 3) {
             int processed = 0;
             for (int i = ll.itemIndex; i < ll.totalProps && processed < BATCH_SIZE; i++) {
                 const auto& pw = ll.propQueue[i];
@@ -388,12 +429,13 @@ void drawBrowserWindow(AppState& state) {
                 processed++;
             }
             if (ll.itemIndex >= ll.totalProps) {
-                ll.stage = 3;
+                ll.stage = 4;
                 ll.stageLabel = "Loading materials & textures...";
             }
         }
-        else if (ll.stage == 3) {
+        else if (ll.stage == 4) {
             finalizeLevelMaterials(state);
+            bakeLevelBuffers(state.currentModel);
 
             if (!state.currentModel.meshes.empty()) {
                 float minX = 1e30f, maxX = -1e30f;
@@ -414,7 +456,7 @@ void drawBrowserWindow(AppState& state) {
                 state.camera.moveSpeed = radius * 0.1f;
             }
 
-            state.statusMessage = "Loaded level: " +
+            state.statusMessage = "Loaded level: " + std::to_string(ll.terrainLoaded) + " terrain, " +
                 std::to_string(ll.propsLoaded) + " props, " +
                 std::to_string(state.currentModel.materials.size()) + " materials";
             state.showRenderSettings = true;
@@ -426,11 +468,14 @@ void drawBrowserWindow(AppState& state) {
             std::string detail;
             if (ll.stage == 1) {
                 progress = 0.0f;
-                detail = "Scanning RML files...";
+                detail = "Scanning level data...";
             } else if (ll.stage == 2) {
+                progress = ll.totalTerrain > 0 ? (float)ll.itemIndex / ll.totalTerrain : 0.0f;
+                detail = std::to_string(ll.itemIndex) + " / " + std::to_string(ll.totalTerrain) + " terrain";
+            } else if (ll.stage == 3) {
                 progress = ll.totalProps > 0 ? (float)ll.itemIndex / ll.totalProps : 0.0f;
                 detail = std::to_string(ll.itemIndex) + " / " + std::to_string(ll.totalProps) + " props";
-            } else if (ll.stage == 3) {
+            } else if (ll.stage == 4) {
                 progress = 1.0f;
                 detail = "Finalizing...";
             }
@@ -863,6 +908,7 @@ void drawBrowserWindow(AppState& state) {
                         if (g_terrainLoader.loadFromERF(erf, "")) {
                             state.showTerrain = true;
                             state.hasModel = false;
+                            destroyLevelBuffers();
                             state.currentModel = Model();
                             auto& t = g_terrainLoader.getTerrain();
                             float cx = (t.minX + t.maxX) * 0.5f;
@@ -1531,7 +1577,12 @@ void drawBrowserWindow(AppState& state) {
                             if (mat.normalTexId != 0)      destroyTexture(mat.normalTexId);
                             if (mat.specularTexId != 0)    destroyTexture(mat.specularTexId);
                             if (mat.tintTexId != 0)        destroyTexture(mat.tintTexId);
+                            if (mat.paletteTexId != 0)     destroyTexture(mat.paletteTexId);
+                            if (mat.palNormalTexId != 0)   destroyTexture(mat.palNormalTexId);
+                            if (mat.maskVTexId != 0)       destroyTexture(mat.maskVTexId);
+                            if (mat.maskATexId != 0)       destroyTexture(mat.maskATexId);
                         }
+                        destroyLevelBuffers();
                         state.currentModel = Model();
                         state.currentModel.name = fs::path(state.currentRIMPath).stem().string() + " (level)";
                         state.hasModel = true;
@@ -1866,6 +1917,7 @@ void drawBrowserWindow(AppState& state) {
             std::string deletedModelLower = s_deleteModelName;
             std::transform(deletedModelLower.begin(), deletedModelLower.end(), deletedModelLower.begin(), ::tolower);
             if (currentModelLower == deletedModelLower || currentModelLower == baseName + ".msh") {
+                destroyLevelBuffers();
                 state.currentModel = Model();
                 state.hasModel = false;
             }

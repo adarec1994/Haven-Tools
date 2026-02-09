@@ -6,6 +6,7 @@
 #include "gff32.h"
 #include "erf.h"
 #include <algorithm>
+#include <sstream>
 #include <map>
 #include <set>
 #include <functional>
@@ -23,54 +24,143 @@ Material parseMAO(const std::string& maoContent, const std::string& materialName
         if (gff32.load(rawBytes) && gff32.root()) {
             const auto& root = *gff32.root();
 
+            // First pass: detect terrain/water by scanning all string fields
+            for (const auto& fieldName : root.fieldOrder) {
+                auto it = root.fields.find(fieldName);
+                if (it == root.fields.end()) continue;
+                const auto& field = it->second;
+                if (field.typeId != GFF32::TypeID::ExoString &&
+                    field.typeId != GFF32::TypeID::ResRef) continue;
+                const std::string* valPtr = std::get_if<std::string>(&field.value);
+                if (!valPtr) continue;
+                std::string valLower = *valPtr;
+                std::transform(valLower.begin(), valLower.end(), valLower.begin(), ::tolower);
+                if (valLower.find("terrain.mat") != std::string::npos ||
+                    valLower.find("terrain_low.mat") != std::string::npos) {
+                    mat.isTerrain = true;
+                    break;
+                }
+                if (valLower == "water.mat") {
+                    mat.isWater = true;
+                    break;
+                }
+            }
+
+            // Second pass: extract textures with terrain awareness
             for (const auto& fieldName : root.fieldOrder) {
                 auto it = root.fields.find(fieldName);
                 if (it == root.fields.end()) continue;
                 const auto& field = it->second;
 
+                if (field.typeId == GFF32::TypeID::ExoString ||
+                    field.typeId == GFF32::TypeID::ResRef) {
+                    const std::string* valPtr = std::get_if<std::string>(&field.value);
+                    if (!valPtr || valPtr->empty()) continue;
+                    std::string resName = *valPtr;
+                    std::string labelLower = fieldName;
+                    std::transform(labelLower.begin(), labelLower.end(), labelLower.begin(), ::tolower);
+                    std::string resLower = resName;
+                    std::transform(resLower.begin(), resLower.end(), resLower.begin(), ::tolower);
 
-                if (field.typeId != GFF32::TypeID::ExoString &&
-                    field.typeId != GFF32::TypeID::ResRef) continue;
-
-                const std::string* valPtr = std::get_if<std::string>(&field.value);
-                if (!valPtr || valPtr->empty()) continue;
-                std::string resName = *valPtr;
-
-                std::string labelLower = fieldName;
-                std::transform(labelLower.begin(), labelLower.end(), labelLower.begin(), ::tolower);
-                std::string resLower = resName;
-                std::transform(resLower.begin(), resLower.end(), resLower.begin(), ::tolower);
-
-
-
-                if (labelLower.find("diffuse") != std::string::npos ||
-                    labelLower.find("packedtexture") != std::string::npos ||
-                    labelLower.find("palette") != std::string::npos) {
-                    if (mat.diffuseMap.empty()) mat.diffuseMap = resName;
-                } else if (labelLower.find("normalmap") != std::string::npos ||
-                           labelLower.find("normal") != std::string::npos) {
-                    if (mat.normalMap.empty()) mat.normalMap = resName;
-                } else if (labelLower.find("specular") != std::string::npos) {
-                    if (mat.specularMap.empty()) mat.specularMap = resName;
-                } else if (labelLower.find("tint") != std::string::npos) {
-                    if (mat.tintMap.empty()) mat.tintMap = resName;
-                } else if (labelLower.find("lowlod") != std::string::npos) {
-                    if (mat.diffuseMap.empty()) mat.diffuseMap = resName;
-                } else if (labelLower.find("texture") != std::string::npos) {
-
-                    if (resLower.find("_n.") != std::string::npos ||
-                        resLower.find("_nrm") != std::string::npos ||
-                        resLower.find("_n_") != std::string::npos) {
-                        if (mat.normalMap.empty()) mat.normalMap = resName;
-                    } else if (resLower.find("_s.") != std::string::npos ||
-                               resLower.find("_spec") != std::string::npos) {
-                        if (mat.specularMap.empty()) mat.specularMap = resName;
+                    if (mat.isTerrain) {
+                        if (labelLower.find("palette") != std::string::npos) {
+                            mat.paletteMap = resName;
+                            mat.diffuseMap = resName;
+                        } else if (labelLower == "normal" || labelLower == "normalmap") {
+                            mat.palNormalMap = resName;
+                            mat.normalMap = resName;
+                        } else if (labelLower.find("maskv") != std::string::npos) {
+                            mat.maskVMap = resName;
+                        } else if (labelLower.find("maska") != std::string::npos) {
+                            mat.maskAMap = resName;
+                        }
+                        // ignore lowlod for terrain - palette is the real diffuse
                     } else {
-                        if (mat.diffuseMap.empty()) mat.diffuseMap = resName;
+                        if (labelLower.find("diffuse") != std::string::npos ||
+                            labelLower.find("packedtexture") != std::string::npos ||
+                            labelLower.find("palette") != std::string::npos) {
+                            if (mat.diffuseMap.empty()) mat.diffuseMap = resName;
+                        } else if (labelLower.find("normalmap") != std::string::npos ||
+                                   labelLower.find("normal") != std::string::npos) {
+                            if (mat.normalMap.empty()) mat.normalMap = resName;
+                        } else if (labelLower.find("specular") != std::string::npos) {
+                            if (mat.specularMap.empty()) mat.specularMap = resName;
+                        } else if (labelLower.find("tint") != std::string::npos) {
+                            if (mat.tintMap.empty()) mat.tintMap = resName;
+                        } else if (labelLower.find("lowlod") != std::string::npos) {
+                            mat.diffuseMap = resName;
+                            mat.normalMap.clear();
+                        } else if (labelLower.find("texture") != std::string::npos) {
+                            if (resLower.find("_n.") != std::string::npos ||
+                                resLower.find("_nrm") != std::string::npos ||
+                                resLower.find("_n_") != std::string::npos) {
+                                if (mat.normalMap.empty()) mat.normalMap = resName;
+                            } else if (resLower.find("_s.") != std::string::npos ||
+                                       resLower.find("_spec") != std::string::npos) {
+                                if (mat.specularMap.empty()) mat.specularMap = resName;
+                            } else {
+                                if (mat.diffuseMap.empty()) mat.diffuseMap = resName;
+                            }
+                        }
+                    }
+                }
+
+                // Parse terrain vector/matrix parameters from Structure fields
+                if ((mat.isTerrain || mat.isWater) && field.typeId == GFF32::TypeID::Structure) {
+                    std::string labelLower = fieldName;
+                    std::transform(labelLower.begin(), labelLower.end(), labelLower.begin(), ::tolower);
+                    const auto* structPtr = std::get_if<GFF32::StructurePtr>(&field.value);
+                    if (!structPtr || !*structPtr) continue;
+                    const auto& st = **structPtr;
+
+                    auto extractFloats = [&](const GFF32::Structure& s, float* out, int maxCount) {
+                        int idx = 0;
+                        for (const auto& fn : s.fieldOrder) {
+                            if (idx >= maxCount) break;
+                            auto fit = s.fields.find(fn);
+                            if (fit == s.fields.end()) continue;
+                            if (fit->second.typeId == GFF32::TypeID::FLOAT) {
+                                const float* fp = std::get_if<float>(&fit->second.value);
+                                if (fp) out[idx] = *fp;
+                            }
+                            idx++;
+                        }
+                    };
+
+                    if (labelLower.find("mml_vpalette_parameters") != std::string::npos) {
+                        extractFloats(st, mat.palParam, 4);
+                    } else if (labelLower.find("mml_vpalette_dimensions") != std::string::npos) {
+                        extractFloats(st, mat.palDim, 4);
+                    } else if (labelLower.find("mml_muvscalevalues") != std::string::npos) {
+                        float uvMatrix[16] = {};
+                        int floatIdx = 0;
+                        for (const auto& fn : st.fieldOrder) {
+                            auto fit = st.fields.find(fn);
+                            if (fit == st.fields.end()) continue;
+                            if (fit->second.typeId == GFF32::TypeID::FLOAT) {
+                                const float* fp = std::get_if<float>(&fit->second.value);
+                                if (fp && floatIdx < 16) uvMatrix[floatIdx] = *fp;
+                                floatIdx++;
+                            } else if (fit->second.typeId == GFF32::TypeID::Structure) {
+                                const auto* rowPtr = std::get_if<GFF32::StructurePtr>(&fit->second.value);
+                                if (rowPtr && *rowPtr) {
+                                    extractFloats(**rowPtr, &uvMatrix[floatIdx], 4);
+                                    floatIdx += 4;
+                                }
+                            }
+                        }
+                        for (int i = 0; i < 4; i++) mat.uvScales[i] = uvMatrix[i];
+                        for (int i = 0; i < 4; i++) mat.uvScales[4+i] = uvMatrix[4+i];
+                    } else if (labelLower.find("mat_vvshwaterparams") != std::string::npos) {
+                        extractFloats(st, mat.waveParams, 12);
+                    } else if (labelLower.find("mat_vpshwaterparams") != std::string::npos) {
+                        float pshParams[8] = {};
+                        extractFloats(st, pshParams, 8);
+                        for (int i = 0; i < 4; i++) mat.waterColor[i] = pshParams[i];
+                        for (int i = 0; i < 4; i++) mat.waterVisual[i] = pshParams[4+i];
                     }
                 }
             }
-
 
             if (mat.diffuseMap.empty()) {
                 for (const auto& fieldName : root.fieldOrder) {
@@ -89,6 +179,14 @@ Material parseMAO(const std::string& maoContent, const std::string& materialName
     }
 
 
+    if (maoContent.find("\"terrain.mat\"") != std::string::npos ||
+        maoContent.find("\"terrain_low.mat\"") != std::string::npos) {
+        mat.isTerrain = true;
+    }
+    if (maoContent.find("\"Water.mat\"") != std::string::npos ||
+        maoContent.find("\"water.mat\"") != std::string::npos) {
+        mat.isWater = true;
+    }
 
     size_t pos = 0;
     while ((pos = maoContent.find("<Texture", pos)) != std::string::npos) {
@@ -122,74 +220,111 @@ Material parseMAO(const std::string& maoContent, const std::string& materialName
         if (!texName.empty() && !resName.empty()) {
             std::string texNameLower = texName;
             std::transform(texNameLower.begin(), texNameLower.end(), texNameLower.begin(), ::tolower);
-
             std::string resNameLower = resName;
             std::transform(resNameLower.begin(), resNameLower.end(), resNameLower.begin(), ::tolower);
 
-
-            if (texNameLower.find("corneanormal") != std::string::npos ||
-                texNameLower.find("lightmap") != std::string::npos ||
-                texNameLower.find("emotionsmask") != std::string::npos ||
-                texNameLower.find("emotionsnormal") != std::string::npos ||
-                texNameLower.find("reliefmap") != std::string::npos ||
-                texNameLower.find("maskv") != std::string::npos ||
-                texNameLower.find("maska") != std::string::npos) {
-
-            } else if (texNameLower.find("agediffuse") != std::string::npos ||
-                texNameLower.find("age_diffuse") != std::string::npos ||
-                texNameLower.find("agediffusemap") != std::string::npos) {
-                mat.ageDiffuseMap = resName;
-            } else if (texNameLower.find("agenormal") != std::string::npos ||
-                       texNameLower.find("age_normal") != std::string::npos ||
-                       texNameLower.find("agenormalmap") != std::string::npos) {
-                mat.ageNormalMap = resName;
-            } else if (texNameLower.find("tattoo") != std::string::npos) {
-                mat.tattooMap = resName;
-            } else if (texNameLower.find("browstubblenormal") != std::string::npos) {
-                mat.browStubbleNormalMap = resName;
-            } else if (texNameLower.find("browstubble") != std::string::npos) {
-                mat.browStubbleMap = resName;
-            } else if (texNameLower.find("diffuse") != std::string::npos ||
-                       texNameLower.find("packedtexture") != std::string::npos ||
-                       texNameLower == "palette") {
-                mat.diffuseMap = resName;
-            } else if (texNameLower.find("normalmap") != std::string::npos ||
-                       texNameLower == "normal") {
-                if (mat.normalMap.empty()) {
-                    mat.normalMap = resName;
-                }
-            } else if (texNameLower.find("specular") != std::string::npos) {
-                mat.specularMap = resName;
-            } else if (texNameLower.find("tintmask") != std::string::npos ||
-                       texNameLower.find("tint") != std::string::npos) {
-                mat.tintMap = resName;
-            } else if (texNameLower.find("lowlod") != std::string::npos) {
-
-                if (mat.diffuseMap.empty()) {
+            if (mat.isTerrain) {
+                if (texNameLower == "palette") {
+                    mat.paletteMap = resName;
                     mat.diffuseMap = resName;
+                } else if (texNameLower == "normal") {
+                    mat.palNormalMap = resName;
+                    mat.normalMap = resName;
+                } else if (texNameLower == "maskv") {
+                    mat.maskVMap = resName;
+                } else if (texNameLower == "maska") {
+                    mat.maskAMap = resName;
                 }
             } else {
+                if (texNameLower.find("corneanormal") != std::string::npos ||
+                    texNameLower.find("lightmap") != std::string::npos ||
+                    texNameLower.find("emotionsmask") != std::string::npos ||
+                    texNameLower.find("emotionsnormal") != std::string::npos ||
+                    texNameLower.find("reliefmap") != std::string::npos ||
+                    texNameLower.find("maskv") != std::string::npos ||
+                    texNameLower.find("maska") != std::string::npos) {
 
-                if (resNameLower.find("_d.") != std::string::npos ||
-                    resNameLower.find("0d.") != std::string::npos ||
-                    resNameLower.find("_d_") != std::string::npos) {
-                    if (mat.diffuseMap.empty()) mat.diffuseMap = resName;
-                } else if (resNameLower.find("_n.") != std::string::npos ||
-                           resNameLower.find("0n.") != std::string::npos ||
-                           resNameLower.find("_nrm") != std::string::npos) {
-                    if (mat.normalMap.empty()) mat.normalMap = resName;
-                } else if (resNameLower.find("_s.") != std::string::npos ||
-                           resNameLower.find("0s.") != std::string::npos) {
-                    if (mat.specularMap.empty()) mat.specularMap = resName;
-                } else if (resNameLower.find("_t.") != std::string::npos ||
-                           resNameLower.find("0t.") != std::string::npos) {
-                    if (mat.tintMap.empty()) mat.tintMap = resName;
-                } else if (mat.diffuseMap.empty()) {
+                } else if (texNameLower.find("agediffuse") != std::string::npos ||
+                    texNameLower.find("age_diffuse") != std::string::npos ||
+                    texNameLower.find("agediffusemap") != std::string::npos) {
+                    mat.ageDiffuseMap = resName;
+                } else if (texNameLower.find("agenormal") != std::string::npos ||
+                           texNameLower.find("age_normal") != std::string::npos ||
+                           texNameLower.find("agenormalmap") != std::string::npos) {
+                    mat.ageNormalMap = resName;
+                } else if (texNameLower.find("tattoo") != std::string::npos) {
+                    mat.tattooMap = resName;
+                } else if (texNameLower.find("browstubblenormal") != std::string::npos) {
+                    mat.browStubbleNormalMap = resName;
+                } else if (texNameLower.find("browstubble") != std::string::npos) {
+                    mat.browStubbleMap = resName;
+                } else if (texNameLower.find("diffuse") != std::string::npos ||
+                           texNameLower.find("packedtexture") != std::string::npos ||
+                           texNameLower == "palette") {
                     mat.diffuseMap = resName;
+                } else if (texNameLower.find("normalmap") != std::string::npos ||
+                           texNameLower == "normal") {
+                    if (mat.normalMap.empty()) mat.normalMap = resName;
+                } else if (texNameLower.find("specular") != std::string::npos) {
+                    mat.specularMap = resName;
+                } else if (texNameLower.find("tintmask") != std::string::npos ||
+                           texNameLower.find("tint") != std::string::npos) {
+                    mat.tintMap = resName;
+                } else if (texNameLower.find("lowlod") != std::string::npos) {
+                    mat.diffuseMap = resName;
+                    mat.normalMap.clear();
+                } else {
+                    if (resNameLower.find("_d.") != std::string::npos ||
+                        resNameLower.find("0d.") != std::string::npos ||
+                        resNameLower.find("_d_") != std::string::npos) {
+                        if (mat.diffuseMap.empty()) mat.diffuseMap = resName;
+                    } else if (resNameLower.find("_n.") != std::string::npos ||
+                               resNameLower.find("0n.") != std::string::npos ||
+                               resNameLower.find("_nrm") != std::string::npos) {
+                        if (mat.normalMap.empty()) mat.normalMap = resName;
+                    } else if (resNameLower.find("_s.") != std::string::npos ||
+                               resNameLower.find("0s.") != std::string::npos) {
+                        if (mat.specularMap.empty()) mat.specularMap = resName;
+                    } else if (resNameLower.find("_t.") != std::string::npos ||
+                               resNameLower.find("0t.") != std::string::npos) {
+                        if (mat.tintMap.empty()) mat.tintMap = resName;
+                    } else if (mat.diffuseMap.empty()) {
+                        mat.diffuseMap = resName;
+                    }
                 }
             }
         }
         pos = endTag + 2;
+    }
+
+    auto parseFloats = [&](const std::string& tagName, float* out, int count) {
+        size_t p = maoContent.find("Name=\"" + tagName + "\"");
+        if (p == std::string::npos) return;
+        size_t vp = maoContent.find("value=\"", p);
+        if (vp == std::string::npos) return;
+        vp += 7;
+        size_t ve = maoContent.find("\"", vp);
+        if (ve == std::string::npos) return;
+        std::string vals = maoContent.substr(vp, ve - vp);
+        std::istringstream ss(vals);
+        for (int i = 0; i < count; i++) ss >> out[i];
+    };
+
+    if (mat.isTerrain) {
+        parseFloats("mml_vPalette_parameters", mat.palParam, 4);
+        parseFloats("mml_vPalette_dimensions", mat.palDim, 4);
+        float uvMatrix[16] = {};
+        parseFloats("mml_mUVScaleValues", uvMatrix, 16);
+        for (int i = 0; i < 4; i++) mat.uvScales[i] = uvMatrix[i];
+        for (int i = 0; i < 4; i++) mat.uvScales[4+i] = uvMatrix[4+i];
+    }
+
+    if (mat.isWater) {
+        parseFloats("mat_vVSHWaterParams", mat.waveParams, 12);
+        float pshParams[8] = {};
+        parseFloats("mat_vPSHWaterParams", pshParams, 8);
+        for (int i = 0; i < 4; i++) mat.waterColor[i] = pshParams[i];
+        for (int i = 0; i < 4; i++) mat.waterVisual[i] = pshParams[4+i];
     }
 
     return mat;
