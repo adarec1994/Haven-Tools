@@ -323,6 +323,131 @@ void drawMeshBrowserWindow(AppState& state) {
     ImGui::End();
 }
 void drawBrowserWindow(AppState& state) {
+    if (state.levelLoad.stage > 0) {
+        auto& ll = state.levelLoad;
+        const int BATCH_SIZE = 8;
+
+        if (ll.stage == 1) {
+            buildErfIndex(state);
+            ll.propQueue.clear();
+
+            auto collectProps = [&](ERFFile& rim) {
+                for (const auto& entry : rim.entries()) {
+                    std::string eLower = entry.name;
+                    std::transform(eLower.begin(), eLower.end(), eLower.begin(), ::tolower);
+                    if (eLower.size() < 4 || eLower.substr(eLower.size() - 4) != ".rml") continue;
+                    std::vector<uint8_t> rmlData = rim.readEntry(entry);
+                    if (rmlData.empty()) continue;
+                    RMLData rml;
+                    if (!parseRML(rmlData, rml)) continue;
+                    for (const auto& prop : rml.props) {
+                        std::string name = prop.modelFile.empty() ? prop.modelName : prop.modelFile;
+                        if (name.empty()) continue;
+                        AppState::PropWork pw;
+                        pw.modelName = name;
+                        pw.px = rml.roomPosX + prop.posX;
+                        pw.py = rml.roomPosY + prop.posY;
+                        pw.pz = rml.roomPosZ + prop.posZ;
+                        pw.qx = prop.orientX; pw.qy = prop.orientY;
+                        pw.qz = prop.orientZ; pw.qw = prop.orientW;
+                        pw.scale = prop.scale;
+                        ll.propQueue.push_back(pw);
+                    }
+                }
+            };
+
+            collectProps(*state.currentErf);
+
+            std::string rimDir = fs::path(state.currentRIMPath).parent_path().string();
+            for (const auto& dirEntry : fs::directory_iterator(rimDir)) {
+                if (!dirEntry.is_regular_file()) continue;
+                std::string fnameLower = dirEntry.path().filename().string();
+                std::transform(fnameLower.begin(), fnameLower.end(), fnameLower.begin(), ::tolower);
+                if (fnameLower.size() > 4 && fnameLower.substr(fnameLower.size() - 4) == ".rim" &&
+                    fnameLower.find(".gpu.") == std::string::npos &&
+                    dirEntry.path().string() != state.currentRIMPath) {
+                    ERFFile siblingRim;
+                    if (siblingRim.open(dirEntry.path().string()))
+                        collectProps(siblingRim);
+                }
+            }
+
+            ll.totalProps = (int)ll.propQueue.size();
+            ll.itemIndex = 0;
+            ll.stage = 2;
+            ll.stageLabel = "Loading props...";
+        }
+        else if (ll.stage == 2) {
+            int processed = 0;
+            for (int i = ll.itemIndex; i < ll.totalProps && processed < BATCH_SIZE; i++) {
+                const auto& pw = ll.propQueue[i];
+                if (mergeModelByName(state, pw.modelName, pw.px, pw.py, pw.pz,
+                                     pw.qx, pw.qy, pw.qz, pw.qw, pw.scale))
+                    ll.propsLoaded++;
+                ll.itemIndex = i + 1;
+                processed++;
+            }
+            if (ll.itemIndex >= ll.totalProps) {
+                ll.stage = 3;
+                ll.stageLabel = "Loading materials & textures...";
+            }
+        }
+        else if (ll.stage == 3) {
+            finalizeLevelMaterials(state);
+
+            if (!state.currentModel.meshes.empty()) {
+                float minX = 1e30f, maxX = -1e30f;
+                float minY = 1e30f, maxY = -1e30f;
+                float minZ = 1e30f, maxZ = -1e30f;
+                for (const auto& mesh : state.currentModel.meshes) {
+                    if (mesh.minX < minX) minX = mesh.minX;
+                    if (mesh.maxX > maxX) maxX = mesh.maxX;
+                    if (mesh.minY < minY) minY = mesh.minY;
+                    if (mesh.maxY > maxY) maxY = mesh.maxY;
+                    if (mesh.minZ < minZ) minZ = mesh.minZ;
+                    if (mesh.maxZ > maxZ) maxZ = mesh.maxZ;
+                }
+                float cx = (minX + maxX) / 2.0f, cy = (minY + maxY) / 2.0f, cz = (minZ + maxZ) / 2.0f;
+                float dx = maxX - minX, dy = maxY - minY, dz = maxZ - minZ;
+                float radius = std::sqrt(dx*dx + dy*dy + dz*dz) / 2.0f;
+                state.camera.lookAt(cx, cy, cz, radius * 2.5f);
+                state.camera.moveSpeed = radius * 0.1f;
+            }
+
+            state.statusMessage = "Loaded level: " +
+                std::to_string(ll.propsLoaded) + " props, " +
+                std::to_string(state.currentModel.materials.size()) + " materials";
+            state.showRenderSettings = true;
+            ll.stage = 0;
+        }
+
+        if (ll.stage > 0) {
+            float progress = 0.0f;
+            std::string detail;
+            if (ll.stage == 1) {
+                progress = 0.0f;
+                detail = "Scanning RML files...";
+            } else if (ll.stage == 2) {
+                progress = ll.totalProps > 0 ? (float)ll.itemIndex / ll.totalProps : 0.0f;
+                detail = std::to_string(ll.itemIndex) + " / " + std::to_string(ll.totalProps) + " props";
+            } else if (ll.stage == 3) {
+                progress = 1.0f;
+                detail = "Finalizing...";
+            }
+
+            ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+            ImGui::SetNextWindowPos(center, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+            ImGui::SetNextWindowSize(ImVec2(400, 0));
+            ImGui::Begin("##LevelLoading", nullptr,
+                ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
+                ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar |
+                ImGuiWindowFlags_AlwaysAutoResize);
+            ImGui::Text("%s", ll.stageLabel.c_str());
+            ImGui::ProgressBar(progress, ImVec2(-1, 0), detail.c_str());
+            ImGui::End();
+        }
+    }
+
     ImGui::SetNextWindowSize(ImVec2(500, 600), ImGuiCond_FirstUseEver);
     ImGui::Begin("ERF Browser", &state.showBrowser, ImGuiWindowFlags_MenuBar);
     if (ImGui::BeginMenuBar()) {
@@ -1348,12 +1473,11 @@ void drawBrowserWindow(AppState& state) {
                 ImGui::SameLine();
                 char loadLabel[64];
                 snprintf(loadLabel, sizeof(loadLabel), "Load Level (%d)", mshCount);
-                if (ImGui::Button(loadLabel)) {
+                if (ImGui::Button(loadLabel) && state.levelLoad.stage == 0) {
                     state.showTerrain = false;
                     g_terrainLoader.clear();
                     state.currentErf = std::make_unique<ERFFile>();
                     if (state.currentErf->open(state.currentRIMPath)) {
-
                         state.textureErfsLoaded = false;
                         state.modelErfsLoaded = false;
                         state.materialErfsLoaded = false;
@@ -1363,7 +1487,6 @@ void drawBrowserWindow(AppState& state) {
                         clearPropCache();
                         ensureBaseErfsLoaded(state);
 
-
                         auto rimForModel = std::make_unique<ERFFile>();
                         auto rimForMat = std::make_unique<ERFFile>();
                         rimForModel->open(state.currentRIMPath);
@@ -1371,9 +1494,7 @@ void drawBrowserWindow(AppState& state) {
                         state.modelErfs.push_back(std::move(rimForModel));
                         state.materialErfs.push_back(std::move(rimForMat));
 
-
                         std::string rimDir = fs::path(state.currentRIMPath).parent_path().string();
-                        int gpuPushed = 0;
                         for (const auto& dirEntry : fs::directory_iterator(rimDir)) {
                             if (!dirEntry.is_regular_file()) continue;
                             std::string fname = dirEntry.path().filename().string();
@@ -1385,11 +1506,9 @@ void drawBrowserWindow(AppState& state) {
                                 if (g1->open(dirEntry.path().string()) && g2->open(dirEntry.path().string())) {
                                     state.textureErfs.push_back(std::move(g1));
                                     state.materialErfs.push_back(std::move(g2));
-                                    gpuPushed += 2;
                                 }
                             }
                         }
-
 
                         for (const auto& dirEntry : fs::directory_iterator(rimDir)) {
                             if (!dirEntry.is_regular_file()) continue;
@@ -1398,17 +1517,14 @@ void drawBrowserWindow(AppState& state) {
                             std::string fname = dirEntry.path().filename().string();
                             std::string fnameLower = fname;
                             std::transform(fnameLower.begin(), fnameLower.end(), fnameLower.begin(), ::tolower);
-
                             if (fnameLower.size() > 4 && fnameLower.substr(fnameLower.size() - 4) == ".rim" &&
                                 fnameLower.find(".gpu.rim") == std::string::npos) {
                                 auto sibRim = std::make_unique<ERFFile>();
                                 if (sibRim->open(dpath)) {
                                     state.materialErfs.push_back(std::move(sibRim));
-                                    gpuPushed++;
                                 }
                             }
                         }
-
 
                         for (const auto& mat : state.currentModel.materials) {
                             if (mat.diffuseTexId != 0)     destroyTexture(mat.diffuseTexId);
@@ -1422,133 +1538,10 @@ void drawBrowserWindow(AppState& state) {
                         state.selectedLevelChunk = -1;
                         state.currentModelAnimations.clear();
 
-
-                        int loaded = 0;
-                        for (const auto& re : state.rimEntries) {
-                            std::string nameLower = re.name;
-                            std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), ::tolower);
-                            if (nameLower.size() < 4 || nameLower.substr(nameLower.size() - 4) != ".msh") continue;
-                            if (re.entryIdx < state.currentErf->entries().size()) {
-                                const auto& erfEntry = state.currentErf->entries()[re.entryIdx];
-                                if (mergeModelEntry(state, erfEntry))
-                                    loaded++;
-                            }
-                        }
-
-
-
-                        int propsLoaded = 0;
-                        buildErfIndex(state);
-                        for (const auto& re : state.rimEntries) {
-                            std::string nameLower = re.name;
-                            std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), ::tolower);
-                            if (nameLower.size() < 4 || nameLower.substr(nameLower.size() - 4) != ".rml") continue;
-                            if (re.entryIdx >= state.currentErf->entries().size()) continue;
-
-                            const auto& erfEntry = state.currentErf->entries()[re.entryIdx];
-                            std::vector<uint8_t> rmlData = state.currentErf->readEntry(erfEntry);
-                            if (rmlData.empty()) continue;
-
-                            RMLData rml;
-                            if (!parseRML(rmlData, rml)) continue;
-
-
-                            for (const auto& prop : rml.props) {
-                                std::string name = prop.modelFile.empty() ? prop.modelName : prop.modelFile;
-                                if (name.empty()) continue;
-
-
-                                float worldX = rml.roomPosX + prop.posX;
-                                float worldY = rml.roomPosY + prop.posY;
-                                float worldZ = rml.roomPosZ + prop.posZ;
-
-
-                                if (mergeModelByName(state, name, worldX, worldY, worldZ,
-                                                     prop.orientX, prop.orientY, prop.orientZ, prop.orientW,
-                                                     prop.scale)) {
-                                    propsLoaded++;
-                                }
-                            }
-                        }
-
-
-                        {
-                            std::string rimDir = fs::path(state.currentRIMPath).parent_path().string();
-                            for (const auto& dirEntry : fs::directory_iterator(rimDir)) {
-                                if (!dirEntry.is_regular_file()) continue;
-                                std::string fname = dirEntry.path().filename().string();
-                                std::string fnameLower = fname;
-                                std::transform(fnameLower.begin(), fnameLower.end(), fnameLower.begin(), ::tolower);
-
-                                if (fnameLower.size() > 4 && fnameLower.substr(fnameLower.size() - 4) == ".rim" &&
-                                    fnameLower.find(".gpu.") == std::string::npos &&
-                                    dirEntry.path().string() != state.currentRIMPath) {
-                                    ERFFile siblingRim;
-                                    if (!siblingRim.open(dirEntry.path().string())) continue;
-                                    for (const auto& entry : siblingRim.entries()) {
-                                        std::string eLower = entry.name;
-                                        std::transform(eLower.begin(), eLower.end(), eLower.begin(), ::tolower);
-                                        if (eLower.size() < 4 || eLower.substr(eLower.size() - 4) != ".rml") continue;
-
-                                        std::vector<uint8_t> rmlData = siblingRim.readEntry(entry);
-                                        if (rmlData.empty()) continue;
-
-                                        RMLData rml;
-                                        if (!parseRML(rmlData, rml)) continue;
-
-                                        for (const auto& prop : rml.props) {
-                                            std::string name = prop.modelFile.empty() ? prop.modelName : prop.modelFile;
-                                            if (name.empty()) continue;
-
-                                            float worldX = rml.roomPosX + prop.posX;
-                                            float worldY = rml.roomPosY + prop.posY;
-                                            float worldZ = rml.roomPosZ + prop.posZ;
-
-                                            if (mergeModelByName(state, name, worldX, worldY, worldZ,
-                                                                 prop.orientX, prop.orientY, prop.orientZ, prop.orientW,
-                                                                 prop.scale)) {
-                                                propsLoaded++;
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-
-                        finalizeLevelMaterials(state);
-
-                        if (!state.currentModel.meshes.empty()) {
-                            float minX = 1e30f, maxX = -1e30f;
-                            float minY = 1e30f, maxY = -1e30f;
-                            float minZ = 1e30f, maxZ = -1e30f;
-                            for (const auto& mesh : state.currentModel.meshes) {
-                                if (mesh.minX < minX) minX = mesh.minX;
-                                if (mesh.maxX > maxX) maxX = mesh.maxX;
-                                if (mesh.minY < minY) minY = mesh.minY;
-                                if (mesh.maxY > maxY) maxY = mesh.maxY;
-                                if (mesh.minZ < minZ) minZ = mesh.minZ;
-                                if (mesh.maxZ > maxZ) maxZ = mesh.maxZ;
-                            }
-                            float cx = (minX + maxX) / 2.0f, cy = (minY + maxY) / 2.0f, cz = (minZ + maxZ) / 2.0f;
-                            float dx = maxX - minX, dy = maxY - minY, dz = maxZ - minZ;
-                            float radius = std::sqrt(dx*dx + dy*dy + dz*dz) / 2.0f;
-                            state.camera.lookAt(cx, cy, cz, radius * 2.5f);
-                            state.camera.moveSpeed = radius * 0.1f;
-                        }
-
-                        state.statusMessage = "Loaded level: " + std::to_string(loaded) + " terrain, " +
-                            std::to_string(propsLoaded) + " props, " +
-                            std::to_string(state.currentModel.materials.size()) + " materials";
-                        state.showRenderSettings = true;
-
-
-
-
-
-
+                        state.levelLoad = {};
+                        state.levelLoad.stage = 1;
+                        state.levelLoad.stageLabel = "Scanning level data...";
                     }
-
-
                 }
             }
 

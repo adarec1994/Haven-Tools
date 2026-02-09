@@ -273,6 +273,25 @@ struct AppState {
     bool isPreloading = false;
     float preloadProgress = 0.0f;
     std::string preloadStatus;
+
+    struct PropWork {
+        std::string modelName;
+        float px, py, pz;
+        float qx, qy, qz, qw;
+        float scale;
+    };
+    struct LevelLoadState {
+        int stage = 0;
+        int itemIndex = 0;
+        int terrainLoaded = 0;
+        int propsLoaded = 0;
+        int totalTerrain = 0;
+        int totalProps = 0;
+        std::string stageLabel;
+        std::vector<PropWork> propQueue;
+    };
+    LevelLoadState levelLoad;
+
     int mainTab = 0;
     struct CharacterDesigner {
         int race = 0;
