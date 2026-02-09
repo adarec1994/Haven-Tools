@@ -191,6 +191,10 @@ struct AppState {
     std::string selectedFolder;
     std::vector<std::string> erfFiles;
     std::vector<std::string> rimFiles;
+    std::vector<int> rimMshCounts;         // .msh count per RIM file
+    bool rimSingleCollapsed = true;        // collapse single-mesh RIMs
+    bool rimLevelsCollapsed = false;       // levels section open by default
+    int rimMultiMeshCount = 0;             // how many RIMs have multiple .msh
     std::vector<size_t> filteredErfIndices;
     std::map<std::string, std::vector<size_t>> erfsByName;
     std::string selectedErfName;

@@ -735,15 +735,62 @@ void drawBrowserWindow(AppState& state) {
                 state.rimEntries.clear();
                 state.showFSBBrowser = false;
                 state.currentFSBSamples.clear();
-                for (size_t i = 0; i < state.rimFiles.size(); i++) {
-                    CachedEntry ce;
-                    size_t lastSlash = state.rimFiles[i].find_last_of("/\\");
-                    ce.name = (lastSlash != std::string::npos) ? state.rimFiles[i].substr(lastSlash + 1) : state.rimFiles[i];
-                    ce.erfIdx = i;
-                    ce.entryIdx = 0;
-                    state.mergedEntries.push_back(ce);
+
+                // Levels header (multi-mesh RIMs, open by default)
+                state.rimMultiMeshCount = 0;
+                {
+                    // Count first
+                    for (size_t i = 0; i < state.rimFiles.size(); i++)
+                        if (state.rimMshCounts[i] > 1) state.rimMultiMeshCount++;
+
+                    CachedEntry header;
+                    header.name = "__COLLAPSE_LEVELS__Levels (" + std::to_string(state.rimMultiMeshCount) + ")";
+                    header.erfIdx = SIZE_MAX;
+                    header.entryIdx = 0;
+                    state.mergedEntries.push_back(header);
                 }
-                state.statusMessage = std::to_string(state.rimFiles.size()) + " RIM files";
+
+                // Multi-mesh RIMs
+                for (size_t i = 0; i < state.rimFiles.size(); i++) {
+                    if (state.rimMshCounts[i] > 1) {
+                        CachedEntry ce;
+                        size_t lastSlash = state.rimFiles[i].find_last_of("/\\");
+                        ce.name = (lastSlash != std::string::npos) ? state.rimFiles[i].substr(lastSlash + 1) : state.rimFiles[i];
+                        ce.name += "  (" + std::to_string(state.rimMshCounts[i]) + " msh)";
+                        ce.erfIdx = i;
+                        ce.entryIdx = 0;
+                        state.mergedEntries.push_back(ce);
+                    }
+                }
+
+                // Collapsible header for the rest (collapsed by default)
+                {
+                    int singleCount = (int)state.rimFiles.size() - state.rimMultiMeshCount;
+                    CachedEntry header;
+                    header.name = "__COLLAPSE_OTHER__Other RIMs (" + std::to_string(singleCount) + ")";
+                    header.erfIdx = SIZE_MAX;
+                    header.entryIdx = 0;
+                    state.mergedEntries.push_back(header);
+                }
+
+                // Single/no-mesh RIMs
+                for (size_t i = 0; i < state.rimFiles.size(); i++) {
+                    if (state.rimMshCounts[i] <= 1) {
+                        CachedEntry ce;
+                        size_t lastSlash = state.rimFiles[i].find_last_of("/\\");
+                        ce.name = (lastSlash != std::string::npos) ? state.rimFiles[i].substr(lastSlash + 1) : state.rimFiles[i];
+                        if (state.rimMshCounts[i] == 1)
+                            ce.name += "  (1 msh)";
+                        ce.erfIdx = i;
+                        ce.entryIdx = 0;
+                        state.mergedEntries.push_back(ce);
+                    }
+                }
+
+                state.rimLevelsCollapsed = false;
+                state.rimSingleCollapsed = true;
+                state.statusMessage = std::to_string(state.rimMultiMeshCount) + " levels / " +
+                    std::to_string(state.rimFiles.size() - state.rimMultiMeshCount) + " other RIM files";
             }
         }
     }
@@ -863,12 +910,25 @@ void drawBrowserWindow(AppState& state) {
             std::transform(selNameLower.begin(), selNameLower.end(), selNameLower.begin(), ::tolower);
             bool filterByMeshSource = (selNameLower == "modelmeshdata.erf" && s_meshDataSourceFilter > 0);
             bool filterByHierSource = (selNameLower == "modelhierarchies.erf" && s_hierDataSourceFilter > 0);
+            int collapseSection = 0; // 0=none, 1=levels, 2=other
             for (int i = 0; i < (int)state.mergedEntries.size(); i++) {
                 const auto& ce = state.mergedEntries[i];
                 if (ce.name.find("__HEADER__") == 0) {
                     state.filteredEntryIndices.push_back(i);
                     continue;
                 }
+                if (ce.name.find("__COLLAPSE_LEVELS__") == 0) {
+                    state.filteredEntryIndices.push_back(i);
+                    collapseSection = 1;
+                    continue;
+                }
+                if (ce.name.find("__COLLAPSE_OTHER__") == 0) {
+                    state.filteredEntryIndices.push_back(i);
+                    collapseSection = 2;
+                    continue;
+                }
+                if (collapseSection == 1 && state.rimLevelsCollapsed) continue;
+                if (collapseSection == 2 && state.rimSingleCollapsed) continue;
                 if (filterByMeshSource) {
                     if (s_meshDataSourceFilter == 1 && ce.source != "Core") continue;
                     if (s_meshDataSourceFilter == 2 && ce.source != "Awakening") continue;
@@ -957,6 +1017,32 @@ void drawBrowserWindow(AppState& state) {
                 std::string headerTitle = ce.name.substr(10);
                 ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.0f, 0.0f, 1.0f));
                 ImGui::Selectable(headerTitle.c_str(), false, ImGuiSelectableFlags_Disabled);
+                ImGui::PopStyleColor();
+                return;
+            }
+            if (ce.name.find("__COLLAPSE_LEVELS__") == 0) {
+                std::string title = ce.name.substr(19);
+                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.4f, 1.0f, 0.6f, 1.0f));
+                std::string arrow = state.rimLevelsCollapsed ? "+ " : "- ";
+                char clabel[256]; snprintf(clabel, sizeof(clabel), "%s%s##levels", arrow.c_str(), title.c_str());
+                if (ImGui::Selectable(clabel, false)) {
+                    state.rimLevelsCollapsed = !state.rimLevelsCollapsed;
+                    state.filteredEntryIndices.clear();
+                    state.lastContentFilter.clear();
+                }
+                ImGui::PopStyleColor();
+                return;
+            }
+            if (ce.name.find("__COLLAPSE_OTHER__") == 0) {
+                std::string title = ce.name.substr(18);
+                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.6f, 0.6f, 0.6f, 1.0f));
+                std::string arrow = state.rimSingleCollapsed ? "+ " : "- ";
+                char clabel[256]; snprintf(clabel, sizeof(clabel), "%s%s##other", arrow.c_str(), title.c_str());
+                if (ImGui::Selectable(clabel, false)) {
+                    state.rimSingleCollapsed = !state.rimSingleCollapsed;
+                    state.filteredEntryIndices.clear();
+                    state.lastContentFilter.clear();
+                }
                 ImGui::PopStyleColor();
                 return;
             }

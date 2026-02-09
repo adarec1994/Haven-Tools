@@ -5,6 +5,7 @@
 #include <cstring>
 #include <algorithm>
 #include <vector>
+#include <chrono>
 #include "terrain_loader.h"
 
 
@@ -281,14 +282,18 @@ static bool aabbInFrustum(const float planes[6][4], float mnX, float mnY, float 
     return true;
 }
 
-static float s_waterTime = 0.0f;
+static float getWaterTime() {
+    static auto startTime = std::chrono::steady_clock::now();
+    auto now = std::chrono::steady_clock::now();
+    return std::chrono::duration<float>(now - startTime).count();
+}
 
 static void renderLevelStatic(const Model& model, const float* mvp, const float* view,
                                const float* viewPos, const RenderSettings& settings) {
     if (!s_levelBaked || !s_levelVB || !s_levelIB) return;
     D3DContext& d3d = getD3DContext();
 
-    s_waterTime += 1.0f / 60.0f;  // ~60fps assumed tick
+    float waterTime = getWaterTime();
 
     float planes[6][4];
     extractFrustumPlanes(mvp, planes);
@@ -374,7 +379,7 @@ static void renderLevelStatic(const Model& model, const float* mvp, const float*
                     memcpy(waterCB.wave2, &mat->waveParams[8], 16);
                     memcpy(waterCB.waterColor, mat->waterColor, 16);
                     memcpy(waterCB.waterVisual, mat->waterVisual, 16);
-                    waterCB.time = s_waterTime;
+                    waterCB.time = waterTime;
                     waterCB.isWater = 1;
                 }
                 updateWaterCB(waterCB);
