@@ -1,6 +1,7 @@
 #include "GffViewer.h"
 #include "Gff4FieldNames.h"
 #include "imgui.h"
+#include "ImGuiFileDialog.h"
 #include <algorithm>
 #include <sstream>
 #include <iomanip>
@@ -73,6 +74,36 @@ static std::string gff4StructTypeDesc(const GFFFile& gff, uint32_t structIndex, 
     return "?";
 }
 
+static std::string readGffString(const GFFFile& gff, uint32_t address) {
+    if (address == 0xFFFFFFFF) return "";
+    const auto& cache = gff.stringCache();
+    if (gff.isV41()) {
+        if (address < cache.size()) return cache[address];
+        return "";
+    }
+    const auto& raw = gff.rawData();
+    uint32_t strPos = gff.dataOffset() + address;
+    if (strPos + 4 > raw.size()) return "";
+    uint32_t length = gff.readUInt32At(strPos);
+    strPos += 4;
+    std::string result;
+    for (uint32_t i = 0; i < length && strPos + 2 <= raw.size(); i++) {
+        uint16_t wc = gff.readUInt16At(strPos);
+        strPos += 2;
+        if (wc == 0) continue;
+        if (wc < 0x80) result += static_cast<char>(wc);
+        else if (wc < 0x800) {
+            result += static_cast<char>(0xC0 | (wc >> 6));
+            result += static_cast<char>(0x80 | (wc & 0x3F));
+        } else {
+            result += static_cast<char>(0xE0 | (wc >> 12));
+            result += static_cast<char>(0x80 | ((wc >> 6) & 0x3F));
+            result += static_cast<char>(0x80 | (wc & 0x3F));
+        }
+    }
+    return result;
+}
+
 static std::string gff4ReadFieldValueStr(const GFFFile& gff, const GFFField& field, uint32_t baseOffset) {
     bool isList = (field.flags & FLAG_LIST) != 0;
     bool isStruct = (field.flags & FLAG_STRUCT) != 0;
@@ -123,26 +154,24 @@ static std::string gff4ReadFieldValueStr(const GFFFile& gff, const GFFField& fie
             return oss.str();
         }
         case 14: {
-            int32_t relOffset = gff.readInt32At(dataPos);
-            if (relOffset < 0) return "";
-            uint32_t strPos = gff.dataOffset() + relOffset;
-            if (strPos + 4 > raw.size()) return "";
-            uint32_t length = gff.readUInt32At(strPos);
-            strPos += 4;
-            std::string result;
-            for (uint32_t i = 0; i < length && strPos + 2 <= raw.size(); i++) {
-                uint16_t wc = gff.readUInt16At(strPos);
-                strPos += 2;
-                if (wc == 0) continue;
-                if (wc < 128) result += static_cast<char>(wc);
-                else result += '?';
-            }
-            return result;
+            uint32_t address = gff.readUInt32At(dataPos);
+            return readGffString(gff, address);
         }
         case 16: return "Matrix4x4";
         case 17: {
-            uint32_t tlkLabel = gff.readUInt32At(dataPos);
-            return "TlkString(" + std::to_string(tlkLabel) + ")";
+            uint32_t tlkId = gff.readUInt32At(dataPos);
+            uint32_t address = gff.readUInt32At(dataPos + 4);
+            std::string label = std::to_string(tlkId);
+            std::string text;
+            if (address != 0xFFFFFFFF && address != 0)
+                text = readGffString(gff, address);
+            if (text.empty() && GFF4TLK::isLoaded())
+                text = GFF4TLK::lookup(tlkId);
+            if (!text.empty()) {
+                if (text.size() > 80) text = text.substr(0, 80) + "...";
+                return label + ", " + text;
+            }
+            return label;
         }
         default: return "?";
     }
@@ -493,6 +522,38 @@ void drawGffViewerWindow(GffViewerState& state) {
         ImGui::TextDisabled("No GFF file loaded");
         ImGui::End();
         return;
+    }
+    if (ImGui::Button(GFF4TLK::isLoaded() ? "TLK Loaded" : "Load TLK")) {
+        IGFD::FileDialogConfig config;
+        config.path = state.tlkPath.empty() ? "." : state.tlkPath;
+        ImGuiFileDialog::Instance()->OpenDialog("LoadTLK", "Select TLK File", ".tlk", config);
+    }
+    if (GFF4TLK::isLoaded()) {
+        ImGui::SameLine();
+        ImGui::TextDisabled("(%zu strings)", GFF4TLK::count());
+        ImGui::SameLine();
+        if (ImGui::SmallButton("Unload")) {
+            GFF4TLK::clear();
+            state.tlkStatus.clear();
+            rebuildGffTree(state);
+        }
+    }
+    if (!state.tlkStatus.empty()) {
+        ImGui::SameLine();
+        ImGui::TextColored(ImVec4(1, 0.8f, 0.3f, 1), "%s", state.tlkStatus.c_str());
+    }
+    if (ImGuiFileDialog::Instance()->Display("LoadTLK", ImGuiWindowFlags_NoCollapse, ImVec2(500, 400))) {
+        if (ImGuiFileDialog::Instance()->IsOk()) {
+            std::string path = ImGuiFileDialog::Instance()->GetFilePathName();
+            state.tlkPath = path.substr(0, path.find_last_of("/\\") + 1);
+            if (GFF4TLK::loadFromFile(path)) {
+                state.tlkStatus = "Loaded " + std::to_string(GFF4TLK::count()) + " strings";
+                rebuildGffTree(state);
+            } else {
+                state.tlkStatus = "Failed to load TLK";
+            }
+        }
+        ImGuiFileDialog::Instance()->Close();
     }
     ImGui::BeginChild("TreeView", ImVec2(0, 0), true);
     std::string filter = state.searchFilter;

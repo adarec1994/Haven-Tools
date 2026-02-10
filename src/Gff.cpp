@@ -201,10 +201,39 @@ bool GFFFile::parseHeader() {
     m_header.fileType = readAt<uint32_t>(12);
     m_header.fileVersion = readAt<uint32_t>(16);
     m_header.structCount = readAt<uint32_t>(20);
-    m_header.dataOffset = readAt<uint32_t>(24);
 
     if (m_header.magic != 0x20464647) {
         return false;
+    }
+
+    char ver[5] = {};
+    std::memcpy(ver, &m_header.version, 4);
+    m_header.isV41 = (std::string(ver) >= "V4.1");
+
+    if (m_header.isV41) {
+        if (m_data.size() < 36) return false;
+        m_header.stringCount = readAt<uint32_t>(24);
+        m_header.stringOffset = readAt<uint32_t>(28);
+        m_header.dataOffset = readAt<uint32_t>(32);
+        uint32_t strStart = m_header.stringOffset;
+        uint32_t strEnd = m_header.dataOffset;
+        if (strEnd > strStart && strEnd <= m_data.size()) {
+            std::string current;
+            for (uint32_t pos = strStart; pos < strEnd; pos++) {
+                uint8_t c = m_data[pos];
+                if (c == 0) {
+                    m_stringCache.push_back(current);
+                    current.clear();
+                    if (m_stringCache.size() >= m_header.stringCount) break;
+                } else {
+                    current += static_cast<char>(c);
+                }
+            }
+        }
+    } else {
+        m_header.stringCount = 0;
+        m_header.stringOffset = 0;
+        m_header.dataOffset = readAt<uint32_t>(24);
     }
 
     return true;
@@ -215,7 +244,7 @@ bool GFFFile::parseStructs() {
 
     m_structs.resize(m_header.structCount);
 
-    size_t structPos = sizeof(GFFHeader);
+    size_t structPos = m_header.isV41 ? 36 : 28;
 
     for (uint32_t i = 0; i < m_header.structCount; i++) {
         if (structPos + 16 > m_data.size()) return false;
@@ -275,11 +304,16 @@ std::string GFFFile::readStringByLabel(uint32_t structIndex, uint32_t label, uin
     if (field->typeId != 14 && field->typeId != 10 && field->typeId != 11) return "";
 
     uint32_t dataPos = m_header.dataOffset + field->dataOffset + baseOffset;
-    int32_t strOffset = readAt<int32_t>(dataPos);
+    uint32_t address = readAt<uint32_t>(dataPos);
 
-    if (strOffset < 0) return "";
+    if (address == 0xFFFFFFFF) return "";
 
-    uint32_t strPos = m_header.dataOffset + strOffset;
+    if (field->typeId == 14 && m_header.isV41) {
+        if (address < m_stringCache.size()) return m_stringCache[address];
+        return "";
+    }
+
+    uint32_t strPos = m_header.dataOffset + address;
     if (strPos + 4 > m_data.size()) return "";
     uint32_t length = readAt<uint32_t>(strPos);
     strPos += 4;
@@ -291,7 +325,16 @@ std::string GFFFile::readStringByLabel(uint32_t structIndex, uint32_t label, uin
         for (uint32_t i = 0; i < length && strPos + 2 <= m_data.size(); i++) {
             uint16_t wc = readAt<uint16_t>(strPos);
             strPos += 2;
-            if (wc != 0 && wc < 128) result += static_cast<char>(wc);
+            if (wc == 0) continue;
+            if (wc < 0x80) result += static_cast<char>(wc);
+            else if (wc < 0x800) {
+                result += static_cast<char>(0xC0 | (wc >> 6));
+                result += static_cast<char>(0x80 | (wc & 0x3F));
+            } else {
+                result += static_cast<char>(0xE0 | (wc >> 12));
+                result += static_cast<char>(0x80 | ((wc >> 6) & 0x3F));
+                result += static_cast<char>(0x80 | (wc & 0x3F));
+            }
         }
     } else {
         for (uint32_t i = 0; i < length && strPos < m_data.size(); i++) {
@@ -414,37 +457,6 @@ uint32_t GFFFile::getListDataOffset(uint32_t structIndex, uint32_t label, uint32
     return readAt<int32_t>(m_header.dataOffset + field->dataOffset + baseOffset);
 }
 
-std::pair<uint32_t, uint32_t> GFFFile::readPrimitiveListInfo(uint32_t structIndex, uint32_t label, uint32_t baseOffset) {
-    if (structIndex >= m_structs.size()) return {0, 0};
-    const GFFField* field = findField(structIndex, label);
-    if (!field) return {0, 0};
-    uint32_t dataPos = m_header.dataOffset + field->dataOffset + baseOffset;
-    int32_t ref = readAt<int32_t>(dataPos);
-    if (ref < 0) return {0, 0};
-    uint32_t listPos = m_header.dataOffset + ref;
-    if (listPos + 4 > m_data.size()) return {0, 0};
-    uint32_t count = readAt<uint32_t>(listPos);
-    return {count, listPos + 4};
-}
-
-uint32_t GFFFile::primitiveTypeSize(uint16_t typeId) {
-    switch (typeId) {
-        case 0: case 1: return 1;
-        case 2: case 3: return 2;
-        case 4: case 5: return 4;
-        case 6: case 7: return 8;
-        case 8: return 4;
-        case 9: return 8;
-        case 10: return 12;
-        case 11: return 8;
-        case 12: case 13: case 15: return 16;
-        case 14: return 4;
-        case 16: return 64;
-        case 17: return 8;
-        default: return 4;
-    }
-}
-
 std::string GFFFile::readRawString(size_t offset) const {
     if (offset + 4 > m_data.size()) return "";
     uint32_t len = readAt<uint32_t>(offset);
@@ -497,9 +509,13 @@ std::string GFFFile::getFieldDisplayValue(const GFFField& field) const {
         }
         case 14:
         {
-            int32_t relOffset = readAt<int32_t>(dataPos);
-            if (relOffset < 0) return "";
-            uint32_t strPos = m_header.dataOffset + relOffset;
+            uint32_t address = readAt<uint32_t>(dataPos);
+            if (address == 0xFFFFFFFF) return "";
+            if (m_header.isV41) {
+                if (address < m_stringCache.size()) return m_stringCache[address];
+                return "";
+            }
+            uint32_t strPos = m_header.dataOffset + address;
             if (strPos + 4 > m_data.size()) return "";
             uint32_t length = readAt<uint32_t>(strPos);
             strPos += 4;
@@ -508,7 +524,16 @@ std::string GFFFile::getFieldDisplayValue(const GFFField& field) const {
             for (uint32_t i = 0; i < length && strPos + 2 <= m_data.size(); i++) {
                 uint16_t wc = readAt<uint16_t>(strPos);
                 strPos += 2;
-                if (wc != 0 && wc < 128) result += static_cast<char>(wc);
+                if (wc == 0) continue;
+                if (wc < 0x80) result += static_cast<char>(wc);
+                else if (wc < 0x800) {
+                    result += static_cast<char>(0xC0 | (wc >> 6));
+                    result += static_cast<char>(0x80 | (wc & 0x3F));
+                } else {
+                    result += static_cast<char>(0xE0 | (wc >> 12));
+                    result += static_cast<char>(0x80 | ((wc >> 6) & 0x3F));
+                    result += static_cast<char>(0x80 | (wc & 0x3F));
+                }
             }
             return result;
         }
@@ -574,4 +599,174 @@ void GFFFile::walkStruct(uint32_t structIdx, GFF4Visitor visitor, const std::str
             }
         }
     }
+}
+
+std::pair<uint32_t, uint32_t> GFFFile::readPrimitiveListInfo(uint32_t structIndex, uint32_t label, uint32_t baseOffset) {
+    const GFFField* field = findField(structIndex, label);
+    if (!field) return {0, 0};
+    if (!(field->flags & FLAG_LIST)) return {0, 0};
+    uint32_t listOffset = m_header.dataOffset + baseOffset + field->dataOffset;
+    if (listOffset + 4 > m_data.size()) return {0, 0};
+    uint32_t count = readAt<uint32_t>(listOffset);
+    return {count, listOffset + 4};
+}
+
+uint32_t GFFFile::primitiveTypeSize(uint16_t typeId) {
+    switch (typeId) {
+        case 0: case 1: return 1;
+        case 2: case 3: return 2;
+        case 4: case 5: case 8: case 14: return 4;
+        case 6: case 7: case 9: return 8;
+        case 10: return 12;
+        case 11: return 8;
+        case 12: case 13: case 15: return 16;
+        case 16: return 64;
+        case 17: return 8;
+        default: return 4;
+    }
+}
+
+namespace GFF4TLK {
+    static std::unordered_map<uint32_t, std::string> s_strings;
+    static bool s_loaded = false;
+
+    static std::string readECString(const GFFFile& gff, uint32_t dataPos) {
+        const auto& raw = gff.rawData();
+        int32_t relOffset = gff.readInt32At(dataPos);
+        if (relOffset < 0) return "";
+        uint32_t strPos = gff.dataOffset() + relOffset;
+        if (strPos + 4 > raw.size()) return "";
+        uint32_t length = gff.readUInt32At(strPos);
+        strPos += 4;
+        std::string result;
+        for (uint32_t i = 0; i < length && strPos + 2 <= raw.size(); i++) {
+            uint16_t wc = gff.readUInt16At(strPos);
+            strPos += 2;
+            if (wc == 0) continue;
+            if (wc < 0x80) result += static_cast<char>(wc);
+            else if (wc < 0x800) {
+                result += static_cast<char>(0xC0 | (wc >> 6));
+                result += static_cast<char>(0x80 | (wc & 0x3F));
+            } else {
+                result += static_cast<char>(0xE0 | (wc >> 12));
+                result += static_cast<char>(0x80 | ((wc >> 6) & 0x3F));
+                result += static_cast<char>(0x80 | (wc & 0x3F));
+            }
+        }
+        return result;
+    }
+
+    static bool loadV02(GFFFile& gff) {
+        auto items = gff.readStructList(0, 19001, 0);
+        for (auto& item : items) {
+            uint32_t id = gff.readUInt32ByLabel(item.structIndex, 19002, item.offset);
+            const GFFField* strField = gff.findField(item.structIndex, 19003);
+            if (strField) {
+                uint32_t dataPos = gff.dataOffset() + item.offset + strField->dataOffset;
+                s_strings[id] = readECString(gff, dataPos);
+            }
+        }
+        return true;
+    }
+
+    static std::string huffmanDecompress(uint32_t bitStart,
+                                          const std::vector<int32_t>& tree,
+                                          const std::vector<uint32_t>& data) {
+        if (tree.empty() || data.empty()) return "";
+        uint32_t index = bitStart >> 5;
+        uint32_t shift = bitStart & 0x1F;
+        if (index >= data.size()) return "";
+        uint32_t n = data[index] >> shift;
+        std::string result;
+        while (true) {
+            int32_t e = (int32_t)(tree.size() / 2) - 1;
+            while (e >= 0) {
+                if ((uint32_t)e * 2 + 1 >= tree.size()) return result;
+                e = tree[e * 2 + (n & 1)];
+                if (shift < 31) {
+                    n >>= 1;
+                    shift++;
+                } else {
+                    index++;
+                    if (index >= data.size()) return result;
+                    n = data[index];
+                    shift = 0;
+                }
+            }
+            if (e == -1) break;
+            uint16_t wc = (uint16_t)(-(e) - 1);
+            if (wc < 0x80) result += static_cast<char>(wc);
+            else if (wc < 0x800) {
+                result += static_cast<char>(0xC0 | (wc >> 6));
+                result += static_cast<char>(0x80 | (wc & 0x3F));
+            } else {
+                result += static_cast<char>(0xE0 | (wc >> 12));
+                result += static_cast<char>(0x80 | ((wc >> 6) & 0x3F));
+                result += static_cast<char>(0x80 | (wc & 0x3F));
+            }
+        }
+        return result;
+    }
+
+    static bool loadV05(GFFFile& gff) {
+        auto [treeCount, treeStart] = gff.readPrimitiveListInfo(0, 19007, 0);
+        auto [dataCount, dataStart] = gff.readPrimitiveListInfo(0, 19008, 0);
+        if (treeCount == 0 || dataCount == 0) return false;
+        std::vector<int32_t> tree(treeCount);
+        for (uint32_t i = 0; i < treeCount; i++)
+            tree[i] = gff.readAt<int32_t>(treeStart + i * 4);
+        std::vector<uint32_t> data(dataCount);
+        for (uint32_t i = 0; i < dataCount; i++)
+            data[i] = gff.readAt<uint32_t>(dataStart + i * 4);
+        auto entries = gff.readStructList(0, 19006, 0);
+        for (auto& entry : entries) {
+            uint32_t id = gff.readUInt32ByLabel(entry.structIndex, 19004, entry.offset);
+            uint32_t bitOffset = gff.readUInt32ByLabel(entry.structIndex, 19005, entry.offset);
+            s_strings[id] = huffmanDecompress(bitOffset, tree, data);
+        }
+        return true;
+    }
+
+    bool loadFromData(const std::vector<uint8_t>& data) {
+        clear();
+        GFFFile gff;
+        if (!gff.load(data)) return false;
+        uint32_t fv = gff.header().fileVersion;
+        char ver[5] = {};
+        std::memcpy(ver, &fv, 4);
+        if (std::string(ver) == "V0.2") {
+            s_loaded = loadV02(gff);
+        } else if (std::string(ver) == "V0.5") {
+            s_loaded = loadV05(gff);
+        } else {
+            return false;
+        }
+        return s_loaded;
+    }
+
+    bool loadFromFile(const std::string& path) {
+        std::ifstream f(path, std::ios::binary);
+        if (!f) return false;
+        f.seekg(0, std::ios::end);
+        size_t sz = f.tellg();
+        f.seekg(0, std::ios::beg);
+        std::vector<uint8_t> data(sz);
+        f.read(reinterpret_cast<char*>(data.data()), sz);
+        return loadFromData(data);
+    }
+
+    void clear() {
+        s_strings.clear();
+        s_loaded = false;
+    }
+
+    bool isLoaded() { return s_loaded; }
+
+    std::string lookup(uint32_t id) {
+        auto it = s_strings.find(id);
+        if (it != s_strings.end()) return it->second;
+        return "";
+    }
+
+    size_t count() { return s_strings.size(); }
 }

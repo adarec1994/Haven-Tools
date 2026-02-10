@@ -6,6 +6,7 @@
 #include <map>
 #include <functional>
 #include <utility>
+#include <unordered_map>
 #include <cstring>
 #include <sstream>
 #include <iomanip>
@@ -23,7 +24,10 @@ struct GFFHeader {
     uint32_t fileType;
     uint32_t fileVersion;
     uint32_t structCount;
+    uint32_t stringCount;
+    uint32_t stringOffset;
     uint32_t dataOffset;
+    bool isV41 = false;
 };
 
 struct GFFField {
@@ -62,6 +66,8 @@ public:
     const GFFHeader& header() const { return m_header; }
     const std::vector<GFFStruct>& structs() const { return m_structs; }
     const std::vector<uint8_t>& rawData() const { return m_data; }
+    const std::vector<std::string>& stringCache() const { return m_stringCache; }
+    bool isV41() const { return m_header.isV41; }
 
     const GFFField* findField(const GFFStruct& st, uint32_t label) const;
     const GFFField* findField(uint32_t structIndex, uint32_t label) const;
@@ -114,6 +120,7 @@ private:
     GFFHeader m_header;
     std::vector<GFFStruct> m_structs;
     std::vector<uint8_t> m_data;
+    std::vector<std::string> m_stringCache;
     bool m_loaded;
 };
 
@@ -170,4 +177,13 @@ namespace VertexUsage {
     constexpr uint32_t TANGENT = 6;
     constexpr uint32_t BINORMAL = 7;
     constexpr uint32_t COLOR = 10;
+}
+
+namespace GFF4TLK {
+    bool loadFromFile(const std::string& path);
+    bool loadFromData(const std::vector<uint8_t>& data);
+    void clear();
+    bool isLoaded();
+    std::string lookup(uint32_t id);
+    size_t count();
 }

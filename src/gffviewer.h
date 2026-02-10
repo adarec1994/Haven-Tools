@@ -33,6 +33,8 @@ struct GffViewerState {
     bool searchInValues = false;
     int selectedNodeIndex = -1;
     std::string statusMessage;
+    std::string tlkPath;
+    std::string tlkStatus;
     void clear() {
         gff32.reset();
         gff4.reset();
