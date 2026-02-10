@@ -388,6 +388,9 @@ void loadMMH(const std::vector<uint8_t>& data, Model& model) {
     };
 
     std::map<std::string, std::string> meshMaterials;
+    std::map<std::string, std::string> meshParentBone;
+    std::map<std::string, std::array<float,3>> meshLocalPos;
+    std::map<std::string, std::array<float,4>> meshLocalRot;
     std::map<std::string, std::vector<int>> meshBonesUsed;
     std::vector<Bone> tempBones;
     std::map<int, std::string> boneIndexMap;
@@ -401,6 +404,7 @@ void loadMMH(const std::vector<uint8_t>& data, Model& model) {
             std::string meshName = gff.readStringByLabel(structIdx, 6006, offset);
             std::string materialName = gff.readStringByLabel(structIdx, 6001, offset);
             if (!meshName.empty() && !materialName.empty()) meshMaterials[meshName] = materialName;
+            if (!meshName.empty() && !parentName.empty()) meshParentBone[meshName] = parentName;
 
             std::vector<uint32_t> bonesUsedRaw = readUInt32List(structIdx, 6255, offset);
             if (!bonesUsedRaw.empty()) {
@@ -409,7 +413,29 @@ void loadMMH(const std::vector<uint8_t>& data, Model& model) {
                 meshBonesUsed[meshName] = boneIndices;
             }
 
+            // Read mesh's own local position/rotation from child structs (trsl/rota)
             std::vector<GFFStructRef> children = gff.readStructList(structIdx, 6999, offset);
+            for (const auto& child : children) {
+                const GFFField* posField = gff.findField(child.structIndex, 6047);
+                if (posField && !meshName.empty()) {
+                    uint32_t posOffset = gff.dataOffset() + posField->dataOffset + child.offset;
+                    meshLocalPos[meshName] = {
+                        gff.readFloatAt(posOffset),
+                        gff.readFloatAt(posOffset + 4),
+                        gff.readFloatAt(posOffset + 8)
+                    };
+                }
+                const GFFField* rotField = gff.findField(child.structIndex, 6048);
+                if (rotField && !meshName.empty()) {
+                    uint32_t rotOffset = gff.dataOffset() + rotField->dataOffset + child.offset;
+                    meshLocalRot[meshName] = {
+                        gff.readFloatAt(rotOffset),
+                        gff.readFloatAt(rotOffset + 4),
+                        gff.readFloatAt(rotOffset + 8),
+                        gff.readFloatAt(rotOffset + 12)
+                    };
+                }
+            }
             for (const auto& child : children) findNodes(child.structIndex, child.offset, parentName);
             return;
         }
@@ -469,6 +495,22 @@ void loadMMH(const std::vector<uint8_t>& data, Model& model) {
         auto it = meshMaterials.find(mesh.name);
         if (it != meshMaterials.end()) mesh.materialName = it->second;
 
+        auto parentIt = meshParentBone.find(mesh.name);
+        if (parentIt != meshParentBone.end()) {
+            mesh.parentBoneName = parentIt->second;
+        } else {
+            std::string meshLower = mesh.name;
+            std::transform(meshLower.begin(), meshLower.end(), meshLower.begin(), ::tolower);
+            for (const auto& [mmhName, boneName] : meshParentBone) {
+                std::string mmhLower = mmhName;
+                std::transform(mmhLower.begin(), mmhLower.end(), mmhLower.begin(), ::tolower);
+                if (meshLower == mmhLower) {
+                    mesh.parentBoneName = boneName;
+                    break;
+                }
+            }
+        }
+
         auto bonesIt = meshBonesUsed.find(mesh.name);
         if (bonesIt != meshBonesUsed.end()) {
             mesh.bonesUsed = bonesIt->second;
@@ -483,6 +525,39 @@ void loadMMH(const std::vector<uint8_t>& data, Model& model) {
                     break;
                 }
             }
+        }
+
+        // Apply mesh local position/rotation
+        auto posIt = meshLocalPos.find(mesh.name);
+        if (posIt == meshLocalPos.end()) {
+            std::string meshLower = mesh.name;
+            std::transform(meshLower.begin(), meshLower.end(), meshLower.begin(), ::tolower);
+            for (auto& [k, v] : meshLocalPos) {
+                std::string kl = k;
+                std::transform(kl.begin(), kl.end(), kl.begin(), ::tolower);
+                if (meshLower == kl) { posIt = meshLocalPos.find(k); break; }
+            }
+        }
+        if (posIt != meshLocalPos.end()) {
+            mesh.localPosX = posIt->second[0];
+            mesh.localPosY = posIt->second[1];
+            mesh.localPosZ = posIt->second[2];
+        }
+        auto rotIt = meshLocalRot.find(mesh.name);
+        if (rotIt == meshLocalRot.end()) {
+            std::string meshLower = mesh.name;
+            std::transform(meshLower.begin(), meshLower.end(), meshLower.begin(), ::tolower);
+            for (auto& [k, v] : meshLocalRot) {
+                std::string kl = k;
+                std::transform(kl.begin(), kl.end(), kl.begin(), ::tolower);
+                if (meshLower == kl) { rotIt = meshLocalRot.find(k); break; }
+            }
+        }
+        if (rotIt != meshLocalRot.end()) {
+            mesh.localRotX = rotIt->second[0];
+            mesh.localRotY = rotIt->second[1];
+            mesh.localRotZ = rotIt->second[2];
+            mesh.localRotW = rotIt->second[3];
         }
     }
 

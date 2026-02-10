@@ -47,30 +47,27 @@ void runLoadingTask(AppState* statePtr) {
     } catch (...) {}
     std::sort(state.rimFiles.begin(), state.rimFiles.end());
 
-    // Count .msh entries per RIM in background
-    state.preloadStatus = "Scanning RIM files...";
-    state.rimMshCounts.resize(state.rimFiles.size(), 0);
-    for (size_t i = 0; i < state.rimFiles.size(); i++) {
-        ERFFile rim;
-        if (rim.open(state.rimFiles[i])) {
-            int mshCount = 0;
-            for (const auto& e : rim.entries()) {
-                size_t len = e.name.size();
-                if (len > 4) {
-                    std::string ext = e.name.substr(len - 4);
-                    std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
-                    if (ext == ".msh") mshCount++;
+    // Launch RIM .msh counting on a separate thread (non-blocking)
+    state.rimMshCounts.assign(state.rimFiles.size(), 0);
+    state.rimScanDone = false;
+    std::thread([&state]() {
+        for (size_t i = 0; i < state.rimFiles.size(); i++) {
+            ERFFile rim;
+            if (rim.open(state.rimFiles[i])) {
+                int mshCount = 0;
+                for (const auto& e : rim.entries()) {
+                    size_t len = e.name.size();
+                    if (len > 4) {
+                        std::string ext = e.name.substr(len - 4);
+                        std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
+                        if (ext == ".msh") mshCount++;
+                    }
                 }
-            }
-            state.rimMshCounts[i] = mshCount;
-            if (mshCount > 1) {
-                size_t lastSlash = state.rimFiles[i].find_last_of("/\\");
-                std::string fname = (lastSlash != std::string::npos) ? state.rimFiles[i].substr(lastSlash + 1) : state.rimFiles[i];
-                std::string msg = "MULTI_MSH: " + fname + " (" + std::to_string(mshCount) + " msh)\n";
-                OutputDebugStringA(msg.c_str());
+                state.rimMshCounts[i] = mshCount;
             }
         }
-    }
+        state.rimScanDone = true;
+    }).detach();
 
     state.preloadStatus = "Filtering encrypted files...";
     state.preloadProgress = 0.05f;

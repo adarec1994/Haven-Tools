@@ -5,6 +5,7 @@
 #include <fstream>
 #include <map>
 #include <functional>
+#include <utility>
 #include <cstring>
 #include <sstream>
 #include <iomanip>
@@ -81,6 +82,9 @@ public:
     GFFStructRef readStructRef(uint32_t structIndex, uint32_t label, uint32_t baseOffset = 0);
     std::vector<GFFStructRef> readStructList(uint32_t structIndex, uint32_t label, uint32_t baseOffset = 0);
     uint32_t getListDataOffset(uint32_t structIndex, uint32_t label, uint32_t baseOffset = 0);
+
+    std::pair<uint32_t, uint32_t> readPrimitiveListInfo(uint32_t structIndex, uint32_t label, uint32_t baseOffset = 0);
+    static uint32_t primitiveTypeSize(uint16_t typeId);
 
     uint32_t dataOffset() const { return m_header.dataOffset; }
 

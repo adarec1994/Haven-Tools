@@ -723,26 +723,22 @@ void drawBrowserWindow(AppState& state) {
         ImGui::Separator();
         bool rimSelected = (state.selectedErfName == "[RIM]");
         char rimLabel[64];
-        snprintf(rimLabel, sizeof(rimLabel), "RIM Files (%zu)", state.rimFiles.size());
-        if (ImGui::Selectable(rimLabel, rimSelected)) {
-            if (!rimSelected) {
-                state.selectedErfName = "[RIM]";
-                state.selectedEntryIndex = -1;
-                state.mergedEntries.clear();
-                state.filteredEntryIndices.clear();
-                state.lastContentFilter.clear();
-                state.showRIMBrowser = false;
-                state.rimEntries.clear();
-                state.showFSBBrowser = false;
-                state.currentFSBSamples.clear();
+        if (state.rimScanDone)
+            snprintf(rimLabel, sizeof(rimLabel), "RIM Files (%zu)", state.rimFiles.size());
+        else
+            snprintf(rimLabel, sizeof(rimLabel), "RIM Files (%zu) [scanning...]", state.rimFiles.size());
 
-                // Levels header (multi-mesh RIMs, open by default)
+        auto buildRimList = [&]() {
+            state.mergedEntries.clear();
+            state.filteredEntryIndices.clear();
+            state.lastContentFilter.clear();
+
+            if (state.rimScanDone) {
                 state.rimMultiMeshCount = 0;
-                {
-                    // Count first
-                    for (size_t i = 0; i < state.rimFiles.size(); i++)
-                        if (state.rimMshCounts[i] > 1) state.rimMultiMeshCount++;
+                for (size_t i = 0; i < state.rimFiles.size(); i++)
+                    if (state.rimMshCounts[i] > 1) state.rimMultiMeshCount++;
 
+                {
                     CachedEntry header;
                     header.name = "__COLLAPSE_LEVELS__Levels (" + std::to_string(state.rimMultiMeshCount) + ")";
                     header.erfIdx = SIZE_MAX;
@@ -750,7 +746,6 @@ void drawBrowserWindow(AppState& state) {
                     state.mergedEntries.push_back(header);
                 }
 
-                // Multi-mesh RIMs
                 for (size_t i = 0; i < state.rimFiles.size(); i++) {
                     if (state.rimMshCounts[i] > 1) {
                         CachedEntry ce;
@@ -763,7 +758,6 @@ void drawBrowserWindow(AppState& state) {
                     }
                 }
 
-                // Collapsible header for the rest (collapsed by default)
                 {
                     int singleCount = (int)state.rimFiles.size() - state.rimMultiMeshCount;
                     CachedEntry header;
@@ -773,7 +767,6 @@ void drawBrowserWindow(AppState& state) {
                     state.mergedEntries.push_back(header);
                 }
 
-                // Single/no-mesh RIMs
                 for (size_t i = 0; i < state.rimFiles.size(); i++) {
                     if (state.rimMshCounts[i] <= 1) {
                         CachedEntry ce;
@@ -791,6 +784,34 @@ void drawBrowserWindow(AppState& state) {
                 state.rimSingleCollapsed = true;
                 state.statusMessage = std::to_string(state.rimMultiMeshCount) + " levels / " +
                     std::to_string(state.rimFiles.size() - state.rimMultiMeshCount) + " other RIM files";
+            } else {
+                state.rimMultiMeshCount = -1;
+                for (size_t i = 0; i < state.rimFiles.size(); i++) {
+                    CachedEntry ce;
+                    size_t lastSlash = state.rimFiles[i].find_last_of("/\\");
+                    ce.name = (lastSlash != std::string::npos) ? state.rimFiles[i].substr(lastSlash + 1) : state.rimFiles[i];
+                    ce.erfIdx = i;
+                    ce.entryIdx = 0;
+                    state.mergedEntries.push_back(ce);
+                }
+                state.statusMessage = std::to_string(state.rimFiles.size()) + " RIM files (scanning...)";
+            }
+        };
+
+        // Auto-rebuild when scan finishes
+        if (rimSelected && state.rimScanDone && state.rimMultiMeshCount == -1) {
+            buildRimList();
+        }
+
+        if (ImGui::Selectable(rimLabel, rimSelected)) {
+            if (!rimSelected) {
+                state.selectedErfName = "[RIM]";
+                state.selectedEntryIndex = -1;
+                state.showRIMBrowser = false;
+                state.rimEntries.clear();
+                state.showFSBBrowser = false;
+                state.currentFSBSamples.clear();
+                buildRimList();
             }
         }
     }
@@ -1027,8 +1048,7 @@ void drawBrowserWindow(AppState& state) {
                 char clabel[256]; snprintf(clabel, sizeof(clabel), "%s%s##levels", arrow.c_str(), title.c_str());
                 if (ImGui::Selectable(clabel, false)) {
                     state.rimLevelsCollapsed = !state.rimLevelsCollapsed;
-                    state.filteredEntryIndices.clear();
-                    state.lastContentFilter.clear();
+                    state.lastContentFilter = "\x01"; // force rebuild next frame
                 }
                 ImGui::PopStyleColor();
                 return;
@@ -1040,8 +1060,7 @@ void drawBrowserWindow(AppState& state) {
                 char clabel[256]; snprintf(clabel, sizeof(clabel), "%s%s##other", arrow.c_str(), title.c_str());
                 if (ImGui::Selectable(clabel, false)) {
                     state.rimSingleCollapsed = !state.rimSingleCollapsed;
-                    state.filteredEntryIndices.clear();
-                    state.lastContentFilter.clear();
+                    state.lastContentFilter = "\x01"; // force rebuild next frame
                 }
                 ImGui::PopStyleColor();
                 return;

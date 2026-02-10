@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <atomic>
 #include <cmath>
 #include <map>
 #include <unordered_map>
@@ -192,6 +193,7 @@ struct AppState {
     std::vector<std::string> erfFiles;
     std::vector<std::string> rimFiles;
     std::vector<int> rimMshCounts;         // .msh count per RIM file
+    std::atomic<bool> rimScanDone{false};  // true when background msh scan finished
     bool rimSingleCollapsed = true;        // collapse single-mesh RIMs
     bool rimLevelsCollapsed = false;       // levels section open by default
     int rimMultiMeshCount = 0;             // how many RIMs have multiple .msh

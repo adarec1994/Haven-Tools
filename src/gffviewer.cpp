@@ -12,9 +12,6 @@ static bool containsCI(const std::string& haystack, const std::string& needle) {
     std::transform(n.begin(), n.end(), n.begin(), ::tolower);
     return h.find(n) != std::string::npos;
 }
-
-// ---- GFF32 helpers (matches viewer.py) ----
-
 static std::string gff32ValuePreview(const GFF32::Structure& st) {
     if (st.hasField("Tag")) {
         const GFF32::Field* f = st.getField("Tag");
@@ -24,9 +21,6 @@ static std::string gff32ValuePreview(const GFF32::Structure& st) {
     }
     return "...";
 }
-
-// ---- GFF4 helpers (matches editor.pyw / editorutils.py) ----
-
 static std::string gff4PrimitiveName(uint16_t typeId) {
     switch (typeId) {
         case 0: return "UINT8";
@@ -51,7 +45,6 @@ static std::string gff4PrimitiveName(uint16_t typeId) {
     }
 }
 
-// typedesc() from editor.pyw
 static std::string gff4TypeDesc(const GFFFile& gff, uint16_t typeId, uint16_t flags) {
     bool isList = (flags & FLAG_LIST) != 0;
     bool isStruct = (flags & FLAG_STRUCT) != 0;
@@ -72,7 +65,6 @@ static std::string gff4TypeDesc(const GFFFile& gff, uint16_t typeId, uint16_t fl
     return inner;
 }
 
-// typedesc for a struct by index (used for root and list elements)
 static std::string gff4StructTypeDesc(const GFFFile& gff, uint32_t structIndex, bool indirect) {
     if (structIndex < gff.structs().size()) {
         std::string fourcc = gff.structs()[structIndex].structType;
@@ -81,7 +73,6 @@ static std::string gff4StructTypeDesc(const GFFFile& gff, uint32_t structIndex, 
     return "?";
 }
 
-// Read a single primitive field value as string (matches value_preview for leaf values)
 static std::string gff4ReadFieldValueStr(const GFFFile& gff, const GFFField& field, uint32_t baseOffset) {
     bool isList = (field.flags & FLAG_LIST) != 0;
     bool isStruct = (field.flags & FLAG_STRUCT) != 0;
@@ -157,7 +148,6 @@ static std::string gff4ReadFieldValueStr(const GFFFile& gff, const GFFField& fie
     }
 }
 
-// Struct value_preview: comma-separated inline field values (matches editorutils.py)
 static std::string gff4StructPreview(const GFFFile& gff, uint32_t structIndex, uint32_t baseOffset) {
     if (structIndex >= gff.structs().size()) return "?";
     const GFFStruct& st = gff.structs()[structIndex];
@@ -180,9 +170,6 @@ static std::string gff4ListPreview(size_t count) {
     if (count == 1) return "(1 item)";
     return "(" + std::to_string(count) + " items)";
 }
-
-// ---- Loading ----
-
 bool loadGffData(GffViewerState& state, const std::vector<uint8_t>& data,
                  const std::string& fileName, const std::string& erfSource) {
     state.clear();
@@ -212,9 +199,6 @@ bool loadGffData(GffViewerState& state, const std::vector<uint8_t>& data,
     state.statusMessage = "Failed to parse as GFF";
     return false;
 }
-
-// ---- Tree building ----
-
 static void buildTreeFromGff32Struct(GffViewerState& state, const GFF32::Structure& st,
                                       const std::string& basePath, int depth);
 static void buildTreeFromGff4Struct(GffViewerState& state, uint32_t structIndex,
@@ -238,8 +222,6 @@ void rebuildGffTree(GffViewerState& state) {
             buildTreeFromGff32Struct(state, *state.gff32->root(), "", 1);
     }
     else if (state.loadedFormat == GffViewerState::Format::GFF4 && state.gff4 && state.gff4->isLoaded()) {
-        // GFF4 root matches editor.pyw:
-        // Index: "0"  Label: "GFF  V4.0 CRPS V0.5 PC  "  Type: "CRPS"  Value: inline preview
         const auto& hdr = state.gff4->header();
         char fileType[5] = {0}, fileVer[5] = {0}, platform[5] = {0};
         std::memcpy(fileType, &hdr.fileType, 4);
@@ -269,7 +251,6 @@ void rebuildGffTree(GffViewerState& state) {
     }
 }
 
-// GFF32 tree (matches viewer.py)
 static void buildTreeFromGff32Struct(GffViewerState& state, const GFF32::Structure& st,
                                       const std::string& basePath, int depth) {
     for (const auto& label : st.fieldOrder) {
@@ -365,9 +346,6 @@ static void buildTreeFromGff32Struct(GffViewerState& state, const GFF32::Structu
     }
 }
 
-// GFF4 tree (matches editor.pyw GFFModel.GetText)
-// Fields:     Index=field.label  Label=get_field_name()  Type=typedesc(field)  Value=value_preview
-// List items: Index=list_index   Label=""                Type=typedesc(elem)   Value=value_preview
 static void buildTreeFromGff4Struct(GffViewerState& state, uint32_t structIndex,
                                      uint32_t baseOffset, int depth, const std::string& basePath) {
     if (!state.gff4 || structIndex >= state.gff4->structs().size()) return;
@@ -390,11 +368,28 @@ static void buildTreeFromGff4Struct(GffViewerState& state, uint32_t structIndex,
         bool isStruct = (field.flags & FLAG_STRUCT) != 0;
         bool isRef = (field.flags & FLAG_REFERENCE) != 0;
 
-        if (isList) {
+        if (isList && (isStruct || isRef)) {
             node.isExpandable = true;
             auto items = state.gff4->readStructList(structIndex, field.label, baseOffset);
             node.childCount = items.size();
             node.value = gff4ListPreview(items.size());
+        } else if (isList && !isStruct && !isRef) {
+            auto [count, dataStart] = state.gff4->readPrimitiveListInfo(structIndex, field.label, baseOffset);
+            node.childCount = count;
+            node.isExpandable = count > 0;
+            node.value = gff4ListPreview(count);
+        } else if (isRef && !isStruct) {
+            auto ref = state.gff4->readStructRef(structIndex, field.label, baseOffset);
+            if (ref.structIndex < state.gff4->structs().size()) {
+                node.isExpandable = true;
+                node.childCount = state.gff4->structs()[ref.structIndex].fields.size();
+                node.typeName = gff4StructTypeDesc(*state.gff4, ref.structIndex, true);
+                node.value = gff4StructPreview(*state.gff4, ref.structIndex, ref.offset);
+            } else {
+                node.isExpandable = false;
+                node.childCount = 0;
+                node.value = "...";
+            }
         } else if (isStruct && isRef) {
             node.isExpandable = true;
             auto ref = state.gff4->readStructRef(structIndex, field.label, baseOffset);
@@ -422,14 +417,14 @@ static void buildTreeFromGff4Struct(GffViewerState& state, uint32_t structIndex,
         state.flattenedTree.push_back(node);
 
         if (node.isExpanded && node.isExpandable) {
-            if (isList) {
+            if (isList && (isStruct || isRef)) {
                 auto items = state.gff4->readStructList(structIndex, field.label, baseOffset);
                 bool elemIndirect = isRef;
                 for (size_t j = 0; j < items.size(); ++j) {
                     std::string itemPath = path + "[" + std::to_string(j) + "]";
                     GffViewerState::TreeNode itemNode;
                     itemNode.numericLabel = static_cast<uint32_t>(j);
-                    itemNode.label = "";  // List items: empty Label (matches Python)
+                    itemNode.label = "";
                     itemNode.isListItem = true;
                     if (items[j].structIndex < state.gff4->structs().size()) {
                         itemNode.typeName = gff4StructTypeDesc(*state.gff4, items[j].structIndex, elemIndirect);
@@ -450,6 +445,30 @@ static void buildTreeFromGff4Struct(GffViewerState& state, uint32_t structIndex,
                     if (itemNode.isExpanded)
                         buildTreeFromGff4Struct(state, items[j].structIndex, items[j].offset, depth + 2, itemPath);
                 }
+            } else if (isList && !isStruct && !isRef) {
+                auto [count, dataStart] = state.gff4->readPrimitiveListInfo(structIndex, field.label, baseOffset);
+                uint32_t itemSize = GFFFile::primitiveTypeSize(field.typeId);
+                for (uint32_t j = 0; j < count; ++j) {
+                    std::string itemPath = path + "[" + std::to_string(j) + "]";
+                    GffViewerState::TreeNode itemNode;
+                    itemNode.numericLabel = j;
+                    itemNode.label = "";
+                    itemNode.isListItem = true;
+                    itemNode.typeName = gff4PrimitiveName(field.typeId);
+                    itemNode.depth = depth + 1;
+                    itemNode.path = itemPath;
+                    itemNode.isExpandable = false;
+                    itemNode.childCount = 0;
+                    GFFField fakeField = field;
+                    fakeField.flags = 0;
+                    fakeField.dataOffset = (dataStart + j * itemSize) - state.gff4->dataOffset();
+                    itemNode.value = gff4ReadFieldValueStr(*state.gff4, fakeField, 0);
+                    state.flattenedTree.push_back(itemNode);
+                }
+            } else if (isRef && !isStruct) {
+                auto ref = state.gff4->readStructRef(structIndex, field.label, baseOffset);
+                if (ref.structIndex < state.gff4->structs().size())
+                    buildTreeFromGff4Struct(state, ref.structIndex, ref.offset, depth + 1, path);
             } else if (isStruct && isRef) {
                 auto ref = state.gff4->readStructRef(structIndex, field.label, baseOffset);
                 if (ref.structIndex < state.gff4->structs().size())
@@ -463,9 +482,6 @@ static void buildTreeFromGff4Struct(GffViewerState& state, uint32_t structIndex,
         }
     }
 }
-
-// ---- Drawing ----
-
 void drawGffViewerWindow(GffViewerState& state) {
     if (!state.showWindow) return;
     ImGui::SetNextWindowSize(ImVec2(700, 500), ImGuiCond_FirstUseEver);
@@ -512,13 +528,10 @@ void drawGffViewerWindow(GffViewerState& state) {
 
             float indent;
             if (isGff4) {
-                // Column 0: Index
                 ImGui::Text("%u", node.numericLabel);
                 ImGui::TableNextColumn();
-                // Column 1: Label with tree indent
                 indent = node.depth * 16.0f;
             } else {
-                // GFF32: Column 0 is Label with tree indent
                 indent = node.depth * 16.0f;
             }
 
@@ -555,7 +568,6 @@ void drawGffViewerWindow(GffViewerState& state) {
                 }
             }
 
-            // Type column
             ImGui::TableNextColumn();
             ImVec4 typeColor(0.5f, 0.5f, 0.5f, 1.0f);
             if (node.typeName.find("[") != std::string::npos || node.typeName == "List")
@@ -566,7 +578,6 @@ void drawGffViewerWindow(GffViewerState& state) {
                 typeColor = ImVec4(0.5f, 0.7f, 0.5f, 1.0f);
             ImGui::TextColored(typeColor, "%s", node.typeName.c_str());
 
-            // Value column
             ImGui::TableNextColumn();
             ImVec4 valColor(1, 1, 1, 1);
             bool isListNode = node.typeName.find("[") != std::string::npos || node.typeName == "List";

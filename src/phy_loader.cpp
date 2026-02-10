@@ -10,6 +10,65 @@
 #include <algorithm>
 #include <functional>
 #include <cmath>
+#include <iostream>
+
+// Apply mesh-local position/rotation from MMH hierarchy into vertices
+// (MaxScript equivalent: in coordsys parent MeshObj.Position/Rotation)
+static void applyMeshLocalTransforms(Model& model) {
+    auto quatRot = [](float qx, float qy, float qz, float qw,
+                      float vx, float vy, float vz,
+                      float& ox, float& oy, float& oz) {
+        float tx = 2.0f * (qy * vz - qz * vy);
+        float ty = 2.0f * (qz * vx - qx * vz);
+        float tz = 2.0f * (qx * vy - qy * vx);
+        ox = vx + qw * tx + (qy * tz - qz * ty);
+        oy = vy + qw * ty + (qz * tx - qx * tz);
+        oz = vz + qw * tz + (qx * ty - qy * tx);
+    };
+
+    for (auto& mesh : model.meshes) {
+        if (mesh.hasSkinning) continue;
+
+        float posX = mesh.localPosX, posY = mesh.localPosY, posZ = mesh.localPosZ;
+        float rotX = mesh.localRotX, rotY = mesh.localRotY, rotZ = mesh.localRotZ, rotW = mesh.localRotW;
+
+        // Combine with parent bone world transform if present
+        if (!mesh.parentBoneName.empty()) {
+            int boneIdx = model.skeleton.findBone(mesh.parentBoneName);
+            if (boneIdx >= 0) {
+                const Bone& bone = model.skeleton.bones[boneIdx];
+                float rp_x, rp_y, rp_z;
+                quatRot(bone.worldRotX, bone.worldRotY, bone.worldRotZ, bone.worldRotW,
+                        posX, posY, posZ, rp_x, rp_y, rp_z);
+                posX = rp_x + bone.worldPosX;
+                posY = rp_y + bone.worldPosY;
+                posZ = rp_z + bone.worldPosZ;
+                float cw = bone.worldRotW*rotW - bone.worldRotX*rotX - bone.worldRotY*rotY - bone.worldRotZ*rotZ;
+                float cx = bone.worldRotW*rotX + bone.worldRotX*rotW + bone.worldRotY*rotZ - bone.worldRotZ*rotY;
+                float cy = bone.worldRotW*rotY - bone.worldRotX*rotZ + bone.worldRotY*rotW + bone.worldRotZ*rotX;
+                float cz = bone.worldRotW*rotZ + bone.worldRotX*rotY - bone.worldRotY*rotX + bone.worldRotZ*rotW;
+                rotX = cx; rotY = cy; rotZ = cz; rotW = cw;
+            }
+        }
+
+        float posMag = posX*posX + posY*posY + posZ*posZ;
+        bool hasRot = !(std::abs(rotW) > 0.9999f);
+        if (posMag < 0.0001f && !hasRot) continue;
+
+        for (auto& v : mesh.vertices) {
+            float rx, ry, rz;
+            quatRot(rotX, rotY, rotZ, rotW, v.x, v.y, v.z, rx, ry, rz);
+            v.x = rx + posX;
+            v.y = ry + posY;
+            v.z = rz + posZ;
+
+            float rnx, rny, rnz;
+            quatRot(rotX, rotY, rotZ, rotW, v.nx, v.ny, v.nz, rnx, rny, rnz);
+            v.nx = rnx; v.ny = rny; v.nz = rnz;
+        }
+        mesh.calculateBounds();
+    }
+}
 #include <set>
 #include <unordered_map>
 #include <filesystem>
@@ -435,6 +494,8 @@ bool loadModelFromEntry(AppState& state, const ERFEntry& entry) {
     if (!mmhFound) {
     }
 
+    applyMeshLocalTransforms(state.currentModel);
+
     std::vector<std::string> phyCandidates = {baseName + ".phy", baseName + "a.phy"};
     if (lastUnderscore != std::string::npos) {
         std::string variantA = baseName;
@@ -548,10 +609,7 @@ bool mergeModelEntry(AppState& state, const ERFEntry& entry) {
     if (!mmhFound) {
     }
 
-
-    for (const auto& mesh : tempModel.meshes) {
-    }
-
+    applyMeshLocalTransforms(tempModel);
 
     std::set<std::string> newMaterials;
     for (const auto& mesh : tempModel.meshes) {
@@ -766,12 +824,14 @@ bool mergeModelByName(AppState& state, const std::string& modelName,
         std::string mshName = modelName + ".msh";
         std::vector<uint8_t> mshData = readFromAnyErf(state, mshName);
         if (mshData.empty()) {
+            std::cout << "[MISSING] " << modelName << ".msh not found" << std::endl;
             s_propMissingModels.insert(nameLower);
             return false;
         }
 
         Model tempModel;
         if (!loadMSH(mshData, tempModel)) {
+            std::cout << "[MISSING] " << modelName << ".msh failed to parse" << std::endl;
             s_propMissingModels.insert(nameLower);
             return false;
         }
@@ -784,6 +844,8 @@ bool mergeModelByName(AppState& state, const std::string& modelName,
                 break;
             }
         }
+
+        applyMeshLocalTransforms(tempModel);
 
         s_propModelCache[nameLower] = tempModel;
         cacheIt = s_propModelCache.find(nameLower);

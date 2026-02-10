@@ -288,14 +288,12 @@ std::string GFFFile::readStringByLabel(uint32_t structIndex, uint32_t label, uin
     result.reserve(length);
 
     if (field->typeId == 14) {
-        // ECString: UTF-16LE, length is character count, 2 bytes per char
         for (uint32_t i = 0; i < length && strPos + 2 <= m_data.size(); i++) {
             uint16_t wc = readAt<uint16_t>(strPos);
             strPos += 2;
             if (wc != 0 && wc < 128) result += static_cast<char>(wc);
         }
     } else {
-        // Type 10/11: UTF-8, length is byte count
         for (uint32_t i = 0; i < length && strPos < m_data.size(); i++) {
             char c = static_cast<char>(m_data[strPos]);
             strPos += 1;
@@ -416,6 +414,37 @@ uint32_t GFFFile::getListDataOffset(uint32_t structIndex, uint32_t label, uint32
     return readAt<int32_t>(m_header.dataOffset + field->dataOffset + baseOffset);
 }
 
+std::pair<uint32_t, uint32_t> GFFFile::readPrimitiveListInfo(uint32_t structIndex, uint32_t label, uint32_t baseOffset) {
+    if (structIndex >= m_structs.size()) return {0, 0};
+    const GFFField* field = findField(structIndex, label);
+    if (!field) return {0, 0};
+    uint32_t dataPos = m_header.dataOffset + field->dataOffset + baseOffset;
+    int32_t ref = readAt<int32_t>(dataPos);
+    if (ref < 0) return {0, 0};
+    uint32_t listPos = m_header.dataOffset + ref;
+    if (listPos + 4 > m_data.size()) return {0, 0};
+    uint32_t count = readAt<uint32_t>(listPos);
+    return {count, listPos + 4};
+}
+
+uint32_t GFFFile::primitiveTypeSize(uint16_t typeId) {
+    switch (typeId) {
+        case 0: case 1: return 1;
+        case 2: case 3: return 2;
+        case 4: case 5: return 4;
+        case 6: case 7: return 8;
+        case 8: return 4;
+        case 9: return 8;
+        case 10: return 12;
+        case 11: return 8;
+        case 12: case 13: case 15: return 16;
+        case 14: return 4;
+        case 16: return 64;
+        case 17: return 8;
+        default: return 4;
+    }
+}
+
 std::string GFFFile::readRawString(size_t offset) const {
     if (offset + 4 > m_data.size()) return "";
     uint32_t len = readAt<uint32_t>(offset);
@@ -468,7 +497,6 @@ std::string GFFFile::getFieldDisplayValue(const GFFField& field) const {
         }
         case 14:
         {
-            // ECString: UTF-16LE
             int32_t relOffset = readAt<int32_t>(dataPos);
             if (relOffset < 0) return "";
             uint32_t strPos = m_header.dataOffset + relOffset;
