@@ -246,6 +246,8 @@ Thank you for downloading or updating to version 2.0!
 -- Updated the audio playback to use a cleaner UI.
 -- Rewrote the Gff viewer ~ much clearer and functional UI.
 -- Added Gff Value editing ~ fast and efficient.
+--- Default save location is in core/override.
+-- Added Core/Override to the ERF browser to access mods, load mods, and edit mods.
 
 - Bug fixes:
 -- Fixed a bug with a rogue separator in the ERF browser.

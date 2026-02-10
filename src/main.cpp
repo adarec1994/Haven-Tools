@@ -55,6 +55,21 @@ int main(int argc, char** argv) {
 
     io.Fonts->AddFontDefault();
 
+    // Load multilingual fonts from Windows system fonts
+    auto tryLoadFont = [&](const char* path, float size, const ImWchar* ranges) {
+        if (std::filesystem::exists(path)) {
+            ImFontConfig cfg;
+            cfg.MergeMode = true;
+            cfg.PixelSnapH = true;
+            io.Fonts->AddFontFromFileTTF(path, size, &cfg, ranges);
+        }
+    };
+    tryLoadFont("C:\\Windows\\Fonts\\segoeui.ttf", 14.0f, io.Fonts->GetGlyphRangesCyrillic());
+    tryLoadFont("C:\\Windows\\Fonts\\malgun.ttf",  14.0f, io.Fonts->GetGlyphRangesKorean());
+    tryLoadFont("C:\\Windows\\Fonts\\msyh.ttc",    14.0f, io.Fonts->GetGlyphRangesChineseFull());
+    tryLoadFont("C:\\Windows\\Fonts\\YuGothM.ttc", 14.0f, io.Fonts->GetGlyphRangesJapanese());
+    tryLoadFont("C:\\Windows\\Fonts\\segoeui.ttf", 14.0f, io.Fonts->GetGlyphRangesGreek());
+
 
     ImFontConfig fa_cfg;
     fa_cfg.MergeMode = true;

@@ -303,91 +303,141 @@ bool ERFFile::extractEntry(const ERFEntry& entry, const std::string& destPath) {
 bool ERFFile::replaceEntry(size_t entryIndex, const std::vector<uint8_t>& newData) {
     if (entryIndex >= m_entries.size() || !m_file.is_open()) return false;
 
-    // Read entire file into memory
-    m_file.clear();
-    m_file.seekg(0, std::ios::end);
-    size_t fileSize = static_cast<size_t>(m_file.tellg());
-    m_file.seekg(0);
-    std::vector<uint8_t> buf(fileSize);
-    m_file.read(reinterpret_cast<char*>(buf.data()), fileSize);
-
-    ERFEntry& target = m_entries[entryIndex];
-    uint64_t oldOff = target.offset;
-    uint32_t oldLen = target.packed_length;
-    uint32_t newLen = static_cast<uint32_t>(newData.size());
-    int64_t diff = static_cast<int64_t>(newLen) - static_cast<int64_t>(oldLen);
-
-    // Splice: [before entry] + [new data] + [after entry]
-    std::vector<uint8_t> newBuf;
-    newBuf.reserve(static_cast<size_t>(static_cast<int64_t>(fileSize) + diff));
-    newBuf.insert(newBuf.end(), buf.begin(), buf.begin() + oldOff);
-    newBuf.insert(newBuf.end(), newData.begin(), newData.end());
-    if (oldOff + oldLen < fileSize)
-        newBuf.insert(newBuf.end(), buf.begin() + oldOff + oldLen, buf.end());
-
-    // Update in-memory entries
-    target.packed_length = newLen;
-    target.length = newLen;
+    std::vector<std::vector<uint8_t>> allData(m_entries.size());
     for (size_t i = 0; i < m_entries.size(); i++) {
-        if (i != entryIndex && m_entries[i].offset > oldOff)
-            m_entries[i].offset = static_cast<uint64_t>(static_cast<int64_t>(m_entries[i].offset) + diff);
+        if (i == entryIndex) {
+            allData[i] = newData;
+        } else {
+            allData[i] = readEntry(m_entries[i]);
+        }
     }
 
-    // Patch TOC in buffer based on version
-    auto writeU32 = [&](size_t pos, uint32_t val) {
-        if (pos + 4 <= newBuf.size())
-            std::memcpy(&newBuf[pos], &val, 4);
-    };
+    m_file.close();
+
+    std::ofstream out(m_path, std::ios::binary | std::ios::trunc);
+    if (!out) return false;
+
+    auto writeU32 = [&](uint32_t val) { out.write(reinterpret_cast<const char*>(&val), 4); };
+    auto writeU64 = [&](uint64_t val) { out.write(reinterpret_cast<const char*>(&val), 8); };
+    auto writeI32 = [&](int32_t val) { out.write(reinterpret_cast<const char*>(&val), 4); };
+    auto writeU16 = [&](uint16_t val) { out.write(reinterpret_cast<const char*>(&val), 2); };
+
+    uint32_t fileCount = static_cast<uint32_t>(m_entries.size());
 
     switch (m_version) {
-    case ERFVersion::V1_0:
-    case ERFVersion::V1_1: {
-        uint32_t resOffset;
-        std::memcpy(&resOffset, &newBuf[28], 4);
-        for (size_t i = 0; i < m_entries.size(); i++) {
-            writeU32(resOffset + i * 8,     static_cast<uint32_t>(m_entries[i].offset));
-            writeU32(resOffset + i * 8 + 4, m_entries[i].packed_length);
-        }
-        break;
-    }
     case ERFVersion::V2_0: {
+        char16_t magic16[] = u"ERF V2.0";
+        out.write(reinterpret_cast<const char*>(magic16), 16);
+        writeU32(fileCount);
+        writeU32(0); writeU32(0); writeU32(0xFFFFFFFF);
+
+        uint32_t tocSize = fileCount * 72;
+        uint32_t dataStart = 32 + tocSize;
+        uint32_t currentOffset = dataStart;
+
         for (size_t i = 0; i < m_entries.size(); i++) {
-            writeU32(32 + i * 72 + 64, static_cast<uint32_t>(m_entries[i].offset));
-            writeU32(32 + i * 72 + 68, m_entries[i].packed_length);
+            std::u16string name16(32, u'\0');
+            for (size_t c = 0; c < m_entries[i].name.size() && c < 31; c++)
+                name16[c] = static_cast<char16_t>(m_entries[i].name[c]);
+            out.write(reinterpret_cast<const char*>(name16.data()), 64);
+            writeU32(currentOffset);
+            writeU32(static_cast<uint32_t>(allData[i].size()));
+            m_entries[i].offset = currentOffset;
+            m_entries[i].packed_length = static_cast<uint32_t>(allData[i].size());
+            m_entries[i].length = m_entries[i].packed_length;
+            currentOffset += static_cast<uint32_t>(allData[i].size());
         }
+
+        for (size_t i = 0; i < m_entries.size(); i++)
+            out.write(reinterpret_cast<const char*>(allData[i].data()), allData[i].size());
         break;
     }
     case ERFVersion::V2_2: {
+        char16_t magic16[] = u"ERF V2.2";
+        out.write(reinterpret_cast<const char*>(magic16), 16);
+        writeU32(fileCount);
+        writeU32(0); writeU32(0); writeU32(0xFFFFFFFF);
+        uint32_t flags = (static_cast<uint32_t>(m_encryption) << 4) | (static_cast<uint32_t>(m_compression) << 29);
+        writeU32(flags);
+        writeU32(0);
+        char zero16[16] = {};
+        out.write(zero16, 16);
+
+        uint32_t tocSize = fileCount * 76;
+        uint32_t dataStart = 56 + tocSize;
+        uint32_t currentOffset = dataStart;
+
         for (size_t i = 0; i < m_entries.size(); i++) {
-            writeU32(56 + i * 76 + 64, static_cast<uint32_t>(m_entries[i].offset));
-            writeU32(56 + i * 76 + 68, m_entries[i].packed_length);
-            writeU32(56 + i * 76 + 72, m_entries[i].length);
+            std::u16string name16(32, u'\0');
+            for (size_t c = 0; c < m_entries[i].name.size() && c < 31; c++)
+                name16[c] = static_cast<char16_t>(m_entries[i].name[c]);
+            out.write(reinterpret_cast<const char*>(name16.data()), 64);
+            writeU32(currentOffset);
+            writeU32(static_cast<uint32_t>(allData[i].size()));
+            writeU32(static_cast<uint32_t>(allData[i].size()));
+            m_entries[i].offset = currentOffset;
+            m_entries[i].packed_length = static_cast<uint32_t>(allData[i].size());
+            m_entries[i].length = m_entries[i].packed_length;
+            currentOffset += static_cast<uint32_t>(allData[i].size());
         }
+
+        for (size_t i = 0; i < m_entries.size(); i++)
+            out.write(reinterpret_cast<const char*>(allData[i].data()), allData[i].size());
         break;
     }
     case ERFVersion::V3_0: {
-        uint32_t stSize;
-        std::memcpy(&stSize, &newBuf[16], 4);
-        size_t tocStart = 48 + stSize;
+        char16_t magic16[] = u"ERF V3.0";
+        out.write(reinterpret_cast<const char*>(magic16), 16);
+
+        std::string stringTable;
+        std::vector<int32_t> nameOffsets(m_entries.size(), -1);
         for (size_t i = 0; i < m_entries.size(); i++) {
-            writeU32(tocStart + i * 28 + 16, static_cast<uint32_t>(m_entries[i].offset));
-            writeU32(tocStart + i * 28 + 20, m_entries[i].packed_length);
-            writeU32(tocStart + i * 28 + 24, m_entries[i].length);
+            if (!m_entries[i].name.empty() && m_entries[i].name[0] != '[') {
+                nameOffsets[i] = static_cast<int32_t>(stringTable.size());
+                stringTable += m_entries[i].name;
+                stringTable += '\0';
+            }
         }
+        uint32_t stSize = static_cast<uint32_t>(stringTable.size());
+
+        writeU32(stSize);
+        writeU32(fileCount);
+        uint32_t flags = (static_cast<uint32_t>(m_encryption) << 4) | (static_cast<uint32_t>(m_compression) << 29);
+        writeU32(flags);
+        writeU32(0);
+        char zero16[16] = {};
+        out.write(zero16, 16);
+
+        out.write(stringTable.data(), stSize);
+
+        uint32_t tocSize = fileCount * 28;
+        uint32_t dataStart = 48 + stSize + tocSize;
+        uint32_t currentOffset = dataStart;
+
+        for (size_t i = 0; i < m_entries.size(); i++) {
+            writeI32(nameOffsets[i]);
+            writeU64(m_entries[i].name_hash);
+            writeU32(m_entries[i].type_hash);
+            writeU32(currentOffset);
+            writeU32(static_cast<uint32_t>(allData[i].size()));
+            writeU32(static_cast<uint32_t>(allData[i].size()));
+            m_entries[i].offset = currentOffset;
+            m_entries[i].packed_length = static_cast<uint32_t>(allData[i].size());
+            m_entries[i].length = m_entries[i].packed_length;
+            currentOffset += static_cast<uint32_t>(allData[i].size());
+        }
+
+        for (size_t i = 0; i < m_entries.size(); i++)
+            out.write(reinterpret_cast<const char*>(allData[i].data()), allData[i].size());
         break;
     }
     default:
         return false;
     }
 
-    // Write back and reopen
-    m_file.close();
-    {
-        std::ofstream out(m_path, std::ios::binary | std::ios::trunc);
-        if (!out) return false;
-        out.write(reinterpret_cast<const char*>(newBuf.data()), newBuf.size());
-        if (!out.good()) return false;
-    }
+    if (!out.good()) return false;
+    out.close();
+
     m_file.open(m_path, std::ios::binary);
     return m_file.is_open();
 }

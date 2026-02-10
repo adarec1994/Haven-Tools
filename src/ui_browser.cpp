@@ -36,6 +36,23 @@ static std::string GetErfSource(const std::string& erfPath) {
     }
     return "Core";
 }
+
+static std::vector<uint8_t> readCachedEntryData(AppState& state, const CachedEntry& ce) {
+    if (ce.erfIdx == SIZE_MAX) {
+        std::ifstream f(ce.source, std::ios::binary | std::ios::ate);
+        if (!f) return {};
+        size_t sz = static_cast<size_t>(f.tellg());
+        f.seekg(0);
+        std::vector<uint8_t> data(sz);
+        f.read(reinterpret_cast<char*>(data.data()), sz);
+        return data;
+    }
+    if (ce.erfIdx >= state.erfFiles.size()) return {};
+    ERFFile erf;
+    if (!erf.open(state.erfFiles[ce.erfIdx])) return {};
+    if (ce.entryIdx >= erf.entries().size()) return {};
+    return erf.readEntry(erf.entries()[ce.entryIdx]);
+}
 static int s_meshDataSourceFilter = 0;
 static int s_hierDataSourceFilter = 0;
 static std::set<std::string> s_importedModels;
@@ -816,6 +833,42 @@ void drawBrowserWindow(AppState& state) {
         }
     }
 
+    if (!state.selectedFolder.empty()) {
+        ImGui::Separator();
+        bool overrideSelected = (state.selectedErfName == "[Override]");
+        if (ImGui::Selectable("Override Folder", overrideSelected)) {
+            if (!overrideSelected) {
+                state.selectedErfName = "[Override]";
+                state.selectedEntryIndex = -1;
+                state.mergedEntries.clear();
+                state.filteredEntryIndices.clear();
+                state.lastContentFilter.clear();
+                state.showRIMBrowser = false;
+                state.rimEntries.clear();
+                state.showFSBBrowser = false;
+                state.currentFSBSamples.clear();
+                fs::path overrideDir = fs::path(state.selectedFolder) / "packages" / "core" / "override";
+                if (fs::exists(overrideDir) && fs::is_directory(overrideDir)) {
+                    for (const auto& entry : fs::directory_iterator(overrideDir)) {
+                        if (entry.is_regular_file()) {
+                            CachedEntry ce;
+                            ce.name = entry.path().filename().string();
+                            ce.erfIdx = SIZE_MAX;
+                            ce.entryIdx = 0;
+                            ce.source = entry.path().string();
+                            state.mergedEntries.push_back(ce);
+                        }
+                    }
+                    std::sort(state.mergedEntries.begin(), state.mergedEntries.end(),
+                        [](const CachedEntry& a, const CachedEntry& b) { return a.name < b.name; });
+                    state.statusMessage = std::to_string(state.mergedEntries.size()) + " files in override";
+                } else {
+                    state.statusMessage = "Override folder not found";
+                }
+            }
+        }
+    }
+
     ImGui::EndChild();
     ImGui::EndChild();
 
@@ -1155,6 +1208,16 @@ void drawBrowserWindow(AppState& state) {
                         }
                     }
                 } else if (ImGui::IsMouseDoubleClicked(0)) {
+                    if (ce.erfIdx == SIZE_MAX) {
+                        auto data = readCachedEntryData(state, ce);
+                        if (!data.empty() && isGffData(data)) {
+                            if (loadGffData(state.gffViewer, data, ce.name)) {
+                                state.statusMessage = "Opened: " + ce.name;
+                            }
+                        } else {
+                            state.statusMessage = "Not a valid GFF file: " + ce.name;
+                        }
+                    } else {
                     ERFFile erf;
                     if (erf.open(state.erfFiles[ce.erfIdx])) {
                         if (ce.entryIdx < erf.entries().size()) {
@@ -1271,6 +1334,7 @@ void drawBrowserWindow(AppState& state) {
                             }
                         }
                     }
+                    }
                 }
             bool isAudio = (state.selectedErfName == "[Audio]" || state.selectedErfName == "[VoiceOver]") &&
                            (ce.name.size() > 4 && (ce.name.substr(ce.name.size() - 4) == ".fsb" ));
@@ -1349,18 +1413,14 @@ void drawBrowserWindow(AppState& state) {
                 }
                 ImGui::Separator();
                 if (ImGui::MenuItem("Open with GFF Viewer")) {
-                    ERFFile erf;
-                    if (ce.erfIdx < state.erfFiles.size() && erf.open(state.erfFiles[ce.erfIdx])) {
-                        if (ce.entryIdx < erf.entries().size()) {
-                            auto data = erf.readEntry(erf.entries()[ce.entryIdx]);
-                            if (!data.empty() && isGffData(data)) {
-                                if (loadGffData(state.gffViewer, data, ce.name, state.erfFiles[ce.erfIdx], ce.entryIdx)) {
-                                    state.statusMessage = "Opened: " + ce.name;
-                                }
-                            } else {
-                                state.statusMessage = "Not a valid GFF file: " + ce.name;
-                            }
+                    auto data = readCachedEntryData(state, ce);
+                    if (!data.empty() && isGffData(data)) {
+                        std::string erfSrc = (ce.erfIdx == SIZE_MAX) ? "" : state.erfFiles[ce.erfIdx];
+                        if (loadGffData(state.gffViewer, data, ce.name, erfSrc, ce.entryIdx)) {
+                            state.statusMessage = "Opened: " + ce.name;
                         }
+                    } else {
+                        state.statusMessage = "Not a valid GFF file: " + ce.name;
                     }
                 }
                 ImGui::EndPopup();
@@ -1404,37 +1464,28 @@ void drawBrowserWindow(AppState& state) {
                 }
                 ImGui::Separator();
                 if (ImGui::MenuItem("Open with GFF Viewer")) {
-                    ERFFile erf;
-                    if (ce.erfIdx < state.erfFiles.size() && erf.open(state.erfFiles[ce.erfIdx])) {
-                        if (ce.entryIdx < erf.entries().size()) {
-                            auto data = erf.readEntry(erf.entries()[ce.entryIdx]);
-                            if (!data.empty() && isGffData(data)) {
-                                if (loadGffData(state.gffViewer, data, ce.name, state.erfFiles[ce.erfIdx], ce.entryIdx)) {
-                                    state.statusMessage = "Opened: " + ce.name;
-                                }
-                            } else {
-                                state.statusMessage = "Not a valid GFF file: " + ce.name;
-                            }
+                    auto data = readCachedEntryData(state, ce);
+                    if (!data.empty() && isGffData(data)) {
+                        std::string erfSrc = (ce.erfIdx == SIZE_MAX) ? "" : state.erfFiles[ce.erfIdx];
+                        if (loadGffData(state.gffViewer, data, ce.name, erfSrc, ce.entryIdx)) {
+                            state.statusMessage = "Opened: " + ce.name;
                         }
+                    } else {
+                        state.statusMessage = "Not a valid GFF file: " + ce.name;
                     }
                 }
                 ImGui::EndPopup();
             }
             if (!isAudio && !isModel && !isTexture && ImGui::BeginPopupContextItem()) {
                 if (ImGui::MenuItem("Open with GFF Viewer")) {
-                    ERFFile erf;
-                    size_t erfIdx = ce.erfIdx;
-                    if (erfIdx < state.erfFiles.size() && erf.open(state.erfFiles[erfIdx])) {
-                        if (ce.entryIdx < erf.entries().size()) {
-                            auto data = erf.readEntry(erf.entries()[ce.entryIdx]);
-                            if (!data.empty() && isGffData(data)) {
-                                if (loadGffData(state.gffViewer, data, ce.name, state.erfFiles[erfIdx], ce.entryIdx)) {
-                                    state.statusMessage = "Opened: " + ce.name;
-                                }
-                            } else {
-                                state.statusMessage = "Not a valid GFF file: " + ce.name;
-                            }
+                    auto data = readCachedEntryData(state, ce);
+                    if (!data.empty() && isGffData(data)) {
+                        std::string erfSrc = (ce.erfIdx == SIZE_MAX) ? "" : state.erfFiles[ce.erfIdx];
+                        if (loadGffData(state.gffViewer, data, ce.name, erfSrc, ce.entryIdx)) {
+                            state.statusMessage = "Opened: " + ce.name;
                         }
+                    } else {
+                        state.statusMessage = "Not a valid GFF file: " + ce.name;
                     }
                 }
                 ImGui::EndPopup();

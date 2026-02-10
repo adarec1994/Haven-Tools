@@ -31,7 +31,6 @@ struct GffViewerState {
         uint32_t baseOffset = 0;
         uint32_t numericLabel = 0;
         bool isListItem = false;
-        // Pre-lowered for instant filtering
         std::string searchAll;
         std::string searchLabel;
         std::string searchType;
@@ -50,12 +49,12 @@ struct GffViewerState {
             searchAll = searchLabel + " " + searchType + " " + searchValue + " " + searchIndex;
         }
     };
-    std::vector<TreeNode> flattenedTree;
     std::vector<TreeNode> fullTree;
+    std::vector<TreeNode> flattenedTree;
+    std::vector<int> visibleIndices;
     std::vector<int> filteredIndices;
     bool cacheReady = false;
 
-    // Background loading
     std::atomic<bool> bgLoading{false};
     std::string bgStatusMessage;
     std::thread bgThread;
@@ -87,6 +86,7 @@ struct GffViewerState {
         loadedFormat = Format::None;
         flattenedTree.clear();
         fullTree.clear();
+        visibleIndices.clear();
         filteredIndices.clear();
         cacheReady = false;
         bgLoading.store(false);
@@ -116,4 +116,3 @@ void drawGffViewerWindow(GffViewerState& state);
 void drawGffLoadingOverlay(GffViewerState& state);
 
 bool applyGffEdit(GffViewerState& state, const GffViewerState::TreeNode& node, const char* newValue, const char* newValue2 = nullptr);
-bool saveGffFile(GffViewerState& state, const std::string& path);

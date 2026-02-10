@@ -256,14 +256,17 @@ bool loadGffData(GffViewerState& state, const std::vector<uint8_t>& data,
     }
     if (!parsed) { state.statusMessage = "Failed to parse as GFF"; return false; }
 
-    // Start background thread: build visible tree + full cache, then open window
     state.showWindow = false;
     state.bgLoading.store(true);
     state.bgStatusMessage = "Building tree for " + fileName + "...";
     state.stopBgThread();
     state.bgThread = std::thread([&state]() {
-        rebuildGffTree(state);
-        buildFullTree(state);
+        try {
+            buildFullTree(state);
+            rebuildGffTree(state);
+        } catch (...) {
+            state.statusMessage = "Error building tree";
+        }
         state.bgLoading.store(false);
         state.showWindow = true;
     });
@@ -273,52 +276,18 @@ static void buildTreeFromGff32Struct(GffViewerState& state, const GFF32::Structu
                                       const std::string& basePath, int depth, bool forceExpand = false);
 static void buildTreeFromGff4Struct(GffViewerState& state, uint32_t structIndex,
                                      uint32_t baseOffset, int depth, const std::string& basePath, bool forceExpand = false);
-
-
 void rebuildGffTree(GffViewerState& state) {
-    state.flattenedTree.clear();
-    if (state.loadedFormat == GffViewerState::Format::GFF32 && state.gff32 && state.gff32->root()) {
-        GffViewerState::TreeNode rootNode;
-        rootNode.label = state.gff32->fileType() + " " + state.gff32->fileVersion();
-        rootNode.typeName = "Root";
-        rootNode.value = "";
-        rootNode.depth = 0;
-        rootNode.isExpandable = true;
-        rootNode.isExpanded = state.expandedPaths.count("") > 0 || state.expandedPaths.empty();
-        rootNode.childCount = state.gff32->root()->fieldCount();
-        rootNode.path = "";
-        state.flattenedTree.push_back(rootNode);
-        if (state.expandedPaths.empty()) state.expandedPaths.insert("");
-        if (rootNode.isExpanded)
-            buildTreeFromGff32Struct(state, *state.gff32->root(), "", 1, false);
-    }
-    else if (state.loadedFormat == GffViewerState::Format::GFF4 && state.gff4 && state.gff4->isLoaded()) {
-        const auto& hdr = state.gff4->header();
-        char fileType[5] = {0}, fileVer[5] = {0}, platform[5] = {0};
-        std::memcpy(fileType, &hdr.fileType, 4);
-        std::memcpy(fileVer, &hdr.fileVersion, 4);
-        std::memcpy(platform, &hdr.platform, 4);
-        std::string version = (hdr.version == 0x56342E30) ? "V4.0" : ((hdr.version == 0x56342E31) ? "V4.1" : "V4.?");
-
-        GffViewerState::TreeNode rootNode;
-        rootNode.numericLabel = 0;
-        rootNode.label = std::string("GFF  ") + version + " " + fileType + " " + fileVer + " " + platform;
-        rootNode.typeName = !state.gff4->structs().empty()
-            ? std::string(state.gff4->structs()[0].structType) : "?";
-        rootNode.value = !state.gff4->structs().empty()
-            ? gff4StructPreview(*state.gff4, 0, 0) : "";
-        rootNode.depth = 0;
-        rootNode.isExpandable = !state.gff4->structs().empty();
-        rootNode.isExpanded = state.expandedPaths.count("") > 0 || state.expandedPaths.empty();
-        rootNode.childCount = state.gff4->structs().empty() ? 0 : state.gff4->structs()[0].fields.size();
-        rootNode.path = "";
-        rootNode.structIndex = 0;
-        rootNode.baseOffset = 0;
-        rootNode.isListItem = false;
-        state.flattenedTree.push_back(rootNode);
-        if (state.expandedPaths.empty()) state.expandedPaths.insert("");
-        if (rootNode.isExpanded && !state.gff4->structs().empty())
-            buildTreeFromGff4Struct(state, 0, 0, 1, "", false);
+    state.visibleIndices.clear();
+    if (!state.cacheReady || state.fullTree.empty()) return;
+    if (state.expandedPaths.empty()) state.expandedPaths.insert("");
+    int skipAboveDepth = -1;
+    for (int i = 0; i < (int)state.fullTree.size(); ++i) {
+        const auto& node = state.fullTree[i];
+        if (skipAboveDepth >= 0 && node.depth > skipAboveDepth) continue;
+        skipAboveDepth = -1;
+        state.visibleIndices.push_back(i);
+        if (node.isExpandable && state.expandedPaths.count(node.path) == 0)
+            skipAboveDepth = node.depth;
     }
 }
 
@@ -360,7 +329,6 @@ static void buildFullTree(GffViewerState& state) {
     state.fullTree = std::move(state.flattenedTree);
     state.flattenedTree = std::move(savedFlat);
     state.expandedPaths = savedPaths;
-    // Pre-compute lowercase search keys for instant filtering
     for (auto& node : state.fullTree) node.buildSearchKeys();
     state.cacheReady = true;
 }
@@ -811,32 +779,6 @@ bool applyGffEdit(GffViewerState& state, const GffViewerState::TreeNode& node, c
     return false;
 }
 
-bool saveGffFile(GffViewerState& state, const std::string& path) {
-    std::vector<uint8_t> gffBytes;
-    if (state.loadedFormat == GffViewerState::Format::GFF4 && state.gff4) {
-        gffBytes = state.gff4->rawData();
-    } else if (state.loadedFormat == GffViewerState::Format::GFF32 && state.gff32) {
-        gffBytes = state.gff32->save();
-    }
-    if (gffBytes.empty()) return false;
-
-    // Try ERF write-back first (most GFFs live inside ERFs)
-    ERFFile erf;
-    if (erf.open(path) && state.erfEntryIndex < erf.entries().size()) {
-        bool ok = erf.replaceEntry(state.erfEntryIndex, gffBytes);
-        erf.close();
-        if (ok) { state.hasUnsavedChanges = false; return true; }
-    }
-
-    // Fallback: direct file write (standalone GFF)
-    std::ofstream out(path, std::ios::binary | std::ios::trunc);
-    if (!out) return false;
-    out.write(reinterpret_cast<const char*>(gffBytes.data()), gffBytes.size());
-    if (!out.good()) return false;
-    state.hasUnsavedChanges = false;
-    return true;
-}
-
 void drawGffViewerWindow(GffViewerState& state) {
     if (!state.showWindow) return;
     ImGui::SetNextWindowSize(ImVec2(700, 500), ImGuiCond_FirstUseEver);
@@ -913,18 +855,9 @@ void drawGffViewerWindow(GffViewerState& state) {
 
     bool hasEditableSelection = false;
     const GffViewerState::TreeNode* selectedNode = nullptr;
-    if (state.selectedNodeIndex >= 0) {
-        if (filtering) {
-            if (state.selectedNodeIndex < (int)state.filteredIndices.size()) {
-                selectedNode = &state.fullTree[state.filteredIndices[state.selectedNodeIndex]];
-                hasEditableSelection = !selectedNode->isExpandable && !selectedNode->isListItem;
-            }
-        } else {
-            if (state.selectedNodeIndex < (int)state.flattenedTree.size()) {
-                selectedNode = &state.flattenedTree[state.selectedNodeIndex];
-                hasEditableSelection = !selectedNode->isExpandable && !selectedNode->isListItem;
-            }
-        }
+    if (state.selectedNodeIndex >= 0 && state.selectedNodeIndex < (int)state.fullTree.size()) {
+        selectedNode = &state.fullTree[state.selectedNodeIndex];
+        hasEditableSelection = !selectedNode->isExpandable && !selectedNode->isListItem;
         if (hasEditableSelection && selectedNode) {
             if (selectedNode->typeName == "Root" || selectedNode->typeName == "List" ||
                 selectedNode->typeName.find("Structure") != std::string::npos)
@@ -972,9 +905,9 @@ void drawGffViewerWindow(GffViewerState& state) {
                     ImGui::SameLine();
                     char labelBuf[512];
                     snprintf(labelBuf, sizeof(labelBuf), "%s##f%zu", node.label.c_str(), i);
-                    bool selected = (static_cast<int>(i) == state.selectedNodeIndex);
+                    bool selected = (state.filteredIndices[row] == state.selectedNodeIndex);
                     if (ImGui::Selectable(labelBuf, selected, ImGuiSelectableFlags_SpanAllColumns))
-                        state.selectedNodeIndex = static_cast<int>(i);
+                        state.selectedNodeIndex = state.filteredIndices[row];
                     ImGui::TableNextColumn();
                     ImVec4 typeColor(0.5f, 0.5f, 0.5f, 1.0f);
                     if (node.typeName.find("[") != std::string::npos || node.typeName == "List")
@@ -1014,8 +947,8 @@ void drawGffViewerWindow(GffViewerState& state) {
                 }
             }
         } else {
-            for (size_t i = 0; i < state.flattenedTree.size(); ++i) {
-                const auto& node = state.flattenedTree[i];
+            for (size_t i = 0; i < state.visibleIndices.size(); ++i) {
+                const auto& node = state.fullTree[state.visibleIndices[i]];
                 ImGui::TableNextRow();
                 ImGui::TableNextColumn();
 
@@ -1030,12 +963,12 @@ void drawGffViewerWindow(GffViewerState& state) {
 
                 ImGui::SetCursorPosX(ImGui::GetCursorPosX() + indent);
                 if (node.isExpandable) {
+                    bool isExp = state.expandedPaths.count(node.path) > 0;
                     ImGui::PushID(static_cast<int>(i));
-                    if (ImGui::SmallButton(node.isExpanded ? "-" : "+")) {
-                        if (node.isExpanded) state.expandedPaths.erase(node.path);
+                    if (ImGui::SmallButton(isExp ? "-" : "+")) {
+                        if (isExp) state.expandedPaths.erase(node.path);
                         else state.expandedPaths.insert(node.path);
                         rebuildGffTree(state);
-            requestCacheBuild(state);
                         ImGui::PopID();
                         break;
                     }
@@ -1048,14 +981,14 @@ void drawGffViewerWindow(GffViewerState& state) {
 
                 char labelBuf[512];
                 snprintf(labelBuf, sizeof(labelBuf), "%s##%zu", node.label.c_str(), i);
-                bool selected = (static_cast<int>(i) == state.selectedNodeIndex);
+                bool selected = (static_cast<int>(state.visibleIndices[i]) == state.selectedNodeIndex);
                 if (ImGui::Selectable(labelBuf, selected, ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowDoubleClick)) {
-                    state.selectedNodeIndex = static_cast<int>(i);
+                    state.selectedNodeIndex = static_cast<int>(state.visibleIndices[i]);
                     if (ImGui::IsMouseDoubleClicked(0) && node.isExpandable) {
-                        if (node.isExpanded) state.expandedPaths.erase(node.path);
+                        bool isExp = state.expandedPaths.count(node.path) > 0;
+                        if (isExp) state.expandedPaths.erase(node.path);
                         else state.expandedPaths.insert(node.path);
                         rebuildGffTree(state);
-            requestCacheBuild(state);
                         ImGui::EndTable();
                         ImGui::EndChild();
                         ImGui::End();
@@ -1106,11 +1039,23 @@ void drawGffViewerWindow(GffViewerState& state) {
     }
     ImGui::EndChild();
 
+    selectedNode = nullptr;
+    hasEditableSelection = false;
+    if (state.selectedNodeIndex >= 0 && state.selectedNodeIndex < (int)state.fullTree.size()) {
+        selectedNode = &state.fullTree[state.selectedNodeIndex];
+        hasEditableSelection = !selectedNode->isExpandable && !selectedNode->isListItem;
+        if (hasEditableSelection && selectedNode) {
+            if (selectedNode->typeName == "Root" || selectedNode->typeName == "List" ||
+                selectedNode->typeName.find("Structure") != std::string::npos)
+                hasEditableSelection = false;
+        }
+    }
+
     if (hasEditableSelection && selectedNode) {
         if (state.editingNodeIndex != state.selectedNodeIndex) {
             if (state.editingNodeIndex >= 0 && !state.lastEditPath.empty()) {
                 const GffViewerState::TreeNode* oldNode = nullptr;
-                for (auto& n : state.flattenedTree) { if (n.path == state.lastEditPath) { oldNode = &n; break; } }
+                for (auto& n : state.fullTree) { if (n.path == state.lastEditPath) { oldNode = &n; break; } }
                 if (!oldNode) {
                     for (auto& n : state.fullTree) { if (n.path == state.lastEditPath) { oldNode = &n; break; } }
                 }
@@ -1118,8 +1063,17 @@ void drawGffViewerWindow(GffViewerState& state) {
                     bool wasTlk = oldNode->typeName.find("TlkString") != std::string::npos;
                     try {
                         if (applyGffEdit(state, *oldNode, state.editBuffer, wasTlk ? state.editBuffer2 : nullptr)) {
+                            for (auto& n : state.fullTree) {
+                                if (n.path == state.lastEditPath) {
+                                    std::string newVal = state.editBuffer;
+                                    if (wasTlk && state.editBuffer2[0])
+                                        newVal += ", " + std::string(state.editBuffer2);
+                                    n.value = newVal;
+                                    n.buildSearchKeys();
+                                    break;
+                                }
+                            }
                             rebuildGffTree(state);
-            requestCacheBuild(state);
                             if (filtering) refilterTree(state);
                         }
                     } catch (...) {}
@@ -1158,7 +1112,8 @@ void drawGffViewerWindow(GffViewerState& state) {
         }
     }
 
-    if (state.hasUnsavedChanges) {
+    bool didPushSaveColor = state.hasUnsavedChanges;
+    if (didPushSaveColor) {
         ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.8f, 0.2f, 0.2f, 1.0f));
         ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.9f, 0.3f, 0.3f, 1.0f));
     }
@@ -1168,36 +1123,52 @@ void drawGffViewerWindow(GffViewerState& state) {
     if (ImGui::Button(saveBtnLabel.c_str(), ImVec2(btnWidth, 0))) {
         if (state.editingNodeIndex >= 0 && !state.lastEditPath.empty()) {
             const GffViewerState::TreeNode* curNode = nullptr;
-            for (auto& n : state.flattenedTree) { if (n.path == state.lastEditPath) { curNode = &n; break; } }
-            if (!curNode) {
-                for (auto& n : state.fullTree) { if (n.path == state.lastEditPath) { curNode = &n; break; } }
-            }
+            for (auto& n : state.fullTree) { if (n.path == state.lastEditPath) { curNode = &n; break; } }
             if (curNode) {
                 bool wasTlk = curNode->typeName.find("TlkString") != std::string::npos;
                 try { applyGffEdit(state, *curNode, state.editBuffer, wasTlk ? state.editBuffer2 : nullptr); } catch (...) {}
             }
         }
-        if (state.hasUnsavedChanges) ImGui::OpenPopup("Confirm Save");
+        if (state.hasUnsavedChanges) {
+            IGFD::FileDialogConfig config;
+            std::string defaultPath = ".";
+            if (!state.gamePath.empty()) {
+                std::filesystem::path overridePath = std::filesystem::path(state.gamePath) / "packages" / "core" / "override";
+                std::filesystem::create_directories(overridePath);
+                defaultPath = overridePath.string();
+            }
+            config.path = defaultPath;
+            config.fileName = state.fileName;
+            ImGuiFileDialog::Instance()->OpenDialog("SaveGFF", "Save GFF File", ".*", config);
+        }
     }
-    if (state.hasUnsavedChanges)
+    if (didPushSaveColor)
         ImGui::PopStyleColor(2);
 
-    if (ImGui::BeginPopupModal("Confirm Save", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
-        ImGui::Text("Save changes to %s?", state.fileName.c_str());
-        ImGui::TextColored(ImVec4(1, 0.6f, 0.3f, 1), "Warning: Changes cannot be undone.");
-        ImGui::Separator();
-        if (ImGui::Button("Save", ImVec2(120, 0))) {
-            if (saveGffFile(state, state.erfSource))
-                state.statusMessage = "Saved: " + state.fileName;
-            else
-                state.statusMessage = "Failed to save";
-            ImGui::CloseCurrentPopup();
+    if (ImGuiFileDialog::Instance()->Display("SaveGFF", ImGuiWindowFlags_NoCollapse, ImVec2(500, 400))) {
+        if (ImGuiFileDialog::Instance()->IsOk()) {
+            std::string savePath = ImGuiFileDialog::Instance()->GetFilePathName();
+            std::vector<uint8_t> gffBytes;
+            if (state.loadedFormat == GffViewerState::Format::GFF4 && state.gff4)
+                gffBytes = state.gff4->rawData();
+            else if (state.loadedFormat == GffViewerState::Format::GFF32 && state.gff32)
+                gffBytes = state.gff32->save();
+            if (!gffBytes.empty()) {
+                std::ofstream out(savePath, std::ios::binary | std::ios::trunc);
+                if (out) {
+                    out.write(reinterpret_cast<const char*>(gffBytes.data()), gffBytes.size());
+                    if (out.good()) {
+                        state.hasUnsavedChanges = false;
+                        state.statusMessage = "Saved: " + savePath;
+                    } else {
+                        state.statusMessage = "Write error: " + savePath;
+                    }
+                } else {
+                    state.statusMessage = "Cannot open: " + savePath;
+                }
+            }
         }
-        ImGui::SameLine();
-        if (ImGui::Button("Cancel", ImVec2(120, 0))) {
-            ImGui::CloseCurrentPopup();
-        }
-        ImGui::EndPopup();
+        ImGuiFileDialog::Instance()->Close();
     }
 
     ImGui::End();
@@ -1206,7 +1177,6 @@ void drawGffViewerWindow(GffViewerState& state) {
 void drawGffLoadingOverlay(GffViewerState& state) {
     if (!state.bgLoading.load()) return;
 
-    // Fullscreen invisible window to block all input
     ImGuiViewport* vp = ImGui::GetMainViewport();
     ImGui::SetNextWindowPos(vp->WorkPos);
     ImGui::SetNextWindowSize(vp->WorkSize);
@@ -1218,7 +1188,6 @@ void drawGffLoadingOverlay(GffViewerState& state) {
     ImGui::End();
     ImGui::PopStyleColor();
 
-    // Spinner popup centered
     ImVec2 center(vp->WorkPos.x + vp->WorkSize.x * 0.5f, vp->WorkPos.y + vp->WorkSize.y * 0.5f);
     ImGui::SetNextWindowPos(center, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
     ImGui::SetNextWindowSize(ImVec2(0, 0));
