@@ -1,6 +1,7 @@
 #include "Gff.h"
 #include <fstream>
 #include <cstring>
+#include <cstdio>
 #include <map>
 #include <algorithm>
 #include <sstream>
@@ -487,7 +488,15 @@ std::string GFFFile::getFieldDisplayValue(const GFFField& field) const {
 
     if (field.flags & FLAG_LIST) return "(List)";
     if (field.flags & FLAG_STRUCT) return "(Struct)";
-    if (field.flags & FLAG_REFERENCE) return "(Reference)";
+    if ((field.flags & FLAG_REFERENCE) && field.typeId > 17) return "(Reference)";
+
+    // For primitive references (typeId <= 17), dereference the pointer first
+    // Exception: ECString (14) - the pointer IS the string address, no extra deref
+    if ((field.flags & FLAG_REFERENCE) && field.typeId != 14) {
+        uint32_t ptr = readAt<uint32_t>(dataPos);
+        if (ptr == 0xFFFFFFFF) return "null";
+        dataPos = m_header.dataOffset + ptr;
+    }
 
     switch (field.typeId) {
         case 0: return std::to_string(readAt<uint8_t>(dataPos));
@@ -544,6 +553,42 @@ std::string GFFFile::getFieldDisplayValue(const GFFField& field) const {
             return readLocString(m_header.dataOffset + relOffset);
         }
         case 13: return "(Binary)";
+        case 17:
+        {
+            uint32_t tlkId = readAt<uint32_t>(dataPos);
+            uint32_t address = readAt<uint32_t>(dataPos + 4);
+            std::string label = std::to_string(tlkId);
+            std::string text;
+            if (address != 0xFFFFFFFF && (address != 0 || m_header.isV41)) {
+                if (m_header.isV41) {
+                    if (address < m_stringCache.size()) text = m_stringCache[address];
+                } else {
+                    uint32_t strPos = m_header.dataOffset + address;
+                    if (strPos + 4 <= m_data.size()) {
+                        uint32_t length = readAt<uint32_t>(strPos);
+                        strPos += 4;
+                        for (uint32_t i = 0; i < length && strPos + 2 <= m_data.size(); i++) {
+                            uint16_t wc = readAt<uint16_t>(strPos);
+                            strPos += 2;
+                            if (wc == 0) continue;
+                            if (wc < 0x80) text += static_cast<char>(wc);
+                            else if (wc < 0x800) {
+                                text += static_cast<char>(0xC0 | (wc >> 6));
+                                text += static_cast<char>(0x80 | (wc & 0x3F));
+                            } else {
+                                text += static_cast<char>(0xE0 | (wc >> 12));
+                                text += static_cast<char>(0x80 | ((wc >> 6) & 0x3F));
+                                text += static_cast<char>(0x80 | (wc & 0x3F));
+                            }
+                        }
+                    }
+                }
+            }
+            if (text.empty() && GFF4TLK::isLoaded())
+                text = GFF4TLK::lookup(tlkId);
+            if (!text.empty()) return label + ", " + text;
+            return label;
+        }
         default: return "???";
     }
 }
@@ -567,7 +612,7 @@ void GFFFile::walkStruct(uint32_t structIdx, GFF4Visitor visitor, const std::str
 
         if (field.flags & FLAG_LIST) { typeName = "List"; isComplex = true; }
         else if (field.flags & FLAG_STRUCT) { typeName = "Struct"; isComplex = true; }
-        else if (field.flags & FLAG_REFERENCE) { typeName = "Reference"; isComplex = true; }
+        else if ((field.flags & FLAG_REFERENCE) && field.typeId > 17) { typeName = "Reference"; isComplex = true; }
         else {
             switch(field.typeId) {
                 case 0: typeName = "BYTE"; break;
@@ -605,10 +650,14 @@ std::pair<uint32_t, uint32_t> GFFFile::readPrimitiveListInfo(uint32_t structInde
     const GFFField* field = findField(structIndex, label);
     if (!field) return {0, 0};
     if (!(field->flags & FLAG_LIST)) return {0, 0};
-    uint32_t listOffset = m_header.dataOffset + baseOffset + field->dataOffset;
-    if (listOffset + 4 > m_data.size()) return {0, 0};
-    uint32_t count = readAt<uint32_t>(listOffset);
-    return {count, listOffset + 4};
+    uint32_t dataPos = m_header.dataOffset + baseOffset + field->dataOffset;
+    if (dataPos + 4 > m_data.size()) return {0, 0};
+    int32_t ref = readAt<int32_t>(dataPos);
+    if (ref < 0) return {0, 0};
+    uint32_t listPos = m_header.dataOffset + ref;
+    if (listPos + 4 > m_data.size()) return {0, 0};
+    uint32_t count = readAt<uint32_t>(listPos);
+    return {count, listPos + 4};
 }
 
 uint32_t GFFFile::primitiveTypeSize(uint16_t typeId) {
@@ -728,20 +777,19 @@ namespace GFF4TLK {
     }
 
     bool loadFromData(const std::vector<uint8_t>& data) {
-        clear();
         GFFFile gff;
         if (!gff.load(data)) return false;
         uint32_t fv = gff.header().fileVersion;
         char ver[5] = {};
         std::memcpy(ver, &fv, 4);
+        bool ok = false;
         if (std::string(ver) == "V0.2") {
-            s_loaded = loadV02(gff);
+            ok = loadV02(gff);
         } else if (std::string(ver) == "V0.5") {
-            s_loaded = loadV05(gff);
-        } else {
-            return false;
+            ok = loadV05(gff);
         }
-        return s_loaded;
+        if (ok) s_loaded = true;
+        return ok;
     }
 
     bool loadFromFile(const std::string& path) {
@@ -753,6 +801,27 @@ namespace GFF4TLK {
         std::vector<uint8_t> data(sz);
         f.read(reinterpret_cast<char*>(data.data()), sz);
         return loadFromData(data);
+    }
+
+    int loadAllFromPath(const std::string& gamePath) {
+        clear();
+        namespace fs = std::filesystem;
+        int fileCount = 0;
+        fs::path base(gamePath);
+        if (!fs::exists(base)) return 0;
+        try {
+            for (auto& entry : fs::recursive_directory_iterator(base, fs::directory_options::skip_permission_denied)) {
+                if (!entry.is_regular_file()) continue;
+                std::string ext = entry.path().extension().string();
+                std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
+                if (ext != ".tlk") continue;
+                size_t before = s_strings.size();
+                if (loadFromFile(entry.path().string())) {
+                    if (s_strings.size() > before) fileCount++;
+                }
+            }
+        } catch (...) {}
+        return fileCount;
     }
 
     void clear() {

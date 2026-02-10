@@ -824,19 +824,21 @@ bool mergeModelByName(AppState& state, const std::string& modelName,
         std::string mshName = modelName + ".msh";
         std::vector<uint8_t> mshData = readFromAnyErf(state, mshName);
         if (mshData.empty()) {
-            std::cout << "[MISSING] " << modelName << ".msh not found" << std::endl;
+            mshName = modelName + "_0.msh";
+            mshData = readFromAnyErf(state, mshName);
+        }
+        if (mshData.empty()) {
             s_propMissingModels.insert(nameLower);
             return false;
         }
 
         Model tempModel;
         if (!loadMSH(mshData, tempModel)) {
-            std::cout << "[MISSING] " << modelName << ".msh failed to parse" << std::endl;
             s_propMissingModels.insert(nameLower);
             return false;
         }
 
-        std::vector<std::string> mmhCandidates = {modelName + ".mmh", modelName + "a.mmh"};
+        std::vector<std::string> mmhCandidates = {modelName + ".mmh", modelName + "a.mmh", modelName + "_0.mmh"};
         for (const auto& candidate : mmhCandidates) {
             std::vector<uint8_t> mmhData = readFromAnyErf(state, candidate);
             if (!mmhData.empty()) {

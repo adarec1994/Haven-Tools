@@ -72,6 +72,16 @@ void runLoadingTask(AppState* statePtr) {
     state.preloadStatus = "Filtering encrypted files...";
     state.preloadProgress = 0.05f;
     filterEncryptedErfs(state);
+
+    state.preloadStatus = "Loading talk tables...";
+    state.preloadProgress = 0.07f;
+    GFF4TLK::clear();
+    {
+        int tlkCount = GFF4TLK::loadAllFromPath(state.selectedFolder);
+        if (tlkCount > 0)
+            state.gffViewer.tlkStatus = "Loaded " + std::to_string(GFF4TLK::count()) + " strings from " + std::to_string(tlkCount) + " TLK files";
+    }
+
     state.meshCache.clear();
     state.mmhCache.clear();
     state.maoCache.clear();
@@ -743,6 +753,7 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
                     std::string filePath = ImGuiFileDialog::Instance()->GetFilePathName();
                     state.selectedFolder = fs::path(filePath).parent_path().string();
                     state.lastDialogPath = state.selectedFolder;
+                    state.gffViewer.gamePath = state.selectedFolder;
                     state.isPreloading = true;
                     std::thread(runLoadingTask, &state).detach();
                 }
@@ -786,6 +797,7 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
         if (ImGuiFileDialog::Instance()->IsOk()) {
             state.selectedFolder = ImGuiFileDialog::Instance()->GetCurrentPath();
             state.lastDialogPath = state.selectedFolder;
+            state.gffViewer.gamePath = state.selectedFolder;
             state.isPreloading = true;
             showSplash = true;
             std::thread(runLoadingTask, &state).detach();

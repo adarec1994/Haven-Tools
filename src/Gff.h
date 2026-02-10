@@ -102,6 +102,22 @@ public:
         return val;
     }
 
+    // Write methods for editing
+    template<typename T>
+    void writeAt(uint32_t pos, T val) {
+        if (pos + sizeof(T) <= m_data.size()) {
+            std::memcpy(&m_data[pos], &val, sizeof(T));
+        }
+    }
+
+    // Write an ECString at a field's data position - handles both V4.0 and V4.1
+    bool writeECString(uint32_t fieldDataPos, const std::string& newStr);
+
+    // Save modified data to file
+    bool save(const std::string& path);
+    std::vector<uint8_t>& mutableData() { return m_data; }
+    std::vector<std::string>& mutableStringCache() { return m_stringCache; }
+
     float readFloatAt(uint32_t pos) const { return readAt<float>(pos); }
     int32_t readInt32At(uint32_t pos) const { return readAt<int32_t>(pos); }
     uint32_t readUInt32At(uint32_t pos) const { return readAt<uint32_t>(pos); }
@@ -182,6 +198,7 @@ namespace VertexUsage {
 namespace GFF4TLK {
     bool loadFromFile(const std::string& path);
     bool loadFromData(const std::vector<uint8_t>& data);
+    int loadAllFromPath(const std::string& gamePath);
     void clear();
     bool isLoaded();
     std::string lookup(uint32_t id);

@@ -29,7 +29,7 @@ void loadSettings(AppState& state) {
                 std::string val = line.substr(eq + 1);
 
                 if (key == "lastDialogPath") state.lastDialogPath = val;
-                else if (key == "selectedFolder") state.selectedFolder = val;
+                else if (key == "selectedFolder") { state.selectedFolder = val; state.gffViewer.gamePath = val; }
                 else if (key == "lastRunVersion") state.lastRunVersion = val;
                 else if (key == "kb_moveForward") state.keybinds.moveForward = (ImGuiKey)std::stoi(val);
                 else if (key == "kb_moveBackward") state.keybinds.moveBackward = (ImGuiKey)std::stoi(val);

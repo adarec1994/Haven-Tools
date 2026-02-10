@@ -6,11 +6,15 @@
 #include <sstream>
 #include <iomanip>
 #include <cstring>
+#include <cstdio>
+#include <filesystem>
 static bool containsCI(const std::string& haystack, const std::string& needle) {
     if (needle.empty()) return true;
     std::string h = haystack, n = needle;
     std::transform(h.begin(), h.end(), h.begin(), ::tolower);
     std::transform(n.begin(), n.end(), n.begin(), ::tolower);
+    std::replace(h.begin(), h.end(), '_', ' ');
+    std::replace(n.begin(), n.end(), '_', ' ');
     return h.find(n) != std::string::npos;
 }
 static std::string gff32ValuePreview(const GFF32::Structure& st) {
@@ -83,7 +87,9 @@ static std::string readGffString(const GFFFile& gff, uint32_t address) {
     }
     const auto& raw = gff.rawData();
     uint32_t strPos = gff.dataOffset() + address;
-    if (strPos + 4 > raw.size()) return "";
+    if (strPos + 4 > raw.size()) {
+        return "";
+    }
     uint32_t length = gff.readUInt32At(strPos);
     strPos += 4;
     std::string result;
@@ -108,7 +114,10 @@ static std::string gff4ReadFieldValueStr(const GFFFile& gff, const GFFField& fie
     bool isList = (field.flags & FLAG_LIST) != 0;
     bool isStruct = (field.flags & FLAG_STRUCT) != 0;
     bool isRef = (field.flags & FLAG_REFERENCE) != 0;
-    if (isList || isStruct || isRef) return "...";
+    if (isList || isStruct || isRef) {
+        if (isRef && field.typeId == 17)
+        return "...";
+    }
 
     uint32_t dataPos = gff.dataOffset() + baseOffset + field.dataOffset;
     const auto& raw = gff.rawData();
@@ -144,6 +153,13 @@ static std::string gff4ReadFieldValueStr(const GFFFile& gff, const GFFField& fie
             oss << std::fixed << std::setprecision(3) << x << ", " << y << ", " << z;
             return oss.str();
         }
+        case 11: {
+            float x = gff.readFloatAt(dataPos);
+            float y = gff.readFloatAt(dataPos + 4);
+            std::ostringstream oss;
+            oss << std::fixed << std::setprecision(3) << x << ", " << y;
+            return oss.str();
+        }
         case 12: case 13: case 15: {
             float a = gff.readFloatAt(dataPos);
             float b = gff.readFloatAt(dataPos + 4);
@@ -163,7 +179,7 @@ static std::string gff4ReadFieldValueStr(const GFFFile& gff, const GFFField& fie
             uint32_t address = gff.readUInt32At(dataPos + 4);
             std::string label = std::to_string(tlkId);
             std::string text;
-            if (address != 0xFFFFFFFF && address != 0)
+            if (address != 0xFFFFFFFF && (address != 0 || gff.isV41()))
                 text = readGffString(gff, address);
             if (text.empty() && GFF4TLK::isLoaded())
                 text = GFF4TLK::lookup(tlkId);
@@ -220,6 +236,11 @@ bool loadGffData(GffViewerState& state, const std::vector<uint8_t>& data,
         if (state.gff4->load(data)) {
             state.loadedFormat = GffViewerState::Format::GFF4;
             state.statusMessage = "Loaded GFF 4";
+            if (!GFF4TLK::isLoaded() && !state.gamePath.empty()) {
+                int tlkCount = GFF4TLK::loadAllFromPath(state.gamePath);
+                if (tlkCount > 0)
+                    state.tlkStatus = "Loaded " + std::to_string(GFF4TLK::count()) + " strings from " + std::to_string(tlkCount) + " TLK files";
+            }
             rebuildGffTree(state);
             return true;
         }
@@ -229,11 +250,12 @@ bool loadGffData(GffViewerState& state, const std::vector<uint8_t>& data,
     return false;
 }
 static void buildTreeFromGff32Struct(GffViewerState& state, const GFF32::Structure& st,
-                                      const std::string& basePath, int depth);
+                                      const std::string& basePath, int depth, bool forceExpand = false);
 static void buildTreeFromGff4Struct(GffViewerState& state, uint32_t structIndex,
-                                     uint32_t baseOffset, int depth, const std::string& basePath);
+                                     uint32_t baseOffset, int depth, const std::string& basePath, bool forceExpand = false);
 
 void rebuildGffTree(GffViewerState& state) {
+    bool forceExpand = state.searchFilter[0] != '\0';
     state.flattenedTree.clear();
     if (state.loadedFormat == GffViewerState::Format::GFF32 && state.gff32 && state.gff32->root()) {
         GffViewerState::TreeNode rootNode;
@@ -242,13 +264,13 @@ void rebuildGffTree(GffViewerState& state) {
         rootNode.value = "";
         rootNode.depth = 0;
         rootNode.isExpandable = true;
-        rootNode.isExpanded = state.expandedPaths.count("") > 0 || state.expandedPaths.empty();
+        rootNode.isExpanded = forceExpand || state.expandedPaths.count("") > 0 || state.expandedPaths.empty();
         rootNode.childCount = state.gff32->root()->fieldCount();
         rootNode.path = "";
         state.flattenedTree.push_back(rootNode);
         if (state.expandedPaths.empty()) state.expandedPaths.insert("");
         if (rootNode.isExpanded)
-            buildTreeFromGff32Struct(state, *state.gff32->root(), "", 1);
+            buildTreeFromGff32Struct(state, *state.gff32->root(), "", 1, forceExpand);
     }
     else if (state.loadedFormat == GffViewerState::Format::GFF4 && state.gff4 && state.gff4->isLoaded()) {
         const auto& hdr = state.gff4->header();
@@ -267,7 +289,7 @@ void rebuildGffTree(GffViewerState& state) {
             ? gff4StructPreview(*state.gff4, 0, 0) : "";
         rootNode.depth = 0;
         rootNode.isExpandable = !state.gff4->structs().empty();
-        rootNode.isExpanded = state.expandedPaths.count("") > 0 || state.expandedPaths.empty();
+        rootNode.isExpanded = forceExpand || state.expandedPaths.count("") > 0 || state.expandedPaths.empty();
         rootNode.childCount = state.gff4->structs().empty() ? 0 : state.gff4->structs()[0].fields.size();
         rootNode.path = "";
         rootNode.structIndex = 0;
@@ -276,12 +298,12 @@ void rebuildGffTree(GffViewerState& state) {
         state.flattenedTree.push_back(rootNode);
         if (state.expandedPaths.empty()) state.expandedPaths.insert("");
         if (rootNode.isExpanded && !state.gff4->structs().empty())
-            buildTreeFromGff4Struct(state, 0, 0, 1, "");
+            buildTreeFromGff4Struct(state, 0, 0, 1, "", forceExpand);
     }
 }
 
 static void buildTreeFromGff32Struct(GffViewerState& state, const GFF32::Structure& st,
-                                      const std::string& basePath, int depth) {
+                                      const std::string& basePath, int depth, bool forceExpand) {
     for (const auto& label : st.fieldOrder) {
         auto it = st.fields.find(label);
         if (it == st.fields.end()) continue;
@@ -318,12 +340,12 @@ static void buildTreeFromGff32Struct(GffViewerState& state, const GFF32::Structu
             node.childCount = 0;
             node.value = field.getDisplayValue();
         }
-        node.isExpanded = state.expandedPaths.count(path) > 0;
+        node.isExpanded = forceExpand || state.expandedPaths.count(path) > 0;
         state.flattenedTree.push_back(node);
         if (node.isExpanded) {
             if (isStruct) {
                 auto ptr = std::get<GFF32::StructurePtr>(field.value);
-                if (ptr) buildTreeFromGff32Struct(state, *ptr, path, depth + 1);
+                if (ptr) buildTreeFromGff32Struct(state, *ptr, path, depth + 1, forceExpand);
             } else if (isList) {
                 auto ptr = std::get<GFF32::ListPtr>(field.value);
                 if (ptr) {
@@ -338,10 +360,10 @@ static void buildTreeFromGff32Struct(GffViewerState& state, const GFF32::Structu
                         itemNode.path = itemPath;
                         itemNode.isExpandable = item.fieldCount() > 0;
                         itemNode.childCount = item.fieldCount();
-                        itemNode.isExpanded = state.expandedPaths.count(itemPath) > 0;
+                        itemNode.isExpanded = forceExpand || state.expandedPaths.count(itemPath) > 0;
                         state.flattenedTree.push_back(itemNode);
                         if (itemNode.isExpanded)
-                            buildTreeFromGff32Struct(state, item, itemPath, depth + 2);
+                            buildTreeFromGff32Struct(state, item, itemPath, depth + 2, forceExpand);
                     }
                 }
             } else if (isLocString) {
@@ -376,7 +398,7 @@ static void buildTreeFromGff32Struct(GffViewerState& state, const GFF32::Structu
 }
 
 static void buildTreeFromGff4Struct(GffViewerState& state, uint32_t structIndex,
-                                     uint32_t baseOffset, int depth, const std::string& basePath) {
+                                     uint32_t baseOffset, int depth, const std::string& basePath, bool forceExpand) {
     if (!state.gff4 || structIndex >= state.gff4->structs().size()) return;
     const GFFStruct& st = state.gff4->structs()[structIndex];
     for (size_t i = 0; i < st.fields.size(); ++i) {
@@ -407,6 +429,31 @@ static void buildTreeFromGff4Struct(GffViewerState& state, uint32_t structIndex,
             node.childCount = count;
             node.isExpandable = count > 0;
             node.value = gff4ListPreview(count);
+        } else if (isRef && !isStruct && field.typeId <= 17) {
+
+            uint32_t ptrPos = state.gff4->dataOffset() + baseOffset + field.dataOffset;
+            const auto& raw = state.gff4->rawData();
+            if (ptrPos + 4 <= raw.size()) {
+                uint32_t ptr = state.gff4->readUInt32At(ptrPos);
+                if (ptr == 0xFFFFFFFF) {
+                    node.value = "null";
+                } else {
+                    GFFField deref = field;
+                    deref.flags &= ~FLAG_REFERENCE;
+                    if (field.typeId == 14) {
+
+                        node.value = gff4ReadFieldValueStr(*state.gff4, deref, baseOffset);
+                    } else {
+
+                        deref.dataOffset = 0;
+                        node.value = gff4ReadFieldValueStr(*state.gff4, deref, ptr);
+                    }
+                }
+            } else {
+                node.value = "?";
+            }
+            node.isExpandable = false;
+            node.childCount = 0;
         } else if (isRef && !isStruct) {
             auto ref = state.gff4->readStructRef(structIndex, field.label, baseOffset);
             if (ref.structIndex < state.gff4->structs().size()) {
@@ -442,7 +489,7 @@ static void buildTreeFromGff4Struct(GffViewerState& state, uint32_t structIndex,
             node.value = gff4ReadFieldValueStr(*state.gff4, field, baseOffset);
         }
 
-        node.isExpanded = state.expandedPaths.count(path) > 0;
+        node.isExpanded = forceExpand || state.expandedPaths.count(path) > 0;
         state.flattenedTree.push_back(node);
 
         if (node.isExpanded && node.isExpandable) {
@@ -469,10 +516,10 @@ static void buildTreeFromGff4Struct(GffViewerState& state, uint32_t structIndex,
                     itemNode.structIndex = items[j].structIndex;
                     itemNode.baseOffset = items[j].offset;
                     itemNode.isExpandable = itemNode.childCount > 0;
-                    itemNode.isExpanded = state.expandedPaths.count(itemPath) > 0;
+                    itemNode.isExpanded = forceExpand || state.expandedPaths.count(itemPath) > 0;
                     state.flattenedTree.push_back(itemNode);
                     if (itemNode.isExpanded)
-                        buildTreeFromGff4Struct(state, items[j].structIndex, items[j].offset, depth + 2, itemPath);
+                        buildTreeFromGff4Struct(state, items[j].structIndex, items[j].offset, depth + 2, itemPath, forceExpand);
                 }
             } else if (isList && !isStruct && !isRef) {
                 auto [count, dataStart] = state.gff4->readPrimitiveListInfo(structIndex, field.label, baseOffset);
@@ -497,16 +544,16 @@ static void buildTreeFromGff4Struct(GffViewerState& state, uint32_t structIndex,
             } else if (isRef && !isStruct) {
                 auto ref = state.gff4->readStructRef(structIndex, field.label, baseOffset);
                 if (ref.structIndex < state.gff4->structs().size())
-                    buildTreeFromGff4Struct(state, ref.structIndex, ref.offset, depth + 1, path);
+                    buildTreeFromGff4Struct(state, ref.structIndex, ref.offset, depth + 1, path, forceExpand);
             } else if (isStruct && isRef) {
                 auto ref = state.gff4->readStructRef(structIndex, field.label, baseOffset);
                 if (ref.structIndex < state.gff4->structs().size())
-                    buildTreeFromGff4Struct(state, ref.structIndex, ref.offset, depth + 1, path);
+                    buildTreeFromGff4Struct(state, ref.structIndex, ref.offset, depth + 1, path, forceExpand);
             } else if (isStruct && !isRef) {
                 uint32_t embStructOffset = baseOffset + field.dataOffset;
                 uint32_t embStructIdx = field.typeId;
                 if (embStructIdx < state.gff4->structs().size())
-                    buildTreeFromGff4Struct(state, embStructIdx, embStructOffset, depth + 1, path);
+                    buildTreeFromGff4Struct(state, embStructIdx, embStructOffset, depth + 1, path, forceExpand);
             }
         }
     }
@@ -555,9 +602,22 @@ void drawGffViewerWindow(GffViewerState& state) {
         }
         ImGuiFileDialog::Instance()->Close();
     }
-    ImGui::BeginChild("TreeView", ImVec2(0, 0), true);
-    std::string filter = state.searchFilter;
+
     bool isGff4 = state.loadedFormat == GffViewerState::Format::GFF4;
+    const char* filterOptions = isGff4 ? "All\0Index\0Label\0Type\0Value\0" : "All\0Label\0Type\0Value\0";
+    ImGui::SetNextItemWidth(80.0f);
+    ImGui::Combo("##FilterCol", &state.filterColumn, filterOptions);
+    ImGui::SameLine();
+    ImGui::SetNextItemWidth(-1);
+    ImGui::InputTextWithHint("##Filter", "Filter...", state.searchFilter, sizeof(state.searchFilter));
+
+    std::string filter = state.searchFilter;
+    if (filter != state.lastFilterText) {
+        state.lastFilterText = filter;
+        rebuildGffTree(state);
+    }
+
+    ImGui::BeginChild("TreeView", ImVec2(0, 0), true);
     int numCols = isGff4 ? 4 : 3;
 
     ImGuiTableFlags tableFlags = ImGuiTableFlags_Resizable | ImGuiTableFlags_ScrollY |
@@ -579,8 +639,23 @@ void drawGffViewerWindow(GffViewerState& state) {
         for (size_t i = 0; i < state.flattenedTree.size(); ++i) {
             const auto& node = state.flattenedTree[i];
             if (!filter.empty()) {
-                bool matches = containsCI(node.label, filter);
-                if (state.searchInValues && !matches) matches = containsCI(node.value, filter);
+                bool matches = false;
+                int col = state.filterColumn;
+                if (!isGff4 && col > 0) col++;
+                if (col == 0) {
+                    matches = containsCI(node.label, filter) ||
+                              containsCI(node.typeName, filter) ||
+                              containsCI(node.value, filter) ||
+                              containsCI(std::to_string(node.numericLabel), filter);
+                } else if (col == 1) {
+                    matches = containsCI(std::to_string(node.numericLabel), filter);
+                } else if (col == 2) {
+                    matches = containsCI(node.label, filter);
+                } else if (col == 3) {
+                    matches = containsCI(node.typeName, filter);
+                } else if (col == 4) {
+                    matches = containsCI(node.value, filter);
+                }
                 if (!matches) continue;
             }
 
