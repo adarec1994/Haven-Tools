@@ -1514,4 +1514,5 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
         ImGui::PopStyleVar(1);
         ImGui::PopStyleColor(1);
     }
+    drawGffLoadingOverlay(state.gffViewer);
 }

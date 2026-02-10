@@ -245,6 +245,7 @@ Thank you for downloading or updating to version 2.0!
 -- Added settings -> keybinds to the top toolbar.
 -- Updated the audio playback to use a cleaner UI.
 -- Rewrote the Gff viewer ~ much clearer and functional UI.
+-- Added Gff Value editing ~ fast and efficient.
 
 - Bug fixes:
 -- Fixed a bug with a rogue separator in the ERF browser.

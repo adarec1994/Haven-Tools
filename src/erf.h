@@ -39,6 +39,7 @@ public:
 
     bool extractEntry(const ERFEntry& entry, const std::string& destPath);
     std::vector<uint8_t> readEntry(const ERFEntry& entry);
+    bool replaceEntry(size_t entryIndex, const std::vector<uint8_t>& newData);
 
     uint32_t encryption() const { return m_encryption; }
     uint32_t compression() const { return m_compression; }

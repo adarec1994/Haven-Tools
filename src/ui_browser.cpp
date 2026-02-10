@@ -1162,8 +1162,7 @@ void drawBrowserWindow(AppState& state) {
                             if (isTerrainFile) {
                                 auto terrainData = erf.readEntry(entry);
                                 if (!terrainData.empty() && isGffData(terrainData)) {
-                                    if (loadGffData(state.gffViewer, terrainData, ce.name, state.erfFiles[ce.erfIdx])) {
-                                        state.gffViewer.showWindow = true;
+                                    if (loadGffData(state.gffViewer, terrainData, ce.name, state.erfFiles[ce.erfIdx], ce.entryIdx)) {
                                         state.statusMessage = "Opened TMSH: " + ce.name;
                                     }
                                 }
@@ -1253,8 +1252,7 @@ void drawBrowserWindow(AppState& state) {
                                 } else if (isGff) {
                                     auto data = erf.readEntry(entry);
                                     if (!data.empty()) {
-                                        if (loadGffData(state.gffViewer, data, ce.name, state.erfFiles[ce.erfIdx])) {
-                                            state.gffViewer.showWindow = true;
+                                        if (loadGffData(state.gffViewer, data, ce.name, state.erfFiles[ce.erfIdx], ce.entryIdx)) {
                                             state.statusMessage = "Opened GFF: " + ce.name;
                                         } else {
                                             state.statusMessage = "Failed to parse GFF: " + ce.name;
@@ -1263,8 +1261,7 @@ void drawBrowserWindow(AppState& state) {
                                 } else {
                                     auto data = erf.readEntry(entry);
                                     if (!data.empty() && isGffData(data)) {
-                                        if (loadGffData(state.gffViewer, data, ce.name, state.erfFiles[ce.erfIdx])) {
-                                            state.gffViewer.showWindow = true;
+                                        if (loadGffData(state.gffViewer, data, ce.name, state.erfFiles[ce.erfIdx], ce.entryIdx)) {
                                             state.statusMessage = "Opened GFF: " + ce.name;
                                         } else {
                                             state.statusMessage = "Failed to parse GFF: " + ce.name;
@@ -1309,7 +1306,6 @@ void drawBrowserWindow(AppState& state) {
                             std::vector<uint8_t> data((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
                             if (!data.empty() && isGffData(data)) {
                                 if (loadGffData(state.gffViewer, data, ce.name, fullPath)) {
-                                    state.gffViewer.showWindow = true;
                                     state.statusMessage = "Opened: " + ce.name;
                                 }
                             } else {
@@ -1358,8 +1354,7 @@ void drawBrowserWindow(AppState& state) {
                         if (ce.entryIdx < erf.entries().size()) {
                             auto data = erf.readEntry(erf.entries()[ce.entryIdx]);
                             if (!data.empty() && isGffData(data)) {
-                                if (loadGffData(state.gffViewer, data, ce.name, state.erfFiles[ce.erfIdx])) {
-                                    state.gffViewer.showWindow = true;
+                                if (loadGffData(state.gffViewer, data, ce.name, state.erfFiles[ce.erfIdx], ce.entryIdx)) {
                                     state.statusMessage = "Opened: " + ce.name;
                                 }
                             } else {
@@ -1414,8 +1409,7 @@ void drawBrowserWindow(AppState& state) {
                         if (ce.entryIdx < erf.entries().size()) {
                             auto data = erf.readEntry(erf.entries()[ce.entryIdx]);
                             if (!data.empty() && isGffData(data)) {
-                                if (loadGffData(state.gffViewer, data, ce.name, state.erfFiles[ce.erfIdx])) {
-                                    state.gffViewer.showWindow = true;
+                                if (loadGffData(state.gffViewer, data, ce.name, state.erfFiles[ce.erfIdx], ce.entryIdx)) {
                                     state.statusMessage = "Opened: " + ce.name;
                                 }
                             } else {
@@ -1434,8 +1428,7 @@ void drawBrowserWindow(AppState& state) {
                         if (ce.entryIdx < erf.entries().size()) {
                             auto data = erf.readEntry(erf.entries()[ce.entryIdx]);
                             if (!data.empty() && isGffData(data)) {
-                                if (loadGffData(state.gffViewer, data, ce.name, state.erfFiles[erfIdx])) {
-                                    state.gffViewer.showWindow = true;
+                                if (loadGffData(state.gffViewer, data, ce.name, state.erfFiles[erfIdx], ce.entryIdx)) {
                                     state.statusMessage = "Opened: " + ce.name;
                                 }
                             } else {
@@ -1842,8 +1835,7 @@ void drawBrowserWindow(AppState& state) {
                                     if (re.entryIdx < rimErf.entries().size()) {
                                         auto data = rimErf.readEntry(rimErf.entries()[re.entryIdx]);
                                         if (!data.empty() && isGffData(data)) {
-                                            if (loadGffData(state.gffViewer, data, re.name, state.currentRIMPath)) {
-                                                state.gffViewer.showWindow = true;
+                                            if (loadGffData(state.gffViewer, data, re.name, state.currentRIMPath, re.entryIdx)) {
                                                 state.statusMessage = "Opened: " + re.name;
                                             }
                                         }
@@ -1912,8 +1904,7 @@ void drawBrowserWindow(AppState& state) {
                                 if (re.entryIdx < rimErf.entries().size()) {
                                     auto data = rimErf.readEntry(rimErf.entries()[re.entryIdx]);
                                     if (!data.empty() && isGffData(data)) {
-                                        if (loadGffData(state.gffViewer, data, re.name, state.currentRIMPath)) {
-                                            state.gffViewer.showWindow = true;
+                                        if (loadGffData(state.gffViewer, data, re.name, state.currentRIMPath, re.entryIdx)) {
                                             state.statusMessage = "Opened: " + re.name;
                                         }
                                     } else {

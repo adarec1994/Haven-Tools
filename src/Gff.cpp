@@ -490,8 +490,6 @@ std::string GFFFile::getFieldDisplayValue(const GFFField& field) const {
     if (field.flags & FLAG_STRUCT) return "(Struct)";
     if ((field.flags & FLAG_REFERENCE) && field.typeId > 17) return "(Reference)";
 
-    // For primitive references (typeId <= 17), dereference the pointer first
-    // Exception: ECString (14) - the pointer IS the string address, no extra deref
     if ((field.flags & FLAG_REFERENCE) && field.typeId != 14) {
         uint32_t ptr = readAt<uint32_t>(dataPos);
         if (ptr == 0xFFFFFFFF) return "null";
@@ -673,6 +671,58 @@ uint32_t GFFFile::primitiveTypeSize(uint16_t typeId) {
         case 17: return 8;
         default: return 4;
     }
+}
+
+static std::vector<uint16_t> utf8ToUtf16(const std::string& str) {
+    std::vector<uint16_t> result;
+    size_t i = 0;
+    while (i < str.size()) {
+        uint32_t cp = 0;
+        uint8_t c = str[i];
+        if (c < 0x80) { cp = c; i += 1; }
+        else if ((c & 0xE0) == 0xC0) { cp = c & 0x1F; if (i + 1 < str.size()) cp = (cp << 6) | (str[i+1] & 0x3F); i += 2; }
+        else if ((c & 0xF0) == 0xE0) { cp = c & 0x0F; if (i + 2 < str.size()) { cp = (cp << 6) | (str[i+1] & 0x3F); cp = (cp << 6) | (str[i+2] & 0x3F); } i += 3; }
+        else { cp = c & 0x07; if (i + 3 < str.size()) { cp = (cp << 6) | (str[i+1] & 0x3F); cp = (cp << 6) | (str[i+2] & 0x3F); cp = (cp << 6) | (str[i+3] & 0x3F); } i += 4; }
+        if (cp <= 0xFFFF) result.push_back(static_cast<uint16_t>(cp));
+        else { cp -= 0x10000; result.push_back(static_cast<uint16_t>(0xD800 + (cp >> 10))); result.push_back(static_cast<uint16_t>(0xDC00 + (cp & 0x3FF))); }
+    }
+    return result;
+}
+
+bool GFFFile::writeECString(uint32_t fieldDataPos, const std::string& newStr) {
+    if (fieldDataPos + 4 > m_data.size()) return false;
+    uint32_t address = readUInt32At(fieldDataPos);
+    auto wchars = utf8ToUtf16(newStr);
+    uint32_t newLen = static_cast<uint32_t>(wchars.size());
+    if (address != 0xFFFFFFFF) {
+        uint32_t strPos = m_header.dataOffset + address;
+        if (strPos + 4 <= m_data.size()) {
+            uint32_t oldLen = readUInt32At(strPos);
+            if (newLen <= oldLen) {
+                writeAt(strPos, newLen);
+                for (uint32_t i = 0; i < newLen; i++)
+                    writeAt(strPos + 4 + i * 2, wchars[i]);
+                for (uint32_t i = newLen; i < oldLen; i++)
+                    writeAt<uint16_t>(strPos + 4 + i * 2, 0);
+                return true;
+            }
+        }
+    }
+    uint32_t newAddress = static_cast<uint32_t>(m_data.size()) - m_header.dataOffset;
+    m_data.resize(m_data.size() + 4 + newLen * 2);
+    uint32_t newStrPos = m_header.dataOffset + newAddress;
+    writeAt(newStrPos, newLen);
+    for (uint32_t i = 0; i < newLen; i++)
+        writeAt(newStrPos + 4 + i * 2, wchars[i]);
+    writeAt(fieldDataPos, newAddress);
+    return true;
+}
+
+bool GFFFile::save(const std::string& path) {
+    std::ofstream f(path, std::ios::binary);
+    if (!f.is_open()) return false;
+    f.write(reinterpret_cast<const char*>(m_data.data()), m_data.size());
+    return f.good();
 }
 
 namespace GFF4TLK {

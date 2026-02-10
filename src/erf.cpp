@@ -292,17 +292,109 @@ std::vector<uint8_t> ERFFile::readEntry(const ERFEntry& entry) {
 bool ERFFile::extractEntry(const ERFEntry& entry, const std::string& destPath) {
     std::vector<uint8_t> data = readEntry(entry);
     if (data.empty() && entry.packed_length > 0) return false;
-    
+
     std::ofstream out(destPath, std::ios::binary);
     if (!out) return false;
-    
+
     out.write(reinterpret_cast<const char*>(data.data()), data.size());
     return out.good();
 }
 
+bool ERFFile::replaceEntry(size_t entryIndex, const std::vector<uint8_t>& newData) {
+    if (entryIndex >= m_entries.size() || !m_file.is_open()) return false;
+
+    // Read entire file into memory
+    m_file.clear();
+    m_file.seekg(0, std::ios::end);
+    size_t fileSize = static_cast<size_t>(m_file.tellg());
+    m_file.seekg(0);
+    std::vector<uint8_t> buf(fileSize);
+    m_file.read(reinterpret_cast<char*>(buf.data()), fileSize);
+
+    ERFEntry& target = m_entries[entryIndex];
+    uint64_t oldOff = target.offset;
+    uint32_t oldLen = target.packed_length;
+    uint32_t newLen = static_cast<uint32_t>(newData.size());
+    int64_t diff = static_cast<int64_t>(newLen) - static_cast<int64_t>(oldLen);
+
+    // Splice: [before entry] + [new data] + [after entry]
+    std::vector<uint8_t> newBuf;
+    newBuf.reserve(static_cast<size_t>(static_cast<int64_t>(fileSize) + diff));
+    newBuf.insert(newBuf.end(), buf.begin(), buf.begin() + oldOff);
+    newBuf.insert(newBuf.end(), newData.begin(), newData.end());
+    if (oldOff + oldLen < fileSize)
+        newBuf.insert(newBuf.end(), buf.begin() + oldOff + oldLen, buf.end());
+
+    // Update in-memory entries
+    target.packed_length = newLen;
+    target.length = newLen;
+    for (size_t i = 0; i < m_entries.size(); i++) {
+        if (i != entryIndex && m_entries[i].offset > oldOff)
+            m_entries[i].offset = static_cast<uint64_t>(static_cast<int64_t>(m_entries[i].offset) + diff);
+    }
+
+    // Patch TOC in buffer based on version
+    auto writeU32 = [&](size_t pos, uint32_t val) {
+        if (pos + 4 <= newBuf.size())
+            std::memcpy(&newBuf[pos], &val, 4);
+    };
+
+    switch (m_version) {
+    case ERFVersion::V1_0:
+    case ERFVersion::V1_1: {
+        uint32_t resOffset;
+        std::memcpy(&resOffset, &newBuf[28], 4);
+        for (size_t i = 0; i < m_entries.size(); i++) {
+            writeU32(resOffset + i * 8,     static_cast<uint32_t>(m_entries[i].offset));
+            writeU32(resOffset + i * 8 + 4, m_entries[i].packed_length);
+        }
+        break;
+    }
+    case ERFVersion::V2_0: {
+        for (size_t i = 0; i < m_entries.size(); i++) {
+            writeU32(32 + i * 72 + 64, static_cast<uint32_t>(m_entries[i].offset));
+            writeU32(32 + i * 72 + 68, m_entries[i].packed_length);
+        }
+        break;
+    }
+    case ERFVersion::V2_2: {
+        for (size_t i = 0; i < m_entries.size(); i++) {
+            writeU32(56 + i * 76 + 64, static_cast<uint32_t>(m_entries[i].offset));
+            writeU32(56 + i * 76 + 68, m_entries[i].packed_length);
+            writeU32(56 + i * 76 + 72, m_entries[i].length);
+        }
+        break;
+    }
+    case ERFVersion::V3_0: {
+        uint32_t stSize;
+        std::memcpy(&stSize, &newBuf[16], 4);
+        size_t tocStart = 48 + stSize;
+        for (size_t i = 0; i < m_entries.size(); i++) {
+            writeU32(tocStart + i * 28 + 16, static_cast<uint32_t>(m_entries[i].offset));
+            writeU32(tocStart + i * 28 + 20, m_entries[i].packed_length);
+            writeU32(tocStart + i * 28 + 24, m_entries[i].length);
+        }
+        break;
+    }
+    default:
+        return false;
+    }
+
+    // Write back and reopen
+    m_file.close();
+    {
+        std::ofstream out(m_path, std::ios::binary | std::ios::trunc);
+        if (!out) return false;
+        out.write(reinterpret_cast<const char*>(newBuf.data()), newBuf.size());
+        if (!out.good()) return false;
+    }
+    m_file.open(m_path, std::ios::binary);
+    return m_file.is_open();
+}
+
 std::vector<std::string> scanForERFFiles(const std::string& rootPath) {
     std::vector<std::string> result;
-    
+
     try {
         for (const auto& entry : fs::recursive_directory_iterator(rootPath, fs::directory_options::skip_permission_denied)) {
             if (entry.is_regular_file()) {
@@ -314,7 +406,7 @@ std::vector<std::string> scanForERFFiles(const std::string& rootPath) {
             }
         }
     } catch (...) {}
-    
+
     std::sort(result.begin(), result.end());
     return result;
 }

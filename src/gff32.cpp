@@ -422,8 +422,227 @@ bool GFF32File::save(const std::string& path) {
     file.write(reinterpret_cast<const char*>(data.data()), data.size());
     return true;
 }
+struct WriterState {
+    std::vector<uint8_t> structsBuf;
+    std::vector<uint8_t> fieldsBuf;
+    std::vector<uint8_t> labelsBuf;
+    std::vector<uint8_t> fieldDataBuf;
+    std::vector<uint8_t> fieldIndicesBuf;
+    std::vector<uint8_t> listIndicesBuf;
+    std::map<std::string, uint32_t> labelMap;
+    uint32_t structCount = 0;
+    uint32_t fieldCount = 0;
+
+    template<typename T>
+    static void append(std::vector<uint8_t>& buf, T val) {
+        size_t pos = buf.size();
+        buf.resize(pos + sizeof(T));
+        std::memcpy(&buf[pos], &val, sizeof(T));
+    }
+
+    uint32_t getLabelIndex(const std::string& label) {
+        auto it = labelMap.find(label);
+        if (it != labelMap.end()) return it->second;
+        uint32_t idx = static_cast<uint32_t>(labelMap.size());
+        labelMap[label] = idx;
+        char b[16];
+        std::memset(b, 0, 16);
+        std::memcpy(b, label.c_str(), std::min(label.size(), (size_t)16));
+        labelsBuf.insert(labelsBuf.end(), b, b + 16);
+        return idx;
+    }
+};
+
 std::vector<uint8_t> GFF32File::save() {
-    return {};
+    if (!m_root) return {};
+
+    WriterState w;
+
+    std::function<uint32_t(const Structure&)> writeStruct;
+    writeStruct = [&](const Structure& st) -> uint32_t {
+        uint32_t structIdx = w.structCount++;
+        size_t structPos = w.structsBuf.size();
+        WriterState::append(w.structsBuf, static_cast<uint32_t>(st.structId == -1 ? 0xFFFFFFFF : st.structId));
+        WriterState::append(w.structsBuf, uint32_t(0));
+        WriterState::append(w.structsBuf, static_cast<uint32_t>(st.fieldOrder.size()));
+
+        std::vector<uint32_t> fieldIndices;
+        for (const auto& label : st.fieldOrder) {
+            auto it = st.fields.find(label);
+            if (it == st.fields.end()) continue;
+            const Field& field = it->second;
+            uint32_t fieldIdx = w.fieldCount++;
+            fieldIndices.push_back(fieldIdx);
+            uint32_t labelIdx = w.getLabelIndex(label);
+            uint32_t typeId = static_cast<uint32_t>(field.typeId);
+            uint32_t dataOrOffset = 0;
+
+            switch (field.typeId) {
+                case TypeID::BYTE:
+                    dataOrOffset = std::get<uint8_t>(field.value);
+                    break;
+                case TypeID::CHAR:
+                    dataOrOffset = static_cast<uint32_t>(static_cast<uint8_t>(std::get<int8_t>(field.value)));
+                    break;
+                case TypeID::WORD:
+                    dataOrOffset = std::get<uint16_t>(field.value);
+                    break;
+                case TypeID::SHORT: {
+                    int16_t v = std::get<int16_t>(field.value);
+                    dataOrOffset = static_cast<uint32_t>(static_cast<uint16_t>(v));
+                    break;
+                }
+                case TypeID::DWORD:
+                    dataOrOffset = std::get<uint32_t>(field.value);
+                    break;
+                case TypeID::INT: {
+                    int32_t v = std::get<int32_t>(field.value);
+                    std::memcpy(&dataOrOffset, &v, 4);
+                    break;
+                }
+                case TypeID::FLOAT: {
+                    float v = std::get<float>(field.value);
+                    std::memcpy(&dataOrOffset, &v, 4);
+                    break;
+                }
+                case TypeID::DWORD64: {
+                    dataOrOffset = static_cast<uint32_t>(w.fieldDataBuf.size());
+                    uint64_t v = std::get<uint64_t>(field.value);
+                    WriterState::append(w.fieldDataBuf, v);
+                    break;
+                }
+                case TypeID::INT64: {
+                    dataOrOffset = static_cast<uint32_t>(w.fieldDataBuf.size());
+                    int64_t v = std::get<int64_t>(field.value);
+                    WriterState::append(w.fieldDataBuf, v);
+                    break;
+                }
+                case TypeID::DOUBLE: {
+                    dataOrOffset = static_cast<uint32_t>(w.fieldDataBuf.size());
+                    double v = std::get<double>(field.value);
+                    WriterState::append(w.fieldDataBuf, v);
+                    break;
+                }
+                case TypeID::ExoString: {
+                    dataOrOffset = static_cast<uint32_t>(w.fieldDataBuf.size());
+                    const auto& s = std::get<std::string>(field.value);
+                    uint32_t len = static_cast<uint32_t>(s.size());
+                    WriterState::append(w.fieldDataBuf, len);
+                    w.fieldDataBuf.insert(w.fieldDataBuf.end(), s.begin(), s.end());
+                    break;
+                }
+                case TypeID::ResRef: {
+                    dataOrOffset = static_cast<uint32_t>(w.fieldDataBuf.size());
+                    const auto& s = std::get<std::string>(field.value);
+                    uint8_t len = static_cast<uint8_t>(std::min(s.size(), (size_t)255));
+                    w.fieldDataBuf.push_back(len);
+                    w.fieldDataBuf.insert(w.fieldDataBuf.end(), s.begin(), s.begin() + len);
+                    break;
+                }
+                case TypeID::ExoLocString: {
+                    dataOrOffset = static_cast<uint32_t>(w.fieldDataBuf.size());
+                    const auto& loc = std::get<ExoLocString>(field.value);
+                    uint32_t sref = (loc.stringref == -1) ? 0xFFFFFFFF : static_cast<uint32_t>(loc.stringref);
+                    uint32_t scount = static_cast<uint32_t>(loc.strings.size());
+                    size_t sizePos = w.fieldDataBuf.size();
+                    WriterState::append(w.fieldDataBuf, uint32_t(0));
+                    WriterState::append(w.fieldDataBuf, sref);
+                    WriterState::append(w.fieldDataBuf, scount);
+                    for (const auto& ls : loc.strings) {
+                        uint32_t sid = (ls.language << 2) | (ls.gender ? 1 : 0);
+                        uint32_t slen = static_cast<uint32_t>(ls.text.size());
+                        WriterState::append(w.fieldDataBuf, sid);
+                        WriterState::append(w.fieldDataBuf, slen);
+                        w.fieldDataBuf.insert(w.fieldDataBuf.end(), ls.text.begin(), ls.text.end());
+                    }
+                    uint32_t totalSize = static_cast<uint32_t>(w.fieldDataBuf.size() - sizePos - 4);
+                    std::memcpy(&w.fieldDataBuf[sizePos], &totalSize, 4);
+                    break;
+                }
+                case TypeID::VOID: {
+                    dataOrOffset = static_cast<uint32_t>(w.fieldDataBuf.size());
+                    const auto& vd = std::get<VoidData>(field.value);
+                    uint32_t len = static_cast<uint32_t>(vd.data.size());
+                    WriterState::append(w.fieldDataBuf, len);
+                    w.fieldDataBuf.insert(w.fieldDataBuf.end(), vd.data.begin(), vd.data.end());
+                    break;
+                }
+                case TypeID::Structure: {
+                    auto ptr = std::get<StructurePtr>(field.value);
+                    dataOrOffset = writeStruct(ptr ? *ptr : Structure());
+                    break;
+                }
+                case TypeID::List: {
+                    auto ptr = std::get<ListPtr>(field.value);
+                    dataOrOffset = static_cast<uint32_t>(w.listIndicesBuf.size());
+                    uint32_t count = ptr ? static_cast<uint32_t>(ptr->size()) : 0;
+                    WriterState::append(w.listIndicesBuf, count);
+                    if (ptr) {
+                        for (const auto& item : *ptr) {
+                            uint32_t childIdx = writeStruct(item);
+                            WriterState::append(w.listIndicesBuf, childIdx);
+                        }
+                    }
+                    break;
+                }
+                default:
+                    break;
+            }
+            WriterState::append(w.fieldsBuf, typeId);
+            WriterState::append(w.fieldsBuf, labelIdx);
+            WriterState::append(w.fieldsBuf, dataOrOffset);
+        }
+
+        if (fieldIndices.size() == 1) {
+            std::memcpy(&w.structsBuf[structPos + 4], &fieldIndices[0], 4);
+        } else if (fieldIndices.size() > 1) {
+            uint32_t indicesOffset = static_cast<uint32_t>(w.fieldIndicesBuf.size());
+            std::memcpy(&w.structsBuf[structPos + 4], &indicesOffset, 4);
+            for (uint32_t fi : fieldIndices)
+                WriterState::append(w.fieldIndicesBuf, fi);
+        }
+        return structIdx;
+    };
+
+    writeStruct(*m_root);
+
+    uint32_t headerSize = 56;
+    uint32_t structOff = headerSize;
+    uint32_t fieldOff = structOff + static_cast<uint32_t>(w.structsBuf.size());
+    uint32_t labelOff = fieldOff + static_cast<uint32_t>(w.fieldsBuf.size());
+    uint32_t fieldDataOff = labelOff + static_cast<uint32_t>(w.labelsBuf.size());
+    uint32_t fieldIndicesOff = fieldDataOff + static_cast<uint32_t>(w.fieldDataBuf.size());
+    uint32_t listIndicesOff = fieldIndicesOff + static_cast<uint32_t>(w.fieldIndicesBuf.size());
+    uint32_t totalSize = listIndicesOff + static_cast<uint32_t>(w.listIndicesBuf.size());
+
+    std::vector<uint8_t> out(totalSize);
+    std::memcpy(&out[0], m_header.fileType, 4);
+    std::memcpy(&out[4], m_header.fileVersion, 4);
+    auto w32 = [&](size_t off, uint32_t val) { std::memcpy(&out[off], &val, 4); };
+    w32(8, structOff);
+    w32(12, w.structCount);
+    w32(16, fieldOff);
+    w32(20, w.fieldCount);
+    w32(24, labelOff);
+    w32(28, static_cast<uint32_t>(w.labelMap.size()));
+    w32(32, fieldDataOff);
+    w32(36, static_cast<uint32_t>(w.fieldDataBuf.size()));
+    w32(40, fieldIndicesOff);
+    w32(44, static_cast<uint32_t>(w.fieldIndicesBuf.size()));
+    w32(48, listIndicesOff);
+    w32(52, static_cast<uint32_t>(w.listIndicesBuf.size()));
+
+    std::memcpy(&out[structOff], w.structsBuf.data(), w.structsBuf.size());
+    std::memcpy(&out[fieldOff], w.fieldsBuf.data(), w.fieldsBuf.size());
+    std::memcpy(&out[labelOff], w.labelsBuf.data(), w.labelsBuf.size());
+    if (!w.fieldDataBuf.empty())
+        std::memcpy(&out[fieldDataOff], w.fieldDataBuf.data(), w.fieldDataBuf.size());
+    if (!w.fieldIndicesBuf.empty())
+        std::memcpy(&out[fieldIndicesOff], w.fieldIndicesBuf.data(), w.fieldIndicesBuf.size());
+    if (!w.listIndicesBuf.empty())
+        std::memcpy(&out[listIndicesOff], w.listIndicesBuf.data(), w.listIndicesBuf.size());
+
+    return out;
 }
 std::string typeIdToString(TypeID type) {
     switch (type) {

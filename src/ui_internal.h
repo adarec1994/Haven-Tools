@@ -88,6 +88,7 @@ void drawUvViewer(AppState& state);
 void drawAnimWindow(AppState& state, ImGuiIO& io);
 void drawHeightmapViewer(AppState& state);
 void drawGffViewerWindow(GffViewerState& state);
+void drawGffLoadingOverlay(GffViewerState& state);
 void filterEncryptedErfs(AppState& state);
 void buildCharacterLists(AppState& state);
 void loadCharacterModel(AppState& state);

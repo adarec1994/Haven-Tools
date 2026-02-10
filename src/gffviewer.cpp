@@ -1,5 +1,6 @@
 #include "GffViewer.h"
 #include "Gff4FieldNames.h"
+#include "erf.h"
 #include "imgui.h"
 #include "ImGuiFileDialog.h"
 #include <algorithm>
@@ -7,6 +8,7 @@
 #include <iomanip>
 #include <cstring>
 #include <cstdio>
+#include <cmath>
 #include <filesystem>
 static bool containsCI(const std::string& haystack, const std::string& needle) {
     if (needle.empty()) return true;
@@ -215,23 +217,29 @@ static std::string gff4ListPreview(size_t count) {
     if (count == 1) return "(1 item)";
     return "(" + std::to_string(count) + " items)";
 }
+static void buildFullTree(GffViewerState& state);
+static void requestCacheBuild(GffViewerState& state);
+
 bool loadGffData(GffViewerState& state, const std::vector<uint8_t>& data,
-                 const std::string& fileName, const std::string& erfSource) {
+                 const std::string& fileName, const std::string& erfSource, size_t erfEntryIndex) {
     state.clear();
     state.fileName = fileName;
     state.erfSource = erfSource;
+    state.erfEntryIndex = erfEntryIndex;
     if (data.empty()) { state.statusMessage = "Empty data"; return false; }
+
+    bool parsed = false;
     if (GFF32::GFF32File::isGFF32(data)) {
         state.gff32 = std::make_unique<GFF32::GFF32File>();
         if (state.gff32->load(data)) {
             state.loadedFormat = GffViewerState::Format::GFF32;
             state.statusMessage = "Loaded GFF 3.2: " + state.gff32->fileType();
-            rebuildGffTree(state);
-            return true;
+            parsed = true;
+        } else {
+            state.gff32.reset();
         }
-        state.gff32.reset();
     }
-    if (data.size() >= 4 && data[0] == 'G' && data[1] == 'F' && data[2] == 'F' && data[3] == ' ') {
+    if (!parsed && data.size() >= 4 && data[0] == 'G' && data[1] == 'F' && data[2] == 'F' && data[3] == ' ') {
         state.gff4 = std::make_unique<GFFFile>();
         if (state.gff4->load(data)) {
             state.loadedFormat = GffViewerState::Format::GFF4;
@@ -241,21 +249,33 @@ bool loadGffData(GffViewerState& state, const std::vector<uint8_t>& data,
                 if (tlkCount > 0)
                     state.tlkStatus = "Loaded " + std::to_string(GFF4TLK::count()) + " strings from " + std::to_string(tlkCount) + " TLK files";
             }
-            rebuildGffTree(state);
-            return true;
+            parsed = true;
+        } else {
+            state.gff4.reset();
         }
-        state.gff4.reset();
     }
-    state.statusMessage = "Failed to parse as GFF";
-    return false;
+    if (!parsed) { state.statusMessage = "Failed to parse as GFF"; return false; }
+
+    // Start background thread: build visible tree + full cache, then open window
+    state.showWindow = false;
+    state.bgLoading.store(true);
+    state.bgStatusMessage = "Building tree for " + fileName + "...";
+    state.stopBgThread();
+    state.bgThread = std::thread([&state]() {
+        rebuildGffTree(state);
+        buildFullTree(state);
+        state.bgLoading.store(false);
+        state.showWindow = true;
+    });
+    return true;
 }
 static void buildTreeFromGff32Struct(GffViewerState& state, const GFF32::Structure& st,
                                       const std::string& basePath, int depth, bool forceExpand = false);
 static void buildTreeFromGff4Struct(GffViewerState& state, uint32_t structIndex,
                                      uint32_t baseOffset, int depth, const std::string& basePath, bool forceExpand = false);
 
+
 void rebuildGffTree(GffViewerState& state) {
-    bool forceExpand = state.searchFilter[0] != '\0';
     state.flattenedTree.clear();
     if (state.loadedFormat == GffViewerState::Format::GFF32 && state.gff32 && state.gff32->root()) {
         GffViewerState::TreeNode rootNode;
@@ -264,13 +284,13 @@ void rebuildGffTree(GffViewerState& state) {
         rootNode.value = "";
         rootNode.depth = 0;
         rootNode.isExpandable = true;
-        rootNode.isExpanded = forceExpand || state.expandedPaths.count("") > 0 || state.expandedPaths.empty();
+        rootNode.isExpanded = state.expandedPaths.count("") > 0 || state.expandedPaths.empty();
         rootNode.childCount = state.gff32->root()->fieldCount();
         rootNode.path = "";
         state.flattenedTree.push_back(rootNode);
         if (state.expandedPaths.empty()) state.expandedPaths.insert("");
         if (rootNode.isExpanded)
-            buildTreeFromGff32Struct(state, *state.gff32->root(), "", 1, forceExpand);
+            buildTreeFromGff32Struct(state, *state.gff32->root(), "", 1, false);
     }
     else if (state.loadedFormat == GffViewerState::Format::GFF4 && state.gff4 && state.gff4->isLoaded()) {
         const auto& hdr = state.gff4->header();
@@ -289,7 +309,7 @@ void rebuildGffTree(GffViewerState& state) {
             ? gff4StructPreview(*state.gff4, 0, 0) : "";
         rootNode.depth = 0;
         rootNode.isExpandable = !state.gff4->structs().empty();
-        rootNode.isExpanded = forceExpand || state.expandedPaths.count("") > 0 || state.expandedPaths.empty();
+        rootNode.isExpanded = state.expandedPaths.count("") > 0 || state.expandedPaths.empty();
         rootNode.childCount = state.gff4->structs().empty() ? 0 : state.gff4->structs()[0].fields.size();
         rootNode.path = "";
         rootNode.structIndex = 0;
@@ -298,7 +318,80 @@ void rebuildGffTree(GffViewerState& state) {
         state.flattenedTree.push_back(rootNode);
         if (state.expandedPaths.empty()) state.expandedPaths.insert("");
         if (rootNode.isExpanded && !state.gff4->structs().empty())
-            buildTreeFromGff4Struct(state, 0, 0, 1, "", forceExpand);
+            buildTreeFromGff4Struct(state, 0, 0, 1, "", false);
+    }
+}
+
+static void buildFullTree(GffViewerState& state) {
+    state.fullTree.clear();
+    std::set<std::string> savedPaths = state.expandedPaths;
+    std::vector<GffViewerState::TreeNode> savedFlat = std::move(state.flattenedTree);
+    state.flattenedTree.clear();
+
+    if (state.loadedFormat == GffViewerState::Format::GFF32 && state.gff32 && state.gff32->root()) {
+        GffViewerState::TreeNode rootNode;
+        rootNode.label = state.gff32->fileType() + " " + state.gff32->fileVersion();
+        rootNode.typeName = "Root"; rootNode.value = ""; rootNode.depth = 0;
+        rootNode.isExpandable = true; rootNode.isExpanded = true;
+        rootNode.childCount = state.gff32->root()->fieldCount(); rootNode.path = "";
+        state.flattenedTree.push_back(rootNode);
+        buildTreeFromGff32Struct(state, *state.gff32->root(), "", 1, true);
+    }
+    else if (state.loadedFormat == GffViewerState::Format::GFF4 && state.gff4 && state.gff4->isLoaded()) {
+        const auto& hdr = state.gff4->header();
+        char fileType[5]={0}, fileVer[5]={0}, platform[5]={0};
+        std::memcpy(fileType, &hdr.fileType, 4);
+        std::memcpy(fileVer, &hdr.fileVersion, 4);
+        std::memcpy(platform, &hdr.platform, 4);
+        std::string version = (hdr.version == 0x56342E30) ? "V4.0" : ((hdr.version == 0x56342E31) ? "V4.1" : "V4.?");
+        GffViewerState::TreeNode rootNode;
+        rootNode.numericLabel = 0;
+        rootNode.label = std::string("GFF  ") + version + " " + fileType + " " + fileVer + " " + platform;
+        rootNode.typeName = !state.gff4->structs().empty() ? std::string(state.gff4->structs()[0].structType) : "?";
+        rootNode.value = !state.gff4->structs().empty() ? gff4StructPreview(*state.gff4, 0, 0) : "";
+        rootNode.depth = 0; rootNode.isExpandable = !state.gff4->structs().empty();
+        rootNode.isExpanded = true;
+        rootNode.childCount = state.gff4->structs().empty() ? 0 : state.gff4->structs()[0].fields.size();
+        rootNode.path = ""; rootNode.structIndex = 0; rootNode.baseOffset = 0; rootNode.isListItem = false;
+        state.flattenedTree.push_back(rootNode);
+        if (!state.gff4->structs().empty())
+            buildTreeFromGff4Struct(state, 0, 0, 1, "", true);
+    }
+    state.fullTree = std::move(state.flattenedTree);
+    state.flattenedTree = std::move(savedFlat);
+    state.expandedPaths = savedPaths;
+    // Pre-compute lowercase search keys for instant filtering
+    for (auto& node : state.fullTree) node.buildSearchKeys();
+    state.cacheReady = true;
+}
+
+static void requestCacheBuild(GffViewerState& state) {
+    state.cacheReady = false;
+    state.fullTree.clear();
+    state.filteredIndices.clear();
+    buildFullTree(state);
+}
+
+static void refilterTree(GffViewerState& state) {
+    state.filteredIndices.clear();
+    std::string needle = state.searchFilter;
+    if (needle.empty()) return;
+    std::transform(needle.begin(), needle.end(), needle.begin(), ::tolower);
+    std::replace(needle.begin(), needle.end(), '_', ' ');
+    bool isGff4 = state.loadedFormat == GffViewerState::Format::GFF4;
+    int col = state.filterColumn;
+    if (!isGff4 && col > 0) col++;
+    for (int i = 0; i < (int)state.fullTree.size(); ++i) {
+        const auto& node = state.fullTree[i];
+        bool matches = false;
+        switch (col) {
+            case 0: matches = node.searchAll.find(needle) != std::string::npos; break;
+            case 1: matches = node.searchIndex.find(needle) != std::string::npos; break;
+            case 2: matches = node.searchLabel.find(needle) != std::string::npos; break;
+            case 3: matches = node.searchType.find(needle) != std::string::npos; break;
+            case 4: matches = node.searchValue.find(needle) != std::string::npos; break;
+        }
+        if (matches) state.filteredIndices.push_back(i);
     }
 }
 
@@ -558,11 +651,198 @@ static void buildTreeFromGff4Struct(GffViewerState& state, uint32_t structIndex,
         }
     }
 }
+
+static std::vector<float> parseFloats(const std::string& str) {
+    std::vector<float> result;
+    std::istringstream iss(str);
+    std::string token;
+    while (std::getline(iss, token, ',')) {
+        try { result.push_back(std::stof(token)); } catch (...) { result.push_back(0.0f); }
+    }
+    return result;
+}
+
+bool applyGffEdit(GffViewerState& state, const GffViewerState::TreeNode& node, const char* newValue, const char* newValue2) {
+    if (state.loadedFormat == GffViewerState::Format::GFF4 && state.gff4) {
+        const auto& structs = state.gff4->structs();
+        if (node.structIndex >= structs.size()) return false;
+        if (node.fieldIndex >= structs[node.structIndex].fields.size()) return false;
+        const GFFField& field = structs[node.structIndex].fields[node.fieldIndex];
+        if ((field.flags & (FLAG_LIST | FLAG_STRUCT)) != 0) return false;
+
+        uint32_t dataPos = state.gff4->dataOffset() + node.baseOffset + field.dataOffset;
+        bool isRef = (field.flags & FLAG_REFERENCE) != 0;
+        if (isRef && field.typeId <= 17 && field.typeId != 14) {
+            if (dataPos + 4 > state.gff4->rawData().size()) return false;
+            uint32_t ptr = state.gff4->readUInt32At(dataPos);
+            if (ptr == 0xFFFFFFFF) return false;
+            if (field.typeId == 14)
+                dataPos = state.gff4->dataOffset() + node.baseOffset + field.dataOffset;
+            else
+                dataPos = state.gff4->dataOffset() + ptr;
+        }
+
+        std::string val(newValue);
+        switch (field.typeId) {
+            case 0: { uint8_t v = static_cast<uint8_t>(std::stoul(val)); state.gff4->writeAt(dataPos, v); break; }
+            case 1: { int8_t v = static_cast<int8_t>(std::stoi(val)); state.gff4->writeAt(dataPos, v); break; }
+            case 2: { uint16_t v = static_cast<uint16_t>(std::stoul(val)); state.gff4->writeAt(dataPos, v); break; }
+            case 3: { int16_t v = static_cast<int16_t>(std::stoi(val)); state.gff4->writeAt(dataPos, v); break; }
+            case 4: { uint32_t v = static_cast<uint32_t>(std::stoul(val)); state.gff4->writeAt(dataPos, v); break; }
+            case 5: { int32_t v = static_cast<int32_t>(std::stoi(val)); state.gff4->writeAt(dataPos, v); break; }
+            case 6: { uint64_t v = std::stoull(val); state.gff4->writeAt(dataPos, v); break; }
+            case 7: { int64_t v = std::stoll(val); state.gff4->writeAt(dataPos, v); break; }
+            case 8: { float v = std::stof(val); state.gff4->writeAt(dataPos, v); break; }
+            case 9: { double v = std::stod(val); state.gff4->writeAt(dataPos, v); break; }
+            case 10: {
+                auto f = parseFloats(val);
+                while (f.size() < 3) f.push_back(0.0f);
+                for (int i = 0; i < 3; i++) state.gff4->writeAt(dataPos + i * 4, f[i]);
+                break;
+            }
+            case 11: {
+                auto f = parseFloats(val);
+                while (f.size() < 2) f.push_back(0.0f);
+                for (int i = 0; i < 2; i++) state.gff4->writeAt(dataPos + i * 4, f[i]);
+                break;
+            }
+            case 12: case 13: case 15: {
+                auto f = parseFloats(val);
+                while (f.size() < 4) f.push_back(0.0f);
+                for (int i = 0; i < 4; i++) state.gff4->writeAt(dataPos + i * 4, f[i]);
+                break;
+            }
+            case 14: {
+                state.gff4->writeECString(dataPos, val);
+                break;
+            }
+            case 16: {
+                auto f = parseFloats(val);
+                while (f.size() < 16) f.push_back(0.0f);
+                for (int i = 0; i < 16; i++) state.gff4->writeAt(dataPos + i * 4, f[i]);
+                break;
+            }
+            case 17: {
+                uint32_t tlkId = static_cast<uint32_t>(std::stoul(val));
+                state.gff4->writeAt(dataPos, tlkId);
+                if (newValue2 && newValue2[0] != '\0') {
+                    state.gff4->writeECString(dataPos + 4, std::string(newValue2));
+                }
+                break;
+            }
+            default: return false;
+        }
+        state.hasUnsavedChanges = true;
+        return true;
+    }
+    else if (state.loadedFormat == GffViewerState::Format::GFF32 && state.gff32 && state.gff32->root()) {
+        std::string path = node.path;
+        std::vector<std::string> parts;
+        std::istringstream iss(path);
+        std::string part;
+        while (std::getline(iss, part, '.')) parts.push_back(part);
+
+        GFF32::Structure* current = state.gff32->root();
+        for (size_t i = 0; i < parts.size() - 1; i++) {
+            std::string& p = parts[i];
+            size_t bk = p.find('[');
+            if (bk != std::string::npos) {
+                std::string fieldName = p.substr(0, bk);
+                size_t idx = std::stoul(p.substr(bk + 1, p.size() - bk - 2));
+                GFF32::Field* f = current->getField(fieldName);
+                if (!f) return false;
+                auto ptr = std::get<GFF32::ListPtr>(f->value);
+                if (!ptr || idx >= ptr->size()) return false;
+                current = &(*ptr)[idx];
+            } else {
+                GFF32::Field* f = current->getField(p);
+                if (!f) return false;
+                if (f->typeId == GFF32::TypeID::Structure) {
+                    auto ptr = std::get<GFF32::StructurePtr>(f->value);
+                    if (!ptr) return false;
+                    current = ptr.get();
+                }
+            }
+        }
+
+        std::string lastPart = parts.back();
+        size_t bk = lastPart.find('[');
+        if (bk != std::string::npos) {
+            std::string fieldName = lastPart.substr(0, bk);
+            size_t idx = std::stoul(lastPart.substr(bk + 1, lastPart.size() - bk - 2));
+            GFF32::Field* f = current->getField(fieldName);
+            if (!f) return false;
+            if (f->typeId == GFF32::TypeID::ExoLocString) {
+                auto& loc = std::get<GFF32::ExoLocString>(f->value);
+                if (idx >= loc.strings.size()) return false;
+                loc.strings[idx].text = std::string(newValue);
+                state.hasUnsavedChanges = true;
+                return true;
+            }
+            return false;
+        }
+
+        GFF32::Field* f = current->getField(lastPart);
+        if (!f) return false;
+
+        std::string val(newValue);
+        switch (f->typeId) {
+            case GFF32::TypeID::BYTE: f->value = static_cast<uint8_t>(std::stoul(val)); break;
+            case GFF32::TypeID::CHAR: f->value = static_cast<int8_t>(std::stoi(val)); break;
+            case GFF32::TypeID::WORD: f->value = static_cast<uint16_t>(std::stoul(val)); break;
+            case GFF32::TypeID::SHORT: f->value = static_cast<int16_t>(std::stoi(val)); break;
+            case GFF32::TypeID::DWORD: f->value = static_cast<uint32_t>(std::stoul(val)); break;
+            case GFF32::TypeID::INT: f->value = static_cast<int32_t>(std::stoi(val)); break;
+            case GFF32::TypeID::DWORD64: f->value = static_cast<uint64_t>(std::stoull(val)); break;
+            case GFF32::TypeID::INT64: f->value = static_cast<int64_t>(std::stoll(val)); break;
+            case GFF32::TypeID::FLOAT: f->value = std::stof(val); break;
+            case GFF32::TypeID::DOUBLE: f->value = std::stod(val); break;
+            case GFF32::TypeID::ExoString: case GFF32::TypeID::ResRef: f->value = val; break;
+            case GFF32::TypeID::ExoLocString: {
+                auto& loc = std::get<GFF32::ExoLocString>(f->value);
+                loc.stringref = static_cast<int32_t>(std::stoi(val));
+                break;
+            }
+            default: return false;
+        }
+        state.hasUnsavedChanges = true;
+        return true;
+    }
+    return false;
+}
+
+bool saveGffFile(GffViewerState& state, const std::string& path) {
+    std::vector<uint8_t> gffBytes;
+    if (state.loadedFormat == GffViewerState::Format::GFF4 && state.gff4) {
+        gffBytes = state.gff4->rawData();
+    } else if (state.loadedFormat == GffViewerState::Format::GFF32 && state.gff32) {
+        gffBytes = state.gff32->save();
+    }
+    if (gffBytes.empty()) return false;
+
+    // Try ERF write-back first (most GFFs live inside ERFs)
+    ERFFile erf;
+    if (erf.open(path) && state.erfEntryIndex < erf.entries().size()) {
+        bool ok = erf.replaceEntry(state.erfEntryIndex, gffBytes);
+        erf.close();
+        if (ok) { state.hasUnsavedChanges = false; return true; }
+    }
+
+    // Fallback: direct file write (standalone GFF)
+    std::ofstream out(path, std::ios::binary | std::ios::trunc);
+    if (!out) return false;
+    out.write(reinterpret_cast<const char*>(gffBytes.data()), gffBytes.size());
+    if (!out.good()) return false;
+    state.hasUnsavedChanges = false;
+    return true;
+}
+
 void drawGffViewerWindow(GffViewerState& state) {
     if (!state.showWindow) return;
     ImGui::SetNextWindowSize(ImVec2(700, 500), ImGuiCond_FirstUseEver);
     std::string title = "GFF Viewer";
     if (!state.fileName.empty()) title += " - " + state.fileName;
+    if (state.hasUnsavedChanges) title += " *";
     title += "###GffViewer";
     if (!ImGui::Begin(title.c_str(), &state.showWindow)) { ImGui::End(); return; }
     if (!state.isLoaded()) {
@@ -582,7 +862,9 @@ void drawGffViewerWindow(GffViewerState& state) {
         if (ImGui::SmallButton("Unload")) {
             GFF4TLK::clear();
             state.tlkStatus.clear();
+
             rebuildGffTree(state);
+            requestCacheBuild(state);
         }
     }
     if (!state.tlkStatus.empty()) {
@@ -595,7 +877,9 @@ void drawGffViewerWindow(GffViewerState& state) {
             state.tlkPath = path.substr(0, path.find_last_of("/\\") + 1);
             if (GFF4TLK::loadFromFile(path)) {
                 state.tlkStatus = "Loaded " + std::to_string(GFF4TLK::count()) + " strings";
+
                 rebuildGffTree(state);
+            requestCacheBuild(state);
             } else {
                 state.tlkStatus = "Failed to load TLK";
             }
@@ -608,16 +892,51 @@ void drawGffViewerWindow(GffViewerState& state) {
     ImGui::SetNextItemWidth(80.0f);
     ImGui::Combo("##FilterCol", &state.filterColumn, filterOptions);
     ImGui::SameLine();
-    ImGui::SetNextItemWidth(-1);
-    ImGui::InputTextWithHint("##Filter", "Filter...", state.searchFilter, sizeof(state.searchFilter));
 
     std::string filter = state.searchFilter;
-    if (filter != state.lastFilterText) {
+    bool filtering = !filter.empty() && state.cacheReady;
+    float filterWidth = filtering ? ImGui::GetContentRegionAvail().x - 100.0f : -1.0f;
+    ImGui::SetNextItemWidth(filterWidth);
+    ImGui::InputTextWithHint("##Filter", "Filter...", state.searchFilter, sizeof(state.searchFilter));
+
+    filter = state.searchFilter;
+    filtering = !filter.empty() && state.cacheReady;
+    if (state.cacheReady && (filter != state.lastFilterText || state.filterColumn != state.lastFilterColumn)) {
         state.lastFilterText = filter;
-        rebuildGffTree(state);
+        state.lastFilterColumn = state.filterColumn;
+        refilterTree(state);
+    }
+    if (filtering) {
+        ImGui::SameLine();
+        ImGui::TextDisabled("%d hits", (int)state.filteredIndices.size());
     }
 
-    ImGui::BeginChild("TreeView", ImVec2(0, 0), true);
+    bool hasEditableSelection = false;
+    const GffViewerState::TreeNode* selectedNode = nullptr;
+    if (state.selectedNodeIndex >= 0) {
+        if (filtering) {
+            if (state.selectedNodeIndex < (int)state.filteredIndices.size()) {
+                selectedNode = &state.fullTree[state.filteredIndices[state.selectedNodeIndex]];
+                hasEditableSelection = !selectedNode->isExpandable && !selectedNode->isListItem;
+            }
+        } else {
+            if (state.selectedNodeIndex < (int)state.flattenedTree.size()) {
+                selectedNode = &state.flattenedTree[state.selectedNodeIndex];
+                hasEditableSelection = !selectedNode->isExpandable && !selectedNode->isListItem;
+            }
+        }
+        if (hasEditableSelection && selectedNode) {
+            if (selectedNode->typeName == "Root" || selectedNode->typeName == "List" ||
+                selectedNode->typeName.find("Structure") != std::string::npos)
+                hasEditableSelection = false;
+        }
+    }
+    float editHeight = hasEditableSelection ? 100.0f : 0.0f;
+    if (hasEditableSelection && selectedNode && selectedNode->typeName.find("TlkString") != std::string::npos)
+        editHeight = 130.0f;
+    float bottomBarHeight = 32.0f;
+
+    ImGui::BeginChild("TreeView", ImVec2(0, -(editHeight + bottomBarHeight)), true);
     int numCols = isGff4 ? 4 : 3;
 
     ImGuiTableFlags tableFlags = ImGuiTableFlags_Resizable | ImGuiTableFlags_ScrollY |
@@ -636,114 +955,280 @@ void drawGffViewerWindow(GffViewerState& state) {
         }
         ImGui::TableHeadersRow();
 
-        for (size_t i = 0; i < state.flattenedTree.size(); ++i) {
-            const auto& node = state.flattenedTree[i];
-            if (!filter.empty()) {
-                bool matches = false;
-                int col = state.filterColumn;
-                if (!isGff4 && col > 0) col++;
-                if (col == 0) {
-                    matches = containsCI(node.label, filter) ||
-                              containsCI(node.typeName, filter) ||
-                              containsCI(node.value, filter) ||
-                              containsCI(std::to_string(node.numericLabel), filter);
-                } else if (col == 1) {
-                    matches = containsCI(std::to_string(node.numericLabel), filter);
-                } else if (col == 2) {
-                    matches = containsCI(node.label, filter);
-                } else if (col == 3) {
-                    matches = containsCI(node.typeName, filter);
-                } else if (col == 4) {
-                    matches = containsCI(node.value, filter);
+        if (filtering) {
+            ImGuiListClipper clipper;
+            clipper.Begin(static_cast<int>(state.filteredIndices.size()));
+            while (clipper.Step()) {
+                for (int row = clipper.DisplayStart; row < clipper.DisplayEnd; ++row) {
+                    const auto& node = state.fullTree[state.filteredIndices[row]];
+                    size_t i = static_cast<size_t>(row);
+                    ImGui::TableNextRow();
+                    ImGui::TableNextColumn();
+                    if (isGff4) {
+                        ImGui::Text("%u", node.numericLabel);
+                        ImGui::TableNextColumn();
+                    }
+                    ImGui::Dummy(ImVec2(20, 0));
+                    ImGui::SameLine();
+                    char labelBuf[512];
+                    snprintf(labelBuf, sizeof(labelBuf), "%s##f%zu", node.label.c_str(), i);
+                    bool selected = (static_cast<int>(i) == state.selectedNodeIndex);
+                    if (ImGui::Selectable(labelBuf, selected, ImGuiSelectableFlags_SpanAllColumns))
+                        state.selectedNodeIndex = static_cast<int>(i);
+                    ImGui::TableNextColumn();
+                    ImVec4 typeColor(0.5f, 0.5f, 0.5f, 1.0f);
+                    if (node.typeName.find("[") != std::string::npos || node.typeName == "List")
+                        typeColor = ImVec4(0.9f, 0.7f, 0.3f, 1.0f);
+                    else if (node.typeName.find("Structure") != std::string::npos || node.typeName == "Root")
+                        typeColor = ImVec4(0.5f, 0.7f, 0.5f, 1.0f);
+                    else if (isGff4 && node.isExpandable)
+                        typeColor = ImVec4(0.5f, 0.7f, 0.5f, 1.0f);
+                    ImGui::TextColored(typeColor, "%s", node.typeName.c_str());
+                    ImGui::TableNextColumn();
+                    ImVec4 valColor(1, 1, 1, 1);
+                    bool isListNode = node.typeName.find("[") != std::string::npos || node.typeName == "List";
+                    bool isStructNode = node.isExpandable && !isListNode;
+                    if (isListNode)
+                        valColor = ImVec4(1.0f, 0.8f, 0.4f, 1.0f);
+                    else if (isStructNode)
+                        valColor = ImVec4(0.4f, 1.0f, 0.4f, 1.0f);
+                    else if (node.typeName.find("String") != std::string::npos ||
+                             node.typeName == "ResRef" || node.typeName == "ExoString" ||
+                             node.typeName.find("ECString") != std::string::npos)
+                        valColor = ImVec4(1.0f, 0.6f, 0.6f, 1.0f);
+                    else if (node.typeName.find("INT") != std::string::npos ||
+                             node.typeName.find("DWORD") != std::string::npos ||
+                             node.typeName.find("WORD") != std::string::npos ||
+                             node.typeName.find("BYTE") != std::string::npos ||
+                             node.typeName.find("UINT") != std::string::npos)
+                        valColor = ImVec4(0.6f, 0.8f, 1.0f, 1.0f);
+                    else if (node.typeName.find("FLOAT") != std::string::npos ||
+                             node.typeName.find("DOUBLE") != std::string::npos ||
+                             node.typeName.find("Vector") != std::string::npos ||
+                             node.typeName.find("Quaternion") != std::string::npos ||
+                             node.typeName.find("Color") != std::string::npos)
+                        valColor = ImVec4(0.8f, 1.0f, 0.6f, 1.0f);
+                    else if (node.typeName.find("TlkString") != std::string::npos)
+                        valColor = ImVec4(0.8f, 0.6f, 1.0f, 1.0f);
+                    ImGui::TextColored(valColor, "%s", node.value.c_str());
                 }
-                if (!matches) continue;
             }
-
-            ImGui::TableNextRow();
-            ImGui::TableNextColumn();
-
-            float indent;
-            if (isGff4) {
-                ImGui::Text("%u", node.numericLabel);
+        } else {
+            for (size_t i = 0; i < state.flattenedTree.size(); ++i) {
+                const auto& node = state.flattenedTree[i];
+                ImGui::TableNextRow();
                 ImGui::TableNextColumn();
-                indent = node.depth * 16.0f;
-            } else {
-                indent = node.depth * 16.0f;
-            }
 
-            ImGui::SetCursorPosX(ImGui::GetCursorPosX() + indent);
-            if (node.isExpandable) {
-                ImGui::PushID(static_cast<int>(i));
-                if (ImGui::SmallButton(node.isExpanded ? "-" : "+")) {
-                    if (node.isExpanded) state.expandedPaths.erase(node.path);
-                    else state.expandedPaths.insert(node.path);
-                    rebuildGffTree(state);
+                float indent;
+                if (isGff4) {
+                    ImGui::Text("%u", node.numericLabel);
+                    ImGui::TableNextColumn();
+                    indent = node.depth * 16.0f;
+                } else {
+                    indent = node.depth * 16.0f;
+                }
+
+                ImGui::SetCursorPosX(ImGui::GetCursorPosX() + indent);
+                if (node.isExpandable) {
+                    ImGui::PushID(static_cast<int>(i));
+                    if (ImGui::SmallButton(node.isExpanded ? "-" : "+")) {
+                        if (node.isExpanded) state.expandedPaths.erase(node.path);
+                        else state.expandedPaths.insert(node.path);
+                        rebuildGffTree(state);
+            requestCacheBuild(state);
+                        ImGui::PopID();
+                        break;
+                    }
                     ImGui::PopID();
-                    break;
+                    ImGui::SameLine();
+                } else {
+                    ImGui::Dummy(ImVec2(20, 0));
+                    ImGui::SameLine();
                 }
-                ImGui::PopID();
-                ImGui::SameLine();
-            } else {
-                ImGui::Dummy(ImVec2(20, 0));
-                ImGui::SameLine();
-            }
 
-            char labelBuf[512];
-            snprintf(labelBuf, sizeof(labelBuf), "%s##%zu", node.label.c_str(), i);
-            bool selected = (static_cast<int>(i) == state.selectedNodeIndex);
-            if (ImGui::Selectable(labelBuf, selected, ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowDoubleClick)) {
-                state.selectedNodeIndex = static_cast<int>(i);
-                if (ImGui::IsMouseDoubleClicked(0) && node.isExpandable) {
-                    if (node.isExpanded) state.expandedPaths.erase(node.path);
-                    else state.expandedPaths.insert(node.path);
-                    rebuildGffTree(state);
-                    ImGui::EndTable();
-                    ImGui::EndChild();
-                    ImGui::End();
-                    return;
+                char labelBuf[512];
+                snprintf(labelBuf, sizeof(labelBuf), "%s##%zu", node.label.c_str(), i);
+                bool selected = (static_cast<int>(i) == state.selectedNodeIndex);
+                if (ImGui::Selectable(labelBuf, selected, ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowDoubleClick)) {
+                    state.selectedNodeIndex = static_cast<int>(i);
+                    if (ImGui::IsMouseDoubleClicked(0) && node.isExpandable) {
+                        if (node.isExpanded) state.expandedPaths.erase(node.path);
+                        else state.expandedPaths.insert(node.path);
+                        rebuildGffTree(state);
+            requestCacheBuild(state);
+                        ImGui::EndTable();
+                        ImGui::EndChild();
+                        ImGui::End();
+                        return;
+                    }
                 }
+
+                ImGui::TableNextColumn();
+                ImVec4 typeColor(0.5f, 0.5f, 0.5f, 1.0f);
+                if (node.typeName.find("[") != std::string::npos || node.typeName == "List")
+                    typeColor = ImVec4(0.9f, 0.7f, 0.3f, 1.0f);
+                else if (node.typeName.find("Structure") != std::string::npos || node.typeName == "Root")
+                    typeColor = ImVec4(0.5f, 0.7f, 0.5f, 1.0f);
+                else if (isGff4 && node.isExpandable)
+                    typeColor = ImVec4(0.5f, 0.7f, 0.5f, 1.0f);
+                ImGui::TextColored(typeColor, "%s", node.typeName.c_str());
+
+                ImGui::TableNextColumn();
+                ImVec4 valColor(1, 1, 1, 1);
+                bool isListNode = node.typeName.find("[") != std::string::npos || node.typeName == "List";
+                bool isStructNode = node.isExpandable && !isListNode;
+                if (isListNode)
+                    valColor = ImVec4(1.0f, 0.8f, 0.4f, 1.0f);
+                else if (isStructNode)
+                    valColor = ImVec4(0.4f, 1.0f, 0.4f, 1.0f);
+                else if (node.typeName.find("String") != std::string::npos ||
+                         node.typeName == "ResRef" || node.typeName == "ExoString" ||
+                         node.typeName.find("ECString") != std::string::npos)
+                    valColor = ImVec4(1.0f, 0.6f, 0.6f, 1.0f);
+                else if (node.typeName.find("INT") != std::string::npos ||
+                         node.typeName.find("DWORD") != std::string::npos ||
+                         node.typeName.find("WORD") != std::string::npos ||
+                         node.typeName.find("BYTE") != std::string::npos ||
+                         node.typeName.find("UINT") != std::string::npos)
+                    valColor = ImVec4(0.6f, 0.8f, 1.0f, 1.0f);
+                else if (node.typeName.find("FLOAT") != std::string::npos ||
+                         node.typeName.find("DOUBLE") != std::string::npos ||
+                         node.typeName.find("Vector") != std::string::npos ||
+                         node.typeName.find("Quaternion") != std::string::npos ||
+                         node.typeName.find("Color") != std::string::npos)
+                    valColor = ImVec4(0.8f, 1.0f, 0.6f, 1.0f);
+                else if (node.typeName.find("TlkString") != std::string::npos)
+                    valColor = ImVec4(0.8f, 0.6f, 1.0f, 1.0f);
+                ImGui::TextColored(valColor, "%s", node.value.c_str());
             }
-
-            ImGui::TableNextColumn();
-            ImVec4 typeColor(0.5f, 0.5f, 0.5f, 1.0f);
-            if (node.typeName.find("[") != std::string::npos || node.typeName == "List")
-                typeColor = ImVec4(0.9f, 0.7f, 0.3f, 1.0f);
-            else if (node.typeName.find("Structure") != std::string::npos || node.typeName == "Root")
-                typeColor = ImVec4(0.5f, 0.7f, 0.5f, 1.0f);
-            else if (isGff4 && node.isExpandable)
-                typeColor = ImVec4(0.5f, 0.7f, 0.5f, 1.0f);
-            ImGui::TextColored(typeColor, "%s", node.typeName.c_str());
-
-            ImGui::TableNextColumn();
-            ImVec4 valColor(1, 1, 1, 1);
-            bool isListNode = node.typeName.find("[") != std::string::npos || node.typeName == "List";
-            bool isStructNode = node.isExpandable && !isListNode;
-            if (isListNode)
-                valColor = ImVec4(1.0f, 0.8f, 0.4f, 1.0f);
-            else if (isStructNode)
-                valColor = ImVec4(0.4f, 1.0f, 0.4f, 1.0f);
-            else if (node.typeName.find("String") != std::string::npos ||
-                     node.typeName == "ResRef" || node.typeName == "ExoString" ||
-                     node.typeName.find("ECString") != std::string::npos)
-                valColor = ImVec4(1.0f, 0.6f, 0.6f, 1.0f);
-            else if (node.typeName.find("INT") != std::string::npos ||
-                     node.typeName.find("DWORD") != std::string::npos ||
-                     node.typeName.find("WORD") != std::string::npos ||
-                     node.typeName.find("BYTE") != std::string::npos ||
-                     node.typeName.find("UINT") != std::string::npos)
-                valColor = ImVec4(0.6f, 0.8f, 1.0f, 1.0f);
-            else if (node.typeName.find("FLOAT") != std::string::npos ||
-                     node.typeName.find("DOUBLE") != std::string::npos ||
-                     node.typeName.find("Vector") != std::string::npos ||
-                     node.typeName.find("Quaternion") != std::string::npos ||
-                     node.typeName.find("Color") != std::string::npos)
-                valColor = ImVec4(0.8f, 1.0f, 0.6f, 1.0f);
-            else if (node.typeName.find("TlkString") != std::string::npos)
-                valColor = ImVec4(0.8f, 0.6f, 1.0f, 1.0f);
-            ImGui::TextColored(valColor, "%s", node.value.c_str());
         }
         ImGui::EndTable();
     }
     ImGui::EndChild();
+
+    if (hasEditableSelection && selectedNode) {
+        if (state.editingNodeIndex != state.selectedNodeIndex) {
+            if (state.editingNodeIndex >= 0 && !state.lastEditPath.empty()) {
+                const GffViewerState::TreeNode* oldNode = nullptr;
+                for (auto& n : state.flattenedTree) { if (n.path == state.lastEditPath) { oldNode = &n; break; } }
+                if (!oldNode) {
+                    for (auto& n : state.fullTree) { if (n.path == state.lastEditPath) { oldNode = &n; break; } }
+                }
+                if (oldNode) {
+                    bool wasTlk = oldNode->typeName.find("TlkString") != std::string::npos;
+                    try {
+                        if (applyGffEdit(state, *oldNode, state.editBuffer, wasTlk ? state.editBuffer2 : nullptr)) {
+                            rebuildGffTree(state);
+            requestCacheBuild(state);
+                            if (filtering) refilterTree(state);
+                        }
+                    } catch (...) {}
+                }
+            }
+            state.editingNodeIndex = state.selectedNodeIndex;
+            state.lastEditPath = selectedNode->path;
+            std::string val = selectedNode->value;
+            if (selectedNode->typeName.find("TlkString") != std::string::npos) {
+                size_t comma = val.find(',');
+                if (comma != std::string::npos) {
+                    strncpy(state.editBuffer, val.substr(0, comma).c_str(), sizeof(state.editBuffer) - 1);
+                    std::string rest = val.substr(comma + 1);
+                    while (!rest.empty() && rest[0] == ' ') rest.erase(0, 1);
+                    strncpy(state.editBuffer2, rest.c_str(), sizeof(state.editBuffer2) - 1);
+                } else {
+                    strncpy(state.editBuffer, val.c_str(), sizeof(state.editBuffer) - 1);
+                    state.editBuffer2[0] = '\0';
+                }
+            } else {
+                strncpy(state.editBuffer, val.c_str(), sizeof(state.editBuffer) - 1);
+                state.editBuffer2[0] = '\0';
+            }
+        }
+        ImGui::Separator();
+        ImGui::Text("Edit: %s (%s)", selectedNode->label.c_str(), selectedNode->typeName.c_str());
+        bool isTlk = selectedNode->typeName.find("TlkString") != std::string::npos;
+        if (isTlk) {
+            ImGui::SetNextItemWidth(120.0f);
+            ImGui::InputText("TLK ID", state.editBuffer, sizeof(state.editBuffer));
+            ImGui::InputTextMultiline("##EditText", state.editBuffer2, sizeof(state.editBuffer2),
+                ImVec2(-1, ImGui::GetContentRegionAvail().y - 30));
+        } else {
+            ImGui::InputTextMultiline("##EditVal", state.editBuffer, sizeof(state.editBuffer),
+                ImVec2(-1, ImGui::GetContentRegionAvail().y - 30));
+        }
+    }
+
+    if (state.hasUnsavedChanges) {
+        ImGui::PushStyleColor(ImGuiCol_Button, ImVec4(0.8f, 0.2f, 0.2f, 1.0f));
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.9f, 0.3f, 0.3f, 1.0f));
+    }
+    float btnWidth = 80.0f;
+    ImGui::SetCursorPosX(ImGui::GetWindowWidth() - btnWidth - 10.0f);
+    std::string saveBtnLabel = state.hasUnsavedChanges ? "Save *" : "Save";
+    if (ImGui::Button(saveBtnLabel.c_str(), ImVec2(btnWidth, 0))) {
+        if (state.editingNodeIndex >= 0 && !state.lastEditPath.empty()) {
+            const GffViewerState::TreeNode* curNode = nullptr;
+            for (auto& n : state.flattenedTree) { if (n.path == state.lastEditPath) { curNode = &n; break; } }
+            if (!curNode) {
+                for (auto& n : state.fullTree) { if (n.path == state.lastEditPath) { curNode = &n; break; } }
+            }
+            if (curNode) {
+                bool wasTlk = curNode->typeName.find("TlkString") != std::string::npos;
+                try { applyGffEdit(state, *curNode, state.editBuffer, wasTlk ? state.editBuffer2 : nullptr); } catch (...) {}
+            }
+        }
+        if (state.hasUnsavedChanges) ImGui::OpenPopup("Confirm Save");
+    }
+    if (state.hasUnsavedChanges)
+        ImGui::PopStyleColor(2);
+
+    if (ImGui::BeginPopupModal("Confirm Save", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+        ImGui::Text("Save changes to %s?", state.fileName.c_str());
+        ImGui::TextColored(ImVec4(1, 0.6f, 0.3f, 1), "Warning: Changes cannot be undone.");
+        ImGui::Separator();
+        if (ImGui::Button("Save", ImVec2(120, 0))) {
+            if (saveGffFile(state, state.erfSource))
+                state.statusMessage = "Saved: " + state.fileName;
+            else
+                state.statusMessage = "Failed to save";
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Cancel", ImVec2(120, 0))) {
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::EndPopup();
+    }
+
+    ImGui::End();
+}
+
+void drawGffLoadingOverlay(GffViewerState& state) {
+    if (!state.bgLoading.load()) return;
+
+    // Fullscreen invisible window to block all input
+    ImGuiViewport* vp = ImGui::GetMainViewport();
+    ImGui::SetNextWindowPos(vp->WorkPos);
+    ImGui::SetNextWindowSize(vp->WorkSize);
+    ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0, 0, 0, 0.3f));
+    ImGui::Begin("##GffInputBlock", nullptr,
+        ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
+        ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse |
+        ImGuiWindowFlags_NoFocusOnAppearing);
+    ImGui::End();
+    ImGui::PopStyleColor();
+
+    // Spinner popup centered
+    ImVec2 center(vp->WorkPos.x + vp->WorkSize.x * 0.5f, vp->WorkPos.y + vp->WorkSize.y * 0.5f);
+    ImGui::SetNextWindowPos(center, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+    ImGui::SetNextWindowSize(ImVec2(0, 0));
+    ImGui::Begin("##GffLoading", nullptr,
+        ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
+        ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize);
+
+    const char* spinChars = "|/-\\";
+    int idx = (int)(ImGui::GetTime() * 8.0f) % 4;
+    ImGui::Text("  %c  Loading %s...", spinChars[idx], state.fileName.c_str());
+
     ImGui::End();
 }

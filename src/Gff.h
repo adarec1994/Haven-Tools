@@ -102,7 +102,6 @@ public:
         return val;
     }
 
-    // Write methods for editing
     template<typename T>
     void writeAt(uint32_t pos, T val) {
         if (pos + sizeof(T) <= m_data.size()) {
@@ -110,10 +109,8 @@ public:
         }
     }
 
-    // Write an ECString at a field's data position - handles both V4.0 and V4.1
     bool writeECString(uint32_t fieldDataPos, const std::string& newStr);
 
-    // Save modified data to file
     bool save(const std::string& path);
     std::vector<uint8_t>& mutableData() { return m_data; }
     std::vector<std::string>& mutableStringCache() { return m_stringCache; }
