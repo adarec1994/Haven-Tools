@@ -171,16 +171,23 @@ bool GFFFile::load(const std::vector<uint8_t>& data) {
     close();
 
     m_data = data;
+    std::cout << "[GFF4] load: " << data.size() << " bytes" << std::endl;
 
     if (!parseHeader()) {
+        std::cout << "[GFF4] parseHeader FAILED" << std::endl;
         close();
         return false;
     }
+    std::cout << "[GFF4] header OK: structs=" << m_header.structCount
+              << " dataOffset=" << m_header.dataOffset
+              << " v41=" << m_header.isV41 << std::endl;
 
     if (!parseStructs()) {
+        std::cout << "[GFF4] parseStructs FAILED" << std::endl;
         close();
         return false;
     }
+    std::cout << "[GFF4] parseStructs OK: " << m_structs.size() << " structs" << std::endl;
 
     m_loaded = true;
     return true;
@@ -410,6 +417,7 @@ std::vector<GFFStructRef> GFFFile::readStructList(uint32_t structIndex, uint32_t
     uint32_t listPos = m_header.dataOffset + ref;
     if (listPos + 4 > m_data.size()) return result;
     uint32_t listCount = readAt<uint32_t>(listPos);
+    if (listCount > 100000) return result;
     listPos += 4;
 
     if (isList && isStruct && !isRef) {
@@ -694,11 +702,11 @@ bool GFFFile::writeECString(uint32_t fieldDataPos, const std::string& newStr) {
     uint32_t address = readUInt32At(fieldDataPos);
     auto wchars = utf8ToUtf16(newStr);
     uint32_t newLen = static_cast<uint32_t>(wchars.size());
-    if (address != 0xFFFFFFFF) {
+    if (address != 0xFFFFFFFF && (address != 0 || m_header.isV41)) {
         uint32_t strPos = m_header.dataOffset + address;
         if (strPos + 4 <= m_data.size()) {
             uint32_t oldLen = readUInt32At(strPos);
-            if (newLen <= oldLen) {
+            if (oldLen < 100000 && newLen <= oldLen) {
                 writeAt(strPos, newLen);
                 for (uint32_t i = 0; i < newLen; i++)
                     writeAt(strPos + 4 + i * 2, wchars[i]);
