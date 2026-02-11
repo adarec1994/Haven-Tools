@@ -3,7 +3,6 @@
 #include "Gff.h"
 #include <string>
 #include <vector>
-#include <iostream>
 #include <memory>
 #include <set>
 #include <algorithm>
@@ -79,9 +78,7 @@ struct GffViewerState {
 
     void stopBgThread() {
         if (bgThread.joinable()) {
-            std::cout << "[GFF] stopBgThread: joining..." << std::endl;
             bgThread.join();
-            std::cout << "[GFF] stopBgThread: joined" << std::endl;
         }
     }
     void clear() {

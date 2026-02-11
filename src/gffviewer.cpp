@@ -228,32 +228,24 @@ bool loadGffData(GffViewerState& state, const std::vector<uint8_t>& data,
     state.fileName = fileName;
     state.erfSource = erfSource;
     state.erfEntryIndex = erfEntryIndex;
-    std::cout << "[GFF] loadGffData: " << fileName << " (" << data.size() << " bytes)" << std::endl;
     if (data.empty()) { state.statusMessage = "Empty data"; return false; }
 
     bool parsed = false;
     if (GFF32::GFF32File::isGFF32(data)) {
-        std::cout << "[GFF] Detected GFF 3.2" << std::endl;
         state.gff32 = std::make_unique<GFF32::GFF32File>();
         if (state.gff32->load(data)) {
             state.loadedFormat = GffViewerState::Format::GFF32;
             state.statusMessage = "Loaded GFF 3.2: " + state.gff32->fileType();
             parsed = true;
-            std::cout << "[GFF] Parsed GFF32 OK: " << state.gff32->fileType() << std::endl;
         } else {
-            std::cout << "[GFF] GFF32 parse FAILED" << std::endl;
             state.gff32.reset();
         }
     }
     if (!parsed && data.size() >= 4 && data[0] == 'G' && data[1] == 'F' && data[2] == 'F' && data[3] == ' ') {
-        std::cout << "[GFF] Detected GFF 4.x" << std::endl;
         state.gff4 = std::make_unique<GFFFile>();
         if (state.gff4->load(data)) {
             state.loadedFormat = GffViewerState::Format::GFF4;
             state.statusMessage = "Loaded GFF 4";
-            std::cout << "[GFF] Parsed GFF4 OK, structs=" << state.gff4->structs().size()
-                      << " dataOff=" << state.gff4->dataOffset()
-                      << " rawSize=" << state.gff4->rawData().size() << std::endl;
             if (!GFF4TLK::isLoaded() && !state.gamePath.empty()) {
                 int tlkCount = GFF4TLK::loadAllFromPath(state.gamePath);
                 if (tlkCount > 0)
@@ -261,34 +253,25 @@ bool loadGffData(GffViewerState& state, const std::vector<uint8_t>& data,
             }
             parsed = true;
         } else {
-            std::cout << "[GFF] GFF4 parse FAILED" << std::endl;
             state.gff4.reset();
         }
     }
-    if (!parsed) { std::cout << "[GFF] No parser matched" << std::endl; state.statusMessage = "Failed to parse as GFF"; return false; }
 
     state.showWindow = false;
     state.bgLoading.store(true);
     state.bgStatusMessage = "Building tree for " + fileName + "...";
     state.stopBgThread();
-    std::cout << "[GFF] Starting bg thread..." << std::endl;
     state.bgThread = std::thread([&state]() {
-        std::cout << "[GFF-BG] buildFullTree start" << std::endl;
         try {
             buildFullTree(state);
-            std::cout << "[GFF-BG] buildFullTree done, nodes=" << state.fullTree.size() << std::endl;
             rebuildGffTree(state);
-            std::cout << "[GFF-BG] rebuildGffTree done, visible=" << state.visibleIndices.size() << std::endl;
         } catch (const std::exception& e) {
-            std::cout << "[GFF-BG] EXCEPTION: " << e.what() << std::endl;
             state.statusMessage = std::string("Error: ") + e.what();
         } catch (...) {
-            std::cout << "[GFF-BG] UNKNOWN EXCEPTION" << std::endl;
             state.statusMessage = "Error building tree";
         }
         state.bgLoading.store(false);
         state.showWindow = true;
-        std::cout << "[GFF-BG] Thread complete" << std::endl;
     });
     return true;
 }
@@ -313,14 +296,12 @@ void rebuildGffTree(GffViewerState& state) {
 }
 
 static void buildFullTree(GffViewerState& state) {
-    std::cout << "[BFT] enter, format=" << (int)state.loadedFormat << std::endl;
     state.fullTree.clear();
     std::set<std::string> savedPaths = state.expandedPaths;
     std::vector<GffViewerState::TreeNode> savedFlat = std::move(state.flattenedTree);
     state.flattenedTree.clear();
 
     if (state.loadedFormat == GffViewerState::Format::GFF32 && state.gff32 && state.gff32->root()) {
-        std::cout << "[BFT] GFF32 path" << std::endl;
         GffViewerState::TreeNode rootNode;
         rootNode.label = state.gff32->fileType() + " " + state.gff32->fileVersion();
         rootNode.typeName = "Root"; rootNode.value = ""; rootNode.depth = 0;
@@ -330,39 +311,30 @@ static void buildFullTree(GffViewerState& state) {
         buildTreeFromGff32Struct(state, *state.gff32->root(), "", 1, true);
     }
     else if (state.loadedFormat == GffViewerState::Format::GFF4 && state.gff4 && state.gff4->isLoaded()) {
-        std::cout << "[BFT] GFF4 path, structs=" << state.gff4->structs().size() << std::endl;
         const auto& hdr = state.gff4->header();
         char fileType[5]={0}, fileVer[5]={0}, platform[5]={0};
         std::memcpy(fileType, &hdr.fileType, 4);
         std::memcpy(fileVer, &hdr.fileVersion, 4);
         std::memcpy(platform, &hdr.platform, 4);
         std::string version = (hdr.version == 0x56342E30) ? "V4.0" : ((hdr.version == 0x56342E31) ? "V4.1" : "V4.?");
-        std::cout << "[BFT] creating root node" << std::endl;
         GffViewerState::TreeNode rootNode;
         rootNode.numericLabel = 0;
         rootNode.label = std::string("GFF  ") + version + " " + fileType + " " + fileVer + " " + platform;
         rootNode.typeName = !state.gff4->structs().empty() ? std::string(state.gff4->structs()[0].structType) : "?";
-        std::cout << "[BFT] calling gff4StructPreview..." << std::endl;
         rootNode.value = !state.gff4->structs().empty() ? gff4StructPreview(*state.gff4, 0, 0) : "";
-        std::cout << "[BFT] gff4StructPreview done" << std::endl;
         rootNode.depth = 0; rootNode.isExpandable = !state.gff4->structs().empty();
         rootNode.isExpanded = true;
         rootNode.childCount = state.gff4->structs().empty() ? 0 : state.gff4->structs()[0].fields.size();
         rootNode.path = ""; rootNode.structIndex = 0; rootNode.baseOffset = 0; rootNode.isListItem = false;
         state.flattenedTree.push_back(rootNode);
-        std::cout << "[BFT] calling buildTreeFromGff4Struct..." << std::endl;
         if (!state.gff4->structs().empty())
             buildTreeFromGff4Struct(state, 0, 0, 1, "", true);
-        std::cout << "[BFT] buildTreeFromGff4Struct done, flat=" << state.flattenedTree.size() << std::endl;
     }
-    std::cout << "[BFT] moving to fullTree" << std::endl;
     state.fullTree = std::move(state.flattenedTree);
     state.flattenedTree = std::move(savedFlat);
     state.expandedPaths = savedPaths;
-    std::cout << "[BFT] building search keys for " << state.fullTree.size() << " nodes" << std::endl;
     for (auto& node : state.fullTree) node.buildSearchKeys();
     state.cacheReady = true;
-    std::cout << "[BFT] done" << std::endl;
 }
 
 static void requestCacheBuild(GffViewerState& state) {
@@ -502,21 +474,13 @@ static void buildTreeFromGff4Struct(GffViewerState& state, uint32_t structIndex,
     if (!visited) visited = &localVisited;
     auto key = std::make_pair(structIndex, baseOffset);
     if (visited->count(key)) {
-        std::cout << "[TREE4] CYCLE detected: struct=" << structIndex << " offset=" << baseOffset
-                  << " depth=" << depth << " path=" << basePath << std::endl;
         return;
     }
     visited->insert(key);
 
-    if (state.flattenedTree.size() % 100 == 0 && state.flattenedTree.size() > 0) {
-        std::cout << "[TREE4] " << state.flattenedTree.size() << " nodes, depth=" << depth
-                  << " struct=" << structIndex << " offset=" << baseOffset << std::endl;
-    }
     const GFFStruct& st = state.gff4->structs()[structIndex];
-    if (depth <= 3) std::cout << "[TREE4] struct=" << structIndex << " off=" << baseOffset << " depth=" << depth << " fields=" << st.fields.size() << " path=" << basePath << std::endl;
     for (size_t i = 0; i < st.fields.size(); ++i) {
         const GFFField& field = st.fields[i];
-        if (depth <= 3) std::cout << "[TREE4]   field[" << i << "] label=" << field.label << " type=" << field.typeId << " flags=" << (int)field.flags << std::endl;
         std::string path = basePath.empty() ? std::to_string(field.label) : basePath + "." + std::to_string(field.label);
         GffViewerState::TreeNode node;
         node.numericLabel = field.label;
@@ -540,7 +504,6 @@ static void buildTreeFromGff4Struct(GffViewerState& state, uint32_t structIndex,
             node.value = gff4ListPreview(items.size());
         } else if (isList && !isStruct && !isRef) {
             auto [count, dataStart] = state.gff4->readPrimitiveListInfo(structIndex, field.label, baseOffset);
-            if (depth <= 3) std::cout << "[TREE4]   primListInfo count=" << count << " dataStart=" << dataStart << std::endl;
             node.childCount = count;
             node.isExpandable = count > 0;
             node.value = gff4ListPreview(count);
@@ -610,7 +573,6 @@ static void buildTreeFromGff4Struct(GffViewerState& state, uint32_t structIndex,
         if (node.isExpanded && node.isExpandable) {
             if (isList && (isStruct || isRef)) {
                 auto items = state.gff4->readStructList(structIndex, field.label, baseOffset);
-                if (depth <= 3) std::cout << "[TREE4]     list items=" << items.size() << std::endl;
                 bool elemIndirect = isRef;
                 for (size_t j = 0; j < items.size(); ++j) {
                     std::string itemPath = path + "[" + std::to_string(j) + "]";
@@ -635,15 +597,13 @@ static void buildTreeFromGff4Struct(GffViewerState& state, uint32_t structIndex,
                     itemNode.isExpanded = forceExpand || state.expandedPaths.count(itemPath) > 0;
                     state.flattenedTree.push_back(itemNode);
                     if (itemNode.isExpanded) {
-                        if (depth <= 3) std::cout << "[TREE4]     recurse list item[" << j << "] struct=" << items[j].structIndex << " off=" << items[j].offset << std::endl;
                         buildTreeFromGff4Struct(state, items[j].structIndex, items[j].offset, depth + 2, itemPath, forceExpand, visited);
                     }
                 }
             } else if (isList && !isStruct && !isRef) {
                 auto [count, dataStart] = state.gff4->readPrimitiveListInfo(structIndex, field.label, baseOffset);
-                std::cout << "[TREE4]     primList count=" << count << " dataStart=" << dataStart << " itemSize=" << GFFFile::primitiveTypeSize(field.typeId) << std::endl;
                 uint32_t itemSize = GFFFile::primitiveTypeSize(field.typeId);
-                if (count > 100000) { std::cout << "[TREE4]     CAPPED primitive list from " << count << std::endl; count = 100000; }
+                if (count > 100000) count = 100000;
                 for (uint32_t j = 0; j < count; ++j) {
                     std::string itemPath = path + "[" + std::to_string(j) + "]";
                     GffViewerState::TreeNode itemNode;
@@ -664,20 +624,17 @@ static void buildTreeFromGff4Struct(GffViewerState& state, uint32_t structIndex,
             } else if (isRef && !isStruct) {
                 auto ref = state.gff4->readStructRef(structIndex, field.label, baseOffset);
                 if (ref.structIndex < state.gff4->structs().size()) {
-                    if (depth <= 3) std::cout << "[TREE4]     recurse ref struct=" << ref.structIndex << " off=" << ref.offset << std::endl;
                     buildTreeFromGff4Struct(state, ref.structIndex, ref.offset, depth + 1, path, forceExpand, visited);
                 }
             } else if (isStruct && isRef) {
                 auto ref = state.gff4->readStructRef(structIndex, field.label, baseOffset);
                 if (ref.structIndex < state.gff4->structs().size()) {
-                    if (depth <= 3) std::cout << "[TREE4]     recurse structRef struct=" << ref.structIndex << " off=" << ref.offset << std::endl;
                     buildTreeFromGff4Struct(state, ref.structIndex, ref.offset, depth + 1, path, forceExpand, visited);
                 }
             } else if (isStruct && !isRef) {
                 uint32_t embStructOffset = baseOffset + field.dataOffset;
                 uint32_t embStructIdx = field.typeId;
                 if (embStructIdx < state.gff4->structs().size()) {
-                    if (depth <= 3) std::cout << "[TREE4]     recurse embedded struct=" << embStructIdx << " off=" << embStructOffset << std::endl;
                     buildTreeFromGff4Struct(state, embStructIdx, embStructOffset, depth + 1, path, forceExpand, visited);
                 }
             }
@@ -696,8 +653,6 @@ static std::vector<float> parseFloats(const std::string& str) {
 }
 
 bool applyGffEdit(GffViewerState& state, const GffViewerState::TreeNode& node, const char* newValue, const char* newValue2) {
-    std::cout << "[GFF] applyGffEdit: path=" << node.path << " type=" << node.typeName
-              << " val='" << newValue << "'" << std::endl;
     if (state.loadedFormat == GffViewerState::Format::GFF4 && state.gff4) {
         const auto& structs = state.gff4->structs();
         if (node.structIndex >= structs.size()) return false;
@@ -1215,37 +1170,26 @@ void drawGffViewerWindow(GffViewerState& state) {
     if (ImGuiFileDialog::Instance()->Display("SaveGFF", ImGuiWindowFlags_NoCollapse, ImVec2(500, 400))) {
         if (ImGuiFileDialog::Instance()->IsOk()) {
             std::string savePath = ImGuiFileDialog::Instance()->GetFilePathName();
-            std::cout << "[GFF-SAVE] Saving to: " << savePath << std::endl;
             std::vector<uint8_t> gffBytes;
             if (state.loadedFormat == GffViewerState::Format::GFF4 && state.gff4) {
                 gffBytes = state.gff4->rawData();
-                std::cout << "[GFF-SAVE] GFF4 rawData size=" << gffBytes.size() << std::endl;
             } else if (state.loadedFormat == GffViewerState::Format::GFF32 && state.gff32) {
                 gffBytes = state.gff32->save();
-                std::cout << "[GFF-SAVE] GFF32 save() size=" << gffBytes.size() << std::endl;
             }
             if (!gffBytes.empty()) {
-                std::cout << "[GFF-SAVE] First 16 bytes: ";
-                for (size_t i = 0; i < 16 && i < gffBytes.size(); i++)
-                    std::cout << std::hex << (int)gffBytes[i] << " ";
-                std::cout << std::dec << std::endl;
                 std::ofstream out(savePath, std::ios::binary | std::ios::trunc);
                 if (out) {
                     out.write(reinterpret_cast<const char*>(gffBytes.data()), gffBytes.size());
                     if (out.good()) {
                         state.hasUnsavedChanges = false;
                         state.statusMessage = "Saved: " + savePath;
-                        std::cout << "[GFF-SAVE] Write OK" << std::endl;
                     } else {
                         state.statusMessage = "Write error: " + savePath;
-                        std::cout << "[GFF-SAVE] Write FAILED" << std::endl;
                     }
                 } else {
                     state.statusMessage = "Cannot open: " + savePath;
-                    std::cout << "[GFF-SAVE] Cannot open file" << std::endl;
                 }
             } else {
-                std::cout << "[GFF-SAVE] gffBytes EMPTY" << std::endl;
             }
         }
         ImGuiFileDialog::Instance()->Close();

@@ -171,23 +171,16 @@ bool GFFFile::load(const std::vector<uint8_t>& data) {
     close();
 
     m_data = data;
-    std::cout << "[GFF4] load: " << data.size() << " bytes" << std::endl;
 
     if (!parseHeader()) {
-        std::cout << "[GFF4] parseHeader FAILED" << std::endl;
         close();
         return false;
     }
-    std::cout << "[GFF4] header OK: structs=" << m_header.structCount
-              << " dataOffset=" << m_header.dataOffset
-              << " v41=" << m_header.isV41 << std::endl;
 
     if (!parseStructs()) {
-        std::cout << "[GFF4] parseStructs FAILED" << std::endl;
         close();
         return false;
     }
-    std::cout << "[GFF4] parseStructs OK: " << m_structs.size() << " structs" << std::endl;
 
     m_loaded = true;
     return true;
