@@ -3,8 +3,103 @@
 #include "terrain_loader.h"
 #include "rml_loader.h"
 #include "GffViewer.h"
+#include "LevelDatabase.h"
 #include <cstring>
 #include <fstream>
+
+
+static const std::vector<LevelGame>& getLevelDB() {
+    static std::vector<LevelGame> db = buildLevelDatabase();
+    return db;
+}
+
+static void startLevelLoad(AppState& state, const std::string& rimPath, const std::string& displayName) {
+    if (state.levelLoad.stage != 0) return;
+    state.showTerrain = false;
+    g_terrainLoader.clear();
+    state.currentErf = std::make_unique<ERFFile>();
+    if (!state.currentErf->open(rimPath)) {
+        state.statusMessage = "Failed to open: " + rimPath;
+        return;
+    }
+
+    state.currentRIMPath = rimPath;
+    state.rimEntries.clear();
+    for (size_t ei = 0; ei < state.currentErf->entries().size(); ei++) {
+        CachedEntry re;
+        re.name = state.currentErf->entries()[ei].name;
+        re.erfIdx = 0;
+        re.entryIdx = ei;
+        state.rimEntries.push_back(re);
+    }
+
+    state.textureErfsLoaded = false;
+    state.modelErfsLoaded = false;
+    state.materialErfsLoaded = false;
+    state.textureErfs.clear();
+    state.modelErfs.clear();
+    state.materialErfs.clear();
+    clearPropCache();
+    ensureBaseErfsLoaded(state);
+
+    auto rimForModel = std::make_unique<ERFFile>();
+    auto rimForMat = std::make_unique<ERFFile>();
+    rimForModel->open(rimPath);
+    rimForMat->open(rimPath);
+    state.modelErfs.push_back(std::move(rimForModel));
+    state.materialErfs.push_back(std::move(rimForMat));
+
+    std::string rimDir = fs::path(rimPath).parent_path().string();
+    for (const auto& dirEntry : fs::directory_iterator(rimDir)) {
+        if (!dirEntry.is_regular_file()) continue;
+        std::string fnameLower = dirEntry.path().filename().string();
+        std::transform(fnameLower.begin(), fnameLower.end(), fnameLower.begin(), ::tolower);
+        if (fnameLower.size() > 8 && fnameLower.substr(fnameLower.size() - 8) == ".gpu.rim") {
+            auto g1 = std::make_unique<ERFFile>();
+            auto g2 = std::make_unique<ERFFile>();
+            if (g1->open(dirEntry.path().string()) && g2->open(dirEntry.path().string())) {
+                state.textureErfs.push_back(std::move(g1));
+                state.materialErfs.push_back(std::move(g2));
+            }
+        }
+    }
+    for (const auto& dirEntry : fs::directory_iterator(rimDir)) {
+        if (!dirEntry.is_regular_file()) continue;
+        std::string dpath = dirEntry.path().string();
+        if (dpath == rimPath) continue;
+        std::string fnameLower = dirEntry.path().filename().string();
+        std::transform(fnameLower.begin(), fnameLower.end(), fnameLower.begin(), ::tolower);
+        if (fnameLower.size() > 4 && fnameLower.substr(fnameLower.size() - 4) == ".rim" &&
+            fnameLower.find(".gpu.rim") == std::string::npos) {
+            auto sibRim = std::make_unique<ERFFile>();
+            if (sibRim->open(dpath))
+                state.materialErfs.push_back(std::move(sibRim));
+        }
+    }
+
+    for (const auto& mat : state.currentModel.materials) {
+        if (mat.diffuseTexId != 0) destroyTexture(mat.diffuseTexId);
+        if (mat.normalTexId != 0) destroyTexture(mat.normalTexId);
+        if (mat.specularTexId != 0) destroyTexture(mat.specularTexId);
+        if (mat.tintTexId != 0) destroyTexture(mat.tintTexId);
+        if (mat.paletteTexId != 0) destroyTexture(mat.paletteTexId);
+        if (mat.palNormalTexId != 0) destroyTexture(mat.palNormalTexId);
+        if (mat.maskVTexId != 0) destroyTexture(mat.maskVTexId);
+        if (mat.maskATexId != 0) destroyTexture(mat.maskATexId);
+    }
+    destroyLevelBuffers();
+    state.currentModel = Model();
+    state.currentModel.name = displayName + " (" + fs::path(rimPath).stem().string() + ")";
+    state.hasModel = true;
+    state.selectedLevelChunk = -1;
+    state.currentModelAnimations.clear();
+    state.showRIMBrowser = false;
+
+    state.levelLoad = {};
+    state.levelLoad.stage = 1;
+    state.levelLoad.stageLabel = "Scanning level data...";
+    state.statusMessage = "Loading: " + displayName;
+}
 
 static bool isGffData(const std::vector<uint8_t>& data) {
     if (data.size() < 12) return false;
@@ -200,146 +295,6 @@ static bool deleteFromERF(const std::string& erfPath, const std::vector<std::str
     out.write(reinterpret_cast<const char*>(newErf.data()), newErf.size());
     return true;
 }
-void drawMeshBrowserWindow(AppState& state) {
-    loadMeshDatabase(state);
-    ImGui::SetNextWindowSize(ImVec2(400, 500), ImGuiCond_FirstUseEver);
-    ImGui::Begin("Mesh Browser", &state.showMeshBrowser);
-    if (state.meshBrowser.allMeshes.empty()) {
-        ImGui::TextDisabled("No mesh database loaded.");
-        ImGui::TextDisabled("Place model_names.csv in exe directory.");
-        ImGui::End();
-        return;
-    }
-    ImGui::Checkbox("Categorized", &state.meshBrowser.categorized);
-    ImGui::SameLine();
-    ImGui::SetNextItemWidth(150);
-    if (ImGui::BeginCombo("Category", state.meshBrowser.categories[state.meshBrowser.selectedCategory].c_str())) {
-        for (size_t i = 0; i < state.meshBrowser.categories.size(); i++) {
-            bool selected = (state.meshBrowser.selectedCategory == (int)i);
-            if (ImGui::Selectable(state.meshBrowser.categories[i].c_str(), selected)) {
-                state.meshBrowser.selectedCategory = (int)i;
-            }
-            if (selected) ImGui::SetItemDefaultFocus();
-        }
-        ImGui::EndCombo();
-    }
-    if (ImGui::BeginTabBar("LODTabs")) {
-        const char* lodNames[] = {"LOD 0", "LOD 1", "LOD 2", "LOD 3"};
-        for (int lod = 0; lod < 4; lod++) {
-            if (ImGui::BeginTabItem(lodNames[lod])) {
-                state.meshBrowser.selectedLod = lod;
-                ImGui::EndTabItem();
-            }
-        }
-        ImGui::EndTabBar();
-    }
-    ImGui::InputText("Filter", state.meshBrowser.meshFilter, sizeof(state.meshBrowser.meshFilter));
-    std::string filterLower = state.meshBrowser.meshFilter;
-    std::transform(filterLower.begin(), filterLower.end(), filterLower.begin(), ::tolower);
-    std::string selectedCat = state.meshBrowser.categories[state.meshBrowser.selectedCategory];
-    std::vector<const MeshEntry*> filtered;
-    for (const auto& entry : state.meshBrowser.allMeshes) {
-        if (entry.lod != state.meshBrowser.selectedLod) continue;
-        if (state.meshBrowser.categorized && selectedCat != "All" && entry.category != selectedCat) continue;
-        std::string displayName = entry.mshName.empty() ? entry.mshFile : entry.mshName;
-        std::string displayLower = displayName;
-        std::transform(displayLower.begin(), displayLower.end(), displayLower.begin(), ::tolower);
-        if (!filterLower.empty() && displayLower.find(filterLower) == std::string::npos) continue;
-        filtered.push_back(&entry);
-    }
-    ImGui::Text("%zu meshes", filtered.size());
-    ImGui::Separator();
-    ImGui::BeginChild("MeshList", ImVec2(0, 0), true);
-    ImGuiListClipper clipper;
-    clipper.Begin(static_cast<int>(filtered.size()));
-    while (clipper.Step()) {
-        for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; i++) {
-            const MeshEntry* entry = filtered[i];
-            std::string displayName = entry->mshName.empty() ? entry->mshFile : entry->mshName;
-            char label[512];
-            if (state.meshBrowser.categorized || selectedCat == "All") {
-                snprintf(label, sizeof(label), "%s##%d", displayName.c_str(), i);
-            } else {
-                snprintf(label, sizeof(label), "[%s] %s##%d", entry->category.c_str(), displayName.c_str(), i);
-            }
-            bool selected = (state.meshBrowser.selectedMeshIndex == i);
-            if (ImGui::Selectable(label, selected, ImGuiSelectableFlags_AllowDoubleClick)) {
-                state.meshBrowser.selectedMeshIndex = i;
-                if (ImGui::IsMouseDoubleClicked(0)) {
-                    std::string mshFile = entry->mshFile;
-                    std::string mshLower = mshFile;
-                    std::transform(mshLower.begin(), mshLower.end(), mshLower.begin(), ::tolower);
-                    if (state.showHeadSelector && state.pendingBodyMsh != mshFile) {
-                        state.showHeadSelector = false;
-                    }
-                    auto heads = findAssociatedHeads(state, mshFile);
-                    auto eyes = findAssociatedEyes(state, mshFile);
-                    state.currentModelAnimations = entry->animations;
-                    for (const auto& erfPath : state.erfFiles) {
-                        ERFFile erf;
-                        if (erf.open(erfPath)) {
-                            for (size_t entryIdx = 0; entryIdx < erf.entries().size(); entryIdx++) {
-                                const auto& erfEntry = erf.entries()[entryIdx];
-                                std::string entryLower = erfEntry.name;
-                                std::transform(entryLower.begin(), entryLower.end(), entryLower.begin(), ::tolower);
-                                if (entryLower == mshLower) {
-                                    state.currentErf = std::make_unique<ERFFile>();
-                                    state.currentErf->open(erfPath);
-                                    if (loadModelFromEntry(state, erfEntry)) {
-                                        state.statusMessage = "Loaded: " + displayName;
-                                        if (!heads.empty()) {
-                                            loadAndMergeHead(state, heads[0].first);
-                                            state.statusMessage += " + " + heads[0].second;
-                                            if (heads.size() > 1) {
-                                                state.availableHeads.clear();
-                                                state.availableHeadNames.clear();
-                                                for (const auto& h : heads) {
-                                                    state.availableHeads.push_back(h.first);
-                                                    state.availableHeadNames.push_back(h.second);
-                                                }
-                                                state.pendingBodyMsh = mshFile;
-                                                state.pendingBodyEntry.erfIdx = 0;
-                                                for (size_t ei = 0; ei < state.erfFiles.size(); ei++) {
-                                                    if (state.erfFiles[ei] == erfPath) {
-                                                        state.pendingBodyEntry.erfIdx = ei;
-                                                        break;
-                                                    }
-                                                }
-                                                state.pendingBodyEntry.entryIdx = entryIdx;
-                                                state.pendingBodyEntry.name = erfEntry.name;
-                                                state.selectedHeadIndex = 0;
-                                                state.showHeadSelector = true;
-                                            }
-                                        }
-                                        if (!eyes.empty()) {
-                                            loadAndMergeHead(state, eyes[0].first);
-                                            state.statusMessage += " + " + eyes[0].second;
-                                        }
-                                        state.showRenderSettings = true;
-                                    } else {
-                                        state.statusMessage = "Failed to load: " + displayName;
-                                    }
-                                    goto done_search;
-                                }
-                            }
-                        }
-                    }
-                    done_search:;
-                }
-            }
-            if (ImGui::IsItemHovered()) {
-                ImGui::BeginTooltip();
-                ImGui::Text("File: %s", entry->mshFile.c_str());
-                if (!entry->mshName.empty()) ImGui::Text("Name: %s", entry->mshName.c_str());
-                ImGui::Text("Category: %s", entry->category.c_str());
-                ImGui::Text("LOD: %d", entry->lod);
-                ImGui::EndTooltip();
-            }
-        }
-    }
-    ImGui::EndChild();
-    ImGui::End();
-}
 void drawBrowserWindow(AppState& state) {
     if (state.levelLoad.stage > 0) {
         auto& ll = state.levelLoad;
@@ -423,8 +378,19 @@ void drawBrowserWindow(AppState& state) {
                 size_t rimIdx = ll.terrainQueue[i];
                 if (state.rimEntries[rimIdx].entryIdx < state.currentErf->entries().size()) {
                     const auto& erfEntry = state.currentErf->entries()[state.rimEntries[rimIdx].entryIdx];
-                    if (mergeModelEntry(state, erfEntry))
+                    size_t meshCountBefore = state.currentModel.meshes.size();
+                    if (mergeModelEntry(state, erfEntry)) {
                         ll.terrainLoaded++;
+                        // Tag terrain meshes with the .msh filename
+                        for (size_t mi = meshCountBefore; mi < state.currentModel.meshes.size(); mi++) {
+                            if (state.currentModel.meshes[mi].name.empty()) {
+                                std::string displayName = erfEntry.name;
+                                auto dot = displayName.rfind('.');
+                                if (dot != std::string::npos) displayName = displayName.substr(0, dot);
+                                state.currentModel.meshes[mi].name = displayName;
+                            }
+                        }
+                    }
                 }
                 ll.itemIndex = i + 1;
                 processed++;
@@ -439,9 +405,20 @@ void drawBrowserWindow(AppState& state) {
             int processed = 0;
             for (int i = ll.itemIndex; i < ll.totalProps && processed < BATCH_SIZE; i++) {
                 const auto& pw = ll.propQueue[i];
+                size_t meshCountBefore = state.currentModel.meshes.size();
                 if (mergeModelByName(state, pw.modelName, pw.px, pw.py, pw.pz,
-                                     pw.qx, pw.qy, pw.qz, pw.qw, pw.scale))
+                                     pw.qx, pw.qy, pw.qz, pw.qw, pw.scale)) {
                     ll.propsLoaded++;
+                    // Tag new meshes with prop model name for selection display
+                    for (size_t mi = meshCountBefore; mi < state.currentModel.meshes.size(); mi++) {
+                        if (state.currentModel.meshes[mi].name.empty()) {
+                            std::string displayName = pw.modelName;
+                            auto dot = displayName.rfind('.');
+                            if (dot != std::string::npos) displayName = displayName.substr(0, dot);
+                            state.currentModel.meshes[mi].name = displayName;
+                        }
+                    }
+                }
                 ll.itemIndex = i + 1;
                 processed++;
             }
@@ -455,22 +432,33 @@ void drawBrowserWindow(AppState& state) {
             bakeLevelBuffers(state.currentModel);
 
             if (!state.currentModel.meshes.empty()) {
+                // Compute bounds directly from vertex data (mesh bounds may not be set after merge)
                 float minX = 1e30f, maxX = -1e30f;
                 float minY = 1e30f, maxY = -1e30f;
                 float minZ = 1e30f, maxZ = -1e30f;
+                bool hasVerts = false;
                 for (const auto& mesh : state.currentModel.meshes) {
-                    if (mesh.minX < minX) minX = mesh.minX;
-                    if (mesh.maxX > maxX) maxX = mesh.maxX;
-                    if (mesh.minY < minY) minY = mesh.minY;
-                    if (mesh.maxY > maxY) maxY = mesh.maxY;
-                    if (mesh.minZ < minZ) minZ = mesh.minZ;
-                    if (mesh.maxZ > maxZ) maxZ = mesh.maxZ;
+                    for (const auto& v : mesh.vertices) {
+                        if (v.x < minX) minX = v.x;
+                        if (v.x > maxX) maxX = v.x;
+                        if (v.y < minY) minY = v.y;
+                        if (v.y > maxY) maxY = v.y;
+                        if (v.z < minZ) minZ = v.z;
+                        if (v.z > maxZ) maxZ = v.z;
+                        hasVerts = true;
+                    }
                 }
-                float cx = (minX + maxX) / 2.0f, cy = (minY + maxY) / 2.0f, cz = (minZ + maxZ) / 2.0f;
-                float dx = maxX - minX, dy = maxY - minY, dz = maxZ - minZ;
-                float radius = std::sqrt(dx*dx + dy*dy + dz*dz) / 2.0f;
-                state.camera.lookAt(cx, cy, cz, radius * 2.5f);
-                state.camera.moveSpeed = radius * 0.1f;
+                if (hasVerts) {
+                    float cx = (minX + maxX) / 2.0f;
+                    float cy = (minY + maxY) / 2.0f;
+                    float cz = (minZ + maxZ) / 2.0f;
+                    float dx = maxX - minX, dy = maxY - minY, dz = maxZ - minZ;
+                    float radius = std::sqrt(dx*dx + dy*dy + dz*dz) / 2.0f;
+                    if (radius < 1.0f) radius = 1.0f;
+                    state.camera.lookAt(cx, cy, cz, radius * 1.5f);
+                    state.camera.moveSpeed = radius * 0.05f;
+                    if (state.camera.moveSpeed < 1.0f) state.camera.moveSpeed = 1.0f;
+                }
             }
 
             state.statusMessage = "Loaded level: " + std::to_string(ll.terrainLoaded) + " terrain, " +
@@ -530,7 +518,26 @@ void drawBrowserWindow(AppState& state) {
     ImGui::BeginChild("LeftPane", ImVec2(leftW, totalH), false);
     ImGui::Text("Files");
     ImGui::BeginChild("ERFList", ImVec2(0, 0), true);
-    if (!state.audioFilesLoaded && !state.selectedFolder.empty()) {
+    if (!state.selectedFolder.empty()) {
+        bool levelsSelected = (state.selectedErfName == "[Levels]");
+        if (ImGui::Selectable("Levels", levelsSelected)) {
+            if (!levelsSelected) {
+                state.selectedErfName = "[Levels]";
+                state.selectedEntryIndex = -1;
+                state.mergedEntries.clear();
+                state.filteredEntryIndices.clear();
+                state.lastContentFilter.clear();
+                state.showRIMBrowser = false;
+                state.rimEntries.clear();
+                state.showFSBBrowser = false;
+                state.currentFSBSamples.clear();
+            }
+        }
+    }
+
+    ImGui::Separator();
+
+        if (!state.audioFilesLoaded && !state.selectedFolder.empty()) {
         scanAudioFiles(state);
     }
     bool audioSelected = (state.selectedErfName == "[Audio]");
@@ -750,75 +757,18 @@ void drawBrowserWindow(AppState& state) {
             state.filteredEntryIndices.clear();
             state.lastContentFilter.clear();
 
-            if (state.rimScanDone) {
-                state.rimMultiMeshCount = 0;
-                for (size_t i = 0; i < state.rimFiles.size(); i++)
-                    if (state.rimMshCounts[i] > 1) state.rimMultiMeshCount++;
-
-                {
-                    CachedEntry header;
-                    header.name = "__COLLAPSE_LEVELS__Levels (" + std::to_string(state.rimMultiMeshCount) + ")";
-                    header.erfIdx = SIZE_MAX;
-                    header.entryIdx = 0;
-                    state.mergedEntries.push_back(header);
-                }
-
-                for (size_t i = 0; i < state.rimFiles.size(); i++) {
-                    if (state.rimMshCounts[i] > 1) {
-                        CachedEntry ce;
-                        size_t lastSlash = state.rimFiles[i].find_last_of("/\\");
-                        ce.name = (lastSlash != std::string::npos) ? state.rimFiles[i].substr(lastSlash + 1) : state.rimFiles[i];
-                        ce.name += "  (" + std::to_string(state.rimMshCounts[i]) + " msh)";
-                        ce.erfIdx = i;
-                        ce.entryIdx = 0;
-                        state.mergedEntries.push_back(ce);
-                    }
-                }
-
-                {
-                    int singleCount = (int)state.rimFiles.size() - state.rimMultiMeshCount;
-                    CachedEntry header;
-                    header.name = "__COLLAPSE_OTHER__Other RIMs (" + std::to_string(singleCount) + ")";
-                    header.erfIdx = SIZE_MAX;
-                    header.entryIdx = 0;
-                    state.mergedEntries.push_back(header);
-                }
-
-                for (size_t i = 0; i < state.rimFiles.size(); i++) {
-                    if (state.rimMshCounts[i] <= 1) {
-                        CachedEntry ce;
-                        size_t lastSlash = state.rimFiles[i].find_last_of("/\\");
-                        ce.name = (lastSlash != std::string::npos) ? state.rimFiles[i].substr(lastSlash + 1) : state.rimFiles[i];
-                        if (state.rimMshCounts[i] == 1)
-                            ce.name += "  (1 msh)";
-                        ce.erfIdx = i;
-                        ce.entryIdx = 0;
-                        state.mergedEntries.push_back(ce);
-                    }
-                }
-
-                state.rimLevelsCollapsed = false;
-                state.rimSingleCollapsed = true;
-                state.statusMessage = std::to_string(state.rimMultiMeshCount) + " levels / " +
-                    std::to_string(state.rimFiles.size() - state.rimMultiMeshCount) + " other RIM files";
-            } else {
-                state.rimMultiMeshCount = -1;
-                for (size_t i = 0; i < state.rimFiles.size(); i++) {
-                    CachedEntry ce;
-                    size_t lastSlash = state.rimFiles[i].find_last_of("/\\");
-                    ce.name = (lastSlash != std::string::npos) ? state.rimFiles[i].substr(lastSlash + 1) : state.rimFiles[i];
-                    ce.erfIdx = i;
-                    ce.entryIdx = 0;
-                    state.mergedEntries.push_back(ce);
-                }
-                state.statusMessage = std::to_string(state.rimFiles.size()) + " RIM files (scanning...)";
+            for (size_t i = 0; i < state.rimFiles.size(); i++) {
+                CachedEntry ce;
+                size_t lastSlash = state.rimFiles[i].find_last_of("/\\");
+                ce.name = (lastSlash != std::string::npos) ? state.rimFiles[i].substr(lastSlash + 1) : state.rimFiles[i];
+                ce.erfIdx = i;
+                ce.entryIdx = 0;
+                state.mergedEntries.push_back(ce);
             }
+            state.statusMessage = std::to_string(state.rimFiles.size()) + " RIM files";
         };
 
         // Auto-rebuild when scan finishes
-        if (rimSelected && state.rimScanDone && state.rimMultiMeshCount == -1) {
-            buildRimList();
-        }
 
         if (ImGui::Selectable(rimLabel, rimSelected)) {
             if (!rimSelected) {
@@ -888,7 +838,73 @@ void drawBrowserWindow(AppState& state) {
 
     ImGui::SameLine(0, 0);
     ImGui::BeginChild("RightPane", ImVec2(0, totalH), false);
-    if (!state.selectedErfName.empty() && !state.mergedEntries.empty()) {
+    if (state.selectedErfName == "[Levels]") {
+        ImGui::Text("Levels");
+        ImGui::Separator();
+        ImGui::BeginChild("LevelTree", ImVec2(0, 0), true);
+        const auto& db = getLevelDB();
+
+        static std::unordered_map<std::string, std::string> s_rimLookup;
+        static size_t s_lastRimCount = 0;
+        if (s_rimLookup.empty() || s_lastRimCount != state.rimFiles.size()) {
+            s_rimLookup.clear();
+            for (const auto& rimPath : state.rimFiles) {
+                std::string stem = fs::path(rimPath).stem().string();
+                std::transform(stem.begin(), stem.end(), stem.begin(), ::tolower);
+                s_rimLookup[stem] = rimPath;
+            }
+            s_lastRimCount = state.rimFiles.size();
+        }
+
+        auto lookupRim = [&](const std::string& prefix) -> std::string {
+            std::string key = prefix;
+            std::transform(key.begin(), key.end(), key.begin(), ::tolower);
+            auto it = s_rimLookup.find(key);
+            return (it != s_rimLookup.end()) ? it->second : "";
+        };
+
+        auto drawEntry = [&](const LevelEntry& entry, const char* idSuffix) {
+            std::string rimPath = lookupRim(entry.rimPrefix);
+            bool found = !rimPath.empty();
+            if (!found) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.5f, 0.5f, 0.5f, 1.0f));
+            char label[256];
+            snprintf(label, sizeof(label), "      %s%s", entry.displayName.c_str(), idSuffix);
+            if (ImGui::Selectable(label, false, ImGuiSelectableFlags_AllowDoubleClick)) {
+                if (ImGui::IsMouseDoubleClicked(0) && found) {
+                    startLevelLoad(state, rimPath, entry.displayName);
+                }
+            }
+            if (!found) ImGui::PopStyleColor();
+        };
+        int entryId = 0;
+        for (const auto& game : db) {
+            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.85f, 0.3f, 1.0f));
+            ImGui::Text("%s", game.name.c_str());
+            ImGui::PopStyleColor();
+            ImGui::Separator();
+            for (const auto& sec : game.sections) {
+                if (ImGui::TreeNode(sec.name.c_str())) {
+                    for (const auto& entry : sec.entries) {
+                        char suffix[32]; snprintf(suffix, sizeof(suffix), "##e%d", entryId++);
+                        drawEntry(entry, suffix);
+                    }
+                    for (const auto& sf : sec.subFolders) {
+                        if (ImGui::TreeNode(sf.name.c_str())) {
+                            for (const auto& entry : sf.entries) {
+                                char suffix[32]; snprintf(suffix, sizeof(suffix), "##e%d", entryId++);
+                                drawEntry(entry, suffix);
+                            }
+                            ImGui::TreePop();
+                        }
+                    }
+                    ImGui::TreePop();
+                }
+            }
+            ImGui::Spacing();
+        }
+        ImGui::EndChild();
+    }
+    else if (!state.selectedErfName.empty() && !state.mergedEntries.empty()) {
         bool hasTextures = false, hasModels = false, hasTerrain = false;
         bool isAudioCategory = (state.selectedErfName == "[Audio]" || state.selectedErfName == "[VoiceOver]");
         for (const auto& ce : state.mergedEntries) {
@@ -984,25 +1000,14 @@ void drawBrowserWindow(AppState& state) {
             std::transform(selNameLower.begin(), selNameLower.end(), selNameLower.begin(), ::tolower);
             bool filterByMeshSource = (selNameLower == "modelmeshdata.erf" && s_meshDataSourceFilter > 0);
             bool filterByHierSource = (selNameLower == "modelhierarchies.erf" && s_hierDataSourceFilter > 0);
-            int collapseSection = 0; // 0=none, 1=levels, 2=other
             for (int i = 0; i < (int)state.mergedEntries.size(); i++) {
                 const auto& ce = state.mergedEntries[i];
                 if (ce.name.find("__HEADER__") == 0) {
                     state.filteredEntryIndices.push_back(i);
                     continue;
                 }
-                if (ce.name.find("__COLLAPSE_LEVELS__") == 0) {
-                    state.filteredEntryIndices.push_back(i);
-                    collapseSection = 1;
-                    continue;
-                }
-                if (ce.name.find("__COLLAPSE_OTHER__") == 0) {
-                    state.filteredEntryIndices.push_back(i);
-                    collapseSection = 2;
-                    continue;
-                }
-                if (collapseSection == 1 && state.rimLevelsCollapsed) continue;
-                if (collapseSection == 2 && state.rimSingleCollapsed) continue;
+                if (ce.name.find("__COLLAPSE_LEVELS__") == 0) continue;
+                if (ce.name.find("__COLLAPSE_OTHER__") == 0) continue;
                 if (filterByMeshSource) {
                     if (s_meshDataSourceFilter == 1 && ce.source != "Core") continue;
                     if (s_meshDataSourceFilter == 2 && ce.source != "Awakening") continue;
@@ -1094,30 +1099,7 @@ void drawBrowserWindow(AppState& state) {
                 ImGui::PopStyleColor();
                 return;
             }
-            if (ce.name.find("__COLLAPSE_LEVELS__") == 0) {
-                std::string title = ce.name.substr(19);
-                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.4f, 1.0f, 0.6f, 1.0f));
-                std::string arrow = state.rimLevelsCollapsed ? "+ " : "- ";
-                char clabel[256]; snprintf(clabel, sizeof(clabel), "%s%s##levels", arrow.c_str(), title.c_str());
-                if (ImGui::Selectable(clabel, false)) {
-                    state.rimLevelsCollapsed = !state.rimLevelsCollapsed;
-                    state.lastContentFilter = "\x01"; // force rebuild next frame
-                }
-                ImGui::PopStyleColor();
-                return;
-            }
-            if (ce.name.find("__COLLAPSE_OTHER__") == 0) {
-                std::string title = ce.name.substr(18);
-                ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.6f, 0.6f, 0.6f, 1.0f));
-                std::string arrow = state.rimSingleCollapsed ? "+ " : "- ";
-                char clabel[256]; snprintf(clabel, sizeof(clabel), "%s%s##other", arrow.c_str(), title.c_str());
-                if (ImGui::Selectable(clabel, false)) {
-                    state.rimSingleCollapsed = !state.rimSingleCollapsed;
-                    state.lastContentFilter = "\x01"; // force rebuild next frame
-                }
-                ImGui::PopStyleColor();
-                return;
-            }
+
             bool isModel = isModelFile(ce.name), isMao = isMaoFile(ce.name), isPhy = isPhyFile(ce.name);
             bool isTerrainFile = isTerrain(ce.name);
             bool isTexture = ce.name.size() > 4 && ce.name.substr(ce.name.size() - 4) == ".dds";

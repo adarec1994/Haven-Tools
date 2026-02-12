@@ -37,62 +37,103 @@ void drawRenderSettingsWindow(AppState& state) {
             state.renderSettings.initMeshVisibility(state.currentModel.meshes.size());
         if (state.currentModel.meshes.size() >= 1) {
             ImGui::Separator(); ImGui::Text("Meshes:");
+            bool isLevel = state.currentModel.meshes.size() > 20;
+
             if (state.selectedLevelChunk >= 0 && state.selectedLevelChunk < (int)state.currentModel.meshes.size()) {
                 const auto& selMesh = state.currentModel.meshes[state.selectedLevelChunk];
-                ImGui::TextColored(ImVec4(0.5f, 1.0f, 0.5f, 1.0f), "Selected: %s",
-                    selMesh.name.empty() ? ("Mesh " + std::to_string(state.selectedLevelChunk)).c_str() : selMesh.name.c_str());
-            } else {
-                ImGui::TextDisabled("Click a mesh in the viewport to select it");
-            }
-            float listHeight = std::min(300.0f, state.currentModel.meshes.size() * 50.0f + 20.0f);
-            ImGui::BeginChild("MeshList", ImVec2(0, listHeight), true);
-            for (size_t i = 0; i < state.currentModel.meshes.size(); i++) {
-                const auto& mesh = state.currentModel.meshes[i];
-                ImGui::PushID(static_cast<int>(i));
-                bool visible = state.renderSettings.meshVisible[i] != 0;
-                if (ImGui::Checkbox("##vis", &visible)) state.renderSettings.meshVisible[i] = visible ? 1 : 0;
-                ImGui::SameLine();
-                bool isSelected = (state.selectedLevelChunk == (int)i);
-                if (isSelected) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.5f, 1.0f, 0.5f, 1.0f));
-                std::string label = mesh.name.empty() ? ("Mesh " + std::to_string(i)) : mesh.name;
-                if (ImGui::Selectable(label.c_str(), isSelected, ImGuiSelectableFlags_AllowDoubleClick)) {
-                    state.selectedLevelChunk = isSelected ? -1 : (int)i;  // Toggle
-                }
-                if (isSelected) {
-                    ImGui::PopStyleColor();
-                    // Auto-scroll to selected item when selected from viewport
-                    if (ImGui::IsWindowAppearing() || !ImGui::IsItemVisible())
-                        ImGui::SetScrollHereY(0.5f);
-                }
+                std::string selName = selMesh.name.empty() ? ("Mesh " + std::to_string(state.selectedLevelChunk)) : selMesh.name;
+                ImGui::TextColored(ImVec4(0.5f, 1.0f, 0.5f, 1.0f), "Selected: %s", selName.c_str());
                 ImGui::Indent();
-                ImGui::TextDisabled("%zu verts, %zu tris", mesh.vertices.size(), mesh.indices.size() / 3);
-                if (!mesh.materialName.empty()) {
-                    ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.4f, 1.0f), "Material: %s", mesh.materialName.c_str());
-                    if (mesh.materialIndex >= 0 && mesh.materialIndex < (int)state.currentModel.materials.size()) {
-                        const auto& mat = state.currentModel.materials[mesh.materialIndex];
+                ImGui::TextDisabled("%zu verts, %zu tris", selMesh.vertices.size(), selMesh.indices.size() / 3);
+                if (!selMesh.materialName.empty()) {
+                    ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.4f, 1.0f), "Material: %s", selMesh.materialName.c_str());
+                    if (selMesh.materialIndex >= 0 && selMesh.materialIndex < (int)state.currentModel.materials.size()) {
+                        const auto& mat = state.currentModel.materials[selMesh.materialIndex];
                         if (mat.diffuseTexId != 0) {
                             ImGui::SameLine();
                             if (ImGui::SmallButton("Texture")) {
                                 state.previewTextureId = mat.diffuseTexId;
                                 state.previewTextureName = mat.diffuseMap;
-                                state.previewMeshIndex = static_cast<int>(i);
+                                state.previewMeshIndex = state.selectedLevelChunk;
                                 state.showTexturePreview = true;
+                            }
+                        }
+                        if (!mat.maoContent.empty()) {
+                            ImGui::SameLine();
+                            if (ImGui::SmallButton("MAO")) {
+                                state.maoContent = mat.maoContent;
+                                state.maoFileName = mat.name + ".mao";
+                                state.showMaoViewer = true;
                             }
                         }
                     }
                 }
-                if (ImGui::SmallButton("View UVs")) { state.selectedMeshForUv = static_cast<int>(i); state.showUvViewer = true; }
-                ImGui::Unindent();
-                ImGui::PopID();
-            }
-            ImGui::EndChild();
-            if (state.currentModel.meshes.size() > 1) {
-                if (ImGui::Button("Show All")) for (auto& v : state.renderSettings.meshVisible) v = 1;
+                if (ImGui::SmallButton("View UVs")) {
+                    state.selectedMeshForUv = state.selectedLevelChunk;
+                    state.showUvViewer = true;
+                }
                 ImGui::SameLine();
-                if (ImGui::Button("Hide All")) for (auto& v : state.renderSettings.meshVisible) v = 0;
+                bool vis = state.renderSettings.meshVisible[state.selectedLevelChunk] != 0;
+                if (ImGui::Checkbox("Visible", &vis))
+                    state.renderSettings.meshVisible[state.selectedLevelChunk] = vis ? 1 : 0;
+                ImGui::Unindent();
+                ImGui::TextDisabled("ESC to deselect");
+            } else {
+                ImGui::TextDisabled("Click a mesh in the viewport to select it");
+            }
+
+            // For individual models (few meshes), show the full list
+            if (!isLevel) {
+                float listHeight = std::min(300.0f, state.currentModel.meshes.size() * 50.0f + 20.0f);
+                ImGui::BeginChild("MeshList", ImVec2(0, listHeight), true);
+                for (size_t i = 0; i < state.currentModel.meshes.size(); i++) {
+                    const auto& mesh = state.currentModel.meshes[i];
+                    ImGui::PushID(static_cast<int>(i));
+                    bool visible = state.renderSettings.meshVisible[i] != 0;
+                    if (ImGui::Checkbox("##vis", &visible)) state.renderSettings.meshVisible[i] = visible ? 1 : 0;
+                    ImGui::SameLine();
+                    bool isSelected = (state.selectedLevelChunk == (int)i);
+                    if (isSelected) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.5f, 1.0f, 0.5f, 1.0f));
+                    std::string label = mesh.name.empty() ? ("Mesh " + std::to_string(i)) : mesh.name;
+                    if (ImGui::Selectable(label.c_str(), isSelected, ImGuiSelectableFlags_AllowDoubleClick)) {
+                        state.selectedLevelChunk = isSelected ? -1 : (int)i;
+                    }
+                    if (isSelected) {
+                        ImGui::PopStyleColor();
+                        if (ImGui::IsWindowAppearing() || !ImGui::IsItemVisible())
+                            ImGui::SetScrollHereY(0.5f);
+                    }
+                    ImGui::Indent();
+                    ImGui::TextDisabled("%zu verts, %zu tris", mesh.vertices.size(), mesh.indices.size() / 3);
+                    if (!mesh.materialName.empty()) {
+                        ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.4f, 1.0f), "Material: %s", mesh.materialName.c_str());
+                        if (mesh.materialIndex >= 0 && mesh.materialIndex < (int)state.currentModel.materials.size()) {
+                            const auto& mat = state.currentModel.materials[mesh.materialIndex];
+                            if (mat.diffuseTexId != 0) {
+                                ImGui::SameLine();
+                                if (ImGui::SmallButton("Texture")) {
+                                    state.previewTextureId = mat.diffuseTexId;
+                                    state.previewTextureName = mat.diffuseMap;
+                                    state.previewMeshIndex = static_cast<int>(i);
+                                    state.showTexturePreview = true;
+                                }
+                            }
+                        }
+                    }
+                    if (ImGui::SmallButton("View UVs")) { state.selectedMeshForUv = static_cast<int>(i); state.showUvViewer = true; }
+                    ImGui::Unindent();
+                    ImGui::PopID();
+                }
+                ImGui::EndChild();
+                if (state.currentModel.meshes.size() > 1) {
+                    if (ImGui::Button("Show All")) for (auto& v : state.renderSettings.meshVisible) v = 1;
+                    ImGui::SameLine();
+                    if (ImGui::Button("Hide All")) for (auto& v : state.renderSettings.meshVisible) v = 0;
+                }
             }
         }
-        if (!state.currentModel.materials.empty()) {
+        bool isLevelModel = state.currentModel.meshes.size() > 20;
+        if (!isLevelModel && !state.currentModel.materials.empty()) {
             ImGui::Separator();
             if (ImGui::TreeNode("Materials", "Materials (%zu)", state.currentModel.materials.size())) {
                 for (size_t i = 0; i < state.currentModel.materials.size(); i++) {

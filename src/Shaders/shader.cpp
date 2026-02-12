@@ -91,6 +91,7 @@ cbuffer CBPerMaterial : register(b1) {
     int    uUseStubble;
     int    uUseTattoo;
     float2 pad1;
+    float4 uHighlightColor;
 };
 Texture2D    texDiffuse        : register(t0);
 Texture2D    texNormal         : register(t1);
@@ -263,6 +264,11 @@ float4 main(PSInput input) : SV_TARGET {
     }
     // Water already has full lighting computed
     if (uIsWater != 0) {
+        if (uHighlightColor.a > 0.0) {
+            diffuseColor.rgb = lerp(diffuseColor.rgb, uHighlightColor.rgb, uHighlightColor.a);
+            diffuseColor.rgb += uHighlightColor.rgb * uHighlightColor.a * 0.35;
+            diffuseColor.rgb = saturate(diffuseColor.rgb);
+        }
         return diffuseColor;
     }
     // Lighting
@@ -284,6 +290,10 @@ float4 main(PSInput input) : SV_TARGET {
         specular = spec * specMap.rgb * 0.5;
     }
     float3 finalColor = ambient + diffuse + specular;
+    if (uHighlightColor.a > 0.0) {
+        finalColor = lerp(finalColor, uHighlightColor.rgb, uHighlightColor.a);
+        finalColor += uHighlightColor.rgb * uHighlightColor.a * 0.35;
+    }
     return float4(saturate(finalColor), diffuseColor.a);
 }
 )";

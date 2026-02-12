@@ -53,11 +53,15 @@ struct Camera {
         z = pz;
     }
     void lookAt(float tx, float ty, float tz, float dist) {
+        // Place camera behind (-Y) and above (+Z) target in model space
+        // Model pos: (tx, ty - dist*0.7, tz + dist*0.5)
+        // Camera-movement space (after -90° X rotation): (tx, tz + dist*0.5, dist*0.7 - ty)
         x = tx;
         y = tz + dist * 0.5f;
-        z = ty - dist;
-        yaw = 3.14159f;
-        pitch = -0.2f;
+        z = dist * 0.7f - ty;
+        // Aim at target: direction in movement space is (0, -dist*0.5, -dist*0.7)
+        yaw = 0.0f;
+        pitch = -std::atan2(dist * 0.5f, dist * 0.7f);
         moveSpeed = dist * 0.5f;
         if (moveSpeed < 1.0f) moveSpeed = 1.0f;
     }

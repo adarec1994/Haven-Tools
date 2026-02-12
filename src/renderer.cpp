@@ -167,6 +167,7 @@ struct StaticMeshDraw {
     uint32_t indexCount;
     int32_t  baseVertex;
     int materialIndex;
+    int meshIndex;          // original index in model.meshes[]
     float minX, minY, minZ;
     float maxX, maxY, maxZ;
 };
@@ -201,12 +202,14 @@ void bakeLevelBuffers(Model& model) {
     std::vector<uint32_t> allIndices(totalIndices);
 
     uint32_t vertOff = 0, idxOff = 0;
-    for (const auto& mesh : model.meshes) {
+    for (size_t mi = 0; mi < model.meshes.size(); mi++) {
+        const auto& mesh = model.meshes[mi];
         StaticMeshDraw draw;
         draw.startIndex = idxOff;
         draw.indexCount = (uint32_t)mesh.indices.size();
         draw.baseVertex = (int32_t)vertOff;
         draw.materialIndex = mesh.materialIndex;
+        draw.meshIndex = (int)mi;
         draw.minX = mesh.minX; draw.minY = mesh.minY; draw.minZ = mesh.minZ;
         draw.maxX = mesh.maxX; draw.maxY = mesh.maxY; draw.maxZ = mesh.maxZ;
         s_levelDraws.push_back(draw);
@@ -244,13 +247,7 @@ void bakeLevelBuffers(Model& model) {
         s_levelVB->Release(); s_levelVB = nullptr; return;
     }
 
-    // Free CPU-side vertex/index data from meshes to save RAM
-    for (auto& mesh : model.meshes) {
-        mesh.vertices.clear();
-        mesh.vertices.shrink_to_fit();
-        mesh.indices.clear();
-        mesh.indices.shrink_to_fit();
-    }
+    // NOTE: We keep CPU-side vertex/index data for ray picking (prop selection)
 
     s_levelBaked = true;
 }
@@ -289,7 +286,8 @@ static float getWaterTime() {
 }
 
 static void renderLevelStatic(const Model& model, const float* mvp, const float* view,
-                               const float* viewPos, const RenderSettings& settings) {
+                               const float* viewPos, const RenderSettings& settings,
+                               int selectedChunk) {
     if (!s_levelBaked || !s_levelVB || !s_levelIB) return;
     D3DContext& d3d = getD3DContext();
 
@@ -328,6 +326,7 @@ static void renderLevelStatic(const Model& model, const float* mvp, const float*
             d3d.context->OMSetBlendState(d3d.bsAlpha, blendFactor, 0xFFFFFFFF);
 
         int lastMatIdx = -999;
+        bool wasSelected = false;
 
         for (const auto& draw : s_levelDraws) {
             // Frustum cull
@@ -345,8 +344,9 @@ static void renderLevelStatic(const Model& model, const float* mvp, const float*
             if (pass == 0 && isWaterMat) continue;
             if (pass == 1 && !isWaterMat) continue;
 
-            // Only update material state when it changes
-            if (draw.materialIndex != lastMatIdx) {
+            // Only update material state when it changes (or selection requires override)
+            bool isSelected = selectedChunk >= 0 && draw.meshIndex == selectedChunk;
+            if (draw.materialIndex != lastMatIdx || isSelected || wasSelected) {
                 lastMatIdx = draw.materialIndex;
 
                 bool hasDiffuse  = mat && mat->diffuseTexId != 0 && settings.showTextures;
@@ -357,6 +357,12 @@ static void renderLevelStatic(const Model& model, const float* mvp, const float*
 
                 CBPerMaterial perMat = {};
                 perMat.tintColor[0] = perMat.tintColor[1] = perMat.tintColor[2] = perMat.tintColor[3] = 1.0f;
+                if (isSelected) {
+                    perMat.highlightColor[0] = 0.2f;
+                    perMat.highlightColor[1] = 1.0f;
+                    perMat.highlightColor[2] = 0.4f;
+                    perMat.highlightColor[3] = 0.45f;
+                }
                 perMat.useDiffuse  = (useShaders && (hasDiffuse || isTerrain)) ? 1 : 0;
                 perMat.useNormal   = (useShaders && hasNormal) ? 1 : 0;
                 perMat.useSpecular = (useShaders && hasSpecular) ? 1 : 0;
@@ -398,6 +404,7 @@ static void renderLevelStatic(const Model& model, const float* mvp, const float*
                 }
                 d3d.context->PSSetShaderResources(0, 9, srvs);
             }
+            wasSelected = isSelected;
 
             d3d.context->DrawIndexed(draw.indexCount, draw.startIndex, draw.baseVertex);
         }
@@ -741,7 +748,7 @@ void renderModel(Model& model, const Camera& camera, const RenderSettings& setti
         updatePerFrameCB(perFrame);
 
         if (s_levelBaked) {
-            renderLevelStatic(model, mvp, view, viewPos, settings);
+            renderLevelStatic(model, mvp, view, viewPos, settings, selectedChunk);
         } else {
 
         bool useShaders = !settings.wireframe && settings.showTextures;
@@ -852,12 +859,12 @@ void renderModel(Model& model, const Camera& camera, const RenderSettings& setti
                 } else {
                     perMat.tintColor[0] = perMat.tintColor[1] = perMat.tintColor[2] = perMat.tintColor[3] = 1.0f;
                 }
-                // Green highlight for selected level chunk
+                // Emissive highlight for selected level chunk
                 if (selectedChunk >= 0 && (int)meshIdx == selectedChunk) {
-                    perMat.tintColor[0] = 0.6f;
-                    perMat.tintColor[1] = 1.0f;
-                    perMat.tintColor[2] = 0.6f;
-                    perMat.tintColor[3] = 1.0f;
+                    perMat.highlightColor[0] = 0.2f;
+                    perMat.highlightColor[1] = 1.0f;
+                    perMat.highlightColor[2] = 0.4f;
+                    perMat.highlightColor[3] = 0.45f;
                 }
                 memcpy(perMat.tintZone1, zone1, 12); perMat.tintZone1[3] = 0;
                 memcpy(perMat.tintZone2, zone2, 12); perMat.tintZone2[3] = 0;

@@ -457,116 +457,131 @@ void handleInput(AppState& state, GLFWwindow* window, ImGuiIO& io) {
                 state.selectedBoneIndex = closestBone;
             }
         }
-        // Chunk selection via ray-AABB (when not in skeleton mode)
+        // Face-level mesh selection via proper ray unprojection
         if (leftPressed && !wasLeftPressed && state.hasModel && !state.renderSettings.showSkeleton
             && state.currentModel.meshes.size() > 1) {
             int width, height;
             glfwGetFramebufferSize(window, &width, &height);
             float aspect = (float)width / (float)height;
             float fov = 45.0f * 3.14159f / 180.0f;
-            float nearPlane = 0.1f;
-            float top = nearPlane * std::tan(fov / 2.0f);
-            float right = top * aspect;
+            float tanHalfFov = std::tan(fov / 2.0f);
+
             float ndcX = (2.0f * (float)mx / width) - 1.0f;
             float ndcY = 1.0f - (2.0f * (float)my / height);
-            float rayX = ndcX * right / nearPlane;
-            float rayY = ndcY * top / nearPlane;
-            float rayZ = -1.0f;
-            float cp = std::cos(-state.camera.pitch);
-            float sp = std::sin(-state.camera.pitch);
-            float cyw = std::cos(-state.camera.yaw);
-            float syw = std::sin(-state.camera.yaw);
-            float rx1 = rayX;
-            float ry1 = rayY * cp - rayZ * sp;
-            float rz1 = rayY * sp + rayZ * cp;
-            float dirX = rx1 * cyw + rz1 * syw;
-            float dirY = ry1;
-            float dirZ = -rx1 * syw + rz1 * cyw;
+
+            // Build the SAME view matrix as the renderer
+            // V = I * RX(-90deg) * T(-pos) * RY(-yaw) * RX(-pitch)
+            auto identity = [](float* m) { for(int i=0;i<16;i++) m[i]=(i%5==0)?1.0f:0.0f; };
+            auto mul = [](const float* a, const float* b, float* out) {
+                for(int i=0;i<4;i++) for(int j=0;j<4;j++) {
+                    out[i*4+j]=0;
+                    for(int k=0;k<4;k++) out[i*4+j]+=a[i*4+k]*b[k*4+j];
+                }
+            };
+            auto applyRX = [&](float* m, float angle) {
+                float c=cosf(angle), s=sinf(angle);
+                float r[16]; identity(r);
+                r[5]=c; r[6]=s; r[9]=-s; r[10]=c;
+                float tmp[16]; mul(m,r,tmp); memcpy(m,tmp,64);
+            };
+            auto applyRY = [&](float* m, float angle) {
+                float c=cosf(angle), s=sinf(angle);
+                float r[16]; identity(r);
+                r[0]=c; r[2]=-s; r[8]=s; r[10]=c;
+                float tmp[16]; mul(m,r,tmp); memcpy(m,tmp,64);
+            };
+            auto applyT = [&](float* m, float x, float y, float z) {
+                float t[16]; identity(t);
+                t[12]=x; t[13]=y; t[14]=z;
+                float tmp[16]; mul(m,t,tmp); memcpy(m,tmp,64);
+            };
+
+            float view[16];
+            identity(view);
+            applyRX(view, -90.0f * 3.14159f / 180.0f);
+            applyT(view, -state.camera.x, -state.camera.y, -state.camera.z);
+            applyRY(view, -state.camera.yaw);
+            applyRX(view, -state.camera.pitch);
+
+            // Invert the view matrix
+            float inv[16], det;
+            inv[0] = view[5]*view[10]*view[15]-view[5]*view[11]*view[14]-view[9]*view[6]*view[15]+view[9]*view[7]*view[14]+view[13]*view[6]*view[11]-view[13]*view[7]*view[10];
+            inv[4] = -view[4]*view[10]*view[15]+view[4]*view[11]*view[14]+view[8]*view[6]*view[15]-view[8]*view[7]*view[14]-view[12]*view[6]*view[11]+view[12]*view[7]*view[10];
+            inv[8] = view[4]*view[9]*view[15]-view[4]*view[11]*view[13]-view[8]*view[5]*view[15]+view[8]*view[7]*view[13]+view[12]*view[5]*view[11]-view[12]*view[7]*view[9];
+            inv[12] = -view[4]*view[9]*view[14]+view[4]*view[10]*view[13]+view[8]*view[5]*view[14]-view[8]*view[6]*view[13]-view[12]*view[5]*view[10]+view[12]*view[6]*view[9];
+            inv[1] = -view[1]*view[10]*view[15]+view[1]*view[11]*view[14]+view[9]*view[2]*view[15]-view[9]*view[3]*view[14]-view[13]*view[2]*view[11]+view[13]*view[3]*view[10];
+            inv[5] = view[0]*view[10]*view[15]-view[0]*view[11]*view[14]-view[8]*view[2]*view[15]+view[8]*view[3]*view[14]+view[12]*view[2]*view[11]-view[12]*view[3]*view[10];
+            inv[9] = -view[0]*view[9]*view[15]+view[0]*view[11]*view[13]+view[8]*view[1]*view[15]-view[8]*view[3]*view[13]-view[12]*view[1]*view[11]+view[12]*view[3]*view[9];
+            inv[13] = view[0]*view[9]*view[14]-view[0]*view[10]*view[13]-view[8]*view[1]*view[14]+view[8]*view[2]*view[13]+view[12]*view[1]*view[10]-view[12]*view[2]*view[9];
+            inv[2] = view[1]*view[6]*view[15]-view[1]*view[7]*view[14]-view[5]*view[2]*view[15]+view[5]*view[3]*view[14]+view[13]*view[2]*view[7]-view[13]*view[3]*view[6];
+            inv[6] = -view[0]*view[6]*view[15]+view[0]*view[7]*view[14]+view[4]*view[2]*view[15]-view[4]*view[3]*view[14]-view[12]*view[2]*view[7]+view[12]*view[3]*view[6];
+            inv[10] = view[0]*view[5]*view[15]-view[0]*view[7]*view[13]-view[4]*view[1]*view[15]+view[4]*view[3]*view[13]+view[12]*view[1]*view[7]-view[12]*view[3]*view[5];
+            inv[14] = -view[0]*view[5]*view[14]+view[0]*view[6]*view[13]+view[4]*view[1]*view[14]-view[4]*view[2]*view[13]-view[12]*view[1]*view[6]+view[12]*view[2]*view[5];
+            inv[3] = -view[1]*view[6]*view[11]+view[1]*view[7]*view[10]+view[5]*view[2]*view[11]-view[5]*view[3]*view[10]-view[9]*view[2]*view[7]+view[9]*view[3]*view[6];
+            inv[7] = view[0]*view[6]*view[11]-view[0]*view[7]*view[10]-view[4]*view[2]*view[11]+view[4]*view[3]*view[10]+view[8]*view[2]*view[7]-view[8]*view[3]*view[6];
+            inv[11] = -view[0]*view[5]*view[11]+view[0]*view[7]*view[9]+view[4]*view[1]*view[11]-view[4]*view[3]*view[9]-view[8]*view[1]*view[7]+view[8]*view[3]*view[5];
+            inv[15] = view[0]*view[5]*view[10]-view[0]*view[6]*view[9]-view[4]*view[1]*view[10]+view[4]*view[2]*view[9]+view[8]*view[1]*view[6]-view[8]*view[2]*view[5];
+            det = view[0]*inv[0]+view[1]*inv[4]+view[2]*inv[8]+view[3]*inv[12];
+            if (std::abs(det) > 1e-12f) {
+                float invDet = 1.0f / det;
+                for(int i=0;i<16;i++) inv[i]*=invDet;
+            }
+
+            // Ray in view space: direction from origin through NDC point
+            float vx = ndcX * tanHalfFov * aspect;
+            float vy = ndcY * tanHalfFov;
+            float vz = -1.0f;
+
+            // Transform ray direction to world space (inv * direction, w=0)
+            float dirX = inv[0]*vx + inv[4]*vy + inv[8]*vz;
+            float dirY = inv[1]*vx + inv[5]*vy + inv[9]*vz;
+            float dirZ = inv[2]*vx + inv[6]*vy + inv[10]*vz;
             float len = std::sqrt(dirX*dirX + dirY*dirY + dirZ*dirZ);
             dirX /= len; dirY /= len; dirZ /= len;
-            float origX = state.camera.x;
-            float origY = state.camera.y;
-            float origZ = state.camera.z;
+
+            // Ray origin = camera position in world space (extract from inv matrix)
+            float origX = inv[12];
+            float origY = inv[13];
+            float origZ = inv[14];
 
             int closestChunk = -1;
             float closestT = 1e30f;
 
-            // Collect AABB hit candidates first
-            struct AABBHit { int meshIdx; float t; };
-            std::vector<AABBHit> candidates;
-
+            // Test every triangle in every visible mesh
             for (size_t mi = 0; mi < state.currentModel.meshes.size(); mi++) {
                 if (mi < state.renderSettings.meshVisible.size() && state.renderSettings.meshVisible[mi] == 0) continue;
                 const auto& m = state.currentModel.meshes[mi];
-                // RotateX(-90°) maps model (x,y,z) → camera world (x, z, -y)
-                float bminX = m.minX, bmaxX = m.maxX;
-                float bminY = m.minZ, bmaxY = m.maxZ;
-                float bminZ = -m.maxY, bmaxZ = -m.minY;
-                // Ray-AABB slab test
-                float tmin = -1e30f, tmax = 1e30f;
-                float invD, t1, t2, ts;
-                if (std::abs(dirX) > 1e-8f) {
-                    invD = 1.0f / dirX;
-                    t1 = (bminX - origX) * invD;
-                    t2 = (bmaxX - origX) * invD;
-                    if (t1 > t2) { ts = t1; t1 = t2; t2 = ts; }
-                    tmin = std::max(tmin, t1);
-                    tmax = std::min(tmax, t2);
-                } else if (origX < bminX || origX > bmaxX) continue;
-                if (std::abs(dirY) > 1e-8f) {
-                    invD = 1.0f / dirY;
-                    t1 = (bminY - origY) * invD;
-                    t2 = (bmaxY - origY) * invD;
-                    if (t1 > t2) { ts = t1; t1 = t2; t2 = ts; }
-                    tmin = std::max(tmin, t1);
-                    tmax = std::min(tmax, t2);
-                } else if (origY < bminY || origY > bmaxY) continue;
-                if (std::abs(dirZ) > 1e-8f) {
-                    invD = 1.0f / dirZ;
-                    t1 = (bminZ - origZ) * invD;
-                    t2 = (bmaxZ - origZ) * invD;
-                    if (t1 > t2) { ts = t1; t1 = t2; t2 = ts; }
-                    tmin = std::max(tmin, t1);
-                    tmax = std::min(tmax, t2);
-                } else if (origZ < bminZ || origZ > bmaxZ) continue;
-                if (tmin <= tmax && tmax > 0.0f) {
-                    float hitT = (tmin > 0.0f) ? tmin : tmax;
-                    candidates.push_back({(int)mi, hitT});
-                }
-            }
-
-            // Triangle-level test on AABB candidates
-            for (const auto& cand : candidates) {
-                const auto& m = state.currentModel.meshes[cand.meshIdx];
+                if (m.vertices.empty() || m.indices.empty()) continue;
                 for (size_t ti = 0; ti + 2 < m.indices.size(); ti += 3) {
                     const auto& v0 = m.vertices[m.indices[ti]];
                     const auto& v1 = m.vertices[m.indices[ti+1]];
                     const auto& v2 = m.vertices[m.indices[ti+2]];
-                    // Transform vertices: (x,y,z) → (x, z, -y)
-                    float ax = v0.x, ay = v0.z, az = -v0.y;
-                    float bx = v1.x, by = v1.z, bz = -v1.y;
-                    float cx = v2.x, cy = v2.z, cz = -v2.y;
-                    // Möller–Trumbore
+                    // Vertices are in model space - no transform needed,
+                    // ray is already in the same space via inverse view matrix
+                    float ax = v0.x, ay = v0.y, az = v0.z;
+                    float bx = v1.x, by = v1.y, bz = v1.z;
+                    float cx = v2.x, cy = v2.y, cz = v2.z;
+                    // Moller-Trumbore intersection
                     float e1x = bx-ax, e1y = by-ay, e1z = bz-az;
                     float e2x = cx-ax, e2y = cy-ay, e2z = cz-az;
                     float px = dirY*e2z - dirZ*e2y;
                     float py = dirZ*e2x - dirX*e2z;
                     float pz = dirX*e2y - dirY*e2x;
-                    float det = e1x*px + e1y*py + e1z*pz;
-                    if (std::abs(det) < 1e-8f) continue;
-                    float invDet = 1.0f / det;
+                    float det2 = e1x*px + e1y*py + e1z*pz;
+                    if (std::abs(det2) < 1e-8f) continue;
+                    float invDet2 = 1.0f / det2;
                     float tx = origX-ax, ty = origY-ay, tz = origZ-az;
-                    float u = (tx*px + ty*py + tz*pz) * invDet;
+                    float u = (tx*px + ty*py + tz*pz) * invDet2;
                     if (u < 0.0f || u > 1.0f) continue;
                     float qx = ty*e1z - tz*e1y;
                     float qy = tz*e1x - tx*e1z;
                     float qz = tx*e1y - ty*e1x;
-                    float v = (dirX*qx + dirY*qy + dirZ*qz) * invDet;
+                    float v = (dirX*qx + dirY*qy + dirZ*qz) * invDet2;
                     if (v < 0.0f || u + v > 1.0f) continue;
-                    float tt = (e2x*qx + e2y*qy + e2z*qz) * invDet;
+                    float tt = (e2x*qx + e2y*qy + e2z*qz) * invDet2;
                     if (tt > 0.0f && tt < closestT) {
                         closestT = tt;
-                        closestChunk = cand.meshIdx;
+                        closestChunk = (int)mi;
                     }
                 }
             }

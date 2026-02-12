@@ -43,6 +43,7 @@ struct alignas(16) CBPerMaterial {
     int useStubble;
     int useTattoo;
     float padding1[2];
+    float highlightColor[4];  // rgb = color, a = mix amount (0 = no highlight)
 };
 
 struct alignas(16) CBSimple {

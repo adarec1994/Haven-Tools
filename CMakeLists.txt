@@ -196,6 +196,8 @@ add_executable(HavenTools
         src/Gff4FieldNames.h
         src/Rml_Loader.cpp
         src/Rml_Loader.h
+        src/LevelDatabase.h
+        src/ui_browser_mesh.cpp
 )
 
 target_include_directories(HavenTools PRIVATE
