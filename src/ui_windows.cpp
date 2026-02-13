@@ -25,9 +25,6 @@ void drawRenderSettingsWindow(AppState& state) {
         ImGui::Checkbox("Tint Maps", &state.renderSettings.useTintMaps);
         ImGui::Unindent();
     }
-    ImGui::Separator();
-    ImGui::Text("Camera Speed: %.1f", state.camera.moveSpeed);
-    ImGui::SliderFloat("##speed", &state.camera.moveSpeed, 0.1f, 10000.0f, "%.1f", ImGuiSliderFlags_Logarithmic);
     if (state.hasModel) {
         ImGui::Separator();
         size_t totalVerts = 0, totalTris = 0;

@@ -141,7 +141,7 @@ float4 main(PSInput input) : SV_TARGET {
                              uUVScales1.x, uUVScales1.y, uUVScales1.z, uUVScales1.w };
         float cellW = uPalDim.x;
         float cellH = uPalDim.y;
-        int cols = (int)uPalDim.z;
+        int rows = (int)uPalDim.w;
         float padX = uPalParam.x;
         float padY = uPalParam.y;
         float usableW = uPalParam.z;
@@ -152,10 +152,11 @@ float4 main(PSInput input) : SV_TARGET {
         for (int i = 0; i < 8; i++) {
             float w = weights[i];
             if (w < 0.001) continue;
-            int col = i % cols;
-            int row = i / cols;
+            if (scales[i] < 0.001) continue;
+            int col = i / rows;
+            int row = i % rows;
             float2 cellOrigin = float2(col * cellW + padX, row * cellH + padY);
-            float s = max(scales[i], 1.0);
+            float s = scales[i];
             float2 tileUV = frac(uv * s);
             float2 palUV = cellOrigin + tileUV * float2(usableW, usableH);
             blendedColor += texDiffuse.Sample(sampLinear, palUV).rgb * w;
@@ -245,35 +246,34 @@ float4 main(PSInput input) : SV_TARGET {
                 diffuseColor.rgb = lerp(diffuseColor.rgb, uTattooColor3.rgb, tattooMask.b * uTattooAmount.b);
         }
     }
-    // Tinting
-    if (uIsEyeMesh != 0 && uUseTint != 0) {
-        float4 tintMask = texTint.Sample(sampLinear, input.texcoord);
-        float irisAmount = tintMask.r;
-        float3 irisColor = uTintColor.rgb * (0.5 + diffuseColor.rgb * 0.5);
-        diffuseColor.rgb = lerp(diffuseColor.rgb, irisColor, irisAmount);
-    } else {
-        diffuseColor.rgb *= uTintColor.rgb;
-        if (uUseTint != 0) {
+    // Tinting (skip for terrain - texTint slot holds maskA, not a tint map)
+    if (uIsTerrain == 0) {
+        if (uIsEyeMesh != 0 && uUseTint != 0) {
             float4 tintMask = texTint.Sample(sampLinear, input.texcoord);
-            float3 zoneColor = diffuseColor.rgb;
-            zoneColor = lerp(zoneColor, zoneColor * uTintZone1.rgb, tintMask.r);
-            zoneColor = lerp(zoneColor, zoneColor * uTintZone2.rgb, tintMask.g);
-            zoneColor = lerp(zoneColor, zoneColor * uTintZone3.rgb, tintMask.b);
-            diffuseColor.rgb = zoneColor;
+            float irisAmount = tintMask.r;
+            float3 irisColor = uTintColor.rgb * (0.5 + diffuseColor.rgb * 0.5);
+            diffuseColor.rgb = lerp(diffuseColor.rgb, irisColor, irisAmount);
+        } else {
+            diffuseColor.rgb *= uTintColor.rgb;
+            if (uUseTint != 0) {
+                float4 tintMask = texTint.Sample(sampLinear, input.texcoord);
+                float3 zoneColor = diffuseColor.rgb;
+                zoneColor = lerp(zoneColor, zoneColor * uTintZone1.rgb, tintMask.r);
+                zoneColor = lerp(zoneColor, zoneColor * uTintZone2.rgb, tintMask.g);
+                zoneColor = lerp(zoneColor, zoneColor * uTintZone3.rgb, tintMask.b);
+                diffuseColor.rgb = zoneColor;
+            }
         }
     }
     // Water already has full lighting computed
     if (uIsWater != 0) {
-        if (uHighlightColor.a > 0.0) {
+        if (uHighlightColor.a > 0.0)
             diffuseColor.rgb = lerp(diffuseColor.rgb, uHighlightColor.rgb, uHighlightColor.a);
-            diffuseColor.rgb += uHighlightColor.rgb * uHighlightColor.a * 0.35;
-            diffuseColor.rgb = saturate(diffuseColor.rgb);
-        }
         return diffuseColor;
     }
     // Lighting
     float3 N = normalize(input.normal);
-    if (uUseNormal != 0 || (uIsFaceMesh != 0 && (uUseAge != 0 || uUseStubble != 0))) {
+    if (uUseNormal != 0 || uIsTerrain != 0 || (uIsFaceMesh != 0 && (uUseAge != 0 || uUseStubble != 0))) {
         N = normalize(N + baseNormal * 0.3);
     }
     float3 L = normalize(float3(0.3, 0.5, 1.0));
@@ -282,7 +282,7 @@ float4 main(PSInput input) : SV_TARGET {
     float3 ambient  = uAmbientStrength * diffuseColor.rgb;
     float3 diffuse  = NdotL * diffuseColor.rgb;
     float3 specular = float3(0.0, 0.0, 0.0);
-    if (uUseSpecular != 0 && NdotL > 0.0) {
+    if (uIsTerrain == 0 && uUseSpecular != 0 && NdotL > 0.0) {
         float3 H = normalize(L + V);
         float NdotH = max(dot(N, H), 0.0);
         float spec = pow(NdotH, uSpecularPower);
@@ -290,10 +290,8 @@ float4 main(PSInput input) : SV_TARGET {
         specular = spec * specMap.rgb * 0.5;
     }
     float3 finalColor = ambient + diffuse + specular;
-    if (uHighlightColor.a > 0.0) {
+    if (uHighlightColor.a > 0.0)
         finalColor = lerp(finalColor, uHighlightColor.rgb, uHighlightColor.a);
-        finalColor += uHighlightColor.rgb * uHighlightColor.a * 0.35;
-    }
     return float4(saturate(finalColor), diffuseColor.a);
 }
 )";

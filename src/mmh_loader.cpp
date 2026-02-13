@@ -11,6 +11,7 @@
 #include <set>
 #include <functional>
 #include <cmath>
+#include <iostream>
 
 
 Material parseMAO(const std::string& maoContent, const std::string& materialName) {
@@ -63,22 +64,22 @@ Material parseMAO(const std::string& maoContent, const std::string& materialName
                     std::transform(resLower.begin(), resLower.end(), resLower.begin(), ::tolower);
 
                     if (mat.isTerrain) {
-                        if (labelLower.find("palette") != std::string::npos) {
+                        if (labelLower == "palette") {
                             mat.paletteMap = resName;
                             mat.diffuseMap = resName;
                         } else if (labelLower == "normal" || labelLower == "normalmap") {
                             mat.palNormalMap = resName;
                             mat.normalMap = resName;
-                        } else if (labelLower.find("maskv") != std::string::npos) {
+                        } else if (labelLower == "maskv") {
                             mat.maskVMap = resName;
-                        } else if (labelLower.find("maska") != std::string::npos) {
+                        } else if (labelLower == "maska") {
                             mat.maskAMap = resName;
                         }
                         // ignore lowlod for terrain - palette is the real diffuse
                     } else {
                         if (labelLower.find("diffuse") != std::string::npos ||
                             labelLower.find("packedtexture") != std::string::npos ||
-                            labelLower.find("palette") != std::string::npos) {
+                            labelLower == "palette") {
                             if (mat.diffuseMap.empty()) mat.diffuseMap = resName;
                         } else if (labelLower.find("normalmap") != std::string::npos ||
                                    labelLower.find("normal") != std::string::npos) {
@@ -174,6 +175,9 @@ Material parseMAO(const std::string& maoContent, const std::string& materialName
                     break;
                 }
             }
+        }
+        if (mat.isTerrain) {
+                      << ", " << mat.uvScales[4] << ", " << mat.uvScales[5] << ", " << mat.uvScales[6] << ", " << mat.uvScales[7] << std::endl;
         }
         return mat;
     }
@@ -325,6 +329,10 @@ Material parseMAO(const std::string& maoContent, const std::string& materialName
         parseFloats("mat_vPSHWaterParams", pshParams, 8);
         for (int i = 0; i < 4; i++) mat.waterColor[i] = pshParams[i];
         for (int i = 0; i < 4; i++) mat.waterVisual[i] = pshParams[4+i];
+    }
+
+    if (mat.isTerrain) {
+                  << ", " << mat.uvScales[4] << ", " << mat.uvScales[5] << ", " << mat.uvScales[6] << ", " << mat.uvScales[7] << std::endl;
     }
 
     return mat;

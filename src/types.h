@@ -158,6 +158,17 @@ struct CachedEntry {
     size_t erfIdx;
     size_t entryIdx;
     std::string source;
+    uint8_t flags = 0;  // cached file type classification
+    enum : uint8_t {
+        FLAG_MODEL   = 1 << 0,
+        FLAG_MAO     = 1 << 1,
+        FLAG_PHY     = 1 << 2,
+        FLAG_TEXTURE = 1 << 3,
+        FLAG_TERRAIN = 1 << 4,
+        FLAG_AUDIO   = 1 << 5,
+        FLAG_GDA     = 1 << 6,
+        FLAG_GFF     = 1 << 7,
+    };
 };
 struct FSBSampleInfo {
     std::string name;
@@ -207,6 +218,10 @@ struct AppState {
     std::vector<CachedEntry> mergedEntries;
     std::vector<int> filteredEntryIndices;
     std::string lastContentFilter;
+    bool contentHasTextures = false;
+    bool contentHasModels = false;
+    bool contentHasTerrain = false;
+    bool contentFlagsDirty = true;
     int selectedErfIndex = -1;
     std::unique_ptr<ERFFile> currentErf;
     int selectedEntryIndex = -1;

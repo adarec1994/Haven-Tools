@@ -132,6 +132,36 @@ static std::string GetErfSource(const std::string& erfPath) {
     return "Core";
 }
 
+static void classifyCachedEntry(CachedEntry& ce) {
+    ce.flags = 0;
+    if (ce.name.find("__HEADER__") == 0) return;
+    if (isModelFile(ce.name))  ce.flags |= CachedEntry::FLAG_MODEL;
+    if (isMaoFile(ce.name))    ce.flags |= CachedEntry::FLAG_MAO;
+    if (isPhyFile(ce.name))    ce.flags |= CachedEntry::FLAG_PHY;
+    if (isTerrain(ce.name))    ce.flags |= CachedEntry::FLAG_TERRAIN;
+    if (isGffFile(ce.name))    ce.flags |= CachedEntry::FLAG_GFF;
+    if (ce.name.size() > 4) {
+        std::string ext = ce.name.substr(ce.name.size() - 4);
+        std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
+        if (ext == ".dds") ce.flags |= CachedEntry::FLAG_TEXTURE;
+        if (ext == ".fsb") ce.flags |= CachedEntry::FLAG_AUDIO;
+        if (ext == ".gda") ce.flags |= CachedEntry::FLAG_GDA;
+    }
+}
+
+static void classifyMergedEntries(AppState& state) {
+    state.contentHasTextures = false;
+    state.contentHasModels = false;
+    state.contentHasTerrain = false;
+    for (auto& ce : state.mergedEntries) {
+        classifyCachedEntry(ce);
+        if (ce.flags & CachedEntry::FLAG_TEXTURE) state.contentHasTextures = true;
+        if (ce.flags & CachedEntry::FLAG_MODEL)   state.contentHasModels = true;
+        if (ce.flags & CachedEntry::FLAG_TERRAIN)  state.contentHasTerrain = true;
+    }
+    state.contentFlagsDirty = false;
+}
+
 static std::vector<uint8_t> readCachedEntryData(AppState& state, const CachedEntry& ce) {
     if (ce.erfIdx == SIZE_MAX) {
         std::ifstream f(ce.source, std::ios::binary | std::ios::ate);
@@ -462,8 +492,15 @@ void drawBrowserWindow(AppState& state) {
             }
 
             state.statusMessage = "Loaded level: " + std::to_string(ll.terrainLoaded) + " terrain, " +
-                std::to_string(ll.propsLoaded) + " props, " +
+                std::to_string(ll.propsLoaded) + " props (" +
+                std::to_string(ll.totalProps - ll.propsLoaded) + " missing), " +
                 std::to_string(state.currentModel.materials.size()) + " materials";
+            std::cout << "[LEVEL] === Load Summary ===" << std::endl;
+            std::cout << "[LEVEL]   Terrain: " << ll.terrainLoaded << "/" << ll.totalTerrain << " loaded" << std::endl;
+            std::cout << "[LEVEL]   Props:   " << ll.propsLoaded << "/" << ll.totalProps << " loaded, "
+                      << (ll.totalProps - ll.propsLoaded) << " missing" << std::endl;
+            std::cout << "[LEVEL]   Meshes:  " << state.currentModel.meshes.size() << std::endl;
+            std::cout << "[LEVEL]   Materials: " << state.currentModel.materials.size() << std::endl;
             state.showRenderSettings = true;
             ll.stage = 0;
         }
@@ -525,6 +562,7 @@ void drawBrowserWindow(AppState& state) {
                 state.selectedErfName = "[Levels]";
                 state.selectedEntryIndex = -1;
                 state.mergedEntries.clear();
+                state.contentFlagsDirty = true;
                 state.filteredEntryIndices.clear();
                 state.lastContentFilter.clear();
                 state.showRIMBrowser = false;
@@ -546,6 +584,7 @@ void drawBrowserWindow(AppState& state) {
             state.selectedErfName = "[Audio]";
             state.selectedEntryIndex = -1;
             state.mergedEntries.clear();
+                state.contentFlagsDirty = true;
             state.filteredEntryIndices.clear();
             state.lastContentFilter.clear();
             state.showRIMBrowser = false;
@@ -571,6 +610,7 @@ void drawBrowserWindow(AppState& state) {
             state.selectedErfName = "[VoiceOver]";
             state.selectedEntryIndex = -1;
             state.mergedEntries.clear();
+                state.contentFlagsDirty = true;
             state.filteredEntryIndices.clear();
             state.lastContentFilter.clear();
             state.showRIMBrowser = false;
@@ -610,6 +650,7 @@ void drawBrowserWindow(AppState& state) {
                 state.selectedErfName = filename;
                 state.selectedEntryIndex = -1;
                 state.mergedEntries.clear();
+                state.contentFlagsDirty = true;
                 state.filteredEntryIndices.clear();
                 state.lastContentFilter.clear();
                 s_meshDataSourceFilter = 0;
@@ -754,6 +795,7 @@ void drawBrowserWindow(AppState& state) {
 
         auto buildRimList = [&]() {
             state.mergedEntries.clear();
+                state.contentFlagsDirty = true;
             state.filteredEntryIndices.clear();
             state.lastContentFilter.clear();
 
@@ -791,6 +833,7 @@ void drawBrowserWindow(AppState& state) {
                 state.selectedErfName = "[Override]";
                 state.selectedEntryIndex = -1;
                 state.mergedEntries.clear();
+                state.contentFlagsDirty = true;
                 state.filteredEntryIndices.clear();
                 state.lastContentFilter.clear();
                 state.showRIMBrowser = false;
@@ -905,15 +948,11 @@ void drawBrowserWindow(AppState& state) {
         ImGui::EndChild();
     }
     else if (!state.selectedErfName.empty() && !state.mergedEntries.empty()) {
-        bool hasTextures = false, hasModels = false, hasTerrain = false;
+        if (state.contentFlagsDirty) classifyMergedEntries(state);
+        bool hasTextures = state.contentHasTextures;
+        bool hasModels = state.contentHasModels;
+        bool hasTerrain = state.contentHasTerrain;
         bool isAudioCategory = (state.selectedErfName == "[Audio]" || state.selectedErfName == "[VoiceOver]");
-        for (const auto& ce : state.mergedEntries) {
-            if (ce.name.find("__HEADER__") == 0) continue;
-            if (ce.name.size() > 4 && ce.name.substr(ce.name.size() - 4) == ".dds") hasTextures = true;
-            if (isModelFile(ce.name)) hasModels = true;
-            if (isTerrain(ce.name)) hasTerrain = true;
-            if (hasTextures && hasModels && hasTerrain) break;
-        }
         ImGui::Text("Contents (%zu)", state.mergedEntries.size());
         ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
         ImGui::InputText("##contentSearch", state.contentFilter, sizeof(state.contentFilter));
@@ -990,7 +1029,13 @@ void drawBrowserWindow(AppState& state) {
         }
         ImGui::Separator();
         std::string currentFilter = state.contentFilter;
-        if (currentFilter != state.lastContentFilter || state.filteredEntryIndices.empty()) {
+        static int s_lastMeshSourceFilter = -1;
+        static int s_lastHierSourceFilter = -1;
+        bool sourceFilterChanged = (s_lastMeshSourceFilter != s_meshDataSourceFilter ||
+                                    s_lastHierSourceFilter != s_hierDataSourceFilter);
+        if (currentFilter != state.lastContentFilter || sourceFilterChanged) {
+            s_lastMeshSourceFilter = s_meshDataSourceFilter;
+            s_lastHierSourceFilter = s_hierDataSourceFilter;
             state.lastContentFilter = currentFilter;
             state.filteredEntryIndices.clear();
             state.filteredEntryIndices.reserve(state.mergedEntries.size());
@@ -1100,12 +1145,14 @@ void drawBrowserWindow(AppState& state) {
                 return;
             }
 
-            bool isModel = isModelFile(ce.name), isMao = isMaoFile(ce.name), isPhy = isPhyFile(ce.name);
-            bool isTerrainFile = isTerrain(ce.name);
-            bool isTexture = ce.name.size() > 4 && ce.name.substr(ce.name.size() - 4) == ".dds";
-            bool isAudioFile = ce.name.size() > 4 && (ce.name.substr(ce.name.size() - 4) == ".fsb" );
-            bool isGda = ce.name.size() > 4 && ce.name.substr(ce.name.size() - 4) == ".gda";
-            bool isGff = isGffFile(ce.name);
+            bool isModel = (ce.flags & CachedEntry::FLAG_MODEL) != 0;
+            bool isMao = (ce.flags & CachedEntry::FLAG_MAO) != 0;
+            bool isPhy = (ce.flags & CachedEntry::FLAG_PHY) != 0;
+            bool isTerrainFile = (ce.flags & CachedEntry::FLAG_TERRAIN) != 0;
+            bool isTexture = (ce.flags & CachedEntry::FLAG_TEXTURE) != 0;
+            bool isAudioFile = (ce.flags & CachedEntry::FLAG_AUDIO) != 0;
+            bool isGda = (ce.flags & CachedEntry::FLAG_GDA) != 0;
+            bool isGff = (ce.flags & CachedEntry::FLAG_GFF) != 0;
             if (isModel) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.4f, 1.0f, 0.4f, 1.0f));
             else if (isTerrainFile) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.6f, 0.4f, 0.2f, 1.0f));
             else if (isMao) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.8f, 0.4f, 1.0f));
@@ -1538,14 +1585,31 @@ void drawBrowserWindow(AppState& state) {
                 ImGui::TableSetupColumn("Hz", ImGuiTableColumnFlags_WidthFixed, 55.0f);
                 ImGui::TableHeadersRow();
 
-                for (int i = 0; i < (int)state.currentFSBSamples.size(); i++) {
-                    const auto& sample = state.currentFSBSamples[i];
-
-                    if (!fsbFilterLower.empty()) {
-                        std::string nameLower = sample.name;
-                        std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), ::tolower);
-                        if (nameLower.find(fsbFilterLower) == std::string::npos) continue;
+                // Pre-filter FSB samples
+                static std::vector<int> s_filteredFsbIndices;
+                static std::string s_lastFsbFilter;
+                static size_t s_lastFsbCount = 0;
+                if (fsbFilterLower != s_lastFsbFilter || state.currentFSBSamples.size() != s_lastFsbCount) {
+                    s_lastFsbFilter = fsbFilterLower;
+                    s_lastFsbCount = state.currentFSBSamples.size();
+                    s_filteredFsbIndices.clear();
+                    s_filteredFsbIndices.reserve(state.currentFSBSamples.size());
+                    for (int i = 0; i < (int)state.currentFSBSamples.size(); i++) {
+                        if (!fsbFilterLower.empty()) {
+                            std::string nameLower = state.currentFSBSamples[i].name;
+                            std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), ::tolower);
+                            if (nameLower.find(fsbFilterLower) == std::string::npos) continue;
+                        }
+                        s_filteredFsbIndices.push_back(i);
                     }
+                }
+
+                ImGuiListClipper clipper;
+                clipper.Begin((int)s_filteredFsbIndices.size());
+                while (clipper.Step()) {
+                    for (int fi = clipper.DisplayStart; fi < clipper.DisplayEnd; fi++) {
+                        int i = s_filteredFsbIndices[fi];
+                        const auto& sample = state.currentFSBSamples[i];
 
                     ImGui::TableNextRow();
                     ImGui::TableNextColumn();
@@ -1605,6 +1669,7 @@ void drawBrowserWindow(AppState& state) {
                     ImGui::Text("%d:%02d", mins, secs);
                     ImGui::TableNextColumn();
                     ImGui::Text("%d", sample.sampleRate);
+                    }
                 }
                 ImGui::EndTable();
             }
@@ -2051,6 +2116,7 @@ void drawBrowserWindow(AppState& state) {
                 state.hasModel = false;
             }
             state.mergedEntries.clear();
+                state.contentFlagsDirty = true;
             state.filteredEntryIndices.clear();
             state.lastContentFilter.clear();
             state.statusMessage = "Deleted " + baseName + " (" + std::to_string(deletedCount) + " ERF files updated)";

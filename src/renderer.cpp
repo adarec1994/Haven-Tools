@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <vector>
 #include <chrono>
+#include <iostream>
 #include "terrain_loader.h"
 
 
@@ -356,12 +357,20 @@ static void renderLevelStatic(const Model& model, const float* mvp, const float*
                 bool isTerrain   = mat && mat->isTerrain && mat->paletteTexId != 0 && mat->maskVTexId != 0;
 
                 CBPerMaterial perMat = {};
-                perMat.tintColor[0] = perMat.tintColor[1] = perMat.tintColor[2] = perMat.tintColor[3] = 1.0f;
                 if (isSelected) {
-                    perMat.highlightColor[0] = 0.2f;
-                    perMat.highlightColor[1] = 1.0f;
-                    perMat.highlightColor[2] = 0.4f;
-                    perMat.highlightColor[3] = 0.45f;
+                    perMat.tintColor[0] = 0.6f;
+                    perMat.tintColor[1] = 1.0f;
+                    perMat.tintColor[2] = 0.6f;
+                    perMat.tintColor[3] = 1.0f;
+                    // For terrain, tintColor multiply is skipped, so use highlightColor instead
+                    if (isTerrain) {
+                        perMat.highlightColor[0] = 0.2f;
+                        perMat.highlightColor[1] = 1.0f;
+                        perMat.highlightColor[2] = 0.2f;
+                        perMat.highlightColor[3] = 0.4f;
+                    }
+                } else {
+                    perMat.tintColor[0] = perMat.tintColor[1] = perMat.tintColor[2] = perMat.tintColor[3] = 1.0f;
                 }
                 perMat.useDiffuse  = (useShaders && (hasDiffuse || isTerrain)) ? 1 : 0;
                 perMat.useNormal   = (useShaders && hasNormal) ? 1 : 0;
@@ -859,12 +868,12 @@ void renderModel(Model& model, const Camera& camera, const RenderSettings& setti
                 } else {
                     perMat.tintColor[0] = perMat.tintColor[1] = perMat.tintColor[2] = perMat.tintColor[3] = 1.0f;
                 }
-                // Emissive highlight for selected level chunk
+                // Green highlight for selected level chunk
                 if (selectedChunk >= 0 && (int)meshIdx == selectedChunk) {
-                    perMat.highlightColor[0] = 0.2f;
-                    perMat.highlightColor[1] = 1.0f;
-                    perMat.highlightColor[2] = 0.4f;
-                    perMat.highlightColor[3] = 0.45f;
+                    perMat.tintColor[0] = 0.6f;
+                    perMat.tintColor[1] = 1.0f;
+                    perMat.tintColor[2] = 0.6f;
+                    perMat.tintColor[3] = 1.0f;
                 }
                 memcpy(perMat.tintZone1, zone1, 12); perMat.tintZone1[3] = 0;
                 memcpy(perMat.tintZone2, zone2, 12); perMat.tintZone2[3] = 0;
