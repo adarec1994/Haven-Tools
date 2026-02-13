@@ -176,9 +176,6 @@ Material parseMAO(const std::string& maoContent, const std::string& materialName
                 }
             }
         }
-        if (mat.isTerrain) {
-                      << ", " << mat.uvScales[4] << ", " << mat.uvScales[5] << ", " << mat.uvScales[6] << ", " << mat.uvScales[7] << std::endl;
-        }
         return mat;
     }
 
@@ -329,10 +326,6 @@ Material parseMAO(const std::string& maoContent, const std::string& materialName
         parseFloats("mat_vPSHWaterParams", pshParams, 8);
         for (int i = 0; i < 4; i++) mat.waterColor[i] = pshParams[i];
         for (int i = 0; i < 4; i++) mat.waterVisual[i] = pshParams[4+i];
-    }
-
-    if (mat.isTerrain) {
-                  << ", " << mat.uvScales[4] << ", " << mat.uvScales[5] << ", " << mat.uvScales[6] << ", " << mat.uvScales[7] << std::endl;
     }
 
     return mat;
