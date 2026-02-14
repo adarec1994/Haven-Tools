@@ -6,6 +6,7 @@
 #include "ui.h"
 #include "version.h"
 #include "update/update.h"
+#include "spt.h"
 #define GLFW_EXPOSE_NATIVE_WIN32
 #include <GLFW/glfw3.h>
 #include <GLFW/glfw3native.h>
@@ -89,12 +90,14 @@ int main(int argc, char** argv) {
 
     AppState state;
     state.extractPath = (fs::path(getExeDir()) / "extracted").string();
+    initSpeedTree();
 
     Update::StartAutoCheckAndUpdate();
 
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
-        handleInput(state, window, io);
+        if (state.levelLoad.stage == 0)
+            handleInput(state, window, io);
 
         ImGui_ImplDX11_NewFrame();
         ImGui_ImplGlfw_NewFrame();
@@ -123,6 +126,7 @@ int main(int argc, char** argv) {
     ImGui_ImplDX11_Shutdown();
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
+    shutdownSpeedTree();
     cleanupRenderer();
     cleanupD3D(g_d3d);
     glfwDestroyWindow(window);

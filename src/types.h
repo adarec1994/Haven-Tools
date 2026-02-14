@@ -158,7 +158,8 @@ struct CachedEntry {
     size_t erfIdx;
     size_t entryIdx;
     std::string source;
-    uint8_t flags = 0;  // cached file type classification
+    uint8_t flags = 0;
+    bool isSptFile = false;
     enum : uint8_t {
         FLAG_MODEL   = 1 << 0,
         FLAG_MAO     = 1 << 1,
@@ -305,16 +306,27 @@ struct AppState {
         float qx, qy, qz, qw;
         float scale;
     };
+    struct SptWork {
+        int32_t treeId;
+        float px, py, pz;
+        float qx, qy, qz, qw;
+        float scale;
+    };
     struct LevelLoadState {
         int stage = 0;
         int itemIndex = 0;
         int terrainLoaded = 0;
         int propsLoaded = 0;
+        int sptLoaded = 0;
         int totalTerrain = 0;
         int totalProps = 0;
+        int totalSpt = 0;
         std::string stageLabel;
         std::vector<size_t> terrainQueue;
         std::vector<PropWork> propQueue;
+        std::vector<SptWork> sptQueue;
+        std::map<int32_t, std::string> sptIdToFile;
+        std::string sptErfPath;
     };
     LevelLoadState levelLoad;
 

@@ -11,6 +11,9 @@ static const uint32_t LABEL_ENV_MODEL_SCALE = 3059;
 static const uint32_t LABEL_ENV_MODEL_ID = 3061;
 static const uint32_t LABEL_ENV_MODEL_NAME = 3062;
 static const uint32_t LABEL_ENV_MODEL_FILE = 3063;
+static const uint32_t LABEL_ENV_ROOM_SPT_LIST = 0xd1a;
+static const uint32_t LABEL_SPT_TREE_ID = 0xd1d;
+static const uint32_t LABEL_SPT_SCALE = 0xd1c;
 
 bool parseRML(const std::vector<uint8_t>& data, RMLData& outData) {
     if (data.size() < 8) return false;
@@ -83,6 +86,42 @@ bool parseRML(const std::vector<uint8_t>& data, RMLData& outData) {
         if (!prop.modelName.empty() || !prop.modelFile.empty()) {
             outData.props.push_back(prop);
         }
+    }
+
+    std::vector<GFFStructRef> sptList = gff.readStructList(0, LABEL_ENV_ROOM_SPT_LIST, 0);
+    for (const auto& sptRef : sptList) {
+        RMLSptInstance inst;
+        uint32_t off = sptRef.offset;
+        uint32_t si = sptRef.structIndex;
+
+        const GFFField* pf = gff.findField(si, LABEL_POSITION);
+        if (pf && pf->typeId == 10) {
+            uint32_t p = gff.dataOffset() + pf->dataOffset + off;
+            inst.posX = gff.readFloatAt(p);
+            inst.posY = gff.readFloatAt(p + 4);
+            inst.posZ = gff.readFloatAt(p + 8);
+        }
+
+        const GFFField* of_ = gff.findField(si, LABEL_ORIENTATION);
+        if (of_ && of_->typeId == 13) {
+            uint32_t p = gff.dataOffset() + of_->dataOffset + off;
+            inst.orientX = gff.readFloatAt(p);
+            inst.orientY = gff.readFloatAt(p + 4);
+            inst.orientZ = gff.readFloatAt(p + 8);
+            inst.orientW = gff.readFloatAt(p + 12);
+        }
+
+        const GFFField* idf = gff.findField(si, LABEL_SPT_TREE_ID);
+        if (idf && idf->typeId == 5) {
+            inst.treeId = gff.readInt32At(gff.dataOffset() + idf->dataOffset + off);
+        }
+
+        const GFFField* sf = gff.findField(si, LABEL_SPT_SCALE);
+        if (sf && sf->typeId == 8) {
+            inst.scale = gff.readFloatAt(gff.dataOffset() + sf->dataOffset + off);
+        }
+
+        outData.sptInstances.push_back(inst);
     }
 
     return true;

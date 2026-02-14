@@ -2,10 +2,12 @@
 #include "renderer.h"
 #include "terrain_loader.h"
 #include "rml_loader.h"
+#include "spt.h"
 #include "GffViewer.h"
 #include "LevelDatabase.h"
 #include <cstring>
 #include <fstream>
+#include <set>
 
 
 static const std::vector<LevelGame>& getLevelDB() {
@@ -144,6 +146,7 @@ static void classifyCachedEntry(CachedEntry& ce) {
         std::string ext = ce.name.substr(ce.name.size() - 4);
         std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
         if (ext == ".dds") ce.flags |= CachedEntry::FLAG_TEXTURE;
+        if (ext == ".tga") ce.flags |= CachedEntry::FLAG_TEXTURE;
         if (ext == ".fsb") ce.flags |= CachedEntry::FLAG_AUDIO;
         if (ext == ".gda") ce.flags |= CachedEntry::FLAG_GDA;
     }
@@ -232,6 +235,8 @@ static void unmarkModelAsImported(const std::string& modelName) {
 static bool s_showDeleteConfirm = false;
 static std::string s_deleteModelName;
 static CachedEntry s_deleteEntry;
+static CachedEntry s_pendingDumpEntry;
+static bool s_pendingDump = false;
 static bool deleteFromERF(const std::string& erfPath, const std::vector<std::string>& namesToDelete) {
     if (!fs::exists(erfPath)) return false;
     std::vector<uint8_t> erfData;
@@ -378,6 +383,17 @@ void drawBrowserWindow(AppState& state) {
                         pw.scale = prop.scale;
                         ll.propQueue.push_back(pw);
                     }
+                    for (const auto& si : rml.sptInstances) {
+                        AppState::SptWork sw;
+                        sw.treeId = si.treeId;
+                        sw.px = rml.roomPosX + si.posX;
+                        sw.py = rml.roomPosY + si.posY;
+                        sw.pz = rml.roomPosZ + si.posZ;
+                        sw.qx = si.orientX; sw.qy = si.orientY;
+                        sw.qz = si.orientZ; sw.qw = si.orientW;
+                        sw.scale = si.scale;
+                        ll.sptQueue.push_back(sw);
+                    }
                 }
             };
 
@@ -397,7 +413,39 @@ void drawBrowserWindow(AppState& state) {
                 }
             }
 
+            // Find .spt files in loaded ERFs for tree ID mapping
+            for (const auto& erfPath : state.erfFiles) {
+                ERFFile erf;
+                if (!erf.open(erfPath)) continue;
+                std::vector<std::string> sptNames;
+                for (const auto& entry : erf.entries()) {
+                    std::string eLower = entry.name;
+                    std::transform(eLower.begin(), eLower.end(), eLower.begin(), ::tolower);
+                    if (eLower.size() > 4 && eLower.substr(eLower.size() - 4) == ".spt")
+                        sptNames.push_back(entry.name);
+                }
+                if (!sptNames.empty()) {
+                    ll.sptErfPath = erfPath;
+                    std::sort(sptNames.begin(), sptNames.end());
+                    std::set<int32_t> uniqueIds;
+                    for (const auto& sw : ll.sptQueue) uniqueIds.insert(sw.treeId);
+                    std::vector<int32_t> sortedIds(uniqueIds.begin(), uniqueIds.end());
+                    for (size_t i = 0; i < sortedIds.size() && i < sptNames.size(); i++)
+                        ll.sptIdToFile[sortedIds[i]] = sptNames[i];
+                    std::cout << "[LEVEL] Found " << sptNames.size() << " .spt files in " << erfPath << std::endl;
+                    for (const auto& [id, name] : ll.sptIdToFile)
+                        std::cout << "[LEVEL]   Tree ID " << id << " -> " << name << std::endl;
+                    break;
+                }
+            }
+
             ll.totalProps = (int)ll.propQueue.size();
+            ll.totalSpt = (int)ll.sptQueue.size();
+            if (!ll.sptErfPath.empty()) {
+                auto sptTexErf = std::make_unique<ERFFile>();
+                if (sptTexErf->open(ll.sptErfPath))
+                    state.textureErfs.push_back(std::move(sptTexErf));
+            }
             ll.itemIndex = 0;
             ll.stage = 2;
             ll.stageLabel = "Loading terrain...";
@@ -453,11 +501,228 @@ void drawBrowserWindow(AppState& state) {
                 processed++;
             }
             if (ll.itemIndex >= ll.totalProps) {
+                ll.itemIndex = 0;
                 ll.stage = 4;
-                ll.stageLabel = "Loading materials & textures...";
+                ll.stageLabel = "Loading trees...";
             }
         }
         else if (ll.stage == 4) {
+            // Batched tree loading: convert unique trees once, then merge ALL instances
+            // into one mesh per (treeId, submeshType) — typically ~16 meshes total instead of ~40k
+            if (!ll.sptErfPath.empty() && !ll.sptIdToFile.empty()) {
+                std::map<int32_t, SptModel> sptCache;
+
+                // Phase 1: Convert all unique tree models (only ~4 typically)
+                ERFFile sptErf;
+                if (sptErf.open(ll.sptErfPath)) {
+                    for (const auto& [treeId, fileName] : ll.sptIdToFile) {
+                        for (const auto& entry : sptErf.entries()) {
+                            if (entry.name == fileName) {
+                                auto sptData = sptErf.readEntry(entry);
+                                if (!sptData.empty()) {
+                                    std::string tempDir;
+                                    #ifdef _WIN32
+                                    char tmp[MAX_PATH]; GetTempPathA(MAX_PATH, tmp); tempDir = tmp;
+                                    #else
+                                    tempDir = "/tmp/";
+                                    #endif
+                                    std::string tempSpt = tempDir + "haven_level_temp.spt";
+                                    { std::ofstream f(tempSpt, std::ios::binary);
+                                      f.write((char*)sptData.data(), sptData.size()); }
+                                    SptModel model;
+                                    if (loadSptModel(tempSpt, model)) {
+                                        extractSptTextures(sptData, model);
+                                        sptCache[treeId] = std::move(model);
+                                    }
+                                    #ifdef _WIN32
+                                    DeleteFileA(tempSpt.c_str());
+                                    #else
+                                    remove(tempSpt.c_str());
+                                    #endif
+                                }
+                                break;
+                            }
+                        }
+                    }
+
+                    auto stripExt = [](const std::string& s) -> std::string {
+                        size_t d = s.rfind('.');
+                        return (d != std::string::npos) ? s.substr(0, d) : s;
+                    };
+
+                    // Phase 2: Create materials and set up batch meshes
+                    // Key: (treeId, submeshType) -> index into batchMeshes
+                    struct BatchKey {
+                        int32_t treeId;
+                        int smIdx;
+                        bool operator<(const BatchKey& o) const {
+                            return treeId < o.treeId || (treeId == o.treeId && smIdx < o.smIdx);
+                        }
+                    };
+                    std::map<BatchKey, size_t> batchMap;
+                    std::vector<Mesh> batchMeshes;
+
+                    // Pre-count vertices per batch to reserve memory
+                    std::map<BatchKey, size_t> vertCounts, idxCounts;
+                    for (const auto& sw : ll.sptQueue) {
+                        auto cit = sptCache.find(sw.treeId);
+                        if (cit == sptCache.end()) continue;
+                        for (int si = 0; si < (int)cit->second.submeshes.size(); si++) {
+                            BatchKey bk{sw.treeId, si};
+                            vertCounts[bk] += cit->second.submeshes[si].vertexCount();
+                            idxCounts[bk] += cit->second.submeshes[si].indexCount();
+                        }
+                    }
+
+                    // Create batch meshes with materials
+                    // Branch = TGA (loaded directly), Frond+Leaf = _diffuse.dds (via finalize)
+                    for (const auto& [treeId, treeModel] : sptCache) {
+                        auto fit = ll.sptIdToFile.find(treeId);
+                        if (fit == ll.sptIdToFile.end()) continue;
+                        std::string baseName = fit->second;
+                        size_t dot = baseName.rfind('.');
+                        if (dot != std::string::npos) baseName = baseName.substr(0, dot);
+
+                        // Branch material — TGA texture from SPT embedded name
+                        std::string branchKey = treeModel.branchTexture.empty() ? baseName : stripExt(treeModel.branchTexture);
+                        int branchMatIdx = -1;
+                        for (int mi = 0; mi < (int)state.currentModel.materials.size(); mi++)
+                            if (state.currentModel.materials[mi].diffuseMap == branchKey) { branchMatIdx = mi; break; }
+                        if (branchMatIdx < 0) {
+                            Material mat;
+                            mat.name = branchKey;
+                            mat.diffuseMap = branchKey;
+                            mat.opacity = 1.0f;
+                            // Load TGA directly from ERF
+                            std::string keyLower = branchKey;
+                            std::transform(keyLower.begin(), keyLower.end(), keyLower.begin(), ::tolower);
+                            for (const auto& te : sptErf.entries()) {
+                                std::string eLower = te.name;
+                                std::transform(eLower.begin(), eLower.end(), eLower.begin(), ::tolower);
+                                if (eLower == keyLower + ".tga") {
+                                    auto tgaData = sptErf.readEntry(te);
+                                    if (!tgaData.empty()) {
+                                        std::vector<uint8_t> rgba; int w, h;
+                                        if (decodeTGAToRGBA(tgaData, rgba, w, h)) {
+                                            mat.diffuseTexId = createTexture2D(rgba.data(), w, h);
+                                            mat.diffuseData = std::move(rgba);
+                                            mat.diffuseWidth = w;
+                                            mat.diffuseHeight = h;
+                                        }
+                                    }
+                                    break;
+                                }
+                            }
+                            branchMatIdx = (int)state.currentModel.materials.size();
+                            state.currentModel.materials.push_back(std::move(mat));
+                        }
+
+                        // Frond + Leaf material — _diffuse.dds (finalize will load it)
+                        std::string diffuseKey = baseName + "_diffuse";
+                        int ddsMatIdx = -1;
+                        for (int mi = 0; mi < (int)state.currentModel.materials.size(); mi++)
+                            if (state.currentModel.materials[mi].diffuseMap == diffuseKey) { ddsMatIdx = mi; break; }
+                        if (ddsMatIdx < 0) {
+                            Material mat;
+                            mat.name = diffuseKey;
+                            mat.diffuseMap = diffuseKey;
+                            mat.opacity = 1.0f;
+                            ddsMatIdx = (int)state.currentModel.materials.size();
+                            state.currentModel.materials.push_back(std::move(mat));
+                        }
+
+                        const char* typeNames[] = {"Branch", "Frond", "LeafCard", "LeafMesh"};
+                        for (int si = 0; si < (int)treeModel.submeshes.size(); si++) {
+                            BatchKey bk{treeId, si};
+                            auto vc = vertCounts.find(bk);
+                            if (vc == vertCounts.end() || vc->second == 0) continue;
+
+                            Mesh mesh;
+                            const auto& sm = treeModel.submeshes[si];
+                            mesh.name = baseName + "_" + typeNames[(int)sm.type];
+                            if (sm.type == SptSubmeshType::Branch) {
+                                mesh.materialIndex = branchMatIdx;
+                                mesh.materialName = branchKey;
+                                mesh.alphaTest = false;
+                            } else {
+                                mesh.materialIndex = ddsMatIdx;
+                                mesh.materialName = diffuseKey;
+                                mesh.alphaTest = true;
+                            }
+                            mesh.vertices.reserve(vc->second);
+                            mesh.indices.reserve(idxCounts[bk]);
+                            batchMap[bk] = batchMeshes.size();
+                            batchMeshes.push_back(std::move(mesh));
+                        }
+                    }
+
+                    // Phase 3: Merge all instances into batch meshes
+                    for (const auto& sw : ll.sptQueue) {
+                        auto cit = sptCache.find(sw.treeId);
+                        if (cit == sptCache.end()) continue;
+
+                        float qx = sw.qx, qy = sw.qy, qz = sw.qz, qw = sw.qw;
+                        float qlen = std::sqrt(qx*qx + qy*qy + qz*qz + qw*qw);
+                        if (qlen > 0.00001f) { qx/=qlen; qy/=qlen; qz/=qlen; qw/=qlen; }
+
+                        for (int si = 0; si < (int)cit->second.submeshes.size(); si++) {
+                            BatchKey bk{sw.treeId, si};
+                            auto bit = batchMap.find(bk);
+                            if (bit == batchMap.end()) continue;
+
+                            Mesh& batch = batchMeshes[bit->second];
+                            const auto& sm = cit->second.submeshes[si];
+                            uint32_t baseVert = (uint32_t)batch.vertices.size();
+                            uint32_t nv = sm.vertexCount();
+
+                            for (uint32_t vi = 0; vi < nv; vi++) {
+                                float lx = sm.positions[vi*3+0] * sw.scale;
+                                float ly = sm.positions[vi*3+1] * sw.scale;
+                                float lz = sm.positions[vi*3+2] * sw.scale;
+                                float tx = 2.0f*(qy*lz - qz*ly);
+                                float ty = 2.0f*(qz*lx - qx*lz);
+                                float tz = 2.0f*(qx*ly - qy*lx);
+
+                                Vertex v;
+                                v.x = lx + qw*tx + (qy*tz - qz*ty) + sw.px;
+                                v.y = ly + qw*ty + (qz*tx - qx*tz) + sw.py;
+                                v.z = lz + qw*tz + (qx*ty - qy*tx) + sw.pz;
+
+                                float nx = sm.normals[vi*3+0];
+                                float ny = sm.normals[vi*3+1];
+                                float nz = sm.normals[vi*3+2];
+                                float tnx = 2.0f*(qy*nz - qz*ny);
+                                float tny = 2.0f*(qz*nx - qx*nz);
+                                float tnz = 2.0f*(qx*ny - qy*nx);
+                                v.nx = nx + qw*tnx + (qy*tnz - qz*tny);
+                                v.ny = ny + qw*tny + (qz*tnx - qx*tnz);
+                                v.nz = nz + qw*tnz + (qx*tny - qy*tnx);
+                                v.u = sm.texcoords[vi*2+0];
+                                v.v = sm.texcoords[vi*2+1];
+                                batch.vertices.push_back(v);
+                            }
+                            for (uint32_t idx : sm.indices)
+                                batch.indices.push_back(baseVert + idx);
+                        }
+                        ll.sptLoaded++;
+                    }
+
+                    // Move batch meshes into model
+                    for (auto& bm : batchMeshes) {
+                        if (!bm.vertices.empty()) {
+                            bm.calculateBounds();
+                            state.currentModel.meshes.push_back(std::move(bm));
+                        }
+                    }
+
+                    std::cout << "[LEVEL] Trees: " << ll.sptLoaded << " instances -> "
+                              << batchMeshes.size() << " batched meshes" << std::endl;
+                }
+            }
+            ll.stage = 5;
+            ll.stageLabel = "Loading materials & textures...";
+        }
+        else if (ll.stage == 5) {
             finalizeLevelMaterials(state);
             bakeLevelBuffers(state.currentModel);
 
@@ -494,11 +759,13 @@ void drawBrowserWindow(AppState& state) {
             state.statusMessage = "Loaded level: " + std::to_string(ll.terrainLoaded) + " terrain, " +
                 std::to_string(ll.propsLoaded) + " props (" +
                 std::to_string(ll.totalProps - ll.propsLoaded) + " missing), " +
+                std::to_string(ll.sptLoaded) + " trees, " +
                 std::to_string(state.currentModel.materials.size()) + " materials";
             std::cout << "[LEVEL] === Load Summary ===" << std::endl;
             std::cout << "[LEVEL]   Terrain: " << ll.terrainLoaded << "/" << ll.totalTerrain << " loaded" << std::endl;
             std::cout << "[LEVEL]   Props:   " << ll.propsLoaded << "/" << ll.totalProps << " loaded, "
                       << (ll.totalProps - ll.propsLoaded) << " missing" << std::endl;
+            std::cout << "[LEVEL]   Trees:   " << ll.sptLoaded << "/" << ll.totalSpt << " placed" << std::endl;
             std::cout << "[LEVEL]   Meshes:  " << state.currentModel.meshes.size() << std::endl;
             std::cout << "[LEVEL]   Materials: " << state.currentModel.materials.size() << std::endl;
             state.showRenderSettings = true;
@@ -518,6 +785,9 @@ void drawBrowserWindow(AppState& state) {
                 progress = ll.totalProps > 0 ? (float)ll.itemIndex / ll.totalProps : 0.0f;
                 detail = std::to_string(ll.itemIndex) + " / " + std::to_string(ll.totalProps) + " props";
             } else if (ll.stage == 4) {
+                progress = 0.5f;
+                detail = "Batching " + std::to_string(ll.totalSpt) + " trees...";
+            } else if (ll.stage == 5) {
                 progress = 1.0f;
                 detail = "Finalizing...";
             }
@@ -533,6 +803,7 @@ void drawBrowserWindow(AppState& state) {
             ImGui::ProgressBar(progress, ImVec2(-1, 0), detail.c_str());
             ImGui::End();
         }
+        return;  // Skip all other UI during level loading
     }
 
     ImGui::SetNextWindowSize(ImVec2(500, 600), ImGuiCond_FirstUseEver);
@@ -564,7 +835,7 @@ void drawBrowserWindow(AppState& state) {
                 state.mergedEntries.clear();
                 state.contentFlagsDirty = true;
                 state.filteredEntryIndices.clear();
-                state.lastContentFilter.clear();
+                state.lastContentFilter = "\x01_REBUILD";
                 state.showRIMBrowser = false;
                 state.rimEntries.clear();
                 state.showFSBBrowser = false;
@@ -586,7 +857,7 @@ void drawBrowserWindow(AppState& state) {
             state.mergedEntries.clear();
                 state.contentFlagsDirty = true;
             state.filteredEntryIndices.clear();
-            state.lastContentFilter.clear();
+            state.lastContentFilter = "\x01_REBUILD";
             state.showRIMBrowser = false;
             state.rimEntries.clear();
             for (size_t i = 0; i < state.audioFiles.size(); i++) {
@@ -612,7 +883,7 @@ void drawBrowserWindow(AppState& state) {
             state.mergedEntries.clear();
                 state.contentFlagsDirty = true;
             state.filteredEntryIndices.clear();
-            state.lastContentFilter.clear();
+            state.lastContentFilter = "\x01_REBUILD";
             state.showRIMBrowser = false;
             state.rimEntries.clear();
             for (size_t i = 0; i < state.voiceOverFiles.size(); i++) {
@@ -652,7 +923,7 @@ void drawBrowserWindow(AppState& state) {
                 state.mergedEntries.clear();
                 state.contentFlagsDirty = true;
                 state.filteredEntryIndices.clear();
-                state.lastContentFilter.clear();
+                state.lastContentFilter = "\x01_REBUILD";
                 s_meshDataSourceFilter = 0;
                 s_hierDataSourceFilter = 0;
                 state.showRIMBrowser = false;
@@ -698,14 +969,14 @@ void drawBrowserWindow(AppState& state) {
             if (ImGui::RadioButton(label, s_meshDataSourceFilter == 0)) {
                 s_meshDataSourceFilter = 0;
                 state.filteredEntryIndices.clear();
-                state.lastContentFilter.clear();
+                state.lastContentFilter = "\x01_REBUILD";
             }
             if (coreCount > 0) {
                 snprintf(label, sizeof(label), "Core (%d)", coreCount);
                 if (ImGui::RadioButton(label, s_meshDataSourceFilter == 1)) {
                     s_meshDataSourceFilter = 1;
                     state.filteredEntryIndices.clear();
-                    state.lastContentFilter.clear();
+                    state.lastContentFilter = "\x01_REBUILD";
                 }
             }
             if (awakCount > 0) {
@@ -713,7 +984,7 @@ void drawBrowserWindow(AppState& state) {
                 if (ImGui::RadioButton(label, s_meshDataSourceFilter == 2)) {
                     s_meshDataSourceFilter = 2;
                     state.filteredEntryIndices.clear();
-                    state.lastContentFilter.clear();
+                    state.lastContentFilter = "\x01_REBUILD";
                 }
             }
             if (modsCount > 0) {
@@ -721,7 +992,7 @@ void drawBrowserWindow(AppState& state) {
                 if (ImGui::RadioButton(label, s_meshDataSourceFilter == 3)) {
                     s_meshDataSourceFilter = 3;
                     state.filteredEntryIndices.clear();
-                    state.lastContentFilter.clear();
+                    state.lastContentFilter = "\x01_REBUILD";
                 }
             }
             ImGui::Unindent();
@@ -739,14 +1010,14 @@ void drawBrowserWindow(AppState& state) {
             if (ImGui::RadioButton(label, s_hierDataSourceFilter == 0)) {
                 s_hierDataSourceFilter = 0;
                 state.filteredEntryIndices.clear();
-                state.lastContentFilter.clear();
+                state.lastContentFilter = "\x01_REBUILD";
             }
             if (coreCount > 0) {
                 snprintf(label, sizeof(label), "Core (%d)", coreCount);
                 if (ImGui::RadioButton(label, s_hierDataSourceFilter == 1)) {
                     s_hierDataSourceFilter = 1;
                     state.filteredEntryIndices.clear();
-                    state.lastContentFilter.clear();
+                    state.lastContentFilter = "\x01_REBUILD";
                 }
             }
             if (awakCount > 0) {
@@ -754,7 +1025,7 @@ void drawBrowserWindow(AppState& state) {
                 if (ImGui::RadioButton(label, s_hierDataSourceFilter == 2)) {
                     s_hierDataSourceFilter = 2;
                     state.filteredEntryIndices.clear();
-                    state.lastContentFilter.clear();
+                    state.lastContentFilter = "\x01_REBUILD";
                 }
             }
             if (modsCount > 0) {
@@ -762,7 +1033,7 @@ void drawBrowserWindow(AppState& state) {
                 if (ImGui::RadioButton(label, s_hierDataSourceFilter == 3)) {
                     s_hierDataSourceFilter = 3;
                     state.filteredEntryIndices.clear();
-                    state.lastContentFilter.clear();
+                    state.lastContentFilter = "\x01_REBUILD";
                 }
             }
             ImGui::Unindent();
@@ -797,7 +1068,7 @@ void drawBrowserWindow(AppState& state) {
             state.mergedEntries.clear();
                 state.contentFlagsDirty = true;
             state.filteredEntryIndices.clear();
-            state.lastContentFilter.clear();
+            state.lastContentFilter = "\x01_REBUILD";
 
             for (size_t i = 0; i < state.rimFiles.size(); i++) {
                 CachedEntry ce;
@@ -835,7 +1106,7 @@ void drawBrowserWindow(AppState& state) {
                 state.mergedEntries.clear();
                 state.contentFlagsDirty = true;
                 state.filteredEntryIndices.clear();
-                state.lastContentFilter.clear();
+                state.lastContentFilter = "\x01_REBUILD";
                 state.showRIMBrowser = false;
                 state.rimEntries.clear();
                 state.showFSBBrowser = false;
@@ -1153,6 +1424,7 @@ void drawBrowserWindow(AppState& state) {
             bool isAudioFile = (ce.flags & CachedEntry::FLAG_AUDIO) != 0;
             bool isGda = (ce.flags & CachedEntry::FLAG_GDA) != 0;
             bool isGff = (ce.flags & CachedEntry::FLAG_GFF) != 0;
+            bool isSpt = (ce.name.size() > 4 && ce.name.substr(ce.name.size() - 4) == ".spt");
             if (isModel) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.4f, 1.0f, 0.4f, 1.0f));
             else if (isTerrainFile) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.6f, 0.4f, 0.2f, 1.0f));
             else if (isMao) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.8f, 0.4f, 1.0f));
@@ -1161,6 +1433,7 @@ void drawBrowserWindow(AppState& state) {
             else if (isAudioFile) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.6f, 0.2f, 1.0f));
             else if (isGda) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.2f, 1.0f, 1.0f, 1.0f));
             else if (isGff) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.5f, 0.8f, 1.0f));
+            else if (isSpt) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.3f, 0.9f, 0.5f, 1.0f));
             char label[256]; snprintf(label, sizeof(label), "%s##%d", ce.name.c_str(), idx);
             if (ImGui::Selectable(label, idx == state.selectedEntryIndex, ImGuiSelectableFlags_AllowDoubleClick)) {
                 state.selectedEntryIndex = idx;
@@ -1318,7 +1591,14 @@ void drawBrowserWindow(AppState& state) {
                                         std::string nameLower = ce.name;
                                         std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), ::tolower);
                                         state.textureCache[nameLower] = data;
-                                        state.previewTextureId = createTextureFromDDS(data);
+                                        bool isTga = nameLower.size() > 4 && nameLower.substr(nameLower.size() - 4) == ".tga";
+                                        if (isTga) {
+                                            std::vector<uint8_t> rgba; int w, h;
+                                            if (decodeTGAToRGBA(data, rgba, w, h))
+                                                state.previewTextureId = createTexture2D(rgba.data(), w, h);
+                                        } else {
+                                            state.previewTextureId = createTextureFromDDS(data);
+                                        }
                                         state.previewTextureName = ce.name;
                                         state.showTexturePreview = true;
                                         state.previewMeshIndex = -1;
@@ -1348,6 +1628,18 @@ void drawBrowserWindow(AppState& state) {
                                             state.statusMessage = "Opened GFF: " + ce.name;
                                         } else {
                                             state.statusMessage = "Failed to parse GFF: " + ce.name;
+                                        }
+                                    }
+                                } else if (isSpt) {
+                                    auto data = erf.readEntry(entry);
+                                    if (!data.empty()) {
+                                        state.showTerrain = false;
+                                        g_terrainLoader.clear();
+                                        if (loadSptFromData(state, data, ce.name, state.erfFiles[ce.erfIdx])) {
+                                            state.statusMessage = "Loaded SPT: " + ce.name;
+                                            state.showRenderSettings = true;
+                                        } else {
+                                            state.statusMessage = "Failed to load SPT: " + ce.name;
                                         }
                                     }
                                 } else {
@@ -1407,6 +1699,23 @@ void drawBrowserWindow(AppState& state) {
                         }
                     }
                 }
+                ImGui::Separator();
+                if (ImGui::MenuItem("Dump File...")) {
+                    s_pendingDumpEntry = ce;
+                    s_pendingDump = true;
+                    IGFD::FileDialogConfig config;
+                    #ifdef _WIN32
+                    char* userProfile = getenv("USERPROFILE");
+                    if (userProfile) config.path = std::string(userProfile) + "\\Documents";
+                    else config.path = ".";
+                    #else
+                    char* home = getenv("HOME");
+                    if (home) config.path = std::string(home) + "/Documents";
+                    else config.path = ".";
+                    #endif
+                    config.fileName = ce.name;
+                    ImGuiFileDialog::Instance()->OpenDialog("DumpSingleFile", "Save File", ".*", config);
+                }
                 ImGui::EndPopup();
             }
             if (isModel && ImGui::BeginPopupContextItem()) {
@@ -1451,6 +1760,23 @@ void drawBrowserWindow(AppState& state) {
                     } else {
                         state.statusMessage = "Not a valid GFF file: " + ce.name;
                     }
+                }
+                ImGui::Separator();
+                if (ImGui::MenuItem("Dump File...")) {
+                    s_pendingDumpEntry = ce;
+                    s_pendingDump = true;
+                    IGFD::FileDialogConfig config;
+                    #ifdef _WIN32
+                    char* userProfile = getenv("USERPROFILE");
+                    if (userProfile) config.path = std::string(userProfile) + "\\Documents";
+                    else config.path = ".";
+                    #else
+                    char* home = getenv("HOME");
+                    if (home) config.path = std::string(home) + "/Documents";
+                    else config.path = ".";
+                    #endif
+                    config.fileName = ce.name;
+                    ImGuiFileDialog::Instance()->OpenDialog("DumpSingleFile", "Save File", ".*", config);
                 }
                 ImGui::EndPopup();
             }
@@ -1503,6 +1829,23 @@ void drawBrowserWindow(AppState& state) {
                         state.statusMessage = "Not a valid GFF file: " + ce.name;
                     }
                 }
+                ImGui::Separator();
+                if (ImGui::MenuItem("Dump File...")) {
+                    s_pendingDumpEntry = ce;
+                    s_pendingDump = true;
+                    IGFD::FileDialogConfig config;
+                    #ifdef _WIN32
+                    char* userProfile = getenv("USERPROFILE");
+                    if (userProfile) config.path = std::string(userProfile) + "\\Documents";
+                    else config.path = ".";
+                    #else
+                    char* home = getenv("HOME");
+                    if (home) config.path = std::string(home) + "/Documents";
+                    else config.path = ".";
+                    #endif
+                    config.fileName = ce.name;
+                    ImGuiFileDialog::Instance()->OpenDialog("DumpSingleFile", "Save File", ".*", config);
+                }
                 ImGui::EndPopup();
             }
             if (!isAudio && !isModel && !isTexture && ImGui::BeginPopupContextItem()) {
@@ -1517,9 +1860,26 @@ void drawBrowserWindow(AppState& state) {
                         state.statusMessage = "Not a valid GFF file: " + ce.name;
                     }
                 }
+                ImGui::Separator();
+                if (ImGui::MenuItem("Dump File...")) {
+                    s_pendingDumpEntry = ce;
+                    s_pendingDump = true;
+                    IGFD::FileDialogConfig config;
+                    #ifdef _WIN32
+                    char* userProfile = getenv("USERPROFILE");
+                    if (userProfile) config.path = std::string(userProfile) + "\\Documents";
+                    else config.path = ".";
+                    #else
+                    char* home = getenv("HOME");
+                    if (home) config.path = std::string(home) + "/Documents";
+                    else config.path = ".";
+                    #endif
+                    config.fileName = ce.name;
+                    ImGuiFileDialog::Instance()->OpenDialog("DumpSingleFile", "Save File", ".*", config);
+                }
                 ImGui::EndPopup();
             }
-            if (isModel || isTerrainFile || isMao || isPhy || isTexture || isAudioFile || isGda || isGff) ImGui::PopStyleColor();
+            if (isModel || isTerrainFile || isMao || isPhy || isTexture || isAudioFile || isGda || isGff || isSpt) ImGui::PopStyleColor();
         });
         ImGui::EndChild();
 
@@ -1906,7 +2266,14 @@ void drawBrowserWindow(AppState& state) {
                                             std::string nameLower = re.name;
                                             std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), ::tolower);
                                             state.textureCache[nameLower] = data;
-                                            state.previewTextureId = createTextureFromDDS(data);
+                                            bool isTga = nameLower.size() > 4 && nameLower.substr(nameLower.size() - 4) == ".tga";
+                                            if (isTga) {
+                                                std::vector<uint8_t> rgba; int w, h;
+                                                if (decodeTGAToRGBA(data, rgba, w, h))
+                                                    state.previewTextureId = createTexture2D(rgba.data(), w, h);
+                                            } else {
+                                                state.previewTextureId = createTextureFromDDS(data);
+                                            }
                                             state.previewTextureName = re.name;
                                             state.showTexturePreview = true;
                                             state.previewMeshIndex = -1;
@@ -2039,6 +2406,25 @@ void drawBrowserWindow(AppState& state) {
     } else ImGui::Text("Select an ERF file");
     ImGui::EndChild();
     ImGui::End();
+    if (ImGuiFileDialog::Instance()->Display("DumpSingleFile", ImGuiWindowFlags_NoCollapse, ImVec2(500, 400))) {
+        if (ImGuiFileDialog::Instance()->IsOk()) {
+            std::string outPath = ImGuiFileDialog::Instance()->GetFilePathName();
+            auto data = readCachedEntryData(state, s_pendingDumpEntry);
+            if (!data.empty()) {
+                std::ofstream f(outPath, std::ios::binary);
+                if (f) {
+                    f.write(reinterpret_cast<const char*>(data.data()), data.size());
+                    state.statusMessage = "Dumped: " + s_pendingDumpEntry.name;
+                } else {
+                    state.statusMessage = "Failed to write: " + outPath;
+                }
+            } else {
+                state.statusMessage = "Failed to read: " + s_pendingDumpEntry.name;
+            }
+        }
+        s_pendingDump = false;
+        ImGuiFileDialog::Instance()->Close();
+    }
     if (ImGuiFileDialog::Instance()->Display("DumpAllFiles", ImGuiWindowFlags_NoCollapse, ImVec2(500, 400))) {
         if (ImGuiFileDialog::Instance()->IsOk()) {
             std::string outDir = ImGuiFileDialog::Instance()->GetCurrentPath();
@@ -2118,7 +2504,7 @@ void drawBrowserWindow(AppState& state) {
             state.mergedEntries.clear();
                 state.contentFlagsDirty = true;
             state.filteredEntryIndices.clear();
-            state.lastContentFilter.clear();
+            state.lastContentFilter = "\x01_REBUILD";
             state.statusMessage = "Deleted " + baseName + " (" + std::to_string(deletedCount) + " ERF files updated)";
             ImGui::CloseCurrentPopup();
         }

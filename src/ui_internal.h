@@ -11,6 +11,7 @@
 #include "Gff32.h"
 #include "GffViewer.h"
 #include "gda.h"
+#include "spt.h"
 #ifdef _WIN32
 #define NOMINMAX
 #include <windows.h>
@@ -95,3 +96,4 @@ void loadCharacterModel(AppState& state);
 void drawCharacterDesigner(AppState& state, ImGuiIO& io);
 void preloadCharacterData(AppState& state);
 void draw2DAEditorWindow(AppState& state);
+bool loadSptFromData(AppState& state, const std::vector<uint8_t>& sptData, const std::string& name, const std::string& erfPath);

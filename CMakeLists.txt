@@ -132,6 +132,30 @@ static unsigned int fa_solid_otf_len = 0;
     message(WARNING "FontAwesome Solid font not found in src/Assets/otfs/")
 endif()
 
+set(SPT_DLL_PATH "${CMAKE_SOURCE_DIR}/src/dependencies/SpeedTreeRT.dll")
+if(EXISTS "${SPT_DLL_PATH}")
+    file(READ "${SPT_DLL_PATH}" SPT_DATA HEX)
+    string(LENGTH "${SPT_DATA}" SPT_HEX_LEN)
+    math(EXPR SPT_LEN "${SPT_HEX_LEN} / 2")
+    string(REGEX REPLACE "([0-9a-f][0-9a-f])" "0x\\1," SPT_ARRAY "${SPT_DATA}")
+    string(REGEX REPLACE ",$" "" SPT_ARRAY "${SPT_ARRAY}")
+    file(WRITE "${CMAKE_BINARY_DIR}/spt_dll_embedded.h"
+            "#pragma once
+static unsigned char spt_dll[] = {
+${SPT_ARRAY}
+};
+static unsigned int spt_dll_len = ${SPT_LEN};
+")
+    message(STATUS "Embedded SpeedTreeRT.dll (${SPT_LEN} bytes)")
+else()
+    file(WRITE "${CMAKE_BINARY_DIR}/spt_dll_embedded.h"
+            "#pragma once
+static unsigned char spt_dll[] = {0};
+static unsigned int spt_dll_len = 0;
+")
+    message(WARNING "SpeedTreeRT.dll not found at ${SPT_DLL_PATH}")
+endif()
+
 add_executable(HavenTools
         src/main.cpp
         src/types.cpp
@@ -198,14 +222,28 @@ add_executable(HavenTools
         src/Rml_Loader.h
         src/LevelDatabase.h
         src/ui_browser_mesh.cpp
+        src/spt.cpp
+        src/spt.h
+        src/dependencies/speedtree/spt_convert.h
+        src/dependencies/speedtree/speedtree_dll.h
+        src/ui_speedtree.cpp
 )
 
 target_include_directories(HavenTools PRIVATE
         ${CMAKE_SOURCE_DIR}/src
+        ${CMAKE_SOURCE_DIR}/src/dependencies
         ${CMAKE_BINARY_DIR}
 )
 
 target_link_libraries(HavenTools PRIVATE imgui_lib imguifiledialog_lib tinygltf)
+
+if(EXISTS "${CMAKE_SOURCE_DIR}/src/dependencies/SpeedTreeRT.lib")
+    target_link_libraries(HavenTools PRIVATE
+            "${CMAKE_SOURCE_DIR}/src/dependencies/SpeedTreeRT.lib"
+            delayimp.lib
+    )
+    target_link_options(HavenTools PRIVATE /DELAYLOAD:SpeedTreeRT.dll)
+endif()
 
 if(WIN32)
     target_compile_definitions(HavenTools PRIVATE _CRT_SECURE_NO_WARNINGS)

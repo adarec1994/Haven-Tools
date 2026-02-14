@@ -89,6 +89,13 @@ void drawRenderSettingsWindow(AppState& state) {
                     bool visible = state.renderSettings.meshVisible[i] != 0;
                     if (ImGui::Checkbox("##vis", &visible)) state.renderSettings.meshVisible[i] = visible ? 1 : 0;
                     ImGui::SameLine();
+                    bool atBefore = state.currentModel.meshes[i].alphaTest;
+                    bool at = atBefore;
+                    if (atBefore) ImGui::PushStyleColor(ImGuiCol_CheckMark, ImVec4(0.6f, 0.9f, 1.0f, 1.0f));
+                    if (ImGui::Checkbox("##alpha", &at)) state.currentModel.meshes[i].alphaTest = at;
+                    if (atBefore) ImGui::PopStyleColor();
+                    if (ImGui::IsItemHovered()) ImGui::SetTooltip("Alpha test");
+                    ImGui::SameLine();
                     bool isSelected = (state.selectedLevelChunk == (int)i);
                     if (isSelected) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.5f, 1.0f, 0.5f, 1.0f));
                     std::string label = mesh.name.empty() ? ("Mesh " + std::to_string(i)) : mesh.name;

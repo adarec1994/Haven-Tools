@@ -236,8 +236,7 @@ Thank you for downloading or updating to version 2.0!
 - Additional formats:
 -- Added .LVL file's to the list of files that can be loaded.
 -- Added .RIM file's to the list of files that can be loaded.
--- Added terrain rendering in .LVL files (part of the single player resources pack)
--- Added level explorer -> load and explore the game's levels.
+-- Added level loading, includes terrain, props, and foliage.
 
 - UI Updates:
 -- Updated the skeleton rendering to be cleaner.

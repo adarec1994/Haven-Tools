@@ -171,6 +171,7 @@ struct StaticMeshDraw {
     int meshIndex;          // original index in model.meshes[]
     float minX, minY, minZ;
     float maxX, maxY, maxZ;
+    bool alphaTest;
 };
 
 static ID3D11Buffer* s_levelVB = nullptr;
@@ -213,6 +214,7 @@ void bakeLevelBuffers(Model& model) {
         draw.meshIndex = (int)mi;
         draw.minX = mesh.minX; draw.minY = mesh.minY; draw.minZ = mesh.minZ;
         draw.maxX = mesh.maxX; draw.maxY = mesh.maxY; draw.maxZ = mesh.maxZ;
+        draw.alphaTest = mesh.alphaTest;
         s_levelDraws.push_back(draw);
 
         for (size_t i = 0; i < mesh.vertices.size(); i++) {
@@ -327,6 +329,7 @@ static void renderLevelStatic(const Model& model, const float* mvp, const float*
             d3d.context->OMSetBlendState(d3d.bsAlpha, blendFactor, 0xFFFFFFFF);
 
         int lastMatIdx = -999;
+        int lastAlpha = -1;
         bool wasSelected = false;
 
         for (const auto& draw : s_levelDraws) {
@@ -345,10 +348,12 @@ static void renderLevelStatic(const Model& model, const float* mvp, const float*
             if (pass == 0 && isWaterMat) continue;
             if (pass == 1 && !isWaterMat) continue;
 
+            int curAlpha = draw.alphaTest ? 1 : 0;
             // Only update material state when it changes (or selection requires override)
             bool isSelected = selectedChunk >= 0 && draw.meshIndex == selectedChunk;
-            if (draw.materialIndex != lastMatIdx || isSelected || wasSelected) {
+            if (draw.materialIndex != lastMatIdx || curAlpha != lastAlpha || isSelected || wasSelected) {
                 lastMatIdx = draw.materialIndex;
+                lastAlpha = curAlpha;
 
                 bool hasDiffuse  = mat && mat->diffuseTexId != 0 && settings.showTextures;
                 bool hasNormal   = mat && mat->normalTexId != 0 && settings.useNormalMaps;
@@ -376,6 +381,7 @@ static void renderLevelStatic(const Model& model, const float* mvp, const float*
                 perMat.useNormal   = (useShaders && hasNormal) ? 1 : 0;
                 perMat.useSpecular = (useShaders && hasSpecular) ? 1 : 0;
                 perMat.useTint     = (useShaders && hasTint) ? 1 : 0;
+                perMat.useAlphaTest = curAlpha;
                 updatePerMaterialCB(perMat);
 
                 CBTerrain terrCB = {};
@@ -780,6 +786,8 @@ void renderModel(Model& model, const Camera& camera, const RenderSettings& setti
                                     matNameLower.find("brd") != std::string::npos ||
                                     meshNameLower.find("lash") != std::string::npos ||
                                     meshNameLower.find("brow") != std::string::npos);
+                if (mesh.alphaTest)
+                    isAlphaMesh = true;
                 if ((pass == 0 && isAlphaMesh) || (pass == 1 && !isAlphaMesh)) continue;
 
                 if (animating && mesh.hasSkinning && !mesh.skinningCacheBuilt)

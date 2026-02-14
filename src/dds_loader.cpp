@@ -238,6 +238,85 @@ bool decodeDDSToRGBA(const std::vector<uint8_t>& data, std::vector<uint8_t>& rgb
     return false;
 }
 
+bool decodeTGAToRGBA(const std::vector<uint8_t>& data, std::vector<uint8_t>& rgba, int& width, int& height) {
+    if (data.size() < 18) return false;
+    uint8_t idLen = data[0];
+    uint8_t colorMapType = data[1];
+    uint8_t imageType = data[2];
+    width = data[12] | (data[13] << 8);
+    height = data[14] | (data[15] << 8);
+    uint8_t bpp = data[16];
+    uint8_t descriptor = data[17];
+    bool topToBottom = (descriptor & 0x20) != 0;
+    if (width <= 0 || height <= 0) return false;
+    if (colorMapType != 0) return false;
+    bool rle = (imageType == 10);
+    bool uncompressed = (imageType == 2);
+    bool grayscale = (imageType == 3 || imageType == 11);
+    if (!rle && !uncompressed && !grayscale) return false;
+    int bytesPerPixel = bpp / 8;
+    if (bytesPerPixel < 1 || bytesPerPixel > 4) return false;
+    size_t offset = 18 + idLen;
+    if (offset > data.size()) return false;
+    rgba.resize(width * height * 4);
+    int totalPixels = width * height;
+    int pixelsRead = 0;
+    const uint8_t* src = data.data() + offset;
+    const uint8_t* srcEnd = data.data() + data.size();
+    auto writePixel = [&](const uint8_t* p, int idx) {
+        int di = idx * 4;
+        if (grayscale) {
+            rgba[di] = rgba[di+1] = rgba[di+2] = p[0];
+            rgba[di+3] = (bytesPerPixel >= 2) ? p[1] : 255;
+        } else if (bytesPerPixel == 4) {
+            rgba[di] = p[2]; rgba[di+1] = p[1]; rgba[di+2] = p[0]; rgba[di+3] = p[3];
+        } else if (bytesPerPixel == 3) {
+            rgba[di] = p[2]; rgba[di+1] = p[1]; rgba[di+2] = p[0]; rgba[di+3] = 255;
+        } else if (bytesPerPixel == 2) {
+            uint16_t v = p[0] | (p[1] << 8);
+            rgba[di] = ((v >> 10) & 0x1F) * 255 / 31;
+            rgba[di+1] = ((v >> 5) & 0x1F) * 255 / 31;
+            rgba[di+2] = (v & 0x1F) * 255 / 31;
+            rgba[di+3] = (v & 0x8000) ? 255 : 0;
+        }
+    };
+    if (rle || imageType == 11) {
+        while (pixelsRead < totalPixels && src < srcEnd) {
+            uint8_t packet = *src++;
+            int count = (packet & 0x7F) + 1;
+            if (packet & 0x80) {
+                if (src + bytesPerPixel > srcEnd) break;
+                for (int j = 0; j < count && pixelsRead < totalPixels; j++)
+                    writePixel(src, pixelsRead++);
+                src += bytesPerPixel;
+            } else {
+                for (int j = 0; j < count && pixelsRead < totalPixels; j++) {
+                    if (src + bytesPerPixel > srcEnd) break;
+                    writePixel(src, pixelsRead++);
+                    src += bytesPerPixel;
+                }
+            }
+        }
+    } else {
+        for (int i = 0; i < totalPixels && src + bytesPerPixel <= srcEnd; i++) {
+            writePixel(src, i);
+            src += bytesPerPixel;
+        }
+    }
+    if (!topToBottom) {
+        int rowBytes = width * 4;
+        std::vector<uint8_t> row(rowBytes);
+        for (int y = 0; y < height / 2; y++) {
+            int top = y * rowBytes;
+            int bot = (height - 1 - y) * rowBytes;
+            memcpy(row.data(), &rgba[top], rowBytes);
+            memcpy(&rgba[top], &rgba[bot], rowBytes);
+            memcpy(&rgba[bot], row.data(), rowBytes);
+        }
+    }
+    return true;
+}
+
 void encodePNG(const std::vector<uint8_t>& rgba, int w, int h, std::vector<uint8_t>& png) {
     uint32_t crc_table[256];
     for (int n = 0; n < 256; n++) {
