@@ -57,7 +57,10 @@ void runLoadingTask(AppState* statePtr) {
             std::string ext = entry.path().extension().string();
             std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
             if (ext == ".rim") {
-                state.rimFiles.push_back(entry.path().string());
+                std::string fname = entry.path().filename().string();
+                std::transform(fname.begin(), fname.end(), fname.begin(), ::tolower);
+                if (fname.size() <= 8 || fname.substr(fname.size() - 8) != ".gpu.rim")
+                    state.rimFiles.push_back(entry.path().string());
             } else if (ext == ".arl") {
                 state.arlFiles.push_back(entry.path().string());
             } else if (ext == ".opf") {

@@ -955,10 +955,6 @@ void finalizeLevelMaterials(AppState& state) {
         if (!mat.tintMap.empty() && mat.tintTexId == 0)
             mat.tintTexId = loadTextureByName(state, mat.tintMap, &mat.tintData, &mat.tintWidth, &mat.tintHeight);
 
-        if (!mat.diffuseMap.empty() && mat.diffuseTexId == 0)
-        if (!mat.normalMap.empty() && mat.normalTexId == 0)
-        if (!mat.specularMap.empty() && mat.specularTexId == 0)
-        if (!mat.tintMap.empty() && mat.tintTexId == 0)
         if (mat.isTerrain) {
             mat.paletteTexId = mat.diffuseTexId;
             mat.palNormalTexId = mat.normalTexId;
