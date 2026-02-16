@@ -37,6 +37,7 @@ static void boneEditAxisAngleToQuat(float ax, float ay, float az, float angle,
 
 static void boneEditApply(AppState& state, float mouseDeltaX) {
     if (state.boneEditMode == 0 || state.selectedBoneIndex < 0) return;
+    if (state.selectedBoneIndex >= (int)state.currentModel.skeleton.bones.size()) return;
     Bone& bone = state.currentModel.skeleton.bones[state.selectedBoneIndex];
     float sensitivity;
 
@@ -71,6 +72,9 @@ static void boneEditApply(AppState& state, float mouseDeltaX) {
 
 static void boneEditCancel(AppState& state) {
     if (state.boneEditMode == 0 || state.selectedBoneIndex < 0) return;
+    if (state.selectedBoneIndex >= (int)state.currentModel.skeleton.bones.size()) {
+        state.boneEditMode = 0; state.boneEditAxis = -1; return;
+    }
     Bone& bone = state.currentModel.skeleton.bones[state.selectedBoneIndex];
     bone.rotX = state.boneEditSavedRot[0]; bone.rotY = state.boneEditSavedRot[1];
     bone.rotZ = state.boneEditSavedRot[2]; bone.rotW = state.boneEditSavedRot[3];
@@ -81,8 +85,10 @@ static void boneEditCancel(AppState& state) {
     state.boneEditAxis = -1;
 }
 
-static void boneEditStart(AppState& state, int mode) {
+static void boneEditStart(AppState& state, int mode, GLFWwindow* window) {
     if (state.selectedBoneIndex < 0 || !state.renderSettings.showSkeleton) return;
+    if (!state.hasModel || state.currentModel.skeleton.bones.empty()) return;
+    if (state.selectedBoneIndex >= (int)state.currentModel.skeleton.bones.size()) return;
     if (state.basePoseBones.empty())
         state.basePoseBones = state.currentModel.skeleton.bones;
     const Bone& bone = state.currentModel.skeleton.bones[state.selectedBoneIndex];
@@ -91,7 +97,7 @@ static void boneEditStart(AppState& state, int mode) {
     state.boneEditSavedPos[0] = bone.posX; state.boneEditSavedPos[1] = bone.posY;
     state.boneEditSavedPos[2] = bone.posZ;
     double mx, my;
-    glfwGetCursorPos(glfwGetCurrentContext(), &mx, &my);
+    glfwGetCursorPos(window, &mx, &my);
     state.boneEditStartX = (float)mx;
     state.boneEditStartY = (float)my;
     state.boneEditMode = mode;
@@ -552,49 +558,97 @@ void handleInput(AppState& state, GLFWwindow* window, ImGuiIO& io) {
             glfwGetFramebufferSize(window, &width, &height);
             float aspect = (float)width / (float)height;
             float fov = 45.0f * 3.14159f / 180.0f;
-            float nearPlane = 0.1f;
-            float top = nearPlane * std::tan(fov / 2.0f);
-            float right = top * aspect;
+            float tanHalfFov = std::tan(fov / 2.0f);
+
             float ndcX = (2.0f * (float)mx / width) - 1.0f;
             float ndcY = 1.0f - (2.0f * (float)my / height);
-            float rayX = ndcX * right / nearPlane;
-            float rayY = ndcY * top / nearPlane;
-            float rayZ = -1.0f;
-            float cp = std::cos(-state.camera.pitch);
-            float sp = std::sin(-state.camera.pitch);
-            float cy = std::cos(-state.camera.yaw);
-            float sy = std::sin(-state.camera.yaw);
-            float rx1 = rayX;
-            float ry1 = rayY * cp - rayZ * sp;
-            float rz1 = rayY * sp + rayZ * cp;
-            float dirX = rx1 * cy + rz1 * sy;
-            float dirY = ry1;
-            float dirZ = -rx1 * sy + rz1 * cy;
+
+            auto identity = [](float* m) { for(int i=0;i<16;i++) m[i]=(i%5==0)?1.0f:0.0f; };
+            auto mul = [](const float* a, const float* b, float* out) {
+                for(int i=0;i<4;i++) for(int j=0;j<4;j++) {
+                    out[i*4+j]=0;
+                    for(int k=0;k<4;k++) out[i*4+j]+=a[i*4+k]*b[k*4+j];
+                }
+            };
+            auto applyRX = [&](float* m, float angle) {
+                float c=cosf(angle), s=sinf(angle);
+                float r[16]; identity(r);
+                r[5]=c; r[6]=s; r[9]=-s; r[10]=c;
+                float tmp[16]; mul(m,r,tmp); memcpy(m,tmp,64);
+            };
+            auto applyRY = [&](float* m, float angle) {
+                float c=cosf(angle), s=sinf(angle);
+                float r[16]; identity(r);
+                r[0]=c; r[2]=-s; r[8]=s; r[10]=c;
+                float tmp[16]; mul(m,r,tmp); memcpy(m,tmp,64);
+            };
+            auto applyT = [&](float* m, float x, float y, float z) {
+                float t[16]; identity(t);
+                t[12]=x; t[13]=y; t[14]=z;
+                float tmp[16]; mul(m,t,tmp); memcpy(m,tmp,64);
+            };
+
+            float view[16];
+            identity(view);
+            applyRX(view, -90.0f * 3.14159f / 180.0f);
+            applyT(view, -state.camera.x, -state.camera.y, -state.camera.z);
+            applyRY(view, -state.camera.yaw);
+            applyRX(view, -state.camera.pitch);
+
+            float inv[16], det;
+            inv[0] = view[5]*view[10]*view[15]-view[5]*view[11]*view[14]-view[9]*view[6]*view[15]+view[9]*view[7]*view[14]+view[13]*view[6]*view[11]-view[13]*view[7]*view[10];
+            inv[4] = -view[4]*view[10]*view[15]+view[4]*view[11]*view[14]+view[8]*view[6]*view[15]-view[8]*view[7]*view[14]-view[12]*view[6]*view[11]+view[12]*view[7]*view[10];
+            inv[8] = view[4]*view[9]*view[15]-view[4]*view[11]*view[13]-view[8]*view[5]*view[15]+view[8]*view[7]*view[13]+view[12]*view[5]*view[11]-view[12]*view[7]*view[9];
+            inv[12] = -view[4]*view[9]*view[14]+view[4]*view[10]*view[13]+view[8]*view[5]*view[14]-view[8]*view[6]*view[13]-view[12]*view[5]*view[10]+view[12]*view[6]*view[9];
+            inv[1] = -view[1]*view[10]*view[15]+view[1]*view[11]*view[14]+view[9]*view[2]*view[15]-view[9]*view[3]*view[14]-view[13]*view[2]*view[11]+view[13]*view[3]*view[10];
+            inv[5] = view[0]*view[10]*view[15]-view[0]*view[11]*view[14]-view[8]*view[2]*view[15]+view[8]*view[3]*view[14]+view[12]*view[2]*view[11]-view[12]*view[3]*view[10];
+            inv[9] = -view[0]*view[9]*view[15]+view[0]*view[11]*view[13]+view[8]*view[1]*view[15]-view[8]*view[3]*view[13]-view[12]*view[1]*view[11]+view[12]*view[3]*view[9];
+            inv[13] = view[0]*view[9]*view[14]-view[0]*view[10]*view[13]-view[8]*view[1]*view[14]+view[8]*view[2]*view[13]+view[12]*view[1]*view[10]-view[12]*view[2]*view[9];
+            inv[2] = view[1]*view[6]*view[15]-view[1]*view[7]*view[14]-view[5]*view[2]*view[15]+view[5]*view[3]*view[14]+view[13]*view[2]*view[7]-view[13]*view[3]*view[6];
+            inv[6] = -view[0]*view[6]*view[15]+view[0]*view[7]*view[14]+view[4]*view[2]*view[15]-view[4]*view[3]*view[14]-view[12]*view[2]*view[7]+view[12]*view[3]*view[6];
+            inv[10] = view[0]*view[5]*view[15]-view[0]*view[7]*view[13]-view[4]*view[1]*view[15]+view[4]*view[3]*view[13]+view[12]*view[1]*view[7]-view[12]*view[3]*view[5];
+            inv[14] = -view[0]*view[5]*view[14]+view[0]*view[6]*view[13]+view[4]*view[1]*view[14]-view[4]*view[2]*view[13]-view[12]*view[1]*view[6]+view[12]*view[2]*view[5];
+            inv[3] = -view[1]*view[6]*view[11]+view[1]*view[7]*view[10]+view[5]*view[2]*view[11]-view[5]*view[3]*view[10]-view[9]*view[2]*view[7]+view[9]*view[3]*view[6];
+            inv[7] = view[0]*view[6]*view[11]-view[0]*view[7]*view[10]-view[4]*view[2]*view[11]+view[4]*view[3]*view[10]+view[8]*view[2]*view[7]-view[8]*view[3]*view[6];
+            inv[11] = -view[0]*view[5]*view[11]+view[0]*view[7]*view[9]+view[4]*view[1]*view[11]-view[4]*view[3]*view[9]-view[8]*view[1]*view[7]+view[8]*view[3]*view[5];
+            inv[15] = view[0]*view[5]*view[10]-view[0]*view[6]*view[9]-view[4]*view[1]*view[10]+view[4]*view[2]*view[9]+view[8]*view[1]*view[6]-view[8]*view[2]*view[5];
+            det = view[0]*inv[0]+view[1]*inv[4]+view[2]*inv[8]+view[3]*inv[12];
+            if (std::abs(det) > 1e-12f) {
+                float invDet = 1.0f / det;
+                for(int i=0;i<16;i++) inv[i]*=invDet;
+            }
+
+            float vx = ndcX * tanHalfFov * aspect;
+            float vy = ndcY * tanHalfFov;
+            float vz = -1.0f;
+
+            float dirX = inv[0]*vx + inv[4]*vy + inv[8]*vz;
+            float dirY = inv[1]*vx + inv[5]*vy + inv[9]*vz;
+            float dirZ = inv[2]*vx + inv[6]*vy + inv[10]*vz;
             float len = std::sqrt(dirX*dirX + dirY*dirY + dirZ*dirZ);
             dirX /= len; dirY /= len; dirZ /= len;
-            float origX = state.camera.x;
-            float origY = state.camera.y;
-            float origZ = state.camera.z;
+
+            float origX = inv[12];
+            float origY = inv[13];
+            float origZ = inv[14];
+
             int closestBone = -1;
             float closestDist = 999999.0f;
             float threshold = 0.15f;
             for (size_t i = 0; i < state.currentModel.skeleton.bones.size(); i++) {
                 const auto& bone = state.currentModel.skeleton.bones[i];
-                float bx = bone.worldPosY;
-                float by = bone.worldPosZ;
-                float bz = -bone.worldPosX;
+                float bx = bone.worldPosX;
+                float by = bone.worldPosY;
+                float bz = bone.worldPosZ;
                 float toX = bx - origX;
                 float toY = by - origY;
                 float toZ = bz - origZ;
                 float t = toX*dirX + toY*dirY + toZ*dirZ;
                 if (t < 0) continue;
-                float closestX = origX + dirX * t;
-                float closestY = origY + dirY * t;
-                float closestZ = origZ + dirZ * t;
-                float dx = closestX - bx;
-                float dy = closestY - by;
-                float dz = closestZ - bz;
-                float dist = std::sqrt(dx*dx + dy*dy + dz*dz);
+                float cx = origX + dirX * t - bx;
+                float cy = origY + dirY * t - by;
+                float cz = origZ + dirZ * t - bz;
+                float dist = std::sqrt(cx*cx + cy*cy + cz*cz);
                 if (dist < threshold && t < closestDist) {
                     closestDist = t;
                     closestBone = (int)i;
@@ -731,7 +785,10 @@ void handleInput(AppState& state, GLFWwindow* window, ImGuiIO& io) {
 
         if (state.boneEditMode != 0) {
             float dx = (float)mx - state.boneEditStartX;
-            boneEditApply(state, dx);
+            float dy = (float)my - state.boneEditStartY;
+            float delta = std::sqrt(dx*dx + dy*dy);
+            if (dx < 0) delta = -delta;
+            boneEditApply(state, delta);
             if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS) {
                 boneEditCancel(state);
             }
@@ -773,11 +830,11 @@ void handleInput(AppState& state, GLFWwindow* window, ImGuiIO& io) {
                 boneEditCancel(state);
             }
         } else {
-            if (state.selectedBoneIndex >= 0 && state.renderSettings.showSkeleton) {
-                if (ImGui::IsKeyPressed(ImGuiKey_R))
-                    boneEditStart(state, 1);
-                if (ImGui::IsKeyPressed(ImGuiKey_G))
-                    boneEditStart(state, 2);
+            if (state.selectedBoneIndex >= 0 && state.renderSettings.showSkeleton && state.hasModel) {
+                if (ImGui::IsKeyPressed(state.keybinds.boneRotate))
+                    boneEditStart(state, 1, window);
+                if (ImGui::IsKeyPressed(state.keybinds.boneGrab))
+                    boneEditStart(state, 2, window);
             }
             float deltaTime = io.DeltaTime;
             float speed = state.camera.moveSpeed * deltaTime;
@@ -894,6 +951,8 @@ void drawKeybindsWindow(AppState& state) {
 
         drawKeybindRow("Deselect", state.keybinds.deselectBone, 6);
         drawKeybindRow("Delete Object", state.keybinds.deleteObject, 7);
+        drawKeybindRow("Bone Rotate", state.keybinds.boneRotate, 8);
+        drawKeybindRow("Bone Grab", state.keybinds.boneGrab, 9);
 
         ImGui::EndTable();
     }

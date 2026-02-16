@@ -243,11 +243,14 @@ Thank you for downloading or updating to version 2.0!
 --- Export levels as GLB or FBX. Use the havenarea_import.py to import the levels to blender.
 -- No level editing/ importing (please don't ask, it won't happen!).
 
+- Audio:
+-- Wrote a new audio player UI.
+-- Fixed a bug with audio banks spitting out garbage data.
+
 - UI Updates:
 -- Updated the skeleton rendering to be cleaner.
 -- Updated UI positions to be cleaner.
 -- Added settings -> keybinds to the top toolbar.
--- Updated the audio playback to use a cleaner UI.
 -- Rewrote the Gff viewer ~ much clearer and functional UI.
 -- Added Gff Value editing ~ fast and efficient.
 --- Default save location is in core/override.

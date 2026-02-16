@@ -37,6 +37,8 @@ struct Keybinds {
     ImGuiKey panDown       = ImGuiKey_Q;
     ImGuiKey deselectBone  = ImGuiKey_Escape;
     ImGuiKey deleteObject  = ImGuiKey_Delete;
+    ImGuiKey boneRotate    = ImGuiKey_R;
+    ImGuiKey boneGrab      = ImGuiKey_G;
 };
 
 struct GDAEditorState {

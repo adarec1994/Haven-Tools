@@ -486,6 +486,46 @@ bool DAOImporter::LoadGLB(const std::string& path, DAOModelData& outData) {
             bone.name = node.name.empty() ? "bone_" + std::to_string(i) : node.name;
             bone.index = static_cast<int>(i);
             bone.parentIndex = -1;
+            bool hasTRS = !node.translation.empty() || !node.rotation.empty() || !node.scale.empty();
+            if (!node.matrix.empty() && !hasTRS) {
+                const auto& m = node.matrix;
+                bone.translation[0] = (float)m[12];
+                bone.translation[1] = (float)m[13];
+                bone.translation[2] = (float)m[14];
+                float sx = std::sqrt((float)(m[0]*m[0] + m[1]*m[1] + m[2]*m[2]));
+                float sy = std::sqrt((float)(m[4]*m[4] + m[5]*m[5] + m[6]*m[6]));
+                float sz = std::sqrt((float)(m[8]*m[8] + m[9]*m[9] + m[10]*m[10]));
+                bone.scale[0] = sx; bone.scale[1] = sy; bone.scale[2] = sz;
+                float r00 = (float)(m[0]/sx), r01 = (float)(m[4]/sy), r02 = (float)(m[8]/sz);
+                float r10 = (float)(m[1]/sx), r11 = (float)(m[5]/sy), r12 = (float)(m[9]/sz);
+                float r20 = (float)(m[2]/sx), r21 = (float)(m[6]/sy), r22 = (float)(m[10]/sz);
+                float tr = r00 + r11 + r22;
+                if (tr > 0) {
+                    float s = 0.5f / std::sqrt(tr + 1.0f);
+                    bone.rotation[3] = 0.25f / s;
+                    bone.rotation[0] = (r21 - r12) * s;
+                    bone.rotation[1] = (r02 - r20) * s;
+                    bone.rotation[2] = (r10 - r01) * s;
+                } else if (r00 > r11 && r00 > r22) {
+                    float s = 2.0f * std::sqrt(1.0f + r00 - r11 - r22);
+                    bone.rotation[3] = (r21 - r12) / s;
+                    bone.rotation[0] = 0.25f * s;
+                    bone.rotation[1] = (r01 + r10) / s;
+                    bone.rotation[2] = (r02 + r20) / s;
+                } else if (r11 > r22) {
+                    float s = 2.0f * std::sqrt(1.0f + r11 - r00 - r22);
+                    bone.rotation[3] = (r02 - r20) / s;
+                    bone.rotation[0] = (r01 + r10) / s;
+                    bone.rotation[1] = 0.25f * s;
+                    bone.rotation[2] = (r12 + r21) / s;
+                } else {
+                    float s = 2.0f * std::sqrt(1.0f + r22 - r00 - r11);
+                    bone.rotation[3] = (r10 - r01) / s;
+                    bone.rotation[0] = (r02 + r20) / s;
+                    bone.rotation[1] = (r12 + r21) / s;
+                    bone.rotation[2] = 0.25f * s;
+                }
+            } else {
             if (!node.translation.empty()) {
                 bone.translation[0] = static_cast<float>(node.translation[0]);
                 bone.translation[1] = static_cast<float>(node.translation[1]);
@@ -508,6 +548,7 @@ bool DAOImporter::LoadGLB(const std::string& path, DAOModelData& outData) {
                 bone.scale[2] = static_cast<float>(node.scale[2]);
             } else {
                 bone.scale[0] = bone.scale[1] = bone.scale[2] = 1.0f;
+            }
             }
             if (i * 16 + 15 < inverseBindMatrices.size()) {
                 for (int j = 0; j < 16; ++j) {
@@ -774,37 +815,44 @@ bool DAOImporter::LoadGLB(const std::string& path, DAOModelData& outData) {
             }
             if (!posAcc) continue;
             part.hasSkinning = (jointsAcc != nullptr && weightsAcc != nullptr);
-            const float* positions = reinterpret_cast<const float*>(getBufferData(posAcc));
-            const float* normals = normAcc ? reinterpret_cast<const float*>(getBufferData(normAcc)) : nullptr;
-            const float* uvs = uvAcc ? reinterpret_cast<const float*>(getBufferData(uvAcc)) : nullptr;
-            const float* tangents = tanAcc ? reinterpret_cast<const float*>(getBufferData(tanAcc)) : nullptr;
-            const uint8_t* jointsData = jointsAcc ? getBufferData(jointsAcc) : nullptr;
-            const uint8_t* weightsRaw = weightsAcc ? getBufferData(weightsAcc) : nullptr;
+
+            auto getStride = [&](const tinygltf::Accessor* acc, int defaultSize) -> int {
+                const auto& bv = model.bufferViews[acc->bufferView];
+                return bv.byteStride > 0 ? (int)bv.byteStride : defaultSize;
+            };
+            auto getElemPtr = [&](const tinygltf::Accessor* acc, size_t idx, int stride) -> const uint8_t* {
+                const auto& bv = model.bufferViews[acc->bufferView];
+                return model.buffers[bv.buffer].data.data() + bv.byteOffset + acc->byteOffset + idx * stride;
+            };
+
+            int posStride = getStride(posAcc, 12);
+            int normStride = normAcc ? getStride(normAcc, 12) : 0;
+            int uvStride = uvAcc ? getStride(uvAcc, 8) : 0;
+            int tanStride = tanAcc ? getStride(tanAcc, 16) : 0;
+
             size_t vertexCount = posAcc->count;
             part.vertices.resize(vertexCount);
             for (size_t v = 0; v < vertexCount; ++v) {
                 ImportVertex& vert = part.vertices[v];
-                vert.x = positions[v * 3];
-                vert.y = positions[v * 3 + 1];
-                vert.z = positions[v * 3 + 2];
-                if (normals) {
-                    vert.nx = normals[v * 3];
-                    vert.ny = normals[v * 3 + 1];
-                    vert.nz = normals[v * 3 + 2];
+                const float* pos = reinterpret_cast<const float*>(getElemPtr(posAcc, v, posStride));
+                vert.x = pos[0];
+                vert.y = pos[1];
+                vert.z = pos[2];
+                if (normAcc) {
+                    const float* n = reinterpret_cast<const float*>(getElemPtr(normAcc, v, normStride));
+                    vert.nx = n[0]; vert.ny = n[1]; vert.nz = n[2];
                 } else {
                     vert.nx = 0; vert.ny = 1; vert.nz = 0;
                 }
-                if (uvs) {
-                    vert.u = uvs[v * 2];
-                    vert.v = uvs[v * 2 + 1];
+                if (uvAcc) {
+                    const float* uv = reinterpret_cast<const float*>(getElemPtr(uvAcc, v, uvStride));
+                    vert.u = uv[0]; vert.v = uv[1];
                 } else {
                     vert.u = 0; vert.v = 0;
                 }
-                if (tangents) {
-                    vert.tx = tangents[v * 4];
-                    vert.ty = tangents[v * 4 + 1];
-                    vert.tz = tangents[v * 4 + 2];
-                    vert.tw = tangents[v * 4 + 3];
+                if (tanAcc) {
+                    const float* t = reinterpret_cast<const float*>(getElemPtr(tanAcc, v, tanStride));
+                    vert.tx = t[0]; vert.ty = t[1]; vert.tz = t[2]; vert.tw = t[3];
                 } else {
                     float ax = 1.0f, ay = 0.0f, az = 0.0f;
                     if (std::abs(vert.nx) > 0.9f) { ax = 0.0f; ay = 1.0f; az = 0.0f; }
@@ -816,42 +864,36 @@ bool DAOImporter::LoadGLB(const std::string& path, DAOModelData& outData) {
                     else { tx = 1.0f; ty = 0.0f; tz = 0.0f; }
                     vert.tx = tx; vert.ty = ty; vert.tz = tz; vert.tw = 1.0f;
                 }
-                if (part.hasSkinning && jointsData && weightsRaw) {
+                if (part.hasSkinning && jointsAcc && weightsAcc) {
+                    int jointStride = getStride(jointsAcc, jointsAcc->componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT ? 8 :
+                                                           jointsAcc->componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT ? 16 : 4);
+                    int weightStride = getStride(weightsAcc, weightsAcc->componentType == TINYGLTF_COMPONENT_TYPE_FLOAT ? 16 :
+                                                              weightsAcc->componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT ? 8 : 4);
+                    const uint8_t* jp = getElemPtr(jointsAcc, v, jointStride);
+                    const uint8_t* wp = getElemPtr(weightsAcc, v, weightStride);
                     if (jointsAcc->componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE) {
-                        vert.boneIndices[0] = jointsData[v * 4 + 0];
-                        vert.boneIndices[1] = jointsData[v * 4 + 1];
-                        vert.boneIndices[2] = jointsData[v * 4 + 2];
-                        vert.boneIndices[3] = jointsData[v * 4 + 3];
+                        vert.boneIndices[0] = jp[0]; vert.boneIndices[1] = jp[1];
+                        vert.boneIndices[2] = jp[2]; vert.boneIndices[3] = jp[3];
                     } else if (jointsAcc->componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT) {
-                        const uint16_t* joints16 = reinterpret_cast<const uint16_t*>(jointsData);
-                        vert.boneIndices[0] = joints16[v * 4 + 0];
-                        vert.boneIndices[1] = joints16[v * 4 + 1];
-                        vert.boneIndices[2] = joints16[v * 4 + 2];
-                        vert.boneIndices[3] = joints16[v * 4 + 3];
+                        const uint16_t* j16 = reinterpret_cast<const uint16_t*>(jp);
+                        vert.boneIndices[0] = j16[0]; vert.boneIndices[1] = j16[1];
+                        vert.boneIndices[2] = j16[2]; vert.boneIndices[3] = j16[3];
                     } else if (jointsAcc->componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT) {
-                        const uint32_t* joints32 = reinterpret_cast<const uint32_t*>(jointsData);
-                        vert.boneIndices[0] = (int)joints32[v * 4 + 0];
-                        vert.boneIndices[1] = (int)joints32[v * 4 + 1];
-                        vert.boneIndices[2] = (int)joints32[v * 4 + 2];
-                        vert.boneIndices[3] = (int)joints32[v * 4 + 3];
+                        const uint32_t* j32 = reinterpret_cast<const uint32_t*>(jp);
+                        vert.boneIndices[0] = (int)j32[0]; vert.boneIndices[1] = (int)j32[1];
+                        vert.boneIndices[2] = (int)j32[2]; vert.boneIndices[3] = (int)j32[3];
                     }
                     if (weightsAcc->componentType == TINYGLTF_COMPONENT_TYPE_FLOAT) {
-                        const float* wf = reinterpret_cast<const float*>(weightsRaw);
-                        vert.boneWeights[0] = wf[v * 4 + 0];
-                        vert.boneWeights[1] = wf[v * 4 + 1];
-                        vert.boneWeights[2] = wf[v * 4 + 2];
-                        vert.boneWeights[3] = wf[v * 4 + 3];
+                        const float* wf = reinterpret_cast<const float*>(wp);
+                        vert.boneWeights[0] = wf[0]; vert.boneWeights[1] = wf[1];
+                        vert.boneWeights[2] = wf[2]; vert.boneWeights[3] = wf[3];
                     } else if (weightsAcc->componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE) {
-                        vert.boneWeights[0] = weightsRaw[v * 4 + 0] / 255.0f;
-                        vert.boneWeights[1] = weightsRaw[v * 4 + 1] / 255.0f;
-                        vert.boneWeights[2] = weightsRaw[v * 4 + 2] / 255.0f;
-                        vert.boneWeights[3] = weightsRaw[v * 4 + 3] / 255.0f;
+                        vert.boneWeights[0] = wp[0] / 255.0f; vert.boneWeights[1] = wp[1] / 255.0f;
+                        vert.boneWeights[2] = wp[2] / 255.0f; vert.boneWeights[3] = wp[3] / 255.0f;
                     } else if (weightsAcc->componentType == TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT) {
-                        const uint16_t* w16 = reinterpret_cast<const uint16_t*>(weightsRaw);
-                        vert.boneWeights[0] = w16[v * 4 + 0] / 65535.0f;
-                        vert.boneWeights[1] = w16[v * 4 + 1] / 65535.0f;
-                        vert.boneWeights[2] = w16[v * 4 + 2] / 65535.0f;
-                        vert.boneWeights[3] = w16[v * 4 + 3] / 65535.0f;
+                        const uint16_t* w16 = reinterpret_cast<const uint16_t*>(wp);
+                        vert.boneWeights[0] = w16[0] / 65535.0f; vert.boneWeights[1] = w16[1] / 65535.0f;
+                        vert.boneWeights[2] = w16[2] / 65535.0f; vert.boneWeights[3] = w16[3] / 65535.0f;
                     }
                     float wsum = vert.boneWeights[0] + vert.boneWeights[1] +
                                  vert.boneWeights[2] + vert.boneWeights[3];
@@ -874,6 +916,18 @@ bool DAOImporter::LoadGLB(const std::string& path, DAOModelData& outData) {
                     }
                 }
                 part.bonesUsed.assign(usedBones.begin(), usedBones.end());
+                std::map<int, int> boneRemap;
+                for (size_t bi = 0; bi < part.bonesUsed.size(); ++bi)
+                    boneRemap[part.bonesUsed[bi]] = (int)bi;
+                for (auto& v : part.vertices) {
+                    for (int i = 0; i < 4; ++i) {
+                        auto it = boneRemap.find(v.boneIndices[i]);
+                        if (it != boneRemap.end())
+                            v.boneIndices[i] = it->second;
+                        else if (v.boneWeights[i] > 0.0f)
+                            v.boneIndices[i] = 0;
+                    }
+                }
             }
             if (prim.indices >= 0) {
                 const auto* idxAcc = getAccessor(prim.indices);
@@ -893,39 +947,84 @@ bool DAOImporter::LoadGLB(const std::string& path, DAOModelData& outData) {
             outData.parts.push_back(part);
         }
     }
-    float rootRot[4] = {0, 0, 0, 1};
-    bool hasRootRotation = false;
-    for (const auto& node : model.nodes) {
-        if (!node.children.empty() && !node.rotation.empty()) {
-            bool hasMeshChildren = false;
+    // Apply armature/root node rotation to convert from Z-up to Y-up
+    // Blender GLB exports put a -90° X rotation on the armature node (parent of skeleton root)
+    float armRot[4] = {0, 0, 0, 1};
+    bool hasArmRotation = false;
+
+    // Find the armature node - it's the PARENT of skin.skeleton (the root bone)
+    if (!model.skins.empty() && model.skins[0].skeleton >= 0) {
+        int skelRootIdx = model.skins[0].skeleton;
+        for (size_t ni = 0; ni < model.nodes.size(); ++ni) {
+            const auto& node = model.nodes[ni];
             for (int childIdx : node.children) {
-                if (childIdx >= 0 && childIdx < (int)model.nodes.size()) {
-                    if (model.nodes[childIdx].mesh >= 0) {
-                        hasMeshChildren = true;
-                        break;
+                if (childIdx == skelRootIdx && !node.rotation.empty()) {
+                    armRot[0] = (float)node.rotation[0];
+                    armRot[1] = (float)node.rotation[1];
+                    armRot[2] = (float)node.rotation[2];
+                    armRot[3] = (float)node.rotation[3];
+                    hasArmRotation = true;
+                    break;
+                }
+            }
+            if (hasArmRotation) break;
+        }
+    }
+    // Fallback: find any node with rotation that parents mesh or joint nodes
+    if (!hasArmRotation) {
+        for (const auto& node : model.nodes) {
+            if (node.rotation.empty() || node.children.empty()) continue;
+            bool hasRelevantChild = false;
+            for (int c : node.children) {
+                if (c >= 0 && c < (int)model.nodes.size()) {
+                    if (model.nodes[c].mesh >= 0) hasRelevantChild = true;
+                    if (!model.skins.empty()) {
+                        for (int j : model.skins[0].joints) {
+                            if (j == c) { hasRelevantChild = true; break; }
+                        }
                     }
                 }
             }
-            if (hasMeshChildren) {
-                rootRot[0] = (float)node.rotation[0];
-                rootRot[1] = (float)node.rotation[1];
-                rootRot[2] = (float)node.rotation[2];
-                rootRot[3] = (float)node.rotation[3];
-                hasRootRotation = true;
+            if (hasRelevantChild) {
+                armRot[0] = (float)node.rotation[0];
+                armRot[1] = (float)node.rotation[1];
+                armRot[2] = (float)node.rotation[2];
+                armRot[3] = (float)node.rotation[3];
+                hasArmRotation = true;
                 break;
             }
         }
     }
-    if (hasRootRotation) {
-        float invRot[4] = {-rootRot[0], -rootRot[1], -rootRot[2], rootRot[3]};
+
+    if (hasArmRotation) {
+        // Apply rotation to all vertex positions, normals, tangents
         for (auto& part : outData.parts) {
             for (auto& v : part.vertices) {
-                rotateByQuat(v.x, v.y, v.z, invRot);
-                rotateByQuat(v.nx, v.ny, v.nz, invRot);
-                rotateByQuat(v.tx, v.ty, v.tz, invRot);
+                rotateByQuat(v.x, v.y, v.z, armRot);
+                rotateByQuat(v.nx, v.ny, v.nz, armRot);
+                rotateByQuat(v.tx, v.ty, v.tz, armRot);
             }
         }
+        // Apply rotation to root bone transforms
+        if (outData.skeleton.hasSkeleton) {
+            for (auto& bone : outData.skeleton.bones) {
+                if (bone.parentIndex < 0) {
+                    rotateByQuat(bone.translation[0], bone.translation[1], bone.translation[2], armRot);
+                    // Prepend armature rotation to root bone rotation: R_new = R_arm * R_bone
+                    float bq[4] = {bone.rotation[0], bone.rotation[1], bone.rotation[2], bone.rotation[3]};
+                    bone.rotation[3] = armRot[3]*bq[3] - armRot[0]*bq[0] - armRot[1]*bq[1] - armRot[2]*bq[2];
+                    bone.rotation[0] = armRot[3]*bq[0] + armRot[0]*bq[3] + armRot[1]*bq[2] - armRot[2]*bq[1];
+                    bone.rotation[1] = armRot[3]*bq[1] - armRot[0]*bq[2] + armRot[1]*bq[3] + armRot[2]*bq[0];
+                    bone.rotation[2] = armRot[3]*bq[2] + armRot[0]*bq[1] - armRot[1]*bq[0] + armRot[2]*bq[3];
+                }
+            }
+        }
+        // Apply rotation to collision shapes
+        for (auto& shape : outData.collisionShapes) {
+            rotateByQuat(shape.posX, shape.posY, shape.posZ, armRot);
+        }
     }
+
     return !outData.parts.empty() || !outData.collisionShapes.empty();
 }
 
@@ -946,7 +1045,7 @@ bool DAOImporter::WriteMSHXml(const fs::path& outputPath, const DAOModelData& mo
         out << "]]>\n</Data>\n";
         out << "<Data ElementCount=\"" << vertCount << "\" Semantic=\"TEXCOORD\" Type=\"Float2\">\n<![CDATA[\n";
         for (const auto& v : part.vertices)
-            out << v.u << " " << (1.0f - v.v) << "\n";
+            out << v.u << " " << v.v << "\n";
         out << "]]>\n</Data>\n";
         out << "<Data ElementCount=\"" << vertCount << "\" Semantic=\"TANGENT\" Type=\"Float4\">\n<![CDATA[\n";
         for (const auto& v : part.vertices)

@@ -6,9 +6,19 @@
 #include "Gff.h"
 #include "GffViewer.h"
 #include "LevelDatabase.h"
+#include "blender_addon_embedded.h"
 #include <cstring>
 #include <fstream>
 #include <set>
+
+static bool exportBlenderAddon(const unsigned char* data, unsigned int size, const std::string& destDir) {
+    namespace fs = std::filesystem;
+    fs::path outPath = fs::path(destDir) / "havenarea_importer.zip";
+    std::ofstream out(outPath, std::ios::binary);
+    if (!out) return false;
+    out.write(reinterpret_cast<const char*>(data), size);
+    return out.good();
+}
 
 static const std::vector<LevelGame>& getLevelDB() {
     static std::vector<LevelGame> db = buildLevelDatabase();
@@ -899,6 +909,17 @@ void drawBrowserWindow(AppState& state) {
                 (state.selectedFolder.empty() ? "." : state.selectedFolder) : state.lastDialogPath;
             ImGuiFileDialog::Instance()->OpenDialog("ChooseFolder", "Choose Folder", nullptr, config);
         }
+        if (ImGui::Button("Add Ons")) {
+            ImGui::OpenPopup("AddOnsPopup");
+        }
+        if (ImGui::BeginPopup("AddOnsPopup")) {
+            if (ImGui::MenuItem("Export Blender Importer")) {
+                IGFD::FileDialogConfig config;
+                config.path = state.lastDialogPath.empty() ? "." : state.lastDialogPath;
+                ImGuiFileDialog::Instance()->OpenDialog("ExportBlenderAddon", "Select Output Folder", nullptr, config);
+            }
+            ImGui::EndPopup();
+        }
         if (!state.statusMessage.empty()) { ImGui::SameLine(); ImGui::Text("%s", state.statusMessage.c_str()); }
         ImGui::EndMenuBar();
     }
@@ -1212,10 +1233,13 @@ void drawBrowserWindow(AppState& state) {
                 state.currentFSBSamples.clear();
                 fs::path overrideDir = fs::path(state.selectedFolder) / "packages" / "core" / "override";
                 if (fs::exists(overrideDir) && fs::is_directory(overrideDir)) {
-                    for (const auto& entry : fs::directory_iterator(overrideDir)) {
+                    for (const auto& entry : fs::recursive_directory_iterator(overrideDir,
+                             fs::directory_options::skip_permission_denied)) {
                         if (entry.is_regular_file()) {
                             CachedEntry ce;
-                            ce.name = entry.path().filename().string();
+                            fs::path relPath = fs::relative(entry.path(), overrideDir);
+                            ce.name = relPath.string();
+                            std::replace(ce.name.begin(), ce.name.end(), '\\', '/');
                             ce.erfIdx = SIZE_MAX;
                             ce.entryIdx = 0;
                             ce.source = entry.path().string();
@@ -1612,6 +1636,80 @@ void drawBrowserWindow(AppState& state) {
             ImGui::PopStyleColor();
             ImGui::Separator();
         }
+        bool isOverrideTree = (state.selectedErfName == "[Override]");
+        bool hasSubfolders = false;
+        if (isOverrideTree) {
+            for (int i : state.filteredEntryIndices) {
+                if (state.mergedEntries[i].name.find('/') != std::string::npos) {
+                    hasSubfolders = true;
+                    break;
+                }
+            }
+        }
+        if (isOverrideTree && hasSubfolders) {
+            std::map<std::string, std::vector<int>> folderMap;
+            std::vector<int> rootFiles;
+            for (int i : state.filteredEntryIndices) {
+                const auto& ce = state.mergedEntries[i];
+                size_t slash = ce.name.find('/');
+                if (slash != std::string::npos) {
+                    std::string folder = ce.name.substr(0, slash);
+                    folderMap[folder].push_back(i);
+                } else {
+                    rootFiles.push_back(i);
+                }
+            }
+            auto renderOverrideEntry = [&](int idx) {
+                const CachedEntry& ce = state.mergedEntries[idx];
+                std::string displayName = ce.name;
+                size_t lastSlash = displayName.rfind('/');
+                if (lastSlash != std::string::npos) displayName = displayName.substr(lastSlash + 1);
+                std::string nameLower = displayName;
+                std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), ::tolower);
+                bool isModel = (nameLower.size() > 4 && nameLower.substr(nameLower.size() - 4) == ".msh");
+                bool isMao = (nameLower.size() > 4 && nameLower.substr(nameLower.size() - 4) == ".mao");
+                bool isPhy = (nameLower.size() > 4 && nameLower.substr(nameLower.size() - 4) == ".phy");
+                bool isTexture = (nameLower.size() > 4 && nameLower.substr(nameLower.size() - 4) == ".dds");
+                bool isMmh = (nameLower.size() > 4 && nameLower.substr(nameLower.size() - 4) == ".mmh");
+                if (isModel) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.4f, 1.0f, 0.4f, 1.0f));
+                else if (isMao) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.8f, 0.4f, 1.0f));
+                else if (isPhy) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.4f, 1.0f, 1.0f));
+                else if (isTexture) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.4f, 0.8f, 1.0f, 1.0f));
+                else if (isMmh) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.8f, 0.8f, 0.4f, 1.0f));
+                else ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
+                char label[512]; snprintf(label, sizeof(label), "%s##ovr%d", displayName.c_str(), idx);
+                if (ImGui::Selectable(label, idx == state.selectedEntryIndex, ImGuiSelectableFlags_AllowDoubleClick)) {
+                    state.selectedEntryIndex = idx;
+                    if (ImGui::IsMouseDoubleClicked(0) && isModel) {
+                        state.showTerrain = false;
+                        g_terrainLoader.clear();
+                        state.currentModelAnimations.clear();
+                        if (loadModelFromOverride(state, ce.source)) {
+                            state.statusMessage = "Loaded (override): " + displayName;
+                        } else {
+                            state.statusMessage = "Failed to load: " + displayName;
+                        }
+                    } else if (ImGui::IsMouseDoubleClicked(0)) {
+                        auto data = readCachedEntryData(state, ce);
+                        if (!data.empty() && isGffData(data)) {
+                            loadGffData(state.gffViewer, data, ce.name);
+                        }
+                    }
+                }
+                ImGui::PopStyleColor();
+            };
+            for (int idx : rootFiles) {
+                renderOverrideEntry(idx);
+            }
+            for (auto& [folder, indices] : folderMap) {
+                if (ImGui::TreeNode(folder.c_str())) {
+                    for (int idx : indices) {
+                        renderOverrideEntry(idx);
+                    }
+                    ImGui::TreePop();
+                }
+            }
+        } else {
         drawVirtualList((int)state.filteredEntryIndices.size(), [&](int i) {
             int idx = state.filteredEntryIndices[i];
             const CachedEntry& ce = state.mergedEntries[idx];
@@ -1718,13 +1816,27 @@ void drawBrowserWindow(AppState& state) {
                     }
                 } else if (ImGui::IsMouseDoubleClicked(0)) {
                     if (ce.erfIdx == SIZE_MAX) {
-                        auto data = readCachedEntryData(state, ce);
-                        if (!data.empty() && isGffData(data)) {
-                            if (loadGffData(state.gffViewer, data, ce.name)) {
-                                state.statusMessage = "Opened: " + ce.name;
+                        std::string ceLower = ce.name;
+                        std::transform(ceLower.begin(), ceLower.end(), ceLower.begin(), ::tolower);
+                        bool isMshOverride = (ceLower.size() > 4 && ceLower.substr(ceLower.size() - 4) == ".msh");
+                        if (isMshOverride) {
+                            state.showTerrain = false;
+                            g_terrainLoader.clear();
+                            state.currentModelAnimations.clear();
+                            if (loadModelFromOverride(state, ce.source)) {
+                                state.statusMessage = "Loaded (override): " + ce.name;
+                            } else {
+                                state.statusMessage = "Failed to load: " + ce.name;
                             }
                         } else {
-                            state.statusMessage = "Not a valid GFF file: " + ce.name;
+                            auto data = readCachedEntryData(state, ce);
+                            if (!data.empty() && isGffData(data)) {
+                                if (loadGffData(state.gffViewer, data, ce.name)) {
+                                    state.statusMessage = "Opened: " + ce.name;
+                                }
+                            } else {
+                                state.statusMessage = "Not a valid GFF file: " + ce.name;
+                            }
                         }
                     } else {
                     ERFFile erf;
@@ -2088,6 +2200,7 @@ void drawBrowserWindow(AppState& state) {
             }
             if (isModel || isTerrainFile || isMao || isPhy || isTexture || isAudioFile || isGda || isGff || isSpt) ImGui::PopStyleColor();
         });
+        }
         ImGui::EndChild();
 
         if (showFSBPanel) {
@@ -2779,6 +2892,18 @@ void drawBrowserWindow(AppState& state) {
                         state.statusMessage = "Extracted: " + state.rimEntries[state.selectedRIMEntry].name;
                     }
                 }
+            }
+        }
+        ImGuiFileDialog::Instance()->Close();
+    }
+
+    if (ImGuiFileDialog::Instance()->Display("ExportBlenderAddon", ImGuiWindowFlags_NoCollapse, ImVec2(500, 400))) {
+        if (ImGuiFileDialog::Instance()->IsOk()) {
+            std::string outDir = ImGuiFileDialog::Instance()->GetCurrentPath();
+            if (kBlenderAddonZipSize > 0 && exportBlenderAddon(kBlenderAddonZip, kBlenderAddonZipSize, outDir)) {
+                state.statusMessage = "Exported havenarea_importer.zip to: " + outDir;
+            } else {
+                state.statusMessage = "Failed to export Blender importer";
             }
         }
         ImGuiFileDialog::Instance()->Close();

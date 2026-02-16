@@ -58,6 +58,7 @@ std::vector<std::pair<std::string, std::string>> findAssociatedHeads(AppState& s
 std::vector<std::pair<std::string, std::string>> findAssociatedEyes(AppState& state, const std::string& bodyMsh);
 void loadMeshDatabase(AppState& state);
 bool loadModelFromEntry(AppState& state, const ERFEntry& entry);
+bool loadModelFromOverride(AppState& state, const std::string& mshPath);
 bool mergeModelEntry(AppState& state, const ERFEntry& entry);
 bool mergeModelByName(AppState& state, const std::string& modelName,
                       float px, float py, float pz,

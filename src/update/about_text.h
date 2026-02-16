@@ -22,6 +22,7 @@ If you have any questions, suggestions, or bugs to report, either leave a commen
 
 - Eshme. Her DAOTools plugin for 3dsmax was the launching point, as I have been able to use it to understand the models and meshes.
 - DAO Tools wiki. Allowed me to write Gff decryption quickly.
+- Dragon Age Modding discord - Especially Herman2000#9583 for his deep knowledge of the file formats, allowing me to make important changes and fixes.
 
 ### How to Contribute
 

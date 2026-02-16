@@ -10,7 +10,10 @@
 #include <algorithm>
 #include <functional>
 #include <cmath>
+#include <iostream>
 
+// Apply mesh-local position/rotation from MMH hierarchy into vertices
+// (MaxScript equivalent: in coordsys parent MeshObj.Position/Rotation)
 static void applyMeshLocalTransforms(Model& model) {
     auto quatRot = [](float qx, float qy, float qz, float qw,
                       float vx, float vy, float vz,
@@ -29,6 +32,7 @@ static void applyMeshLocalTransforms(Model& model) {
         float posX = mesh.localPosX, posY = mesh.localPosY, posZ = mesh.localPosZ;
         float rotX = mesh.localRotX, rotY = mesh.localRotY, rotZ = mesh.localRotZ, rotW = mesh.localRotW;
 
+        // Combine with parent bone world transform if present
         if (!mesh.parentBoneName.empty()) {
             int boneIdx = model.skeleton.findBone(mesh.parentBoneName);
             if (boneIdx >= 0) {
@@ -326,6 +330,7 @@ static std::vector<uint8_t> readFromMaterialErfs(AppState& state, const std::str
     size_t dp = noExtLower.rfind('.');
     if (dp != std::string::npos) noExtLower = noExtLower.substr(0, dp);
 
+
     const std::vector<std::unique_ptr<ERFFile>>* erfSets[] = {
         &state.materialErfs, &state.modelErfs, &state.textureErfs
     };
@@ -378,6 +383,7 @@ static uint32_t loadTextureByName(AppState& state, const std::string& texName,
     std::string texNameLower = texName;
     std::transform(texNameLower.begin(), texNameLower.end(), texNameLower.begin(), ::tolower);
 
+
     std::string withDdsLower = texNameLower;
     if (withDdsLower.size() < 4 || withDdsLower.substr(withDdsLower.size() - 4) != ".dds")
         withDdsLower += ".dds";
@@ -403,6 +409,7 @@ static uint32_t loadTextureByName(AppState& state, const std::string& texName,
         return 0;
     };
 
+
     const std::vector<std::unique_ptr<ERFFile>>* erfSets[] = {
         &state.textureErfs, &state.materialErfs, &state.modelErfs
     };
@@ -425,6 +432,9 @@ static uint32_t loadTextureByName(AppState& state, const std::string& texName,
         }
     }
 
+    // Texture not found - scan all ERFs to help debug
+    std::cout << "[TEX] FAILED to load: \"" << texName << "\"" << std::endl;
+    std::cout << "[TEX]   Searching all ERFs for \"" << noExtLower << "\"..." << std::endl;
     bool found = false;
     for (const auto& erfPath : state.erfFiles) {
         ERFFile erf;
@@ -436,11 +446,13 @@ static uint32_t loadTextureByName(AppState& state, const std::string& texName,
                     std::string erfName = erfPath;
                     size_t slash = erfName.find_last_of("/\\");
                     if (slash != std::string::npos) erfName = erfName.substr(slash + 1);
+                    std::cout << "[TEX]   FOUND \"" << entry.name << "\" in " << erfName << std::endl;
                     found = true;
                 }
             }
         }
     }
+    // Also check loaded ERF sets
     const char* setNames[] = {"textureErfs", "materialErfs", "modelErfs"};
     const std::vector<std::unique_ptr<ERFFile>>* erfSets2[] = {
         &state.textureErfs, &state.materialErfs, &state.modelErfs
@@ -451,6 +463,7 @@ static uint32_t loadTextureByName(AppState& state, const std::string& texName,
                 std::string entryLower = entry.name;
                 std::transform(entryLower.begin(), entryLower.end(), entryLower.begin(), ::tolower);
                 if (entryLower.find(noExtLower) != std::string::npos) {
+                    std::cout << "[TEX]   FOUND \"" << entry.name << "\" in " << setNames[s] << "[" << ei << "]" << std::endl;
                     found = true;
                 }
             }
@@ -461,10 +474,12 @@ static uint32_t loadTextureByName(AppState& state, const std::string& texName,
             std::string entryLower = entry.name;
             std::transform(entryLower.begin(), entryLower.end(), entryLower.begin(), ::tolower);
             if (entryLower.find(noExtLower) != std::string::npos) {
+                std::cout << "[TEX]   FOUND \"" << entry.name << "\" in currentErf" << std::endl;
                 found = true;
             }
         }
     }
+    if (!found) std::cout << "[TEX]   NOT FOUND anywhere!" << std::endl;
 
     return 0;
 }
@@ -619,16 +634,239 @@ bool loadModelFromEntry(AppState& state, const ERFEntry& entry) {
     return true;
 }
 
+bool loadModelFromOverride(AppState& state, const std::string& mshPath) {
+    loadTextureErfs(state);
+    loadModelErfs(state);
+    loadMaterialErfs(state);
+
+    auto readFile = [](const std::string& path) -> std::vector<uint8_t> {
+        std::ifstream f(path, std::ios::binary | std::ios::ate);
+        if (!f) return {};
+        size_t sz = static_cast<size_t>(f.tellg());
+        f.seekg(0);
+        std::vector<uint8_t> data(sz);
+        f.read(reinterpret_cast<char*>(data.data()), sz);
+        return data;
+    };
+
+    auto findInDir = [](const fs::path& dir, const std::string& nameLower) -> std::string {
+        if (!fs::exists(dir)) return "";
+        for (const auto& entry : fs::directory_iterator(dir)) {
+            if (!entry.is_regular_file()) continue;
+            std::string fn = entry.path().filename().string();
+            std::string fnLower = fn;
+            std::transform(fnLower.begin(), fnLower.end(), fnLower.begin(), ::tolower);
+            if (fnLower == nameLower) return entry.path().string();
+        }
+        return "";
+    };
+
+    std::vector<uint8_t> mshData = readFile(mshPath);
+    if (mshData.empty()) return false;
+
+    Model model;
+    if (!loadMSH(mshData, model)) {
+        state.currentModel = Model();
+        state.currentModel.name = fs::path(mshPath).filename().string() + " (failed to parse)";
+        state.hasModel = true;
+        return false;
+    }
+
+    for (const auto& mat : state.currentModel.materials) {
+        if (mat.diffuseTexId != 0)          destroyTexture(mat.diffuseTexId);
+        if (mat.normalTexId != 0)           destroyTexture(mat.normalTexId);
+        if (mat.specularTexId != 0)         destroyTexture(mat.specularTexId);
+        if (mat.tintTexId != 0)             destroyTexture(mat.tintTexId);
+        if (mat.ageDiffuseTexId != 0)       destroyTexture(mat.ageDiffuseTexId);
+        if (mat.ageNormalTexId != 0)        destroyTexture(mat.ageNormalTexId);
+        if (mat.tattooTexId != 0)           destroyTexture(mat.tattooTexId);
+        if (mat.browStubbleTexId != 0)      destroyTexture(mat.browStubbleTexId);
+        if (mat.browStubbleNormalTexId != 0) destroyTexture(mat.browStubbleNormalTexId);
+        if (mat.paletteTexId != 0)          destroyTexture(mat.paletteTexId);
+        if (mat.palNormalTexId != 0)        destroyTexture(mat.palNormalTexId);
+        if (mat.maskVTexId != 0)            destroyTexture(mat.maskVTexId);
+        if (mat.maskATexId != 0)            destroyTexture(mat.maskATexId);
+        if (mat.maskA2TexId != 0)           destroyTexture(mat.maskA2TexId);
+        if (mat.reliefTexId != 0)           destroyTexture(mat.reliefTexId);
+    }
+    destroyLevelBuffers();
+
+    state.currentModel = model;
+    state.currentModel.name = fs::path(mshPath).filename().string();
+    state.hasModel = true;
+    state.selectedLevelChunk = -1;
+    state.renderSettings.initMeshVisibility(model.meshes.size());
+
+    std::string baseName = fs::path(mshPath).stem().string();
+    fs::path mshDir = fs::path(mshPath).parent_path();
+
+    fs::path overrideRoot = fs::path(state.selectedFolder) / "packages" / "core" / "override";
+    std::vector<fs::path> searchDirs = { mshDir };
+    if (mshDir != overrideRoot) searchDirs.push_back(overrideRoot);
+
+    std::vector<std::string> mmhCandidates = {baseName + ".mmh", baseName + "a.mmh"};
+    size_t lastUnderscore = baseName.find_last_of('_');
+    if (lastUnderscore != std::string::npos) {
+        std::string variantA = baseName;
+        variantA.insert(lastUnderscore, "a");
+        mmhCandidates.push_back(variantA + ".mmh");
+    }
+    bool mmhFound = false;
+    for (const auto& candidate : mmhCandidates) {
+        std::string candLower = candidate;
+        std::transform(candLower.begin(), candLower.end(), candLower.begin(), ::tolower);
+        for (const auto& dir : searchDirs) {
+            std::string found = findInDir(dir, candLower);
+            if (!found.empty()) {
+                std::vector<uint8_t> mmhData = readFile(found);
+                if (!mmhData.empty()) { loadMMH(mmhData, state.currentModel); mmhFound = true; }
+                break;
+            }
+        }
+        if (mmhFound) break;
+    }
+    if (!mmhFound) {
+        for (const auto& candidate : mmhCandidates) {
+            std::vector<uint8_t> mmhData = readFromModelErfs(state, candidate);
+            if (!mmhData.empty()) { loadMMH(mmhData, state.currentModel); break; }
+        }
+    }
+
+    applyMeshLocalTransforms(state.currentModel);
+
+    std::vector<std::string> phyCandidates = {baseName + ".phy", baseName + "a.phy"};
+    if (lastUnderscore != std::string::npos) {
+        std::string variantA = baseName;
+        variantA.insert(lastUnderscore, "a");
+        phyCandidates.push_back(variantA + ".phy");
+    }
+    for (const auto& candidate : phyCandidates) {
+        std::string candLower = candidate;
+        std::transform(candLower.begin(), candLower.end(), candLower.begin(), ::tolower);
+        bool phyFound = false;
+        for (const auto& dir : searchDirs) {
+            std::string found = findInDir(dir, candLower);
+            if (!found.empty()) {
+                std::vector<uint8_t> phyData = readFile(found);
+                if (!phyData.empty()) { loadPHY(phyData, state.currentModel); phyFound = true; }
+                break;
+            }
+        }
+        if (phyFound) break;
+        std::vector<uint8_t> phyData = readFromModelErfs(state, candidate);
+        if (!phyData.empty()) { loadPHY(phyData, state.currentModel); break; }
+    }
+
+    std::set<std::string> materialNames;
+    for (const auto& mesh : state.currentModel.meshes) {
+        if (!mesh.materialName.empty()) materialNames.insert(mesh.materialName);
+    }
+    for (const std::string& matName : materialNames) {
+        std::string maoFile = matName;
+        {
+            std::string lower = matName;
+            std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
+            if (lower.size() < 4 || lower.substr(lower.size() - 4) != ".mao")
+                maoFile += ".mao";
+        }
+        std::string maoLower = maoFile;
+        std::transform(maoLower.begin(), maoLower.end(), maoLower.begin(), ::tolower);
+
+        std::vector<uint8_t> maoData;
+        for (const auto& dir : searchDirs) {
+            std::string found = findInDir(dir, maoLower);
+            if (!found.empty()) { maoData = readFile(found); break; }
+        }
+        if (maoData.empty()) {
+            maoData = readFromMaterialErfs(state, maoFile);
+        }
+        if (!maoData.empty()) {
+            std::string maoContent(maoData.begin(), maoData.end());
+            Material mat = parseMAO(maoContent, matName);
+            mat.maoContent = maoContent;
+            state.currentModel.materials.push_back(mat);
+        } else {
+            Material mat;
+            mat.name = matName;
+            state.currentModel.materials.push_back(mat);
+        }
+    }
+    for (auto& mesh : state.currentModel.meshes) {
+        if (!mesh.materialName.empty())
+            mesh.materialIndex = state.currentModel.findMaterial(mesh.materialName);
+    }
+
+    auto loadTexOverride = [&](const std::string& texName) -> uint32_t {
+        if (texName.empty()) return 0;
+        std::string texLower = texName;
+        std::transform(texLower.begin(), texLower.end(), texLower.begin(), ::tolower);
+        if (texLower.size() < 4 || texLower.substr(texLower.size() - 4) != ".dds")
+            texLower += ".dds";
+        for (const auto& dir : searchDirs) {
+            std::string found = findInDir(dir, texLower);
+            if (!found.empty()) {
+                std::vector<uint8_t> texData = readFile(found);
+                if (!texData.empty()) return createTextureFromDDS(texData);
+            }
+        }
+        return 0;
+    };
+
+    for (auto& mat : state.currentModel.materials) {
+        if (!mat.diffuseMap.empty() && mat.diffuseTexId == 0) {
+            mat.diffuseTexId = loadTexOverride(mat.diffuseMap);
+            if (mat.diffuseTexId == 0)
+                mat.diffuseTexId = loadTextureByName(state, mat.diffuseMap, &mat.diffuseData, &mat.diffuseWidth, &mat.diffuseHeight);
+        }
+        if (!mat.normalMap.empty() && mat.normalTexId == 0) {
+            mat.normalTexId = loadTexOverride(mat.normalMap);
+            if (mat.normalTexId == 0)
+                mat.normalTexId = loadTextureByName(state, mat.normalMap, &mat.normalData, &mat.normalWidth, &mat.normalHeight);
+        }
+        if (!mat.specularMap.empty() && mat.specularTexId == 0) {
+            mat.specularTexId = loadTexOverride(mat.specularMap);
+            if (mat.specularTexId == 0)
+                mat.specularTexId = loadTextureByName(state, mat.specularMap, &mat.specularData, &mat.specularWidth, &mat.specularHeight);
+        }
+        if (!mat.tintMap.empty() && mat.tintTexId == 0) {
+            mat.tintTexId = loadTexOverride(mat.tintMap);
+            if (mat.tintTexId == 0)
+                mat.tintTexId = loadTextureByName(state, mat.tintMap, &mat.tintData, &mat.tintWidth, &mat.tintHeight);
+        }
+    }
+
+    if (!state.currentModel.meshes.empty()) {
+        float minX = state.currentModel.meshes[0].minX, maxX = state.currentModel.meshes[0].maxX;
+        float minY = state.currentModel.meshes[0].minY, maxY = state.currentModel.meshes[0].maxY;
+        float minZ = state.currentModel.meshes[0].minZ, maxZ = state.currentModel.meshes[0].maxZ;
+        for (const auto& mesh : state.currentModel.meshes) {
+            if (mesh.minX < minX) minX = mesh.minX; if (mesh.maxX > maxX) maxX = mesh.maxX;
+            if (mesh.minY < minY) minY = mesh.minY; if (mesh.maxY > maxY) maxY = mesh.maxY;
+            if (mesh.minZ < minZ) minZ = mesh.minZ; if (mesh.maxZ > maxZ) maxZ = mesh.maxZ;
+        }
+        float cx = (minX + maxX) / 2.0f, cy = (minY + maxY) / 2.0f, cz = (minZ + maxZ) / 2.0f;
+        float dx = maxX - minX, dy = maxY - minY, dz = maxZ - minZ;
+        float radius = std::sqrt(dx*dx + dy*dy + dz*dz) / 2.0f;
+        state.camera.lookAt(cx, cy, cz, radius * 2.5f);
+    }
+    findAnimationsForModel(state, baseName);
+    if (!state.availableAnimFiles.empty()) state.showAnimWindow = true;
+    return true;
+}
+
 bool mergeModelEntry(AppState& state, const ERFEntry& entry) {
     if (!state.currentErf) return false;
     std::vector<uint8_t> data = state.currentErf->readEntry(entry);
     if (data.empty()) {
+        std::cout << "[LEVEL] FAILED to read terrain entry: " << entry.name << std::endl;
         return false;
     }
     Model tempModel;
     if (!loadMSH(data, tempModel)) {
+        std::cout << "[LEVEL] FAILED to parse terrain MSH: " << entry.name << std::endl;
         return false;
     }
+
 
     std::string baseName = entry.name;
     size_t dotPos = baseName.rfind('.');
@@ -651,6 +889,7 @@ bool mergeModelEntry(AppState& state, const ERFEntry& entry) {
         }
     }
     if (!mmhFound) {
+        std::cout << "[LEVEL] WARNING: no MMH found for terrain: " << baseName << std::endl;
     }
 
     applyMeshLocalTransforms(tempModel);
@@ -662,10 +901,12 @@ bool mergeModelEntry(AppState& state, const ERFEntry& entry) {
         }
     }
 
+
     for (auto& mesh : tempModel.meshes) {
         state.currentModel.meshes.push_back(std::move(mesh));
     }
     state.renderSettings.initMeshVisibility(state.currentModel.meshes.size());
+
 
     for (const std::string& matName : newMaterials) {
         std::string maoLookup = matName;
@@ -688,10 +929,12 @@ bool mergeModelEntry(AppState& state, const ERFEntry& entry) {
         }
     }
 
+
     for (auto& mesh : state.currentModel.meshes) {
         if (!mesh.materialName.empty())
             mesh.materialIndex = state.currentModel.findMaterial(mesh.materialName);
     }
+
 
     for (auto& mat : state.currentModel.materials) {
         if (!mat.diffuseMap.empty() && mat.diffuseTexId == 0) {
@@ -719,6 +962,7 @@ bool mergeModelEntry(AppState& state, const ERFEntry& entry) {
 
     return true;
 }
+
 
 struct ErfIndexEntry {
     ERFFile* erf;
@@ -871,12 +1115,15 @@ bool mergeModelByName(AppState& state, const std::string& modelName,
             mshData = readFromAnyErf(state, mshName);
         }
         if (mshData.empty()) {
+            std::cout << "[LEVEL] MISSING model mesh: " << modelName
+                      << " (tried " << modelName << ".msh and " << modelName << "_0.msh)" << std::endl;
             s_propMissingModels.insert(nameLower);
             return false;
         }
 
         Model tempModel;
         if (!loadMSH(mshData, tempModel)) {
+            std::cout << "[LEVEL] FAILED to parse MSH: " << modelName << std::endl;
             s_propMissingModels.insert(nameLower);
             return false;
         }
@@ -892,6 +1139,7 @@ bool mergeModelByName(AppState& state, const std::string& modelName,
             }
         }
         if (!mmhFound) {
+            std::cout << "[LEVEL] WARNING: no MMH found for prop: " << modelName << std::endl;
         }
 
         applyMeshLocalTransforms(tempModel);
@@ -934,6 +1182,7 @@ void finalizeLevelMaterials(AppState& state) {
             mat.maoContent = maoContent;
             state.currentModel.materials.push_back(mat);
         } else {
+            std::cout << "[LEVEL] MISSING MAO for material: " << matName << " (looked up: " << maoLookup << ")" << std::endl;
             Material mat;
             mat.name = matName;
             state.currentModel.materials.push_back(mat);
@@ -955,6 +1204,15 @@ void finalizeLevelMaterials(AppState& state) {
         if (!mat.tintMap.empty() && mat.tintTexId == 0)
             mat.tintTexId = loadTextureByName(state, mat.tintMap, &mat.tintData, &mat.tintWidth, &mat.tintHeight);
 
+        // Log missing textures
+        if (!mat.diffuseMap.empty() && mat.diffuseTexId == 0)
+            std::cout << "[LEVEL] MISSING diffuse texture: " << mat.diffuseMap << " (mat=" << mat.name << ")" << std::endl;
+        if (!mat.normalMap.empty() && mat.normalTexId == 0)
+            std::cout << "[LEVEL] MISSING normal texture: " << mat.normalMap << " (mat=" << mat.name << ")" << std::endl;
+        if (!mat.specularMap.empty() && mat.specularTexId == 0)
+            std::cout << "[LEVEL] MISSING specular texture: " << mat.specularMap << " (mat=" << mat.name << ")" << std::endl;
+        if (!mat.tintMap.empty() && mat.tintTexId == 0)
+            std::cout << "[LEVEL] MISSING tint texture: " << mat.tintMap << " (mat=" << mat.name << ")" << std::endl;
         if (mat.isTerrain) {
             mat.paletteTexId = mat.diffuseTexId;
             mat.palNormalTexId = mat.normalTexId;
