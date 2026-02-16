@@ -14,6 +14,7 @@ std::string ExoLocString::getDisplayValue() const {
     }
     return "";
 }
+
 std::string VoidData::getDisplayValue() const {
     std::ostringstream oss;
     oss << "(" << data.size() << " bytes)";
@@ -27,12 +28,15 @@ std::string VoidData::getDisplayValue() const {
     }
     return oss.str();
 }
+
 std::string Field::getTypeName() const {
     return typeIdToString(typeId);
 }
+
 std::string Field::getDisplayValue() const {
     return fieldValueToString(value, typeId);
 }
+
 bool Field::isComplex() const {
     return typeId == TypeID::DWORD64 ||
            typeId == TypeID::INT64 ||
@@ -44,34 +48,42 @@ bool Field::isComplex() const {
            typeId == TypeID::Structure ||
            typeId == TypeID::List;
 }
+
 bool Structure::hasField(const std::string& label) const {
     return fields.find(label) != fields.end();
 }
+
 const Field* Structure::getField(const std::string& label) const {
     auto it = fields.find(label);
     return it != fields.end() ? &it->second : nullptr;
 }
+
 Field* Structure::getField(const std::string& label) {
     auto it = fields.find(label);
     return it != fields.end() ? &it->second : nullptr;
 }
+
 void Structure::setField(const std::string& label, TypeID type, FieldValue value) {
     if (fields.find(label) == fields.end()) {
         fieldOrder.push_back(label);
     }
     fields[label] = Field{label, type, std::move(value)};
 }
+
 GFF32File::GFF32File() : m_loaded(false) {
     std::memset(&m_header, 0, sizeof(m_header));
 }
+
 GFF32File::~GFF32File() {
     close();
 }
+
 void GFF32File::close() {
     m_root.reset();
     m_loaded = false;
     std::memset(&m_header, 0, sizeof(m_header));
 }
+
 bool GFF32File::load(const std::string& path) {
     close();
     std::ifstream file(path, std::ios::binary | std::ios::ate);
@@ -83,9 +95,11 @@ bool GFF32File::load(const std::string& path) {
     file.close();
     return load(data);
 }
+
 bool GFF32File::load(const std::vector<uint8_t>& data) {
     return load(data.data(), data.size());
 }
+
 bool GFF32File::load(const uint8_t* data, size_t size) {
     close();
     if (!parseHeader(data, size)) {
@@ -97,6 +111,7 @@ bool GFF32File::load(const uint8_t* data, size_t size) {
     m_loaded = true;
     return true;
 }
+
 bool GFF32File::parseHeader(const uint8_t* data, size_t size) {
     if (size < 56) return false;
     std::memcpy(m_header.fileType, data, 4);
@@ -120,6 +135,7 @@ bool GFF32File::parseHeader(const uint8_t* data, size_t size) {
     m_header.listIndicesCount = readAt<uint32_t>(data, 52);
     return true;
 }
+
 bool GFF32File::parseContent(const uint8_t* data, size_t size) {
     std::vector<std::string> labels;
     labels.resize(m_header.labelCount);
@@ -381,32 +397,41 @@ bool GFF32File::parseContent(const uint8_t* data, size_t size) {
     }
     return true;
 }
+
 std::string GFF32File::fileType() const {
     if (m_root) return m_root->fileType;
     return std::string(m_header.fileType);
 }
+
 std::string GFF32File::fileVersion() const {
     if (m_root) return m_root->fileVersion;
     return std::string(m_header.fileVersion);
 }
+
 bool GFF32File::is2DA() const {
     return fileType() == "2DA ";
 }
+
 bool GFF32File::isDLG() const {
     return fileType() == "DLG ";
 }
+
 bool GFF32File::isUTI() const {
     return fileType() == "UTI ";
 }
+
 bool GFF32File::isUTC() const {
     return fileType() == "UTC ";
 }
+
 bool GFF32File::isUTP() const {
     return fileType() == "UTP ";
 }
+
 bool GFF32File::isGFF32(const std::vector<uint8_t>& data) {
     return isGFF32(data.data(), data.size());
 }
+
 bool GFF32File::isGFF32(const uint8_t* data, size_t size) {
     if (size < 8) return false;
     if (data[4] == 'V' && data[5] == '3' && data[6] == '.' && data[7] == '2') {
@@ -414,6 +439,7 @@ bool GFF32File::isGFF32(const uint8_t* data, size_t size) {
     }
     return false;
 }
+
 bool GFF32File::save(const std::string& path) {
     auto data = save();
     if (data.empty()) return false;
@@ -422,6 +448,7 @@ bool GFF32File::save(const std::string& path) {
     file.write(reinterpret_cast<const char*>(data.data()), data.size());
     return true;
 }
+
 struct WriterState {
     std::vector<uint8_t> structsBuf;
     std::vector<uint8_t> fieldsBuf;
@@ -644,6 +671,7 @@ std::vector<uint8_t> GFF32File::save() {
 
     return out;
 }
+
 std::string typeIdToString(TypeID type) {
     switch (type) {
         case TypeID::BYTE: return "BYTE";
@@ -665,6 +693,7 @@ std::string typeIdToString(TypeID type) {
         default: return "Unknown";
     }
 }
+
 std::string fieldValueToString(const FieldValue& value, TypeID type) {
     std::ostringstream oss;
     switch (type) {
@@ -732,6 +761,7 @@ std::string fieldValueToString(const FieldValue& value, TypeID type) {
     }
     return oss.str();
 }
+
 void walkStructure(const Structure& st, FieldVisitor visitor, const std::string& basePath, int depth) {
     for (const auto& label : st.fieldOrder) {
         auto it = st.fields.find(label);

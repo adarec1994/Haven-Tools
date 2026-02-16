@@ -12,9 +12,21 @@
 #include "mor_loader.h"
 #include "tnt_loader.h"
 #include "GffViewer.h"
+#include "spt.h"
 
 class ERFFile;
 class GDAFile;
+
+struct ErfEntryIndex {
+    std::unordered_map<std::string, std::pair<size_t, size_t>> exact;
+    std::unordered_map<std::string, std::pair<size_t, size_t>> basename;
+    std::unordered_map<std::string, std::pair<size_t, size_t>> noext;
+    bool built = false;
+
+    void clear() { exact.clear(); basename.clear(); noext.clear(); built = false; }
+
+    void build(const std::vector<std::unique_ptr<ERFFile>>& erfs);
+};
 
 struct Keybinds {
     ImGuiKey moveForward   = ImGuiKey_W;
@@ -24,6 +36,7 @@ struct Keybinds {
     ImGuiKey panUp         = ImGuiKey_E;
     ImGuiKey panDown       = ImGuiKey_Q;
     ImGuiKey deselectBone  = ImGuiKey_Escape;
+    ImGuiKey deleteObject  = ImGuiKey_Delete;
 };
 
 struct GDAEditorState {
@@ -53,13 +66,9 @@ struct Camera {
         z = pz;
     }
     void lookAt(float tx, float ty, float tz, float dist) {
-        // Place camera behind (-Y) and above (+Z) target in model space
-        // Model pos: (tx, ty - dist*0.7, tz + dist*0.5)
-        // Camera-movement space (after -90° X rotation): (tx, tz + dist*0.5, dist*0.7 - ty)
         x = tx;
         y = tz + dist * 0.5f;
         z = dist * 0.7f - ty;
-        // Aim at target: direction in movement space is (0, -dist*0.5, -dist*0.7)
         yaw = 0.0f;
         pitch = -std::atan2(dist * 0.5f, dist * 0.7f);
         moveSpeed = dist * 0.5f;
@@ -110,6 +119,7 @@ struct RenderSettings {
     bool useNormalMaps = true;
     bool useSpecularMaps = true;
     bool useTintMaps = true;
+    bool terrainDebug = false;
     std::vector<uint8_t> meshVisible;
     float hairColor[3] = {0.4f, 0.25f, 0.15f};
     float skinColor[3] = {1.0f, 1.0f, 1.0f};
@@ -208,11 +218,13 @@ struct AppState {
     std::string selectedFolder;
     std::vector<std::string> erfFiles;
     std::vector<std::string> rimFiles;
-    std::vector<int> rimMshCounts;         // .msh count per RIM file
-    std::atomic<bool> rimScanDone{false};  // true when background msh scan finished
-    bool rimSingleCollapsed = true;        // collapse single-mesh RIMs
-    bool rimLevelsCollapsed = false;       // levels section open by default
-    int rimMultiMeshCount = 0;             // how many RIMs have multiple .msh
+    std::vector<std::string> arlFiles;
+    std::vector<std::string> opfFiles;
+    std::vector<int> rimMshCounts;
+    std::atomic<bool> rimScanDone{false};
+    bool rimSingleCollapsed = true;
+    bool rimLevelsCollapsed = false;
+    int rimMultiMeshCount = 0;
     std::vector<size_t> filteredErfIndices;
     std::map<std::string, std::vector<size_t>> erfsByName;
     std::string selectedErfName;
@@ -289,6 +301,9 @@ struct AppState {
     bool textureErfsLoaded = false;
     bool modelErfsLoaded = false;
     bool materialErfsLoaded = false;
+    ErfEntryIndex modelErfIndex;
+    ErfEntryIndex materialErfIndex;
+    ErfEntryIndex textureErfIndex;
     std::map<std::string, std::vector<uint8_t>> meshCache;
     std::map<std::string, std::vector<uint8_t>> mmhCache;
     std::map<std::string, std::vector<uint8_t>> maoCache;
@@ -326,9 +341,30 @@ struct AppState {
         std::vector<PropWork> propQueue;
         std::vector<SptWork> sptQueue;
         std::map<int32_t, std::string> sptIdToFile;
-        std::string sptErfPath;
+        std::map<std::string, std::string> sptFileToErf;
+
+        std::map<int32_t, SptModel> sptCache;
+        std::map<int32_t, int> sptBranchMatIdx;
+        std::map<int32_t, int> sptDdsMatIdx;
+        std::map<int32_t, std::string> sptBaseName;
+        bool sptSetupDone = false;
     };
     LevelLoadState levelLoad;
+
+    struct LevelExportState {
+        int stage = 0;
+        int itemIndex = 0;
+        int totalProps = 0;
+        int totalTrees = 0;
+        int propsExported = 0;
+        int treesExported = 0;
+        std::string stageLabel;
+        std::string outputDir;
+        std::string modelsDir;
+        std::string rimStem;
+        bool useFbx = false;
+    };
+    LevelExportState levelExport;
 
     int mainTab = 0;
     struct CharacterDesigner {

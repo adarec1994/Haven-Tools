@@ -15,6 +15,7 @@ void saveSettings(const AppState& state) {
         f << "kb_panUp=" << (int)state.keybinds.panUp << "\n";
         f << "kb_panDown=" << (int)state.keybinds.panDown << "\n";
         f << "kb_deselectBone=" << (int)state.keybinds.deselectBone << "\n";
+        f << "kb_deleteObject=" << (int)state.keybinds.deleteObject << "\n";
     }
 }
 
@@ -38,6 +39,7 @@ void loadSettings(AppState& state) {
                 else if (key == "kb_panUp") state.keybinds.panUp = (ImGuiKey)std::stoi(val);
                 else if (key == "kb_panDown") state.keybinds.panDown = (ImGuiKey)std::stoi(val);
                 else if (key == "kb_deselectBone") state.keybinds.deselectBone = (ImGuiKey)std::stoi(val);
+                else if (key == "kb_deleteObject") state.keybinds.deleteObject = (ImGuiKey)std::stoi(val);
             }
         }
     }

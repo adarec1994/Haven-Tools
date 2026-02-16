@@ -50,18 +50,26 @@ struct Material {
     std::string palNormalMap;
     std::string maskVMap;
     std::string maskAMap;
+    std::string maskA2Map;
+    std::string reliefMap;
     uint32_t paletteTexId = 0;
     uint32_t palNormalTexId = 0;
     uint32_t maskVTexId = 0;
     uint32_t maskATexId = 0;
+    uint32_t maskA2TexId = 0;
+    uint32_t reliefTexId = 0;
     float palDim[4] = {0.5f, 0.25f, 2.0f, 4.0f};     // cellW, cellH, numCols, numRows
     float palParam[4] = {0.0625f, 0.03125f, 0.375f, 0.1875f}; // padX, padY, usableW, usableH
     float uvScales[8] = {24.0f, 24.0f, 24.0f, 24.0f, 24.0f, 24.0f, 24.0f, 24.0f};
+    float reliefScales[8] = {};
 
     bool isWater = false;
-    float waveParams[12] = {};    // 3 waves: dirX, dirY, speed, unused (from mat_vVSHWaterParams)
-    float waterColor[4] = {0.1f, 0.15f, 0.2f, 0.0f};   // from mat_vPSHWaterParams[0]
-    float waterVisual[4] = {1.0f, 1.0f, 50.0f, 2.0f};   // from mat_vPSHWaterParams[1]
+    float waveParams[12] = {};    // 3 waves: dirX, dirY, uvScale, 0 (from mat_vVSHWaterParams)
+    float waterColor[4] = {1.0f, 0.5f, 0.5f, 0.0f};  // xyz = normal blend weights per layer (mat_vPSHWaterParams[0])
+    float waterVisual[4] = {1.25f, 1.75f, 500.0f, 0.5f}; // fresnelPow, specIntensity, specPower, extra (mat_vPSHWaterParams[1])
+    std::string waterNormalMap;     // mat_tNormalMap
+    std::string waterDecalMap;      // mml_tDecal (foam/flow texture for flowing water)
+    std::string waterMaskMap;       // mml_tWaterMask
 };
 enum class CollisionShapeType {
     Box,

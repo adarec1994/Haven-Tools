@@ -2,7 +2,6 @@
 #include <cstring>
 #include <cmath>
 
-
 float halfToFloat(uint16_t h) {
     uint32_t sign = (h >> 15) & 0x1;
     uint32_t exponent = (h >> 10) & 0x1F;
@@ -40,7 +39,6 @@ float halfToFloat(uint16_t h) {
     std::memcpy(&f, &result, 4);
     return f;
 }
-
 
 void readDeclType(const std::vector<uint8_t>& data, uint32_t offset, uint32_t dataType, float* out) {
     auto readFloat = [&](uint32_t pos) -> float {
@@ -149,7 +147,6 @@ void readDeclType(const std::vector<uint8_t>& data, uint32_t offset, uint32_t da
     }
 }
 
-
 void readBlendIndices(const std::vector<uint8_t>& data, uint32_t offset, uint32_t dataType, int* out) {
     auto readByte = [&](uint32_t pos) -> uint8_t {
         if (pos >= data.size()) return 0;
@@ -157,7 +154,6 @@ void readBlendIndices(const std::vector<uint8_t>& data, uint32_t offset, uint32_
     };
 
     out[0] = out[1] = out[2] = out[3] = -1;
-
 
     switch (dataType) {
         case VertexDeclType::COLOR:
@@ -189,10 +185,8 @@ bool loadMSH(const std::vector<uint8_t>& data, Model& outModel) {
     outModel.meshes.clear();
     outModel.name = "Model";
 
-
     uint32_t vertexBufferOffset = gff.getListDataOffset(0, GFFFieldID::VERTEX_BUFFER, 0);
     uint32_t indexBufferOffset = gff.getListDataOffset(0, GFFFieldID::INDEX_BUFFER, 0);
-
 
     std::vector<GFFStructRef> meshChunks = gff.readStructList(0, GFFFieldID::MESH_CHUNKS, 0);
 
@@ -203,7 +197,6 @@ bool loadMSH(const std::vector<uint8_t>& data, Model& outModel) {
     for (const auto& chunkRef : meshChunks) {
         Mesh mesh;
 
-
         const GFFField* nameField = gff.findField(chunkRef.structIndex, GFFFieldID::NAME);
         if (nameField && nameField->typeId == 14) {
             mesh.name = gff.readStringByLabel(chunkRef.structIndex, GFFFieldID::NAME, chunkRef.offset);
@@ -211,7 +204,6 @@ bool loadMSH(const std::vector<uint8_t>& data, Model& outModel) {
         if (mesh.name.empty()) {
             mesh.name = "chunk_" + std::to_string(outModel.meshes.size());
         }
-
 
         uint32_t vertexSize = gff.readUInt32ByLabel(chunkRef.structIndex, GFFFieldID::VERTEX_SIZE, chunkRef.offset);
         uint32_t vertexCount = gff.readUInt32ByLabel(chunkRef.structIndex, GFFFieldID::VERTEX_COUNT, chunkRef.offset);
@@ -224,9 +216,7 @@ bool loadMSH(const std::vector<uint8_t>& data, Model& outModel) {
             continue;
         }
 
-
         std::vector<GFFStructRef> declList = gff.readStructList(chunkRef.structIndex, GFFFieldID::VERTEX_DECLARATOR, chunkRef.offset);
-
 
         VertexStreamDesc posStream = {0, 0, 0, 0, 0};
         VertexStreamDesc normalStream = {0, 0, 0, 0, 0};
@@ -268,16 +258,13 @@ bool loadMSH(const std::vector<uint8_t>& data, Model& outModel) {
             continue;
         }
 
-
         mesh.hasSkinning = hasBlendWeight && hasBlendIndex;
 
         if (mesh.hasSkinning) {
         }
 
-
         uint32_t vertexDataBase = gff.dataOffset() + vertexBufferOffset + 4 + vertexOffset;
         uint32_t indexDataBase = gff.dataOffset() + indexBufferOffset + 4;
-
 
         if (indexFormat == 0) {
             indexDataBase += indexOffset * 2;
@@ -285,19 +272,16 @@ bool loadMSH(const std::vector<uint8_t>& data, Model& outModel) {
             indexDataBase += indexOffset * 4;
         }
 
-
         mesh.vertices.resize(vertexCount);
 
         for (uint32_t i = 0; i < vertexCount; i++) {
             uint32_t baseOff = vertexDataBase + i * vertexSize;
             float vals[4];
 
-
             readDeclType(gff.rawData(), baseOff + posStream.offset, posStream.dataType, vals);
             mesh.vertices[i].x = vals[0];
             mesh.vertices[i].y = vals[1];
             mesh.vertices[i].z = vals[2];
-
 
             if (hasNormal) {
                 readDeclType(gff.rawData(), baseOff + normalStream.offset, normalStream.dataType, vals);
@@ -310,7 +294,6 @@ bool loadMSH(const std::vector<uint8_t>& data, Model& outModel) {
                 mesh.vertices[i].nz = 0;
             }
 
-
             if (hasTexcoord) {
                 readDeclType(gff.rawData(), baseOff + texcoordStream.offset, texcoordStream.dataType, vals);
                 mesh.vertices[i].u = vals[0];
@@ -319,7 +302,6 @@ bool loadMSH(const std::vector<uint8_t>& data, Model& outModel) {
                 mesh.vertices[i].u = 0;
                 mesh.vertices[i].v = 0;
             }
-
 
             if (hasBlendWeight) {
                 readDeclType(gff.rawData(), baseOff + blendWeightStream.offset, blendWeightStream.dataType, vals);
@@ -330,7 +312,6 @@ bool loadMSH(const std::vector<uint8_t>& data, Model& outModel) {
                 mesh.vertices[i].boneWeights[3] = vals[3];
             }
 
-
             if (hasBlendIndex) {
                 int indices[4];
                 readBlendIndices(gff.rawData(), baseOff + blendIndexStream.offset, blendIndexStream.dataType, indices);
@@ -340,7 +321,6 @@ bool loadMSH(const std::vector<uint8_t>& data, Model& outModel) {
                 mesh.vertices[i].boneIndices[3] = indices[3];
             }
         }
-
 
         mesh.indices.resize(indexCount);
 
@@ -357,14 +337,14 @@ bool loadMSH(const std::vector<uint8_t>& data, Model& outModel) {
                 mesh.indices[i] = idx;
             }
         }
-        
+
         mesh.calculateBounds();
         outModel.meshes.push_back(mesh);
     }
-    
+
     if (outModel.meshes.empty()) {
         return false;
     }
-    
+
     return true;
 }

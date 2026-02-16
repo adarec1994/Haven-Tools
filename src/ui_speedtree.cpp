@@ -45,43 +45,35 @@ bool loadSptFromData(AppState& state, const std::vector<uint8_t>& sptData,
     state.currentModel = Model();
     state.currentModel.name = name;
 
-    // Extract texture names from raw SPT data
     extractSptTextures(sptData, spt);
 
-    // Strip extension for base name
     std::string baseName = name;
     size_t dot = baseName.rfind('.');
     if (dot != std::string::npos) baseName = baseName.substr(0, dot);
 
-    // Helper: strip extension from texture filename
     auto stripExt = [](const std::string& s) -> std::string {
         size_t d = s.rfind('.');
         return (d != std::string::npos) ? s.substr(0, d) : s;
     };
 
-    // Create materials: Branch = TGA, Frond+Leaf = _diffuse.dds
-    // Branch material (TGA)
     Material branchMat;
     std::string branchKey = spt.branchTexture.empty() ? baseName : stripExt(spt.branchTexture);
     branchMat.name = branchKey;
     branchMat.diffuseMap = branchKey;
     branchMat.opacity = 1.0f;
 
-    // Frond + Leaf material (_diffuse.dds with alpha)
     Material ddsMat;
     std::string ddsKey = baseName + "_diffuse";
     ddsMat.name = ddsKey;
     ddsMat.diffuseMap = ddsKey;
     ddsMat.opacity = 1.0f;
 
-    // Load textures from ERF
     ERFFile texErf;
     if (texErf.open(erfPath)) {
         for (const auto& entry : texErf.entries()) {
             std::string entryLower = entry.name;
             std::transform(entryLower.begin(), entryLower.end(), entryLower.begin(), ::tolower);
 
-            // Branch TGA
             if (branchMat.diffuseTexId == 0) {
                 std::string keyLower = branchKey;
                 std::transform(keyLower.begin(), keyLower.end(), keyLower.begin(), ::tolower);
@@ -99,7 +91,6 @@ bool loadSptFromData(AppState& state, const std::vector<uint8_t>& sptData,
                 }
             }
 
-            // Frond+Leaf DDS
             if (ddsMat.diffuseTexId == 0) {
                 std::string keyLower = ddsKey;
                 std::transform(keyLower.begin(), keyLower.end(), keyLower.begin(), ::tolower);

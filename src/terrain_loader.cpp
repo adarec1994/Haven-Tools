@@ -29,22 +29,20 @@ static bool isColwallFile(const std::string& name) {
     return ext == ".tcw";
 }
 
-
-
 static uint32_t ru32(const std::vector<uint8_t>& d, uint32_t off) {
     if ((size_t)off + 4 > d.size()) return 0;
     uint32_t v; memcpy(&v, &d[off], 4); return v;
 }
+
 static int32_t ri32(const std::vector<uint8_t>& d, uint32_t off) {
     if ((size_t)off + 4 > d.size()) return 0;
     int32_t v; memcpy(&v, &d[off], 4); return v;
 }
+
 static float rf32(const std::vector<uint8_t>& d, uint32_t off) {
     if ((size_t)off + 4 > d.size()) return 0;
     float v; memcpy(&v, &d[off], 4); return v;
 }
-
-
 
 static std::pair<uint32_t, uint32_t> readList(const std::vector<uint8_t>& data,
                                                uint32_t dataOffset, uint32_t fieldRawOffset) {
@@ -55,8 +53,6 @@ static std::pair<uint32_t, uint32_t> readList(const std::vector<uint8_t>& data,
     if (count == 0 || count > 500000) return {0, 0};
     return {count, (uint32_t)(absOff + 4)};
 }
-
-
 
 struct TerrainSimpleVertex {
     float x, y, z;
@@ -99,7 +95,6 @@ void renderTerrain(const float* mvp) {
         vb.destroy();
     };
 
-
     for (const auto& sector : terrain.sectors) {
         if (sector.vertices.empty() || sector.indices.empty()) continue;
         std::vector<TerrainSimpleVertex> triVerts;
@@ -113,7 +108,6 @@ void renderTerrain(const float* mvp) {
         drawBatch(triVerts, 0.45f, 0.55f, 0.35f, 1.0f);
     }
 
-
     for (const auto& wm : terrain.water) {
         if (wm.vertices.empty() || wm.indices.empty()) continue;
         std::vector<TerrainSimpleVertex> triVerts;
@@ -126,7 +120,6 @@ void renderTerrain(const float* mvp) {
         }
         drawBatch(triVerts, 0.2f, 0.4f, 0.7f, 0.5f);
     }
-
 
     if (!terrain.collisionWalls.vertices.empty()) {
         const auto& cv = terrain.collisionWalls.vertices;
@@ -148,8 +141,6 @@ void renderTerrain(const float* mvp) {
         }
     }
 }
-
-
 
 TerrainLoader::TerrainLoader() {}
 TerrainLoader::~TerrainLoader() {}
@@ -235,28 +226,6 @@ bool TerrainLoader::loadFromERF(ERFFile& erf, const std::string& anyTmshName) {
     return !m_terrain.sectors.empty();
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 bool TerrainLoader::parseTMSH(const std::vector<uint8_t>& data, TerrainSector& sector) {
     if (data.size() < 28) return false;
     if (memcmp(data.data(), "GFF ", 4) != 0 || memcmp(data.data() + 4, "V4.0", 4) != 0)
@@ -264,7 +233,6 @@ bool TerrainLoader::parseTMSH(const std::vector<uint8_t>& data, TerrainSector& s
 
     uint32_t structCount = ru32(data, 20);
     uint32_t dataOffset = ru32(data, 24);
-
 
     uint32_t vertSize = 32, edgeSize = 16, faceSize = 12;
     uint32_t off = 28;
@@ -289,7 +257,6 @@ bool TerrainLoader::parseTMSH(const std::vector<uint8_t>& data, TerrainSector& s
 
     if (vertCount == 0 || faceCount == 0) return false;
 
-
     std::unordered_map<uint32_t, uint32_t> vertIdToIndex;
     sector.vertices.resize(vertCount);
     sector.minX = sector.minY = sector.minZ = 1e10f;
@@ -312,7 +279,6 @@ bool TerrainLoader::parseTMSH(const std::vector<uint8_t>& data, TerrainSector& s
         sector.minZ = std::min(sector.minZ, z); sector.maxZ = std::max(sector.maxZ, z);
     }
 
-
     std::unordered_map<uint32_t, uint32_t> edgeIdToVertIdx;
     for (uint32_t i = 0; i < edgeCount; i++) {
         size_t eoff = (size_t)edgeStart + (size_t)i * edgeSize;
@@ -325,7 +291,6 @@ bool TerrainLoader::parseTMSH(const std::vector<uint8_t>& data, TerrainSector& s
         if (it != vertIdToIndex.end())
             edgeIdToVertIdx[edgeId] = it->second;
     }
-
 
     sector.indices.reserve(faceCount * 3);
 
@@ -348,19 +313,10 @@ bool TerrainLoader::parseTMSH(const std::vector<uint8_t>& data, TerrainSector& s
         }
     }
 
-
     computeNormals(sector);
 
     return !sector.vertices.empty();
 }
-
-
-
-
-
-
-
-
 
 bool TerrainLoader::parseWater(const std::vector<uint8_t>& data, WaterMesh& mesh) {
     if (data.size() < 28) return false;
@@ -370,7 +326,6 @@ bool TerrainLoader::parseWater(const std::vector<uint8_t>& data, WaterMesh& mesh
     uint32_t structCount = ru32(data, 20);
     uint32_t dataOffset = ru32(data, 24);
 
-
     uint32_t vertStructSize = 64;
     uint32_t off = 28;
     for (uint32_t i = 0; i < structCount && off + 16 <= data.size(); i++) {
@@ -378,7 +333,6 @@ bool TerrainLoader::parseWater(const std::vector<uint8_t>& data, WaterMesh& mesh
         if (strncmp(fourcc, "VERT", 4) == 0) vertStructSize = ru32(data, off + 12);
         off += 16;
     }
-
 
     mesh.waterId = ri32(data, dataOffset + 0);
 
@@ -409,12 +363,6 @@ bool TerrainLoader::parseWater(const std::vector<uint8_t>& data, WaterMesh& mesh
     return true;
 }
 
-
-
-
-
-
-
 bool TerrainLoader::parseColwall(const std::vector<uint8_t>& data, CollisionWall& walls) {
     if (data.size() < 28) return false;
     if (memcmp(data.data(), "GFF ", 4) != 0 || memcmp(data.data() + 4, "V4.0", 4) != 0)
@@ -437,8 +385,6 @@ bool TerrainLoader::parseColwall(const std::vector<uint8_t>& data, CollisionWall
 
     return true;
 }
-
-
 
 void TerrainLoader::computeNormals(TerrainSector& sector) {
     size_t nv = sector.vertices.size();

@@ -1,13 +1,26 @@
 #include "ui_internal.h"
+#include "renderer.h"
 
 void drawRenderSettingsWindow(AppState& state) {
     ImGui::SetNextWindowPos(ImVec2(20, 40), ImGuiCond_FirstUseEver);
     ImGui::SetNextWindowSizeConstraints(ImVec2(300, 100), ImVec2(500, 800));
 
-    // Global ESC to deselect chunk
     if (ImGui::IsKeyPressed(ImGuiKey_Escape)) {
         state.selectedLevelChunk = -1;
         state.selectedBoneIndex = -1;
+    }
+
+    if (ImGui::IsKeyPressed(state.keybinds.deleteObject) && !ImGui::GetIO().WantTextInput) {
+        int idx = state.selectedLevelChunk;
+        if (idx >= 0 && idx < (int)state.currentModel.meshes.size()) {
+            state.currentModel.meshes.erase(state.currentModel.meshes.begin() + idx);
+            if (state.renderSettings.meshVisible.size() > (size_t)idx)
+                state.renderSettings.meshVisible.erase(state.renderSettings.meshVisible.begin() + idx);
+            state.selectedLevelChunk = -1;
+            if (isLevelBaked()) {
+                bakeLevelBuffers(state.currentModel);
+            }
+        }
     }
 
     ImGui::Begin("Render Settings", &state.showRenderSettings, ImGuiWindowFlags_AlwaysAutoResize);
@@ -23,6 +36,7 @@ void drawRenderSettingsWindow(AppState& state) {
         ImGui::Checkbox("Normal Maps", &state.renderSettings.useNormalMaps);
         ImGui::Checkbox("Specular Maps", &state.renderSettings.useSpecularMaps);
         ImGui::Checkbox("Tint Maps", &state.renderSettings.useTintMaps);
+        ImGui::Checkbox("Terrain Layer Debug", &state.renderSettings.terrainDebug);
         ImGui::Unindent();
     }
     if (state.hasModel) {
@@ -74,12 +88,11 @@ void drawRenderSettingsWindow(AppState& state) {
                 if (ImGui::Checkbox("Visible", &vis))
                     state.renderSettings.meshVisible[state.selectedLevelChunk] = vis ? 1 : 0;
                 ImGui::Unindent();
-                ImGui::TextDisabled("ESC to deselect");
+                ImGui::TextDisabled("ESC to deselect | %s to delete", ImGui::GetKeyName(state.keybinds.deleteObject));
             } else {
                 ImGui::TextDisabled("Click a mesh in the viewport to select it");
             }
 
-            // For individual models (few meshes), show the full list
             if (!isLevel) {
                 float listHeight = std::min(300.0f, state.currentModel.meshes.size() * 50.0f + 20.0f);
                 ImGui::BeginChild("MeshList", ImVec2(0, listHeight), true);

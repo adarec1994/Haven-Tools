@@ -93,11 +93,9 @@ bool isMshFile(const std::string& name) {
 }
 
 #include "erf.h"
-#include <iostream>
 #include <set>
 
 void dumpAllMshFileNames(const std::vector<std::string>& erfFiles) {
-    std::cout << "\n=== ALL MSH FILES ===" << std::endl;
     std::set<std::string> allMsh;
     for (const auto& erfPath : erfFiles) {
         ERFFile erf;
@@ -110,7 +108,5 @@ void dumpAllMshFileNames(const std::vector<std::string>& erfFiles) {
         }
     }
     for (const auto& name : allMsh) {
-        std::cout << name << std::endl;
     }
-    std::cout << "=== TOTAL: " << allMsh.size() << " MSH files ===" << std::endl;
 }

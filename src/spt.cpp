@@ -60,12 +60,10 @@ bool initSpeedTree() {
     g_dllPath = g_tempDir + "SpeedTreeRT.dll";
 
     if (!writeFile(g_exePath, spt_convert_exe_data, spt_convert_exe_size)) {
-        fprintf(stderr, "[SPT] Failed to extract spt_convert.exe\n");
         return false;
     }
 
     if (!writeFile(g_dllPath, speedtree_dll_data, speedtree_dll_size)) {
-        fprintf(stderr, "[SPT] Failed to extract SpeedTreeRT.dll\n");
         return false;
     }
 
@@ -101,7 +99,6 @@ static bool runConverter(const std::string& inputPath, const std::string& output
 
     std::string cmdLine = cmd;
     if (!CreateProcessA(NULL, &cmdLine[0], NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi)) {
-        fprintf(stderr, "[SPT] CreateProcess failed: %lu\n", GetLastError());
         return false;
     }
     WaitForSingleObject(pi.hProcess, 30000);
@@ -154,14 +151,12 @@ static bool readSptmesh(const std::string& path, SptModel& model) {
 
 bool loadSptModel(const std::string& sptPath, SptModel& outModel) {
     if (g_exePath.empty()) {
-        fprintf(stderr, "[SPT] Not initialized - call initSpeedTree() first\n");
         return false;
     }
 
     std::string meshPath = g_tempDir + "temp_output.sptmesh";
 
     if (!runConverter(sptPath, meshPath)) {
-        fprintf(stderr, "[SPT] Conversion failed for: %s\n", sptPath.c_str());
         return false;
     }
 
@@ -177,25 +172,21 @@ bool loadSptModel(const std::string& sptPath, SptModel& outModel) {
 }
 
 void extractSptTextures(const std::vector<uint8_t>& rawData, SptModel& model) {
-    // Scan raw SPT binary for embedded texture filenames (.tga and .dds)
-    // They appear as null-terminated ASCII strings
     std::vector<std::string> tgaFiles, ddsFiles;
     size_t n = rawData.size();
 
     for (size_t i = 0; i + 4 < n; ) {
-        // Look for printable string runs ending with .tga or .dds
         if (rawData[i] >= 0x20 && rawData[i] <= 0x7e) {
             size_t start = i;
             while (i < n && rawData[i] >= 0x20 && rawData[i] <= 0x7e) i++;
             size_t len = i - start;
-            if (len >= 5) {  // minimum: "a.tga" or "a.dds"
+            if (len >= 5) {
                 std::string s(reinterpret_cast<const char*>(&rawData[start]), len);
                 std::string lower = s;
                 for (auto& c : lower) c = (char)tolower((unsigned char)c);
                 if (lower.size() > 4) {
                     std::string ext = lower.substr(lower.size() - 4);
                     if (ext == ".tga") {
-                        // Deduplicate
                         bool found = false;
                         for (const auto& existing : tgaFiles)
                             if (existing == s) { found = true; break; }
@@ -213,21 +204,14 @@ void extractSptTextures(const std::vector<uint8_t>& rawData, SptModel& model) {
         }
     }
 
-    // Categorize:
-    // - First .tga is typically the branch/bark texture (at offset ~0x20)
-    // - .tga files with common frond prefixes are frond textures
-    // - _Diffuse.dds is the leaf composite
-    // - Normal maps (*_n.tga) are skipped for diffuse assignment
     for (size_t i = 0; i < tgaFiles.size(); i++) {
         const auto& name = tgaFiles[i];
         std::string lower = name;
         for (auto& c : lower) c = (char)tolower((unsigned char)c);
-        // Skip normal maps
         if (lower.size() > 6 && lower.substr(lower.size() - 6) == "_n.tga") continue;
         if (model.branchTexture.empty()) {
-            model.branchTexture = name;  // First non-normal .tga = branch
+            model.branchTexture = name;
         } else {
-            // Remaining .tga files are frond textures
             bool dup = false;
             for (const auto& ft : model.frondTextures)
                 if (ft == name) { dup = true; break; }
@@ -243,11 +227,6 @@ void extractSptTextures(const std::vector<uint8_t>& rawData, SptModel& model) {
             break;
         }
     }
-    // If no diffuse DDS found, use first DDS
     if (model.compositeTexture.empty() && !ddsFiles.empty())
         model.compositeTexture = ddsFiles[0];
-
-    fprintf(stderr, "[SPT] Textures: branch='%s' fronds=%zu composite='%s'\n",
-            model.branchTexture.c_str(), model.frondTextures.size(),
-            model.compositeTexture.c_str());
 }

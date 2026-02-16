@@ -55,16 +55,18 @@ struct alignas(16) CBTerrain {
     float palDim[4];
     float palParam[4];
     float uvScales[8];
+    float reliefScales[8];
     int isTerrain;
-    int _pad[3];
+    int terrainDebug;
+    int _pad[2];
 };
 
 struct alignas(16) CBWater {
-    float wave0[4];       // dirX, dirY, speed, unused
-    float wave1[4];
-    float wave2[4];
-    float waterColor[4];  // RGB, unused
-    float waterVisual[4]; // reflectivity, fresnel, specPower, specIntensity
+    float wave0[4];       // dirX, dirY, uvScale, unused  (from mat_vVSHWaterParams[0])
+    float wave1[4];       // dirX, dirY, uvScale, unused  (from mat_vVSHWaterParams[1])
+    float wave2[4];       // dirX, dirY, uvScale, unused  (from mat_vVSHWaterParams[2])
+    float waterColor[4];  // xyz = normal blend weights per layer, w = extra (mat_vPSHWaterParams[0])
+    float waterVisual[4]; // x = fresnelPow, y = specIntensity, z = specPower, w = extra (mat_vPSHWaterParams[1])
     float time;
     int isWater;
     int _pad[2];

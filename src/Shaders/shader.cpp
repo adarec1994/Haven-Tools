@@ -2,8 +2,6 @@
 
 #include "d3d_context.h"
 
-#include <iostream>
-
 #include <vector>
 
 #include <cstring>
@@ -36,27 +34,33 @@ cbuffer CBPerFrame : register(b0) {
     float    uSpecularPower;
     float2   pad0;
 };
+
 struct VSInput {
     float3 position : POSITION;
     float3 normal   : NORMAL;
     float2 texcoord : TEXCOORD0;
 };
+
 struct VSOutput {
     float4 position : SV_POSITION;
     float3 worldPos : TEXCOORD0;
     float3 normal   : TEXCOORD1;
     float2 texcoord : TEXCOORD2;
     float3 eyePos   : TEXCOORD3;
+    float3 worldNormal : TEXCOORD4;
 };
+
 VSOutput main(VSInput input) {
     VSOutput output;
     output.position = mul(float4(input.position, 1.0), uModelViewProj);
     output.eyePos   = mul(float4(input.position, 1.0), uModelView).xyz;
     output.worldPos = input.position;
     output.normal   = normalize(mul(float4(input.normal, 0.0), uModelView).xyz);
+    output.worldNormal = input.normal;
     output.texcoord = input.texcoord;
     return output;
 }
+
 )";
 
 static const char* MODEL_PS = R"(
@@ -69,6 +73,7 @@ cbuffer CBPerFrame : register(b0) {
     float    uSpecularPower;
     float2   pad0;
 };
+
 cbuffer CBPerMaterial : register(b1) {
     float4 uTintColor;
     float4 uTintZone1;
@@ -93,6 +98,7 @@ cbuffer CBPerMaterial : register(b1) {
     float2 pad1;
     float4 uHighlightColor;
 };
+
 Texture2D    texDiffuse        : register(t0);
 Texture2D    texNormal         : register(t1);
 Texture2D    texSpecular       : register(t2);
@@ -103,14 +109,19 @@ Texture2D    texStubble        : register(t6);
 Texture2D    texStubbleNormal  : register(t7);
 Texture2D    texTattoo         : register(t8);
 SamplerState sampLinear        : register(s0);
+SamplerState sampPoint         : register(s1);
 cbuffer CBTerrain : register(b2) {
     float4 uPalDim;
     float4 uPalParam;
     float4 uUVScales0;
     float4 uUVScales1;
+    float4 uReliefScales0;
+    float4 uReliefScales1;
     int    uIsTerrain;
-    int3   tpad;
+    int    uTerrainDebug;
+    int2   tpad;
 };
+
 cbuffer CBWater : register(b3) {
     float4 uWave0;
     float4 uWave1;
@@ -121,89 +132,180 @@ cbuffer CBWater : register(b3) {
     int    uIsWater;
     int2   wpad;
 };
+
 struct PSInput {
     float4 position : SV_POSITION;
     float3 worldPos : TEXCOORD0;
     float3 normal   : TEXCOORD1;
     float2 texcoord : TEXCOORD2;
     float3 eyePos   : TEXCOORD3;
+    float3 worldNormal : TEXCOORD4;
 };
+
 float4 main(PSInput input) : SV_TARGET {
     float4 diffuseColor;
     float3 baseNormal = float3(0.0, 0.0, 1.0);
+    float2 uvDDX = ddx(input.texcoord);
+    float2 uvDDY = ddy(input.texcoord);
     if (uIsTerrain != 0) {
         float2 uv = input.texcoord;
-        float4 maskV = texSpecular.Sample(sampLinear, uv);
-        float4 maskA = texTint.Sample(sampLinear, uv);
-        float weights[8] = { maskV.r, maskV.g, maskV.b, maskV.a,
-                              maskA.r, maskA.g, maskA.b, maskA.a };
-        float scales[8] = { uUVScales0.x, uUVScales0.y, uUVScales0.z, uUVScales0.w,
-                             uUVScales1.x, uUVScales1.y, uUVScales1.z, uUVScales1.w };
+
         float cellW = uPalDim.x;
         float cellH = uPalDim.y;
+        int cols = (int)uPalDim.z;
         int rows = (int)uPalDim.w;
         float padX = uPalParam.x;
         float padY = uPalParam.y;
         float usableW = uPalParam.z;
         float usableH = uPalParam.w;
+        float scales[8] = { uUVScales0.x, uUVScales0.y, uUVScales0.z, uUVScales0.w,
+                             uUVScales1.x, uUVScales1.y, uUVScales1.z, uUVScales1.w };
+        float rScales[8] = { uReliefScales0.x, uReliefScales0.y, uReliefScales0.z, uReliefScales0.w,
+                              uReliefScales1.x, uReliefScales1.y, uReliefScales1.z, uReliefScales1.w };
+        float3 viewDir = normalize(uViewPos.xyz - input.worldPos);
+        float totalCells = (float)(cols * rows);
+
+        uint mw, mh;
+        texSpecular.GetDimensions(mw, mh);
+        float2 maskSize = float2(mw, mh);
+        float2 texelSize = 1.0 / maskSize;
+        float2 pixelPos = uv * maskSize - 0.5;
+        float2 frac_pp = frac(pixelPos);
+        float2 base = (floor(pixelPos) + 0.5) * texelSize;
+        float2 off10 = float2(texelSize.x, 0);
+        float2 off01 = float2(0, texelSize.y);
+        float2 off11 = texelSize;
+
+        float bw[4] = {
+            (1 - frac_pp.x) * (1 - frac_pp.y),
+            frac_pp.x * (1 - frac_pp.y),
+            (1 - frac_pp.x) * frac_pp.y,
+            frac_pp.x * frac_pp.y
+        };
+        float2 corners[4] = { base, base + off10, base + off01, base + off11 };
+
+        float cellWeights[8] = { 0,0,0,0,0,0,0,0 };
+
+        for (int corner = 0; corner < 4; corner++) {
+            float4 mv = texSpecular.SampleLevel(sampPoint, corners[corner], 0);
+            float4 ma = texTint.SampleLevel(sampPoint, corners[corner], 0);
+            float4 ma2 = texAgeDiffuse.SampleLevel(sampPoint, corners[corner], 0);
+            float mAll[8] = { ma.r, ma.g, ma.b, ma.a, ma2.r, ma2.g, ma2.b, ma2.a };
+            float mvV[3] = { mv.r, mv.g, mv.b };
+            for (int ch = 0; ch < 3; ch++) {
+                int ci = clamp((int)(mvV[ch] * 7.5 + 0.5), 0, (int)(totalCells - 1));
+                cellWeights[ci] += mAll[ci] * bw[corner];
+            }
+        }
+
         float3 blendedColor = float3(0, 0, 0);
         float3 blendedNormal = float3(0, 0, 0);
         float totalWeight = 0.0;
-        for (int i = 0; i < 8; i++) {
-            float w = weights[i];
+
+        for (int ci = 0; ci < (int)totalCells; ci++) {
+            float w = cellWeights[ci];
             if (w < 0.001) continue;
-            if (scales[i] < 0.001) continue;
-            int col = i / rows;
-            int row = i % rows;
+
+            float s = scales[ci];
+            int col = ci / rows;
+            int row = ci % rows;
             float2 cellOrigin = float2(col * cellW + padX, row * cellH + padY);
-            float s = scales[i];
+
             float2 tileUV = frac(uv * s);
             float2 palUV = cellOrigin + tileUV * float2(usableW, usableH);
-            blendedColor += texDiffuse.Sample(sampLinear, palUV).rgb * w;
-            blendedNormal += (texNormal.Sample(sampLinear, palUV).rgb * 2.0 - 1.0) * w;
+
+            float2 dx = uvDDX * s * float2(usableW, usableH);
+            float2 dy = uvDDY * s * float2(usableW, usableH);
+
+            float rs = rScales[ci];
+            if (rs > 0.0001) {
+                float h = texAgeNormal.SampleGrad(sampLinear, palUV, dx, dy).r;
+                float2 offset = viewDir.xy * h * rs;
+                palUV += offset * float2(usableW, usableH);
+                palUV = clamp(palUV, cellOrigin, cellOrigin + float2(usableW, usableH));
+            }
+
+            blendedColor += texDiffuse.SampleGrad(sampLinear, palUV, dx, dy).rgb * w;
+            blendedNormal += (texNormal.SampleGrad(sampLinear, palUV, dx, dy).rgb * 2.0 - 1.0) * w;
             totalWeight += w;
         }
+
         if (totalWeight > 0.001) {
             blendedColor /= totalWeight;
             blendedNormal /= totalWeight;
         } else {
             blendedColor = float3(0.5, 0.5, 0.5);
+            blendedNormal = float3(0, 0, 1);
         }
+
         diffuseColor = float4(blendedColor, 1.0);
         baseNormal = normalize(blendedNormal);
+
+        if (uTerrainDebug != 0) {
+            float3 dbgColors[8] = {
+                float3(1,0,0), float3(0,1,0), float3(0,0,1), float3(1,1,0),
+                float3(1,0,1), float3(0,1,1), float3(1,0.5,0), float3(0.5,0,1)
+            };
+            float4 mv0 = texSpecular.SampleLevel(sampPoint, base, 0);
+            int domCell = clamp((int)(mv0.r * 7.5 + 0.5), 0, 7);
+            diffuseColor = float4(dbgColors[domCell], 1.0);
+        }
     } else if (uIsWater != 0) {
         float2 uv = input.texcoord;
         float t = uTime;
-        // Scale is UV tiling, direction is scroll velocity
+
         float scale0 = max(uWave0.z, 0.01);
         float scale1 = max(uWave1.z, 0.01);
         float scale2 = max(uWave2.z, 0.01);
-        float2 uv0 = uv * scale0 + float2(uWave0.x, uWave0.y) * t;
-        float2 uv1 = uv * scale1 + float2(uWave1.x, uWave1.y) * t;
-        float2 uv2 = uv * scale2 + float2(uWave2.x, uWave2.y) * t;
-        // Sample normal map 3 times with scrolling UVs
+        float2 uv0 = uv * scale0 + uWave0.xy * t;
+        float2 uv1 = uv * scale1 + uWave1.xy * t;
+        float2 uv2 = uv * scale2 + uWave2.xy * t;
+
         float3 n0 = texNormal.Sample(sampLinear, uv0).rgb * 2.0 - 1.0;
         float3 n1 = texNormal.Sample(sampLinear, uv1).rgb * 2.0 - 1.0;
         float3 n2 = texNormal.Sample(sampLinear, uv2).rgb * 2.0 - 1.0;
-        baseNormal = normalize(n0 + n1 + n2);
-        // Fresnel
+
+        float3 nTest = n0 + n1 + n2;
+        if (dot(nTest + 3.0, nTest + 3.0) < 0.01) {
+            float2 p0 = uv * 8.0  + float2(t * 0.03,  t * 0.02);
+            float2 p1 = uv * 12.0 + float2(-t * 0.02, t * 0.025);
+            float2 p2 = uv * 20.0 + float2(t * 0.015, -t * 0.018);
+            n0 = normalize(float3(sin(p0.x * 6.28) * cos(p0.y * 6.28), sin(p0.y * 6.28) * cos(p0.x * 6.28), 2.0));
+            n1 = normalize(float3(sin(p1.x * 6.28) * cos(p1.y * 4.0),  sin(p1.y * 6.28) * cos(p1.x * 3.0),  2.0));
+            n2 = normalize(float3(sin(p2.x * 5.0)  * cos(p2.y * 6.28), sin(p2.y * 5.0)  * cos(p2.x * 6.28), 2.0));
+        }
+
+        float3 nw = uWaterColor.xyz;
+        float nwSum = nw.x + nw.y + nw.z;
+        if (nwSum < 0.001) { nw = float3(1, 1, 1); nwSum = 3.0; }
+        float3 blendedN = normalize((n0 * nw.x + n1 * nw.y + n2 * nw.z) / nwSum);
+
+        float bumpScale = max(uWaterVisual.w, 1.0);
         float3 viewDir = normalize(uViewPos.xyz - input.worldPos);
-        float3 surfaceN = normalize(input.normal + baseNormal * 0.3);
+        float3 geomN = normalize(input.worldNormal);
+        float3 surfaceN = normalize(geomN + float3(blendedN.xy, 0) * bumpScale);
+
         float NdotV = saturate(dot(surfaceN, viewDir));
-        float fresnel = pow(1.0 - NdotV, uWaterVisual.y);
-        // Specular
+        float fresnelPow = max(uWaterVisual.x, 0.1);
+        float fresnel = 0.02 + 0.98 * pow(1.0 - NdotV, fresnelPow);
+
+        float3 reflColor = float3(0.0, 0.0, 0.0);
+
+        float3 bodyColor = float3(0.15, 0.18, 0.22);
+
+        float3 waterCol = lerp(bodyColor, reflColor, fresnel);
+
         float3 L = normalize(uLightDir.xyz);
         float3 H = normalize(L + viewDir);
         float NdotH = saturate(dot(surfaceN, H));
-        float spec = pow(NdotH, uWaterVisual.z) * uWaterVisual.w;
-        // Color
-        float3 deepColor = uWaterColor.rgb;
-        float3 shallowColor = deepColor + float3(0.1, 0.15, 0.2);
-        float3 waterCol = lerp(shallowColor, deepColor, fresnel);
-        float3 skyColor = float3(0.5, 0.6, 0.8);
-        waterCol = lerp(waterCol, skyColor, fresnel * uWaterVisual.x);
-        waterCol += float3(1, 1, 1) * spec;
-        float alpha = 0.5 + fresnel * 0.4;
+        float specPow = max(uWaterVisual.z, 1.0);
+        float specInt = uWaterVisual.y;
+        waterCol += pow(NdotH, specPow) * specInt;
+
+        float viewDist = length(uViewPos.xyz - input.worldPos);
+        waterCol *= saturate(1.0 - viewDist * 0.002);
+
+        float alpha = 0.7 + fresnel * 0.25;
         diffuseColor = float4(waterCol, alpha);
     } else if (uUseDiffuse != 0) {
         diffuseColor = texDiffuse.Sample(sampLinear, input.texcoord);
@@ -215,7 +317,6 @@ float4 main(PSInput input) : SV_TARGET {
     if (uIsTerrain == 0 && uIsWater == 0 && uUseNormal != 0) {
         baseNormal = texNormal.Sample(sampLinear, input.texcoord).rgb * 2.0 - 1.0;
     }
-    // Face mesh: age, stubble, tattoo
     if (uIsFaceMesh != 0) {
         if (uUseAge != 0 && uAgeAmount > 0.0) {
             float4 ageDiffuse = texAgeDiffuse.Sample(sampLinear, input.texcoord);
@@ -246,7 +347,6 @@ float4 main(PSInput input) : SV_TARGET {
                 diffuseColor.rgb = lerp(diffuseColor.rgb, uTattooColor3.rgb, tattooMask.b * uTattooAmount.b);
         }
     }
-    // Tinting (skip for terrain - texTint slot holds maskA, not a tint map)
     if (uIsTerrain == 0) {
         if (uIsEyeMesh != 0 && uUseTint != 0) {
             float4 tintMask = texTint.Sample(sampLinear, input.texcoord);
@@ -265,13 +365,11 @@ float4 main(PSInput input) : SV_TARGET {
             }
         }
     }
-    // Water already has full lighting computed
     if (uIsWater != 0) {
         if (uHighlightColor.a > 0.0)
             diffuseColor.rgb = lerp(diffuseColor.rgb, uHighlightColor.rgb, uHighlightColor.a);
         return diffuseColor;
     }
-    // Lighting
     float3 N = normalize(input.normal);
     if (uUseNormal != 0 || uIsTerrain != 0 || (uIsFaceMesh != 0 && (uUseAge != 0 || uUseStubble != 0))) {
         N = normalize(N + baseNormal * 0.3);
@@ -294,6 +392,7 @@ float4 main(PSInput input) : SV_TARGET {
         finalColor = lerp(finalColor, uHighlightColor.rgb, uHighlightColor.a);
     return float4(saturate(finalColor), diffuseColor.a);
 }
+
 )";
 
 static const char* SIMPLE_VS = R"(
@@ -301,20 +400,24 @@ cbuffer CBSimple : register(b0) {
     row_major float4x4 uModelViewProj;
     float4   uColor;
 };
+
 struct VSInput {
     float3 position : POSITION;
     float3 normal   : NORMAL;
 };
+
 struct VSOutput {
     float4 position : SV_POSITION;
     float3 normal   : TEXCOORD0;
 };
+
 VSOutput main(VSInput input) {
     VSOutput output;
     output.position = mul(float4(input.position, 1.0), uModelViewProj);
     output.normal   = input.normal;
     return output;
 }
+
 )";
 
 static const char* SIMPLE_PS = R"(
@@ -322,16 +425,19 @@ cbuffer CBSimple : register(b0) {
     row_major float4x4 uModelViewProj;
     float4   uColor;
 };
+
 struct PSInput {
     float4 position : SV_POSITION;
     float3 normal   : TEXCOORD0;
 };
+
 float4 main(PSInput input) : SV_TARGET {
     float3 L = normalize(float3(0.3, 0.5, 1.0));
     float NdotL = max(dot(normalize(input.normal), L), 0.0);
     float shade = 0.35 + 0.65 * NdotL;
     return float4(uColor.rgb * shade, uColor.a);
 }
+
 )";
 
 static const char* LINE_VS = R"(
@@ -339,20 +445,24 @@ cbuffer CBSimple : register(b0) {
     row_major float4x4 uModelViewProj;
     float4   uColor;
 };
+
 struct VSInput {
     float3 position : POSITION;
     float4 color    : COLOR;
 };
+
 struct VSOutput {
     float4 position : SV_POSITION;
     float4 color    : COLOR;
 };
+
 VSOutput main(VSInput input) {
     VSOutput output;
     output.position = mul(float4(input.position, 1.0), uModelViewProj);
     output.color    = input.color;
     return output;
 }
+
 )";
 
 static const char* LINE_PS = R"(
@@ -360,9 +470,11 @@ struct PSInput {
     float4 position : SV_POSITION;
     float4 color    : COLOR;
 };
+
 float4 main(PSInput input) : SV_TARGET {
     return input.color;
 }
+
 )";
 
 void ShaderProgram::release() {
@@ -398,10 +510,6 @@ ID3DBlob* compileShader(const char* source, const char* entryPoint, const char* 
     if (FAILED(hr)) {
 
         if (error) {
-
-            std::cerr << "[SHADER] Compilation error (" << target << "): "
-
-                      << (char*)error->GetBufferPointer() << std::endl;
 
             error->Release();
 
@@ -463,8 +571,6 @@ static bool createModelShader(ID3D11Device* device) {
 
     s_modelShader.valid = true;
 
-    std::cout << "[SHADER] Model shader created" << std::endl;
-
     return true;
 
 }
@@ -512,8 +618,6 @@ static bool createSimpleShader(ID3D11Device* device) {
     if (FAILED(hr)) { s_simpleShader.release(); return false; }
 
     s_simpleShader.valid = true;
-
-    std::cout << "[SHADER] Simple shader created" << std::endl;
 
     return true;
 
@@ -563,8 +667,6 @@ static bool createSimpleLineShader(ID3D11Device* device) {
 
     s_simpleLineShader.valid = true;
 
-    std::cout << "[SHADER] Simple line shader created" << std::endl;
-
     return true;
 
 }
@@ -595,8 +697,6 @@ static bool createConstantBuffers(ID3D11Device* device) {
     if (!makeCB(sizeof(CBTerrain), &s_cbTerrain))           return false;
     if (!makeCB(sizeof(CBWater), &s_cbWater))              return false;
 
-    std::cout << "[SHADER] Constant buffers created" << std::endl;
-
     return true;
 
 }
@@ -610,8 +710,6 @@ bool initShaderSystem() {
     D3DContext& d3d = getD3DContext();
 
     if (!d3d.valid) {
-
-        std::cerr << "[SHADER] D3D context not initialized" << std::endl;
 
         s_shadersAvailable = false;
 
@@ -628,8 +726,6 @@ bool initShaderSystem() {
     if (!createSimpleLineShader(d3d.device))      { s_shadersAvailable = false; return false; }
 
     s_shadersAvailable = true;
-
-    std::cout << "[SHADER] Shader system initialized" << std::endl;
 
     return true;
 

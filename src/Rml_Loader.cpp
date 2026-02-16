@@ -3,7 +3,6 @@
 #include <cmath>
 #include <algorithm>
 
-
 static const uint32_t LABEL_POSITION = 4;
 static const uint32_t LABEL_ORIENTATION = 5;
 static const uint32_t LABEL_ENV_ROOM_MODEL_LIST = 3050;
@@ -18,15 +17,12 @@ static const uint32_t LABEL_SPT_SCALE = 0xd1c;
 bool parseRML(const std::vector<uint8_t>& data, RMLData& outData) {
     if (data.size() < 8) return false;
 
-
     std::string magic(data.begin(), data.begin() + 8);
     if (magic != "GFF V4.0") return false;
 
     GFFFile gff;
     if (!gff.load(data)) return false;
     if (gff.structs().empty()) return false;
-
-
 
     outData.roomPosX = 0; outData.roomPosY = 0; outData.roomPosZ = 0;
     const GFFField* posField = gff.findField(0, LABEL_POSITION);
@@ -37,7 +33,6 @@ bool parseRML(const std::vector<uint8_t>& data, RMLData& outData) {
         outData.roomPosZ = gff.readFloatAt(pos + 8);
     }
 
-
     std::vector<GFFStructRef> mdlList = gff.readStructList(0, LABEL_ENV_ROOM_MODEL_LIST, 0);
 
     for (const auto& mdlRef : mdlList) {
@@ -46,7 +41,6 @@ bool parseRML(const std::vector<uint8_t>& data, RMLData& outData) {
         uint32_t off = mdlRef.offset;
         uint32_t si = mdlRef.structIndex;
 
-
         const GFFField* pf = gff.findField(si, LABEL_POSITION);
         if (pf && pf->typeId == 10) {
             uint32_t p = gff.dataOffset() + pf->dataOffset + off;
@@ -54,7 +48,6 @@ bool parseRML(const std::vector<uint8_t>& data, RMLData& outData) {
             prop.posY = gff.readFloatAt(p + 4);
             prop.posZ = gff.readFloatAt(p + 8);
         }
-
 
         const GFFField* of_ = gff.findField(si, LABEL_ORIENTATION);
         if (of_ && of_->typeId == 13) {
@@ -65,21 +58,17 @@ bool parseRML(const std::vector<uint8_t>& data, RMLData& outData) {
             prop.orientW = gff.readFloatAt(p + 12);
         }
 
-
         const GFFField* sf = gff.findField(si, LABEL_ENV_MODEL_SCALE);
         if (sf && sf->typeId == 8) {
             prop.scale = gff.readFloatAt(gff.dataOffset() + sf->dataOffset + off);
         }
-
 
         const GFFField* idf = gff.findField(si, LABEL_ENV_MODEL_ID);
         if (idf && idf->typeId == 5) {
             prop.modelId = gff.readInt32At(gff.dataOffset() + idf->dataOffset + off);
         }
 
-
         prop.modelName = gff.readStringByLabel(si, LABEL_ENV_MODEL_NAME, off);
-
 
         prop.modelFile = gff.readStringByLabel(si, LABEL_ENV_MODEL_FILE, off);
 
@@ -127,7 +116,6 @@ bool parseRML(const std::vector<uint8_t>& data, RMLData& outData) {
     return true;
 }
 
-
 static void quatRotate(float qx, float qy, float qz, float qw,
                        float px, float py, float pz,
                        float& rx, float& ry, float& rz) {
@@ -154,15 +142,12 @@ void transformModelVertices(Model& model, float px, float py, float pz,
             float sy = v.y * scale;
             float sz = v.z * scale;
 
-
             float rx, ry, rz;
             quatRotate(qx, qy, qz, qw, sx, sy, sz, rx, ry, rz);
-
 
             v.x = rx + px;
             v.y = ry + py;
             v.z = rz + pz;
-
 
             float rnx, rny, rnz;
             quatRotate(qx, qy, qz, qw, v.nx, v.ny, v.nz, rnx, rny, rnz);

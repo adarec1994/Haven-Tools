@@ -279,7 +279,7 @@ static const uint32_t ORIG_S[4][256] = {
 Blowfish::Blowfish(const uint8_t* key, size_t keyLen) {
     std::memcpy(P, ORIG_P, sizeof(P));
     std::memcpy(S, ORIG_S, sizeof(S));
-    
+
     size_t j = 0;
     for (size_t i = 0; i < 18; i++) {
         uint32_t data = 0;
@@ -289,14 +289,14 @@ Blowfish::Blowfish(const uint8_t* key, size_t keyLen) {
         }
         P[i] ^= data;
     }
-    
+
     uint32_t left = 0, right = 0;
     for (size_t i = 0; i < 18; i += 2) {
         encrypt(left, right);
         P[i] = left;
         P[i + 1] = right;
     }
-    
+
     for (size_t i = 0; i < 4; i++) {
         for (size_t j = 0; j < 256; j += 2) {
             encrypt(left, right);
@@ -347,7 +347,7 @@ std::vector<uint8_t> Blowfish::encrypt(const std::vector<uint8_t>& data) const {
     if (result.size() % 8 != 0) {
         result.resize((result.size() / 8 + 1) * 8, 0);
     }
-    
+
     for (size_t i = 0; i < result.size(); i += 8) {
         uint32_t left = (result[i] << 24) | (result[i+1] << 16) | (result[i+2] << 8) | result[i+3];
         uint32_t right = (result[i+4] << 24) | (result[i+5] << 16) | (result[i+6] << 8) | result[i+7];
@@ -361,13 +361,13 @@ std::vector<uint8_t> Blowfish::encrypt(const std::vector<uint8_t>& data) const {
         result[i+6] = (right >> 8) & 0xFF;
         result[i+7] = right & 0xFF;
     }
-    
+
     return result;
 }
 
 std::vector<uint8_t> Blowfish::decrypt(const std::vector<uint8_t>& data) const {
     std::vector<uint8_t> result = data;
-    
+
     for (size_t i = 0; i + 7 < result.size(); i += 8) {
         uint32_t left = (result[i] << 24) | (result[i+1] << 16) | (result[i+2] << 8) | result[i+3];
         uint32_t right = (result[i+4] << 24) | (result[i+5] << 16) | (result[i+6] << 8) | result[i+7];
@@ -381,6 +381,6 @@ std::vector<uint8_t> Blowfish::decrypt(const std::vector<uint8_t>& data) const {
         result[i+6] = (right >> 8) & 0xFF;
         result[i+7] = right & 0xFF;
     }
-    
+
     return result;
 }

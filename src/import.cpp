@@ -1,6 +1,5 @@
 #include "import.h"
 #include "ui_internal.h"
-#include <iostream>
 #include <fstream>
 #include <sstream>
 #include <cstring>
@@ -24,6 +23,7 @@ static std::string ToLower(std::string s) {
     std::transform(s.begin(), s.end(), s.begin(), ::tolower);
     return s;
 }
+
 static std::string CleanName(const std::string& input) {
     std::string result = input;
     size_t lastSlash = result.find_last_of("/\\");
@@ -32,6 +32,7 @@ static std::string CleanName(const std::string& input) {
     if (lastDot != std::string::npos) result = result.substr(0, lastDot);
     return ToLower(result);
 }
+
 DAOGraphicsTools::DAOGraphicsTools() {}
 DAOGraphicsTools::~DAOGraphicsTools() { Cleanup(); }
 bool DAOGraphicsTools::Initialize() {
@@ -44,13 +45,12 @@ bool DAOGraphicsTools::Initialize() {
     fs::create_directories(m_mmhDir);
     fs::create_directories(m_aniDir);
     if (!ExtractTools()) {
-        std::cerr << "[DAOTools] Failed to extract tools" << std::endl;
         return false;
     }
     m_initialized = true;
-    std::cout << "[DAOTools] Initialized at: " << m_workDir << std::endl;
     return true;
 }
+
 bool DAOGraphicsTools::ExtractTools() {
 #ifdef _WIN32
     auto writeFile = [](const fs::path& path, const unsigned char* data, unsigned int len) {
@@ -75,17 +75,17 @@ bool DAOGraphicsTools::ExtractTools() {
     return true;
 #endif
 }
+
 bool DAOGraphicsTools::RunProcessor(const fs::path& exePath, const fs::path& xmlPath) {
     std::string cmdLine = "\"" + exePath.string() + "\" \"" + xmlPath.string() + "\"";
     return RunProcessorWithCmd(exePath, cmdLine);
 }
+
 bool DAOGraphicsTools::RunProcessorWithCmd(const fs::path& exePath, const std::string& cmdLine) {
     if (!fs::exists(exePath)) {
-        std::cerr << "[DAOTools] Processor not found: " << exePath << std::endl;
         return false;
     }
 #ifdef _WIN32
-    std::cout << "[DAOTools] Running: " << cmdLine << std::endl;
     SECURITY_ATTRIBUTES sa = {};
     sa.nLength = sizeof(sa);
     sa.bInheritHandle = TRUE;
@@ -120,27 +120,23 @@ bool DAOGraphicsTools::RunProcessorWithCmd(const fs::path& exePath, const std::s
         }
         CloseHandle(hStdOutRead);
         CloseHandle(hStdErrRead);
-        if (!stdoutStr.empty()) std::cout << "[DAOTools] STDOUT: " << stdoutStr << std::endl;
-        if (!stderrStr.empty()) std::cout << "[DAOTools] STDERR: " << stderrStr << std::endl;
         DWORD exitCode = 1;
         GetExitCodeProcess(pi.hProcess, &exitCode);
-        std::cout << "[DAOTools] Exit code: " << exitCode << std::endl;
         CloseHandle(pi.hProcess);
         CloseHandle(pi.hThread);
         return exitCode == 0;
     }
     DWORD err = GetLastError();
-    std::cerr << "[DAOTools] CreateProcess failed: " << err << std::endl;
     CloseHandle(hStdOutRead);
     CloseHandle(hStdOutWrite);
     CloseHandle(hStdErrRead);
     CloseHandle(hStdErrWrite);
     return false;
 #else
-    std::cerr << "[DAOTools] Graphics processors only supported on Windows" << std::endl;
     return false;
 #endif
 }
+
 std::vector<uint8_t> DAOGraphicsTools::ReadBinaryFile(const fs::path& path) {
     std::ifstream file(path, std::ios::binary | std::ios::ate);
     if (!file) return {};
@@ -150,6 +146,7 @@ std::vector<uint8_t> DAOGraphicsTools::ReadBinaryFile(const fs::path& path) {
     file.read(reinterpret_cast<char*>(data.data()), size);
     return data;
 }
+
 std::vector<uint8_t> DAOGraphicsTools::ProcessMSH(const fs::path& xmlPath) {
     fs::path exePath = m_mshDir / "GraphicsProcessorMSH.exe";
     fs::path localXml = m_mshDir / xmlPath.filename();
@@ -163,13 +160,12 @@ std::vector<uint8_t> DAOGraphicsTools::ProcessMSH(const fs::path& xmlPath) {
     std::string cmdLine = "\"" + exePath.string() + "\" -platform pc mmdtogff \"" + localXml.string() + "\"";
     if (!RunProcessorWithCmd(exePath, cmdLine)) return {};
     if (!fs::exists(outPath)) {
-        std::cerr << "[DAOTools] MSH output not created: " << outPath << std::endl;
         return {};
     }
     auto result = ReadBinaryFile(outPath);
-    std::cout << "[DAOTools] Generated MSH: " << result.size() << " bytes" << std::endl;
     return result;
 }
+
 std::vector<uint8_t> DAOGraphicsTools::ProcessMMH(const fs::path& xmlPath) {
     m_lastPHY.clear();
     fs::path exePath = m_mmhDir / "GraphicsProcessorMMH.exe";
@@ -185,23 +181,22 @@ std::vector<uint8_t> DAOGraphicsTools::ProcessMMH(const fs::path& xmlPath) {
     fs::remove(phyPath);
     if (!RunProcessor(exePath, localXml)) return {};
     if (!fs::exists(outPath)) {
-        std::cerr << "[DAOTools] MMH output not created: " << outPath << std::endl;
         return {};
     }
     if (fs::exists(phyPath)) {
         m_lastPHY = ReadBinaryFile(phyPath);
-        std::cout << "[DAOTools] PHY file generated: " << m_lastPHY.size() << " bytes" << std::endl;
     }
     auto result = ReadBinaryFile(outPath);
-    std::cout << "[DAOTools] Generated MMH: " << result.size() << " bytes" << std::endl;
     return result;
 }
+
 void DAOGraphicsTools::Cleanup() {
     if (!m_workDir.empty() && fs::exists(m_workDir)) {
         std::error_code ec;
         fs::remove_all(m_workDir, ec);
     }
 }
+
 DAOImporter::DAOImporter() : m_backupCallback(nullptr), m_progressCallback(nullptr) {}
 DAOImporter::~DAOImporter() {}
 bool DAOImporter::BackupExists(const std::string& erfPath) {
@@ -209,12 +204,15 @@ bool DAOImporter::BackupExists(const std::string& erfPath) {
     std::string erfName = fs::path(erfPath).filename().string();
     return fs::exists(backupDir / (erfName + ".bak"));
 }
+
 std::string DAOImporter::GetBackupDir() {
     return (fs::current_path() / "backups").string();
 }
+
 void DAOImporter::ReportProgress(float progress, const std::string& status) {
     if (m_progressCallback) m_progressCallback(progress, status);
 }
+
 static std::string FindErfPath(const fs::path& root, const std::string& filename) {
     if (fs::exists(root / filename)) return (root / filename).string();
     try {
@@ -226,6 +224,7 @@ static std::string FindErfPath(const fs::path& root, const std::string& filename
     } catch (...) {}
     return "";
 }
+
 static std::vector<uint8_t> ConvertToDDS(const std::vector<uint8_t>& imageData, int width, int height, int channels) {
     std::vector<uint8_t> dds;
     auto writeU32 = [&](uint32_t v) {
@@ -268,14 +267,13 @@ static std::vector<uint8_t> ConvertToDDS(const std::vector<uint8_t>& imageData, 
     }
     return dds;
 }
+
 bool DAOImporter::ImportToDirectory(const std::string& glbPath, const std::string& targetDir) {
     ReportProgress(0.0f, "Initializing tools...");
     if (!m_tools.Initialize()) {
-        std::cerr << "[Import] Failed to initialize graphics tools" << std::endl;
         return false;
     }
     ReportProgress(0.05f, "Loading GLB...");
-    std::cout << "[Import] Processing: " << fs::path(glbPath).filename().string() << std::endl;
     DAOModelData modelData;
     if (!LoadGLB(glbPath, modelData)) return false;
     ReportProgress(0.1f, "Locating ERF files...");
@@ -296,56 +294,42 @@ bool DAOImporter::ImportToDirectory(const std::string& glbPath, const std::strin
         texErf = FindErfPath(baseDir, "texturepack.erf");
     }
     if (meshErf.empty() || hierErf.empty() || matErf.empty()) {
-        std::cerr << "[Import] Error: Required ERFs not found." << std::endl;
         return false;
     }
-    std::cout << "[Import] ERF locations:" << std::endl;
-    std::cout << "  mesh: " << meshErf << std::endl;
-    std::cout << "  hier: " << hierErf << std::endl;
-    std::cout << "  mat:  " << matErf << std::endl;
-    std::cout << "  tex:  " << (texErf.empty() ? "NOT FOUND" : texErf) << std::endl;
     std::string baseName = modelData.name;
     std::map<std::string, std::vector<uint8_t>> meshFiles, hierFiles, matFiles, texFiles;
     ReportProgress(0.2f, "Generating MSH XML...");
     fs::path mshXmlPath = m_tools.GetWorkDir() / (baseName + ".msh.xml");
     if (!WriteMSHXml(mshXmlPath, modelData)) {
-        std::cerr << "[Import] Failed to write MSH XML" << std::endl;
         return false;
     }
     ReportProgress(0.3f, "Converting MSH...");
     std::string mshFile = baseName + ".msh";
     meshFiles[mshFile] = m_tools.ProcessMSH(mshXmlPath);
     if (meshFiles[mshFile].empty()) {
-        std::cerr << "[Import] MSH conversion failed" << std::endl;
         return false;
     }
-    std::cout << "  + Generated: " << mshFile << " (" << meshFiles[mshFile].size() << " bytes)" << std::endl;
     ReportProgress(0.4f, "Generating MMH XML...");
     fs::path mmhXmlPath = m_tools.GetWorkDir() / (baseName + ".mmh.xml");
     if (!WriteMMHXml(mmhXmlPath, modelData, mshFile)) {
-        std::cerr << "[Import] Failed to write MMH XML" << std::endl;
         return false;
     }
     ReportProgress(0.5f, "Converting MMH...");
     std::string mmhFile = baseName + ".mmh";
     hierFiles[mmhFile] = m_tools.ProcessMMH(mmhXmlPath);
     if (hierFiles[mmhFile].empty()) {
-        std::cerr << "[Import] MMH conversion failed" << std::endl;
         return false;
     }
-    std::cout << "  + Generated: " << mmhFile << " (" << hierFiles[mmhFile].size() << " bytes)" << std::endl;
     auto phyData = m_tools.GetLastPHY();
     if (!phyData.empty()) {
         std::string phyFile = baseName + ".phy";
         hierFiles[phyFile] = std::move(phyData);
-        std::cout << "  + Generated: " << phyFile << " (" << hierFiles[phyFile].size() << " bytes)" << std::endl;
     }
     ReportProgress(0.6f, "Converting textures...");
     for (const auto& tex : modelData.textures) {
         if (tex.width > 0 && tex.height > 0 && !tex.data.empty() && !tex.ddsName.empty()) {
             std::vector<uint8_t> ddsData = ConvertToDDS(tex.data, tex.width, tex.height, tex.channels);
             texFiles[tex.ddsName] = std::move(ddsData);
-            std::cout << "  + Generated texture: " << tex.ddsName << " (" << tex.width << "x" << tex.height << ")" << std::endl;
         }
     }
     ReportProgress(0.65f, "Generating MAO files...");
@@ -353,9 +337,7 @@ bool DAOImporter::ImportToDirectory(const std::string& glbPath, const std::strin
         std::string maoFile = mat.name + ".mao";
         std::string xml = GenerateMAO(mat.name, mat.diffuseMap, mat.normalMap, mat.specularMap);
         matFiles[maoFile].assign(xml.begin(), xml.end());
-        std::cout << "  + Generated: " << maoFile << std::endl;
     }
-    std::cout << "\n[Import] Updating ERF files..." << std::endl;
     ReportProgress(0.7f, "Refreshing modelmeshdata.erf...");
     bool ok1 = RepackERF(meshErf, meshFiles);
     ReportProgress(0.8f, "Refreshing modelhierarchies.erf...");
@@ -376,60 +358,35 @@ bool DAOImporter::ImportToDirectory(const std::string& glbPath, const std::strin
         }
     }
     ReportProgress(1.0f, success ? "Import complete!" : "Import failed!");
-    std::cout << "\n[Import] " << (success ? "SUCCESS" : "FAILED") << std::endl;
     return success;
 }
+
 bool DAOImporter::LoadGLB(const std::string& path, DAOModelData& outData) {
     tinygltf::Model model;
     tinygltf::TinyGLTF loader;
     std::string err, warn;
     if (!loader.LoadBinaryFromFile(&model, &err, &warn, path)) {
-        std::cerr << "GLB Load Error: " << err << std::endl;
         return false;
     }
     outData.name = ToLower(fs::path(path).stem().string());
-    std::cout << "\n=== GLB DEBUG ===" << std::endl;
-    std::cout << "[GLB] File: " << path << std::endl;
-    std::cout << "[GLB] Scenes: " << model.scenes.size() << std::endl;
-    std::cout << "[GLB] Nodes: " << model.nodes.size() << std::endl;
-    std::cout << "[GLB] Meshes: " << model.meshes.size() << std::endl;
-    std::cout << "[GLB] Skins: " << model.skins.size() << std::endl;
-    std::cout << "\n[GLB] Node hierarchy:" << std::endl;
     for (size_t i = 0; i < model.nodes.size(); ++i) {
         const auto& node = model.nodes[i];
-        std::cout << "  Node " << i << ": \"" << node.name << "\"";
-        if (node.mesh >= 0) std::cout << " [mesh=" << node.mesh << "]";
-        if (node.skin >= 0) std::cout << " [skin=" << node.skin << "]";
         if (!node.children.empty()) {
-            std::cout << " children=[";
             for (size_t c = 0; c < node.children.size(); ++c) {
-                if (c > 0) std::cout << ",";
-                std::cout << node.children[c];
             }
-            std::cout << "]";
         }
-        std::cout << std::endl;
         if (!node.translation.empty()) {
-            std::cout << "    translation: [" << node.translation[0] << ", "
-                      << node.translation[1] << ", " << node.translation[2] << "]" << std::endl;
         }
         if (!node.rotation.empty()) {
-            std::cout << "    rotation: [" << node.rotation[0] << ", " << node.rotation[1]
-                      << ", " << node.rotation[2] << ", " << node.rotation[3] << "]" << std::endl;
         }
         if (!node.scale.empty()) {
-            std::cout << "    scale: [" << node.scale[0] << ", "
-                      << node.scale[1] << ", " << node.scale[2] << "]" << std::endl;
         }
         if (!node.matrix.empty()) {
-            std::cout << "    HAS MATRIX TRANSFORM (16 values)" << std::endl;
         }
     }
     if (!model.skins.empty()) {
         const auto& skin = model.skins[0];
         outData.skeleton.hasSkeleton = true;
-        std::cout << "\n[GLB] Found skeleton with " << skin.joints.size() << " bones" << std::endl;
-        std::cout << "[GLB] Skin skeleton root node: " << skin.skeleton << std::endl;
         std::vector<float> inverseBindMatrices;
         if (skin.inverseBindMatrices >= 0) {
             const auto& accessor = model.accessors[skin.inverseBindMatrices];
@@ -493,12 +450,8 @@ bool DAOImporter::LoadGLB(const std::string& path, DAOModelData& outData) {
                 }
             }
         }
-        std::cout << "\n[GLB] Bone data (first 5):" << std::endl;
         for (size_t i = 0; i < std::min(size_t(5), outData.skeleton.bones.size()); ++i) {
             const auto& bone = outData.skeleton.bones[i];
-            std::cout << "  Bone " << i << ": \"" << bone.name << "\" parent=" << bone.parentIndex << std::endl;
-            std::cout << "    trans: [" << bone.translation[0] << ", " << bone.translation[1] << ", " << bone.translation[2] << "]" << std::endl;
-            std::cout << "    rot: [" << bone.rotation[0] << ", " << bone.rotation[1] << ", " << bone.rotation[2] << ", " << bone.rotation[3] << "]" << std::endl;
         }
     }
     for (size_t i = 0; i < model.images.size(); ++i) {
@@ -627,7 +580,6 @@ bool DAOImporter::LoadGLB(const std::string& path, DAOModelData& outData) {
         }
         return "";
     };
-    std::cout << "[GLB] Processing " << model.meshes.size() << " meshes..." << std::endl;
     for (size_t meshIdx = 0; meshIdx < model.meshes.size(); ++meshIdx) {
         const auto& mesh = model.meshes[meshIdx];
         std::string meshName = mesh.name;
@@ -635,7 +587,6 @@ bool DAOImporter::LoadGLB(const std::string& path, DAOModelData& outData) {
             meshName = meshNodeNames[(int)meshIdx];
         }
         bool isCollision = isCollisionMesh(meshName);
-        std::cout << "[GLB] Mesh " << meshIdx << ": \"" << meshName << "\" collision=" << (isCollision ? "YES" : "no") << std::endl;
         for (size_t primIdx = 0; primIdx < mesh.primitives.size(); ++primIdx) {
             const auto& prim = mesh.primitives[primIdx];
             if (prim.mode != TINYGLTF_MODE_TRIANGLES) continue;
@@ -701,8 +652,6 @@ bool DAOImporter::LoadGLB(const std::string& path, DAOModelData& outData) {
                     shape.meshVerts.push_back(verts[i+2] - cz);
                 }
                 shape.meshIndices = indices;
-                std::cout << "[GLB] Collision mesh: " << meshName << " bone=\"" << shape.boneName
-                          << "\" verts=" << vertCount << " tris=" << indices.size()/3 << std::endl;
                 outData.collisionShapes.push_back(shape);
                 continue;
             }
@@ -718,8 +667,6 @@ bool DAOImporter::LoadGLB(const std::string& path, DAOModelData& outData) {
             } else if (!outData.materials.empty()) {
                 part.materialName = outData.materials[0].name;
             }
-            std::cout << "[GLB] Mesh " << meshIdx << " part " << primIdx << ": \"" << part.name
-                      << "\" material: \"" << part.materialName << "\"" << std::endl;
             auto getAccessor = [&](int idx) -> const tinygltf::Accessor* {
                 if (idx < 0 || idx >= (int)model.accessors.size()) return nullptr;
                 return &model.accessors[idx];
@@ -816,7 +763,6 @@ bool DAOImporter::LoadGLB(const std::string& path, DAOModelData& outData) {
                     }
                 }
                 part.bonesUsed.assign(usedBones.begin(), usedBones.end());
-                std::cout << "[GLB] Mesh '" << part.name << "' uses " << part.bonesUsed.size() << " bones" << std::endl;
             }
             if (prim.indices >= 0) {
                 const auto* idxAcc = getAccessor(prim.indices);
@@ -855,14 +801,12 @@ bool DAOImporter::LoadGLB(const std::string& path, DAOModelData& outData) {
                 rootRot[2] = (float)node.rotation[2];
                 rootRot[3] = (float)node.rotation[3];
                 hasRootRotation = true;
-                std::cout << "[GLB] Root rotation found: [" << rootRot[0] << ", " << rootRot[1] << ", " << rootRot[2] << ", " << rootRot[3] << "]" << std::endl;
                 break;
             }
         }
     }
     if (hasRootRotation) {
         float invRot[4] = {-rootRot[0], -rootRot[1], -rootRot[2], rootRot[3]};
-        std::cout << "[GLB] Applying inverse rotation to undo Blender transform" << std::endl;
         for (auto& part : outData.parts) {
             for (auto& v : part.vertices) {
                 rotateByQuat(v.x, v.y, v.z, invRot);
@@ -871,22 +815,19 @@ bool DAOImporter::LoadGLB(const std::string& path, DAOModelData& outData) {
             }
         }
     }
-    std::cout << "=== END GLB DEBUG ===\n" << std::endl;
     return !outData.parts.empty() || !outData.collisionShapes.empty();
 }
+
 bool DAOImporter::WriteMSHXml(const fs::path& outputPath, const DAOModelData& model) {
     std::ofstream out(outputPath);
     if (!out) return false;
     out << std::fixed << std::setprecision(6);
-    std::cout << "[MSH XML] Writing " << model.parts.size() << " mesh groups" << std::endl;
     out << "<?xml version=\"1.0\" ?>\n";
     out << "<ModelMeshData Name=\"" << model.name << ".MSH\" Version=\"1\">\n";
     for (size_t partIdx = 0; partIdx < model.parts.size(); ++partIdx) {
         const auto& part = model.parts[partIdx];
         size_t vertCount = part.vertices.size();
         size_t idxCount = part.indices.size();
-        std::cout << "[MSH XML] Part " << partIdx << ": \"" << part.name << "\" verts=" << vertCount
-                  << " indices=" << idxCount << " skinning=" << (part.hasSkinning ? "yes" : "no") << std::endl;
         out << "<MeshGroup Name=\"" << part.name << "\" Optimize=\"All\">\n";
         out << "<Data ElementCount=\"" << vertCount << "\" Semantic=\"POSITION\" Type=\"Float4\">\n<![CDATA[\n";
         for (const auto& v : part.vertices)
@@ -935,6 +876,7 @@ bool DAOImporter::WriteMSHXml(const fs::path& outputPath, const DAOModelData& mo
     out.flush();
     return out.good();
 }
+
 bool DAOImporter::WriteMMHXml(const fs::path& outputPath, const DAOModelData& model, const std::string& mshFilename) {
     std::ofstream out(outputPath);
     if (!out) return false;
@@ -1021,11 +963,8 @@ bool DAOImporter::WriteMMHXml(const fs::path& outputPath, const DAOModelData& mo
         }
     }
     if (!model.collisionShapes.empty()) {
-        std::cout << "[MMH XML] Writing " << model.collisionShapes.size() << " collision shapes" << std::endl;
         out << "  <CollisionObject Static=\"true\">\n";
         for (const auto& shape : model.collisionShapes) {
-            std::cout << "[MMH XML] Collision: " << shape.name << " bone=\"" << shape.boneName
-                      << "\" verts=" << shape.meshVerts.size()/3 << std::endl;
             out << "    <Shape Name=\"" << shape.name << "\" Type=\"Mesh\" ";
             out << "AllowEmitterSpawn=\"1\" Fadeable=\"false\" ";
             out << "GROUP_MASK_WALKABLE=\"false\" ";
@@ -1056,6 +995,7 @@ bool DAOImporter::WriteMMHXml(const fs::path& outputPath, const DAOModelData& mo
     out << "</ModelHierarchy>\n";
     return out.good();
 }
+
 std::string DAOImporter::GenerateMAO(const std::string& matName, const std::string& diffuse,
                                       const std::string& normal, const std::string& specular) {
     std::stringstream ss;
@@ -1068,11 +1008,9 @@ std::string DAOImporter::GenerateMAO(const std::string& matName, const std::stri
     ss << "</MaterialObject>";
     return ss.str();
 }
+
 bool DAOImporter::RepackERF(const std::string& erfPath, const std::map<std::string, std::vector<uint8_t>>& newFiles) {
-    std::cout << "\n[RepackERF] === " << fs::path(erfPath).filename().string() << " ===" << std::endl;
-    std::cout << "[RepackERF] Adding " << newFiles.size() << " files" << std::endl;
     if (!fs::exists(erfPath)) {
-        std::cerr << "[RepackERF] ERROR: File does not exist!" << std::endl;
         return false;
     }
     std::vector<uint8_t> erfData;
@@ -1103,14 +1041,12 @@ bool DAOImporter::RepackERF(const std::string& erfPath, const std::map<std::stri
     std::string magic = readUtf16String(0, 4);
     std::string version = readUtf16String(8, 4);
     if (magic != "ERF ") {
-        std::cerr << "[RepackERF] ERROR: Invalid magic" << std::endl;
         return false;
     }
     ERFVersion erfVer = ERFVersion::Unknown;
     if (version == "V2.0") erfVer = ERFVersion::V2_0;
     else if (version == "V2.2") erfVer = ERFVersion::V2_2;
     if (erfVer != ERFVersion::V2_0 && erfVer != ERFVersion::V2_2) {
-        std::cerr << "[RepackERF] ERROR: Unsupported version: " << version << std::endl;
         return false;
     }
     uint32_t fileCount = readU32(16);
@@ -1204,6 +1140,5 @@ bool DAOImporter::RepackERF(const std::string& erfPath, const std::map<std::stri
     std::ofstream out(erfPath, std::ios::binary);
     if (!out) return false;
     out.write(reinterpret_cast<char*>(newErfData.data()), newErfData.size());
-    std::cout << "[RepackERF] SUCCESS (" << newErfData.size() << " bytes)" << std::endl;
     return true;
 }

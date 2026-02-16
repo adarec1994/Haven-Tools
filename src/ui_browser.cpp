@@ -3,6 +3,7 @@
 #include "terrain_loader.h"
 #include "rml_loader.h"
 #include "spt.h"
+#include "Gff.h"
 #include "GffViewer.h"
 #include "LevelDatabase.h"
 #include <cstring>
@@ -42,6 +43,10 @@ static void startLevelLoad(AppState& state, const std::string& rimPath, const st
     state.modelErfs.clear();
     state.materialErfs.clear();
     clearPropCache();
+    clearErfIndices();
+    state.modelErfIndex.clear();
+    state.materialErfIndex.clear();
+    state.textureErfIndex.clear();
     ensureBaseErfsLoaded(state);
 
     auto rimForModel = std::make_unique<ERFFile>();
@@ -205,7 +210,6 @@ static void loadImportedModels() {
 static void saveImportedModels() {
     std::ofstream file(getImportedModelsPath());
     if (!file) {
-        std::cerr << "[Browser] Failed to save imported models list" << std::endl;
         return;
     }
     for (const auto& name : s_importedModels) {
@@ -413,39 +417,117 @@ void drawBrowserWindow(AppState& state) {
                 }
             }
 
-            // Find .spt files in loaded ERFs for tree ID mapping
+            std::string speedTreeErfPath;
             for (const auto& erfPath : state.erfFiles) {
-                ERFFile erf;
-                if (!erf.open(erfPath)) continue;
-                std::vector<std::string> sptNames;
-                for (const auto& entry : erf.entries()) {
-                    std::string eLower = entry.name;
-                    std::transform(eLower.begin(), eLower.end(), eLower.begin(), ::tolower);
-                    if (eLower.size() > 4 && eLower.substr(eLower.size() - 4) == ".spt")
-                        sptNames.push_back(entry.name);
-                }
-                if (!sptNames.empty()) {
-                    ll.sptErfPath = erfPath;
-                    std::sort(sptNames.begin(), sptNames.end());
-                    std::set<int32_t> uniqueIds;
-                    for (const auto& sw : ll.sptQueue) uniqueIds.insert(sw.treeId);
-                    std::vector<int32_t> sortedIds(uniqueIds.begin(), uniqueIds.end());
-                    for (size_t i = 0; i < sortedIds.size() && i < sptNames.size(); i++)
-                        ll.sptIdToFile[sortedIds[i]] = sptNames[i];
-                    std::cout << "[LEVEL] Found " << sptNames.size() << " .spt files in " << erfPath << std::endl;
-                    for (const auto& [id, name] : ll.sptIdToFile)
-                        std::cout << "[LEVEL]   Tree ID " << id << " -> " << name << std::endl;
-                    break;
+                std::string fname = fs::path(erfPath).filename().string();
+                std::transform(fname.begin(), fname.end(), fname.begin(), ::tolower);
+                if (fname == "speedtreetools.erf") { speedTreeErfPath = erfPath; break; }
+            }
+
+            std::map<std::string, std::string> sptLowerToActual;
+            if (!speedTreeErfPath.empty()) {
+                ERFFile stErf;
+                if (stErf.open(speedTreeErfPath)) {
+                    for (const auto& entry : stErf.entries()) {
+                        std::string eLower = entry.name;
+                        std::transform(eLower.begin(), eLower.end(), eLower.begin(), ::tolower);
+                        if (eLower.size() > 4 && eLower.substr(eLower.size() - 4) == ".spt") {
+                            ll.sptFileToErf[entry.name] = speedTreeErfPath;
+                            std::string stem = eLower.substr(0, eLower.size() - 4);
+                            sptLowerToActual[stem] = entry.name;
+                        }
+                    }
                 }
             }
 
-            ll.totalProps = (int)ll.propQueue.size();
-            ll.totalSpt = (int)ll.sptQueue.size();
-            if (!ll.sptErfPath.empty()) {
-                auto sptTexErf = std::make_unique<ERFFile>();
-                if (sptTexErf->open(ll.sptErfPath))
-                    state.textureErfs.push_back(std::move(sptTexErf));
+            {
+                std::string rimStem = fs::path(state.currentRIMPath).stem().string();
+                std::string rimStemLower = rimStem;
+                std::transform(rimStemLower.begin(), rimStemLower.end(), rimStemLower.begin(), ::tolower);
+                std::string rimPrefix = rimStemLower + "_";
+                std::string arlPath;
+                for (const auto& arl : state.arlFiles) {
+                    std::string arlStem = fs::path(arl).stem().string();
+                    std::transform(arlStem.begin(), arlStem.end(), arlStem.begin(), ::tolower);
+                    if (arlStem == rimStemLower) { arlPath = arl; break; }
+                }
+                if (!arlPath.empty()) {
+                    GFFFile::initLabelCache();
+                    GFFFile arlGff;
+                    std::ifstream arlIn(arlPath, std::ios::binary);
+                    if (arlIn) {
+                        std::vector<uint8_t> arlData((std::istreambuf_iterator<char>(arlIn)),
+                                                      std::istreambuf_iterator<char>());
+                        if (arlGff.load(arlData)) {
+                            int areaIdx = -1;
+                            for (size_t si = 0; si < arlGff.structs().size(); si++) {
+                                if (std::string(arlGff.structs()[si].structType, 4) == "AREA") {
+                                    areaIdx = (int)si;
+                                    break;
+                                }
+                            }
+                            if (areaIdx >= 0) {
+                                auto treeList = arlGff.readStructList(areaIdx, 3355, 0);
+                                for (int i = 0; i < (int)treeList.size(); i++) {
+                                    std::string treeName = arlGff.readStringByLabel(
+                                        treeList[i].structIndex, 3353, treeList[i].offset);
+                                    if (treeName.empty()) continue;
+                                    std::string treeNameLower = treeName;
+                                    std::transform(treeNameLower.begin(), treeNameLower.end(), treeNameLower.begin(), ::tolower);
+                                    std::string stripped = treeNameLower;
+                                    if (stripped.size() > rimPrefix.size() &&
+                                        stripped.substr(0, rimPrefix.size()) == rimPrefix) {
+                                        stripped = stripped.substr(rimPrefix.size());
+                                    }
+                                    auto it = sptLowerToActual.find(stripped);
+                                    if (it != sptLowerToActual.end()) {
+                                        ll.sptIdToFile[i] = it->second;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
+
+            if (!speedTreeErfPath.empty()) {
+                auto stTexErf = std::make_unique<ERFFile>();
+                if (stTexErf->open(speedTreeErfPath))
+                    state.textureErfs.push_back(std::move(stTexErf));
+            }
+
+            ll.totalProps = (int)ll.propQueue.size();
+
+            {
+                std::set<uint64_t> seen;
+                std::vector<AppState::SptWork> deduped;
+                deduped.reserve(ll.sptQueue.size());
+                for (const auto& sw : ll.sptQueue) {
+                    uint32_t hx = *reinterpret_cast<const uint32_t*>(&sw.px);
+                    uint32_t hy = *reinterpret_cast<const uint32_t*>(&sw.py);
+                    uint32_t hz = *reinterpret_cast<const uint32_t*>(&sw.pz);
+                    uint64_t key = ((uint64_t)(hx ^ (hy << 16) ^ (hz >> 3)) << 32) | (uint32_t)sw.treeId;
+                    if (seen.insert(key).second)
+                        deduped.push_back(sw);
+                }
+                ll.sptQueue = std::move(deduped);
+            }
+
+            ll.totalSpt = (int)ll.sptQueue.size();
+
+            state.modelErfIndex.build(state.modelErfs);
+            state.materialErfIndex.build(state.materialErfs);
+            state.textureErfIndex.build(state.textureErfs);
+            registerErfIndex(&state.modelErfs, &state.modelErfIndex);
+            registerErfIndex(&state.materialErfs, &state.materialErfIndex);
+            registerErfIndex(&state.textureErfs, &state.textureErfIndex);
+
+
+            std::sort(ll.propQueue.begin(), ll.propQueue.end(),
+                [](const AppState::PropWork& a, const AppState::PropWork& b) {
+                    return a.modelName < b.modelName;
+                });
+
             ll.itemIndex = 0;
             ll.stage = 2;
             ll.stageLabel = "Loading terrain...";
@@ -459,7 +541,6 @@ void drawBrowserWindow(AppState& state) {
                     size_t meshCountBefore = state.currentModel.meshes.size();
                     if (mergeModelEntry(state, erfEntry)) {
                         ll.terrainLoaded++;
-                        // Tag terrain meshes with the .msh filename
                         for (size_t mi = meshCountBefore; mi < state.currentModel.meshes.size(); mi++) {
                             if (state.currentModel.meshes[mi].name.empty()) {
                                 std::string displayName = erfEntry.name;
@@ -480,14 +561,14 @@ void drawBrowserWindow(AppState& state) {
             }
         }
         else if (ll.stage == 3) {
+            const int PROP_BATCH_SIZE = 32;
             int processed = 0;
-            for (int i = ll.itemIndex; i < ll.totalProps && processed < BATCH_SIZE; i++) {
+            for (int i = ll.itemIndex; i < ll.totalProps && processed < PROP_BATCH_SIZE; i++) {
                 const auto& pw = ll.propQueue[i];
                 size_t meshCountBefore = state.currentModel.meshes.size();
                 if (mergeModelByName(state, pw.modelName, pw.px, pw.py, pw.pz,
                                      pw.qx, pw.qy, pw.qz, pw.qw, pw.scale)) {
                     ll.propsLoaded++;
-                    // Tag new meshes with prop model name for selection display
                     for (size_t mi = meshCountBefore; mi < state.currentModel.meshes.size(); mi++) {
                         if (state.currentModel.meshes[mi].name.empty()) {
                             std::string displayName = pw.modelName;
@@ -496,6 +577,8 @@ void drawBrowserWindow(AppState& state) {
                             state.currentModel.meshes[mi].name = displayName;
                         }
                     }
+                } else {
+                    std::cout << "[LEVEL LOAD] Missing MSH: " << pw.modelName << std::endl;
                 }
                 ll.itemIndex = i + 1;
                 processed++;
@@ -507,100 +590,80 @@ void drawBrowserWindow(AppState& state) {
             }
         }
         else if (ll.stage == 4) {
-            // Batched tree loading: convert unique trees once, then merge ALL instances
-            // into one mesh per (treeId, submeshType) — typically ~16 meshes total instead of ~40k
-            if (!ll.sptErfPath.empty() && !ll.sptIdToFile.empty()) {
-                std::map<int32_t, SptModel> sptCache;
+            if (!ll.sptFileToErf.empty() && !ll.sptIdToFile.empty() && !ll.sptSetupDone) {
+                std::map<std::string, std::unique_ptr<ERFFile>> openErfs;
+                auto getErf = [&](const std::string& sptFile) -> ERFFile* {
+                    auto it = ll.sptFileToErf.find(sptFile);
+                    if (it == ll.sptFileToErf.end()) return nullptr;
+                    auto& ptr = openErfs[it->second];
+                    if (!ptr) {
+                        ptr = std::make_unique<ERFFile>();
+                        if (!ptr->open(it->second)) { ptr.reset(); return nullptr; }
+                    }
+                    return ptr.get();
+                };
 
-                // Phase 1: Convert all unique tree models (only ~4 typically)
-                ERFFile sptErf;
-                if (sptErf.open(ll.sptErfPath)) {
-                    for (const auto& [treeId, fileName] : ll.sptIdToFile) {
-                        for (const auto& entry : sptErf.entries()) {
-                            if (entry.name == fileName) {
-                                auto sptData = sptErf.readEntry(entry);
-                                if (!sptData.empty()) {
-                                    std::string tempDir;
-                                    #ifdef _WIN32
-                                    char tmp[MAX_PATH]; GetTempPathA(MAX_PATH, tmp); tempDir = tmp;
-                                    #else
-                                    tempDir = "/tmp/";
-                                    #endif
-                                    std::string tempSpt = tempDir + "haven_level_temp.spt";
-                                    { std::ofstream f(tempSpt, std::ios::binary);
-                                      f.write((char*)sptData.data(), sptData.size()); }
-                                    SptModel model;
-                                    if (loadSptModel(tempSpt, model)) {
-                                        extractSptTextures(sptData, model);
-                                        sptCache[treeId] = std::move(model);
-                                    }
-                                    #ifdef _WIN32
-                                    DeleteFileA(tempSpt.c_str());
-                                    #else
-                                    remove(tempSpt.c_str());
-                                    #endif
+                for (const auto& [treeId, fileName] : ll.sptIdToFile) {
+                    ERFFile* erf = getErf(fileName);
+                    if (!erf) continue;
+                    for (const auto& entry : erf->entries()) {
+                        if (entry.name == fileName) {
+                            auto sptData = erf->readEntry(entry);
+                            if (!sptData.empty()) {
+                                std::string tempDir;
+                                #ifdef _WIN32
+                                char tmp[MAX_PATH]; GetTempPathA(MAX_PATH, tmp); tempDir = tmp;
+                                #else
+                                tempDir = "/tmp/";
+                                #endif
+                                std::string tempSpt = tempDir + "haven_level_temp.spt";
+                                { std::ofstream f(tempSpt, std::ios::binary);
+                                  f.write((char*)sptData.data(), sptData.size()); }
+                                SptModel model;
+                                if (loadSptModel(tempSpt, model)) {
+                                    extractSptTextures(sptData, model);
+                                    ll.sptCache[treeId] = std::move(model);
                                 }
-                                break;
+                                #ifdef _WIN32
+                                DeleteFileA(tempSpt.c_str());
+                                #else
+                                remove(tempSpt.c_str());
+                                #endif
                             }
+                            break;
                         }
                     }
+                }
 
-                    auto stripExt = [](const std::string& s) -> std::string {
-                        size_t d = s.rfind('.');
-                        return (d != std::string::npos) ? s.substr(0, d) : s;
-                    };
+                auto stripExt = [](const std::string& s) -> std::string {
+                    size_t d = s.rfind('.');
+                    return (d != std::string::npos) ? s.substr(0, d) : s;
+                };
 
-                    // Phase 2: Create materials and set up batch meshes
-                    // Key: (treeId, submeshType) -> index into batchMeshes
-                    struct BatchKey {
-                        int32_t treeId;
-                        int smIdx;
-                        bool operator<(const BatchKey& o) const {
-                            return treeId < o.treeId || (treeId == o.treeId && smIdx < o.smIdx);
-                        }
-                    };
-                    std::map<BatchKey, size_t> batchMap;
-                    std::vector<Mesh> batchMeshes;
+                for (const auto& [treeId, treeModel] : ll.sptCache) {
+                    auto fit = ll.sptIdToFile.find(treeId);
+                    if (fit == ll.sptIdToFile.end()) continue;
+                    std::string baseName = stripExt(fit->second);
+                    ll.sptBaseName[treeId] = baseName;
 
-                    // Pre-count vertices per batch to reserve memory
-                    std::map<BatchKey, size_t> vertCounts, idxCounts;
-                    for (const auto& sw : ll.sptQueue) {
-                        auto cit = sptCache.find(sw.treeId);
-                        if (cit == sptCache.end()) continue;
-                        for (int si = 0; si < (int)cit->second.submeshes.size(); si++) {
-                            BatchKey bk{sw.treeId, si};
-                            vertCounts[bk] += cit->second.submeshes[si].vertexCount();
-                            idxCounts[bk] += cit->second.submeshes[si].indexCount();
-                        }
-                    }
-
-                    // Create batch meshes with materials
-                    // Branch = TGA (loaded directly), Frond+Leaf = _diffuse.dds (via finalize)
-                    for (const auto& [treeId, treeModel] : sptCache) {
-                        auto fit = ll.sptIdToFile.find(treeId);
-                        if (fit == ll.sptIdToFile.end()) continue;
-                        std::string baseName = fit->second;
-                        size_t dot = baseName.rfind('.');
-                        if (dot != std::string::npos) baseName = baseName.substr(0, dot);
-
-                        // Branch material — TGA texture from SPT embedded name
-                        std::string branchKey = treeModel.branchTexture.empty() ? baseName : stripExt(treeModel.branchTexture);
-                        int branchMatIdx = -1;
-                        for (int mi = 0; mi < (int)state.currentModel.materials.size(); mi++)
-                            if (state.currentModel.materials[mi].diffuseMap == branchKey) { branchMatIdx = mi; break; }
-                        if (branchMatIdx < 0) {
-                            Material mat;
-                            mat.name = branchKey;
-                            mat.diffuseMap = branchKey;
-                            mat.opacity = 1.0f;
-                            // Load TGA directly from ERF
+                    ERFFile* erf = getErf(fit->second);
+                    std::string branchKey = treeModel.branchTexture.empty() ? baseName : stripExt(treeModel.branchTexture);
+                    int branchMatIdx = -1;
+                    for (int mi = 0; mi < (int)state.currentModel.materials.size(); mi++)
+                        if (state.currentModel.materials[mi].diffuseMap == branchKey) { branchMatIdx = mi; break; }
+                    if (branchMatIdx < 0) {
+                        Material mat;
+                        mat.name = branchKey;
+                        mat.diffuseMap = branchKey;
+                        mat.opacity = 1.0f;
+                        if (erf) {
                             std::string keyLower = branchKey;
                             std::transform(keyLower.begin(), keyLower.end(), keyLower.begin(), ::tolower);
-                            for (const auto& te : sptErf.entries()) {
+                            for (const auto& te : erf->entries()) {
                                 std::string eLower = te.name;
                                 std::transform(eLower.begin(), eLower.end(), eLower.begin(), ::tolower);
                                 if (eLower == keyLower + ".tga") {
-                                    auto tgaData = sptErf.readEntry(te);
+                                    auto tgaData = erf->readEntry(te);
                                     if (!tgaData.empty()) {
                                         std::vector<uint8_t> rgba; int w, h;
                                         if (decodeTGAToRGBA(tgaData, rgba, w, h)) {
@@ -613,135 +676,155 @@ void drawBrowserWindow(AppState& state) {
                                     break;
                                 }
                             }
-                            branchMatIdx = (int)state.currentModel.materials.size();
-                            state.currentModel.materials.push_back(std::move(mat));
                         }
-
-                        // Frond + Leaf material — _diffuse.dds (finalize will load it)
-                        std::string diffuseKey = baseName + "_diffuse";
-                        int ddsMatIdx = -1;
-                        for (int mi = 0; mi < (int)state.currentModel.materials.size(); mi++)
-                            if (state.currentModel.materials[mi].diffuseMap == diffuseKey) { ddsMatIdx = mi; break; }
-                        if (ddsMatIdx < 0) {
-                            Material mat;
-                            mat.name = diffuseKey;
-                            mat.diffuseMap = diffuseKey;
-                            mat.opacity = 1.0f;
-                            ddsMatIdx = (int)state.currentModel.materials.size();
-                            state.currentModel.materials.push_back(std::move(mat));
-                        }
-
-                        const char* typeNames[] = {"Branch", "Frond", "LeafCard", "LeafMesh"};
-                        for (int si = 0; si < (int)treeModel.submeshes.size(); si++) {
-                            BatchKey bk{treeId, si};
-                            auto vc = vertCounts.find(bk);
-                            if (vc == vertCounts.end() || vc->second == 0) continue;
-
-                            Mesh mesh;
-                            const auto& sm = treeModel.submeshes[si];
-                            mesh.name = baseName + "_" + typeNames[(int)sm.type];
-                            if (sm.type == SptSubmeshType::Branch) {
-                                mesh.materialIndex = branchMatIdx;
-                                mesh.materialName = branchKey;
-                                mesh.alphaTest = false;
-                            } else {
-                                mesh.materialIndex = ddsMatIdx;
-                                mesh.materialName = diffuseKey;
-                                mesh.alphaTest = true;
-                            }
-                            mesh.vertices.reserve(vc->second);
-                            mesh.indices.reserve(idxCounts[bk]);
-                            batchMap[bk] = batchMeshes.size();
-                            batchMeshes.push_back(std::move(mesh));
-                        }
+                        branchMatIdx = (int)state.currentModel.materials.size();
+                        state.currentModel.materials.push_back(std::move(mat));
                     }
+                    ll.sptBranchMatIdx[treeId] = branchMatIdx;
 
-                    // Phase 3: Merge all instances into batch meshes
-                    for (const auto& sw : ll.sptQueue) {
-                        auto cit = sptCache.find(sw.treeId);
-                        if (cit == sptCache.end()) continue;
-
-                        float qx = sw.qx, qy = sw.qy, qz = sw.qz, qw = sw.qw;
-                        float qlen = std::sqrt(qx*qx + qy*qy + qz*qz + qw*qw);
-                        if (qlen > 0.00001f) { qx/=qlen; qy/=qlen; qz/=qlen; qw/=qlen; }
-
-                        for (int si = 0; si < (int)cit->second.submeshes.size(); si++) {
-                            BatchKey bk{sw.treeId, si};
-                            auto bit = batchMap.find(bk);
-                            if (bit == batchMap.end()) continue;
-
-                            Mesh& batch = batchMeshes[bit->second];
-                            const auto& sm = cit->second.submeshes[si];
-                            uint32_t baseVert = (uint32_t)batch.vertices.size();
-                            uint32_t nv = sm.vertexCount();
-
-                            for (uint32_t vi = 0; vi < nv; vi++) {
-                                float lx = sm.positions[vi*3+0] * sw.scale;
-                                float ly = sm.positions[vi*3+1] * sw.scale;
-                                float lz = sm.positions[vi*3+2] * sw.scale;
-                                float tx = 2.0f*(qy*lz - qz*ly);
-                                float ty = 2.0f*(qz*lx - qx*lz);
-                                float tz = 2.0f*(qx*ly - qy*lx);
-
-                                Vertex v;
-                                v.x = lx + qw*tx + (qy*tz - qz*ty) + sw.px;
-                                v.y = ly + qw*ty + (qz*tx - qx*tz) + sw.py;
-                                v.z = lz + qw*tz + (qx*ty - qy*tx) + sw.pz;
-
-                                float nx = sm.normals[vi*3+0];
-                                float ny = sm.normals[vi*3+1];
-                                float nz = sm.normals[vi*3+2];
-                                float tnx = 2.0f*(qy*nz - qz*ny);
-                                float tny = 2.0f*(qz*nx - qx*nz);
-                                float tnz = 2.0f*(qx*ny - qy*nx);
-                                v.nx = nx + qw*tnx + (qy*tnz - qz*tny);
-                                v.ny = ny + qw*tny + (qz*tnx - qx*tnz);
-                                v.nz = nz + qw*tnz + (qx*tny - qy*tnx);
-                                v.u = sm.texcoords[vi*2+0];
-                                v.v = sm.texcoords[vi*2+1];
-                                batch.vertices.push_back(v);
-                            }
-                            for (uint32_t idx : sm.indices)
-                                batch.indices.push_back(baseVert + idx);
-                        }
-                        ll.sptLoaded++;
+                    std::string diffuseKey = baseName + "_diffuse";
+                    int ddsMatIdx = -1;
+                    for (int mi = 0; mi < (int)state.currentModel.materials.size(); mi++)
+                        if (state.currentModel.materials[mi].diffuseMap == diffuseKey) { ddsMatIdx = mi; break; }
+                    if (ddsMatIdx < 0) {
+                        Material mat;
+                        mat.name = diffuseKey;
+                        mat.diffuseMap = diffuseKey;
+                        mat.opacity = 1.0f;
+                        ddsMatIdx = (int)state.currentModel.materials.size();
+                        state.currentModel.materials.push_back(std::move(mat));
                     }
-
-                    // Move batch meshes into model
-                    for (auto& bm : batchMeshes) {
-                        if (!bm.vertices.empty()) {
-                            bm.calculateBounds();
-                            state.currentModel.meshes.push_back(std::move(bm));
-                        }
-                    }
-
-                    std::cout << "[LEVEL] Trees: " << ll.sptLoaded << " instances -> "
-                              << batchMeshes.size() << " batched meshes" << std::endl;
+                    ll.sptDdsMatIdx[treeId] = ddsMatIdx;
                 }
+                ll.sptSetupDone = true;
+            }
+            ll.itemIndex = 0;
+            ll.sptLoaded = 0;
+
+
+            if (!ll.sptCache.empty()) {
+                size_t estimatedNewMeshes = 0;
+                for (const auto& sw : ll.sptQueue) {
+                    auto cit = ll.sptCache.find(sw.treeId);
+                    if (cit != ll.sptCache.end())
+                        estimatedNewMeshes += cit->second.submeshes.size();
+                }
+                state.currentModel.meshes.reserve(
+                    state.currentModel.meshes.size() + estimatedNewMeshes);
             }
             ll.stage = 5;
-            ll.stageLabel = "Loading materials & textures...";
+            ll.stageLabel = "Placing trees...";
         }
         else if (ll.stage == 5) {
+
+
+            const int SPT_BATCH_SIZE = 200;
+            if (!ll.sptSetupDone || ll.sptCache.empty()) {
+                ll.stage = 6;
+                ll.stageLabel = "Loading materials & textures...";
+            } else {
+                const char* typeNames[] = {"Branch", "Frond", "LeafCard", "LeafMesh"};
+                int processed = 0;
+                for (int i = ll.itemIndex; i < (int)ll.sptQueue.size() && processed < SPT_BATCH_SIZE; i++) {
+                    const auto& sw = ll.sptQueue[i];
+                    auto cit = ll.sptCache.find(sw.treeId);
+                    if (cit == ll.sptCache.end()) {
+                        ll.itemIndex = i + 1;
+                        processed++;
+                        continue;
+                    }
+
+                    float qx = sw.qx, qy = sw.qy, qz = sw.qz, qw = sw.qw;
+                    float qlen = std::sqrt(qx*qx + qy*qy + qz*qz + qw*qw);
+                    if (qlen > 0.00001f) { qx/=qlen; qy/=qlen; qz/=qlen; qw/=qlen; }
+
+                    const std::string& baseName = ll.sptBaseName[sw.treeId];
+                    int branchMatIdx = ll.sptBranchMatIdx[sw.treeId];
+                    int ddsMatIdx = ll.sptDdsMatIdx[sw.treeId];
+
+                    for (int si = 0; si < (int)cit->second.submeshes.size(); si++) {
+                        const auto& sm = cit->second.submeshes[si];
+                        if (sm.vertexCount() == 0) continue;
+
+                        Mesh mesh;
+                        mesh.name = baseName + "_" + typeNames[(int)sm.type];
+                        if (sm.type == SptSubmeshType::Branch) {
+                            mesh.materialIndex = branchMatIdx;
+                            mesh.materialName = state.currentModel.materials[branchMatIdx].name;
+                            mesh.alphaTest = false;
+                        } else {
+                            mesh.materialIndex = ddsMatIdx;
+                            mesh.materialName = state.currentModel.materials[ddsMatIdx].name;
+                            mesh.alphaTest = true;
+                        }
+
+                        uint32_t nv = sm.vertexCount();
+                        mesh.vertices.resize(nv);
+                        for (uint32_t vi = 0; vi < nv; vi++) {
+                            float lx = sm.positions[vi*3+0] * sw.scale;
+                            float ly = sm.positions[vi*3+1] * sw.scale;
+                            float lz = sm.positions[vi*3+2] * sw.scale;
+                            float tx = 2.0f*(qy*lz - qz*ly);
+                            float ty = 2.0f*(qz*lx - qx*lz);
+                            float tz = 2.0f*(qx*ly - qy*lx);
+
+                            auto& v = mesh.vertices[vi];
+                            v.x = lx + qw*tx + (qy*tz - qz*ty) + sw.px;
+                            v.y = ly + qw*ty + (qz*tx - qx*tz) + sw.py;
+                            v.z = lz + qw*tz + (qx*ty - qy*tx) + sw.pz;
+
+                            float nx = sm.normals[vi*3+0];
+                            float ny = sm.normals[vi*3+1];
+                            float nz = sm.normals[vi*3+2];
+                            float tnx = 2.0f*(qy*nz - qz*ny);
+                            float tny = 2.0f*(qz*nx - qx*nz);
+                            float tnz = 2.0f*(qx*ny - qy*nx);
+                            v.nx = nx + qw*tnx + (qy*tnz - qz*tny);
+                            v.ny = ny + qw*tny + (qz*tnx - qx*tnz);
+                            v.nz = nz + qw*tnz + (qx*tny - qy*tnx);
+                            v.u = sm.texcoords[vi*2+0];
+                            v.v = sm.texcoords[vi*2+1];
+                        }
+                        mesh.indices = sm.indices;
+                        mesh.calculateBounds();
+                        state.currentModel.meshes.push_back(std::move(mesh));
+                    }
+                    ll.sptLoaded++;
+                    ll.itemIndex = i + 1;
+                    processed++;
+                }
+
+                if (ll.itemIndex >= (int)ll.sptQueue.size()) {
+                    ll.sptCache.clear();
+                    ll.sptBranchMatIdx.clear();
+                    ll.sptDdsMatIdx.clear();
+                    ll.sptBaseName.clear();
+
+                    ll.stage = 6;
+                    ll.stageLabel = "Loading materials & textures...";
+                }
+            }
+        }
+        else if (ll.stage == 6) {
             finalizeLevelMaterials(state);
             bakeLevelBuffers(state.currentModel);
 
             if (!state.currentModel.meshes.empty()) {
-                // Compute bounds directly from vertex data (mesh bounds may not be set after merge)
+
+
                 float minX = 1e30f, maxX = -1e30f;
                 float minY = 1e30f, maxY = -1e30f;
                 float minZ = 1e30f, maxZ = -1e30f;
                 bool hasVerts = false;
                 for (const auto& mesh : state.currentModel.meshes) {
-                    for (const auto& v : mesh.vertices) {
-                        if (v.x < minX) minX = v.x;
-                        if (v.x > maxX) maxX = v.x;
-                        if (v.y < minY) minY = v.y;
-                        if (v.y > maxY) maxY = v.y;
-                        if (v.z < minZ) minZ = v.z;
-                        if (v.z > maxZ) maxZ = v.z;
-                        hasVerts = true;
-                    }
+                    if (mesh.vertices.empty()) continue;
+                    hasVerts = true;
+                    if (mesh.minX < minX) minX = mesh.minX;
+                    if (mesh.maxX > maxX) maxX = mesh.maxX;
+                    if (mesh.minY < minY) minY = mesh.minY;
+                    if (mesh.maxY > maxY) maxY = mesh.maxY;
+                    if (mesh.minZ < minZ) minZ = mesh.minZ;
+                    if (mesh.maxZ > maxZ) maxZ = mesh.maxZ;
                 }
                 if (hasVerts) {
                     float cx = (minX + maxX) / 2.0f;
@@ -761,14 +844,8 @@ void drawBrowserWindow(AppState& state) {
                 std::to_string(ll.totalProps - ll.propsLoaded) + " missing), " +
                 std::to_string(ll.sptLoaded) + " trees, " +
                 std::to_string(state.currentModel.materials.size()) + " materials";
-            std::cout << "[LEVEL] === Load Summary ===" << std::endl;
-            std::cout << "[LEVEL]   Terrain: " << ll.terrainLoaded << "/" << ll.totalTerrain << " loaded" << std::endl;
-            std::cout << "[LEVEL]   Props:   " << ll.propsLoaded << "/" << ll.totalProps << " loaded, "
-                      << (ll.totalProps - ll.propsLoaded) << " missing" << std::endl;
-            std::cout << "[LEVEL]   Trees:   " << ll.sptLoaded << "/" << ll.totalSpt << " placed" << std::endl;
-            std::cout << "[LEVEL]   Meshes:  " << state.currentModel.meshes.size() << std::endl;
-            std::cout << "[LEVEL]   Materials: " << state.currentModel.materials.size() << std::endl;
             state.showRenderSettings = true;
+            clearErfIndices();
             ll.stage = 0;
         }
 
@@ -785,9 +862,12 @@ void drawBrowserWindow(AppState& state) {
                 progress = ll.totalProps > 0 ? (float)ll.itemIndex / ll.totalProps : 0.0f;
                 detail = std::to_string(ll.itemIndex) + " / " + std::to_string(ll.totalProps) + " props";
             } else if (ll.stage == 4) {
-                progress = 0.5f;
-                detail = "Batching " + std::to_string(ll.totalSpt) + " trees...";
+                progress = 0.3f;
+                detail = "Setting up " + std::to_string(ll.sptIdToFile.size()) + " tree types...";
             } else if (ll.stage == 5) {
+                progress = ll.totalSpt > 0 ? (float)ll.itemIndex / ll.totalSpt : 0.5f;
+                detail = std::to_string(ll.sptLoaded) + " / " + std::to_string(ll.totalSpt) + " trees";
+            } else if (ll.stage == 6) {
                 progress = 1.0f;
                 detail = "Finalizing...";
             }
@@ -803,8 +883,9 @@ void drawBrowserWindow(AppState& state) {
             ImGui::ProgressBar(progress, ImVec2(-1, 0), detail.c_str());
             ImGui::End();
         }
-        return;  // Skip all other UI during level loading
+        return;
     }
+
 
     ImGui::SetNextWindowSize(ImVec2(500, 600), ImGuiCond_FirstUseEver);
     ImGui::Begin("ERF Browser", &state.showBrowser, ImGuiWindowFlags_MenuBar);
@@ -1055,14 +1136,15 @@ void drawBrowserWindow(AppState& state) {
         }
     }
 
-    if (!state.rimFiles.empty()) {
+    if (!state.rimFiles.empty() || !state.arlFiles.empty() || !state.opfFiles.empty()) {
         ImGui::Separator();
-        bool rimSelected = (state.selectedErfName == "[RIM]");
+        bool rimSelected = (state.selectedErfName == "[Env]");
+        size_t envTotal = state.rimFiles.size() + state.arlFiles.size() + state.opfFiles.size();
         char rimLabel[64];
         if (state.rimScanDone)
-            snprintf(rimLabel, sizeof(rimLabel), "RIM Files (%zu)", state.rimFiles.size());
+            snprintf(rimLabel, sizeof(rimLabel), "Env (%zu)", envTotal);
         else
-            snprintf(rimLabel, sizeof(rimLabel), "RIM Files (%zu) [scanning...]", state.rimFiles.size());
+            snprintf(rimLabel, sizeof(rimLabel), "Env (%zu) [scanning...]", envTotal);
 
         auto buildRimList = [&]() {
             state.mergedEntries.clear();
@@ -1078,14 +1160,28 @@ void drawBrowserWindow(AppState& state) {
                 ce.entryIdx = 0;
                 state.mergedEntries.push_back(ce);
             }
-            state.statusMessage = std::to_string(state.rimFiles.size()) + " RIM files";
+            for (size_t i = 0; i < state.arlFiles.size(); i++) {
+                CachedEntry ce;
+                size_t lastSlash = state.arlFiles[i].find_last_of("/\\");
+                ce.name = (lastSlash != std::string::npos) ? state.arlFiles[i].substr(lastSlash + 1) : state.arlFiles[i];
+                ce.erfIdx = i;
+                ce.entryIdx = 1;
+                state.mergedEntries.push_back(ce);
+            }
+            for (size_t i = 0; i < state.opfFiles.size(); i++) {
+                CachedEntry ce;
+                size_t lastSlash = state.opfFiles[i].find_last_of("/\\");
+                ce.name = (lastSlash != std::string::npos) ? state.opfFiles[i].substr(lastSlash + 1) : state.opfFiles[i];
+                ce.erfIdx = i;
+                ce.entryIdx = 2;
+                state.mergedEntries.push_back(ce);
+            }
+            state.statusMessage = std::to_string(envTotal) + " env files";
         };
-
-        // Auto-rebuild when scan finishes
 
         if (ImGui::Selectable(rimLabel, rimSelected)) {
             if (!rimSelected) {
-                state.selectedErfName = "[RIM]";
+                state.selectedErfName = "[Env]";
                 state.selectedEntryIndex = -1;
                 state.showRIMBrowser = false;
                 state.rimEntries.clear();
@@ -1186,6 +1282,114 @@ void drawBrowserWindow(AppState& state) {
             if (ImGui::Selectable(label, false, ImGuiSelectableFlags_AllowDoubleClick)) {
                 if (ImGui::IsMouseDoubleClicked(0) && found) {
                     startLevelLoad(state, rimPath, entry.displayName);
+                }
+            }
+            if (found) {
+                char ctxId[64];
+                snprintf(ctxId, sizeof(ctxId), "##lvlCtx%s", idSuffix);
+                if (ImGui::BeginPopupContextItem(ctxId)) {
+                    if (ImGui::MenuItem("Show Heightmap")) {
+                        ERFFile rim;
+                        if (rim.open(rimPath)) {
+                            float minX = 1e30f, maxX = -1e30f;
+                            float minY = 1e30f, maxY = -1e30f;
+                            float minZ = 1e30f, maxZ = -1e30f;
+                            struct HmVert { float x, y, z; };
+                            std::vector<std::array<HmVert, 3>> tris;
+
+                            for (const auto& re : rim.entries()) {
+                                std::string eLower = re.name;
+                                std::transform(eLower.begin(), eLower.end(), eLower.begin(), ::tolower);
+                                size_t dotPos = eLower.rfind('.');
+                                if (dotPos == std::string::npos) continue;
+                                std::string ext = eLower.substr(dotPos);
+                                if (ext != ".msh") continue;
+                                auto data = rim.readEntry(re);
+                                if (data.empty()) continue;
+                                Model tmp;
+                                if (!loadMSH(data, tmp)) continue;
+                                for (const auto& m : tmp.meshes) {
+                                    for (size_t i = 0; i + 2 < m.indices.size(); i += 3) {
+                                        uint32_t i0 = m.indices[i], i1 = m.indices[i+1], i2 = m.indices[i+2];
+                                        if (i0 >= m.vertices.size() || i1 >= m.vertices.size() || i2 >= m.vertices.size()) continue;
+                                        const auto& v0 = m.vertices[i0];
+                                        const auto& v1 = m.vertices[i1];
+                                        const auto& v2 = m.vertices[i2];
+                                        tris.push_back({HmVert{v0.x,v0.y,v0.z}, HmVert{v1.x,v1.y,v1.z}, HmVert{v2.x,v2.y,v2.z}});
+                                        if (v0.x < minX) minX = v0.x; if (v0.x > maxX) maxX = v0.x;
+                                        if (v0.y < minY) minY = v0.y; if (v0.y > maxY) maxY = v0.y;
+                                        if (v0.z < minZ) minZ = v0.z; if (v0.z > maxZ) maxZ = v0.z;
+                                        if (v1.x < minX) minX = v1.x; if (v1.x > maxX) maxX = v1.x;
+                                        if (v1.y < minY) minY = v1.y; if (v1.y > maxY) maxY = v1.y;
+                                        if (v1.z < minZ) minZ = v1.z; if (v1.z > maxZ) maxZ = v1.z;
+                                        if (v2.x < minX) minX = v2.x; if (v2.x > maxX) maxX = v2.x;
+                                        if (v2.y < minY) minY = v2.y; if (v2.y > maxY) maxY = v2.y;
+                                        if (v2.z < minZ) minZ = v2.z; if (v2.z > maxZ) maxZ = v2.z;
+                                    }
+                                }
+                            }
+
+                            if (!tris.empty()) {
+                                float spanX = maxX - minX, spanY = maxY - minY;
+                                if (spanX < 1e-6f) spanX = 1.0f;
+                                if (spanY < 1e-6f) spanY = 1.0f;
+                                int hmW, hmH;
+                                if (spanX >= spanY) { hmW = 1024; hmH = std::max(1, (int)(1024.0f * spanY / spanX)); }
+                                else { hmH = 1024; hmW = std::max(1, (int)(1024.0f * spanX / spanY)); }
+
+                                std::vector<float> zBuf(hmW * hmH, -1e30f);
+                                for (const auto& tri : tris) {
+                                    int px[3], py[3];
+                                    for (int k = 0; k < 3; k++) {
+                                        px[k] = (int)((tri[k].x - minX) / spanX * (hmW - 1));
+                                        py[k] = (hmH - 1) - (int)((tri[k].y - minY) / spanY * (hmH - 1));
+                                        if (px[k] < 0) px[k] = 0; if (px[k] >= hmW) px[k] = hmW - 1;
+                                        if (py[k] < 0) py[k] = 0; if (py[k] >= hmH) py[k] = hmH - 1;
+                                    }
+                                    int bx0 = std::min({px[0],px[1],px[2]}), bx1 = std::max({px[0],px[1],px[2]});
+                                    int by0 = std::min({py[0],py[1],py[2]}), by1 = std::max({py[0],py[1],py[2]});
+                                    for (int ry = by0; ry <= by1; ry++) {
+                                        for (int rx = bx0; rx <= bx1; rx++) {
+                                            float dx0 = (float)(px[1]-px[0]), dy0 = (float)(py[1]-py[0]);
+                                            float dx1 = (float)(px[2]-px[0]), dy1 = (float)(py[2]-py[0]);
+                                            float dx2 = (float)(rx-px[0]),    dy2 = (float)(ry-py[0]);
+                                            float d00 = dx0*dx0+dy0*dy0, d01 = dx0*dx1+dy0*dy1;
+                                            float d11 = dx1*dx1+dy1*dy1, d20 = dx2*dx0+dy2*dy0, d21 = dx2*dx1+dy2*dy1;
+                                            float den = d00*d11 - d01*d01;
+                                            if (std::abs(den) < 1e-10f) continue;
+                                            float u = (d11*d20 - d01*d21) / den;
+                                            float v = (d00*d21 - d01*d20) / den;
+                                            if (u >= -0.001f && v >= -0.001f && u + v <= 1.002f) {
+                                                float z = tri[0].z*(1-u-v) + tri[1].z*u + tri[2].z*v;
+                                                if (z > zBuf[ry*hmW+rx]) zBuf[ry*hmW+rx] = z;
+                                            }
+                                        }
+                                    }
+                                }
+
+                                float rangeZ = maxZ - minZ;
+                                if (rangeZ < 1e-6f) rangeZ = 1.0f;
+                                std::vector<uint8_t> rgba(hmW * hmH * 4);
+                                for (int i = 0; i < hmW * hmH; i++) {
+                                    if (zBuf[i] < -1e20f) {
+                                        rgba[i*4] = rgba[i*4+1] = rgba[i*4+2] = 0; rgba[i*4+3] = 255;
+                                    } else {
+                                        float t = (zBuf[i] - minZ) / rangeZ;
+                                        if (t < 0) t = 0; if (t > 1) t = 1;
+                                        uint8_t val = (uint8_t)(t * 255.0f);
+                                        rgba[i*4] = rgba[i*4+1] = rgba[i*4+2] = val; rgba[i*4+3] = 255;
+                                    }
+                                }
+
+                                if (state.heightmapTexId) destroyTexture(state.heightmapTexId);
+                                state.heightmapTexId = createTexture2D(rgba.data(), hmW, hmH);
+                                state.heightmapW = hmW;
+                                state.heightmapH = hmH;
+                                state.showHeightmap = true;
+                            }
+                        }
+                    }
+                    ImGui::EndPopup();
                 }
             }
             if (!found) ImGui::PopStyleColor();
@@ -1438,7 +1642,7 @@ void drawBrowserWindow(AppState& state) {
             if (ImGui::Selectable(label, idx == state.selectedEntryIndex, ImGuiSelectableFlags_AllowDoubleClick)) {
                 state.selectedEntryIndex = idx;
 
-                bool isRimClick = (state.selectedErfName == "[RIM]");
+                bool isRimClick = (state.selectedErfName == "[Env]" && ce.entryIdx == 0);
                 if (isRimClick) {
                     if (ce.erfIdx < state.rimFiles.size()) {
                         std::string rimPath = state.rimFiles[ce.erfIdx];
@@ -1945,7 +2149,6 @@ void drawBrowserWindow(AppState& state) {
                 ImGui::TableSetupColumn("Hz", ImGuiTableColumnFlags_WidthFixed, 55.0f);
                 ImGui::TableHeadersRow();
 
-                // Pre-filter FSB samples
                 static std::vector<int> s_filteredFsbIndices;
                 static std::string s_lastFsbFilter;
                 static size_t s_lastFsbCount = 0;
@@ -2087,6 +2290,10 @@ void drawBrowserWindow(AppState& state) {
                         state.modelErfs.clear();
                         state.materialErfs.clear();
                         clearPropCache();
+                        clearErfIndices();
+                        state.modelErfIndex.clear();
+                        state.materialErfIndex.clear();
+                        state.textureErfIndex.clear();
                         ensureBaseErfsLoaded(state);
 
                         auto rimForModel = std::make_unique<ERFFile>();

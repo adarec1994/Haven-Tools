@@ -1,6 +1,5 @@
 #include "tnt_loader.h"
 #include <cstring>
-#include <iostream>
 #include <algorithm>
 
 static float readFloat(const uint8_t* data, size_t offset) {
@@ -55,15 +54,15 @@ bool loadTNT(const std::vector<uint8_t>& data, TintData& outTint) {
     if (memcmp(data.data(), "GFF V4.0", 8) != 0) {
         return false;
     }
-    
+
     const uint8_t* ptr = data.data();
     size_t colorStart = 0xB0;
     size_t maxColors = (data.size() - colorStart) / 16;
-    
+
     if (maxColors > 10) maxColors = 10;
-    
+
     outTint.numColors = (int)maxColors;
-    
+
     for (size_t i = 0; i < maxColors; i++) {
         size_t offset = colorStart + i * 16;
         outTint.colors[i].r = readFloat(ptr, offset);
@@ -71,14 +70,14 @@ bool loadTNT(const std::vector<uint8_t>& data, TintData& outTint) {
         outTint.colors[i].b = readFloat(ptr, offset + 8);
         outTint.colors[i].a = readFloat(ptr, offset + 12);
     }
-    
+
     return true;
 }
 
 const TintData* TintCache::getTint(const std::string& name) const {
     std::string lower = name;
     std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
-    
+
     auto it = m_tints.find(lower);
     if (it != m_tints.end()) {
         return &it->second;

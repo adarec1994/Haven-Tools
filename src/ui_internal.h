@@ -67,6 +67,8 @@ void finalizeLevelMaterials(AppState& state);
 void buildErfIndex(AppState& state);
 void clearPropCache();
 void ensureBaseErfsLoaded(AppState& state);
+void registerErfIndex(const void* erfsPtr, const ErfEntryIndex* index);
+void clearErfIndices();
 std::vector<uint8_t> readFromErfs(const std::vector<std::unique_ptr<ERFFile>>& erfs, const std::string& name);
 std::vector<uint8_t> readFromCache(AppState& state, const std::string& name, const std::string& ext);
 uint32_t loadTexByNameCached(AppState& state, const std::string& texName,

@@ -24,10 +24,9 @@ struct SptModel {
     std::vector<SptSubmesh> submeshes;
     float boundMin[3];
     float boundMax[3];
-    // Texture filenames extracted from raw SPT data
-    std::string branchTexture;       // e.g. "newbark.tga"
-    std::vector<std::string> frondTextures;  // e.g. "FR_c_Redwood.tga"
-    std::string compositeTexture;    // e.g. "tre_c_confsap_Diffuse.dds"
+    std::string branchTexture;
+    std::vector<std::string> frondTextures;
+    std::string compositeTexture;
 };
 
 bool initSpeedTree();

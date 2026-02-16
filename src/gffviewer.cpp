@@ -10,7 +10,6 @@
 #include <cstdio>
 #include <cmath>
 #include <filesystem>
-#include <iostream>
 #include <set>
 static bool containsCI(const std::string& haystack, const std::string& needle) {
     if (needle.empty()) return true;
@@ -21,6 +20,7 @@ static bool containsCI(const std::string& haystack, const std::string& needle) {
     std::replace(n.begin(), n.end(), '_', ' ');
     return h.find(n) != std::string::npos;
 }
+
 static std::string gff32ValuePreview(const GFF32::Structure& st) {
     if (st.hasField("Tag")) {
         const GFF32::Field* f = st.getField("Tag");
@@ -30,6 +30,7 @@ static std::string gff32ValuePreview(const GFF32::Structure& st) {
     }
     return "...";
 }
+
 static std::string gff4PrimitiveName(uint16_t typeId) {
     switch (typeId) {
         case 0: return "UINT8";
@@ -219,6 +220,7 @@ static std::string gff4ListPreview(size_t count) {
     if (count == 1) return "(1 item)";
     return "(" + std::to_string(count) + " items)";
 }
+
 static void buildFullTree(GffViewerState& state);
 static void requestCacheBuild(GffViewerState& state);
 
@@ -275,6 +277,7 @@ bool loadGffData(GffViewerState& state, const std::vector<uint8_t>& data,
     });
     return true;
 }
+
 static void buildTreeFromGff32Struct(GffViewerState& state, const GFF32::Structure& st,
                                       const std::string& basePath, int depth, bool forceExpand = false);
 static void buildTreeFromGff4Struct(GffViewerState& state, uint32_t structIndex,
@@ -469,7 +472,6 @@ static void buildTreeFromGff4Struct(GffViewerState& state, uint32_t structIndex,
     if (depth > 100 || state.flattenedTree.size() > 500000) return;
     if (!state.gff4 || structIndex >= state.gff4->structs().size()) return;
 
-    // Cycle detection: skip if we've already expanded this exact (structIndex, baseOffset) pair
     std::set<std::pair<uint32_t,uint32_t>> localVisited;
     if (!visited) visited = &localVisited;
     auto key = std::make_pair(structIndex, baseOffset);

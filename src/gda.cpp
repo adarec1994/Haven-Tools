@@ -2,7 +2,6 @@
 #include "Gff.h"
 #include <algorithm>
 #include <cstring>
-#include <iostream>
 
 static uint32_t s_crc32Table[256];
 static bool s_crc32Init = false;

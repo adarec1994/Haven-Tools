@@ -233,10 +233,13 @@ Thank you for downloading or updating to version 2.0!
 -- Added vertical panning with Q/E.
 -- Controls can be rebound in the Keybind settings.
 
-- Additional formats:
+- Levels:
 -- Added .LVL file's to the list of files that can be loaded.
 -- Added .RIM file's to the list of files that can be loaded.
 -- Added level loading, includes terrain, props, and foliage.
+-- Added level exporting
+--- Export levels as GLB or FBX. Use the havenarea_import.py to import the levels to blender.
+-- No level editing/ importing (please don't ask, it won't happen!).
 
 - UI Updates:
 -- Updated the skeleton rendering to be cleaner.

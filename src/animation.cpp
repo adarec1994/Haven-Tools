@@ -52,6 +52,7 @@ void decompressQuat(uint32_t quat32, uint32_t quat64, uint16_t quat48, int quali
         outX = q1; outY = q2; outZ = q3; outW = q0;
     }
 }
+
 Animation loadANI(const std::vector<uint8_t>& data, const std::string& filename) {
     Animation anim;
     anim.filename = filename;
@@ -166,6 +167,7 @@ Animation loadANI(const std::vector<uint8_t>& data, const std::string& filename)
     }
     return anim;
 }
+
 void findAnimationsForModel(AppState& state, const std::string& modelBaseName) {
     state.availableAnimFiles.clear();
     state.selectedAnimIndex = -1;
@@ -233,6 +235,7 @@ void findAnimationsForModel(AppState& state, const std::string& modelBaseName) {
     std::sort(state.availableAnimFiles.begin(), state.availableAnimFiles.end());
     state.basePoseBones = state.currentModel.skeleton.bones;
 }
+
 void dumpAllAnimFileNames(const AppState& state) {
     std::set<std::string> allAnis;
     for (const auto& erfPath : state.erfFiles) {
@@ -248,6 +251,7 @@ void dumpAllAnimFileNames(const AppState& state) {
     for (const auto& name : allAnis) {
     }
 }
+
 void applyAnimation(Model& model, const Animation& anim, float time, const std::vector<Bone>& basePose) {
     if (anim.tracks.empty()) return;
     if (basePose.empty() || basePose.size() != model.skeleton.bones.size()) return;

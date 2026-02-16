@@ -56,7 +56,6 @@ int main(int argc, char** argv) {
 
     io.Fonts->AddFontDefault();
 
-    // Load multilingual fonts from Windows system fonts
     auto tryLoadFont = [&](const char* path, float size, const ImWchar* ranges) {
         if (std::filesystem::exists(path)) {
             ImFontConfig cfg;
@@ -70,7 +69,6 @@ int main(int argc, char** argv) {
     tryLoadFont("C:\\Windows\\Fonts\\msyh.ttc",    14.0f, io.Fonts->GetGlyphRangesChineseFull());
     tryLoadFont("C:\\Windows\\Fonts\\YuGothM.ttc", 14.0f, io.Fonts->GetGlyphRangesJapanese());
     tryLoadFont("C:\\Windows\\Fonts\\segoeui.ttf", 14.0f, io.Fonts->GetGlyphRangesGreek());
-
 
     ImFontConfig fa_cfg;
     fa_cfg.MergeMode = true;

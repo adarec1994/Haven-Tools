@@ -6,9 +6,7 @@
 #include <algorithm>
 #include <vector>
 #include <chrono>
-#include <iostream>
 #include "terrain_loader.h"
-
 
 static void mat4Identity(float* m) {
     memset(m, 0, 64);
@@ -102,7 +100,6 @@ static void mat4Transpose(const float* in, float* out) {
             out[j * 4 + i] = in[i * 4 + j];
 }
 
-
 struct ColorVertex {
     float x, y, z;
     float r, g, b, a;
@@ -119,7 +116,6 @@ struct ModelVertex {
     float u, v;
 };
 
-
 static const uint32_t MAX_BATCH_VERTS = 256000;
 static DynamicVertexBuffer s_lineBuffer;
 static DynamicVertexBuffer s_triBuffer;
@@ -129,7 +125,6 @@ static bool s_rendererInit = false;
 
 static std::vector<ColorVertex>  s_lineBatch;
 static std::vector<SimpleVertex> s_triBatch;
-
 
 void initRenderer() {
     if (s_rendererInit) return;
@@ -161,14 +156,12 @@ void cleanupRenderer() {
     s_rendererInit = false;
 }
 
-// ============ Static Level Buffer System ============
-
 struct StaticMeshDraw {
     uint32_t startIndex;
     uint32_t indexCount;
     int32_t  baseVertex;
     int materialIndex;
-    int meshIndex;          // original index in model.meshes[]
+    int meshIndex;
     float minX, minY, minZ;
     float maxX, maxY, maxZ;
     bool alphaTest;
@@ -250,21 +243,18 @@ void bakeLevelBuffers(Model& model) {
         s_levelVB->Release(); s_levelVB = nullptr; return;
     }
 
-    // NOTE: We keep CPU-side vertex/index data for ray picking (prop selection)
-
     s_levelBaked = true;
 }
 
 bool isLevelBaked() { return s_levelBaked; }
 
 static void extractFrustumPlanes(const float* m, float planes[6][4]) {
-    // Row-major MVP: plane = row3 +/- rowN
-    planes[0][0]=m[3]+m[0];  planes[0][1]=m[7]+m[4];  planes[0][2]=m[11]+m[8];  planes[0][3]=m[15]+m[12]; // left
-    planes[1][0]=m[3]-m[0];  planes[1][1]=m[7]-m[4];  planes[1][2]=m[11]-m[8];  planes[1][3]=m[15]-m[12]; // right
-    planes[2][0]=m[3]+m[1];  planes[2][1]=m[7]+m[5];  planes[2][2]=m[11]+m[9];  planes[2][3]=m[15]+m[13]; // bottom
-    planes[3][0]=m[3]-m[1];  planes[3][1]=m[7]-m[5];  planes[3][2]=m[11]-m[9];  planes[3][3]=m[15]-m[13]; // top
-    planes[4][0]=m[3]+m[2];  planes[4][1]=m[7]+m[6];  planes[4][2]=m[11]+m[10]; planes[4][3]=m[15]+m[14]; // near
-    planes[5][0]=m[3]-m[2];  planes[5][1]=m[7]-m[6];  planes[5][2]=m[11]-m[10]; planes[5][3]=m[15]-m[14]; // far
+    planes[0][0]=m[3]+m[0];  planes[0][1]=m[7]+m[4];  planes[0][2]=m[11]+m[8];  planes[0][3]=m[15]+m[12];
+    planes[1][0]=m[3]-m[0];  planes[1][1]=m[7]-m[4];  planes[1][2]=m[11]-m[8];  planes[1][3]=m[15]-m[12];
+    planes[2][0]=m[3]+m[1];  planes[2][1]=m[7]+m[5];  planes[2][2]=m[11]+m[9];  planes[2][3]=m[15]+m[13];
+    planes[3][0]=m[3]-m[1];  planes[3][1]=m[7]-m[5];  planes[3][2]=m[11]-m[9];  planes[3][3]=m[15]-m[13];
+    planes[4][0]=m[3]+m[2];  planes[4][1]=m[7]+m[6];  planes[4][2]=m[11]+m[10]; planes[4][3]=m[15]+m[14];
+    planes[5][0]=m[3]-m[2];  planes[5][1]=m[7]-m[6];  planes[5][2]=m[11]-m[10]; planes[5][3]=m[15]-m[14];
     for (int i = 0; i < 6; i++) {
         float len = sqrtf(planes[i][0]*planes[i][0] + planes[i][1]*planes[i][1] + planes[i][2]*planes[i][2]);
         if (len > 0.0001f) { planes[i][0]/=len; planes[i][1]/=len; planes[i][2]/=len; planes[i][3]/=len; }
@@ -301,13 +291,11 @@ static void renderLevelStatic(const Model& model, const float* mvp, const float*
 
     bool useShaders = !settings.wireframe && settings.showTextures;
 
-    // Bind VB/IB once
     UINT stride = sizeof(ModelVertex), offset = 0;
     d3d.context->IASetVertexBuffers(0, 1, &s_levelVB, &stride, &offset);
     d3d.context->IASetIndexBuffer(s_levelIB, DXGI_FORMAT_R32_UINT, 0);
     d3d.context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-    // Set shader once
     auto& modelShader = getModelShader();
     d3d.context->IASetInputLayout(modelShader.inputLayout);
     d3d.context->VSSetShader(modelShader.vs, nullptr, 0);
@@ -317,11 +305,20 @@ static void renderLevelStatic(const Model& model, const float* mvp, const float*
     ID3D11Buffer* psCBs[] = { getPerFrameCB(), getPerMaterialCB(), getTerrainCB(), getWaterCB() };
     d3d.context->VSSetConstantBuffers(0, 1, vsCBs);
     d3d.context->PSSetConstantBuffers(0, 4, psCBs);
-    d3d.context->PSSetSamplers(0, 1, &d3d.samplerLinear);
+
+    static ID3D11SamplerState* s_samplerPoint = nullptr;
+    if (!s_samplerPoint) {
+        D3D11_SAMPLER_DESC sd = {};
+        sd.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
+        sd.AddressU = sd.AddressV = sd.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+        sd.MaxLOD = D3D11_FLOAT32_MAX;
+        d3d.device->CreateSamplerState(&sd, &s_samplerPoint);
+    }
+    ID3D11SamplerState* samplers[] = { d3d.samplerLinear, s_samplerPoint };
+    d3d.context->PSSetSamplers(0, 2, samplers);
 
     float blendFactor[4] = {0,0,0,0};
 
-    // Two passes: 0 = opaque/terrain, 1 = water (alpha)
     for (int pass = 0; pass < 2; pass++) {
         if (pass == 0)
             d3d.context->OMSetBlendState(d3d.bsOpaque, blendFactor, 0xFFFFFFFF);
@@ -333,7 +330,6 @@ static void renderLevelStatic(const Model& model, const float* mvp, const float*
         bool wasSelected = false;
 
         for (const auto& draw : s_levelDraws) {
-            // Frustum cull
             if (!aabbInFrustum(planes, draw.minX, draw.minY, draw.minZ,
                                         draw.maxX, draw.maxY, draw.maxZ))
                 continue;
@@ -344,12 +340,10 @@ static void renderLevelStatic(const Model& model, const float* mvp, const float*
 
             bool isWaterMat = mat && mat->isWater;
 
-            // Pass 0: skip water. Pass 1: only water.
             if (pass == 0 && isWaterMat) continue;
             if (pass == 1 && !isWaterMat) continue;
 
             int curAlpha = draw.alphaTest ? 1 : 0;
-            // Only update material state when it changes (or selection requires override)
             bool isSelected = selectedChunk >= 0 && draw.meshIndex == selectedChunk;
             if (draw.materialIndex != lastMatIdx || curAlpha != lastAlpha || isSelected || wasSelected) {
                 lastMatIdx = draw.materialIndex;
@@ -367,7 +361,6 @@ static void renderLevelStatic(const Model& model, const float* mvp, const float*
                     perMat.tintColor[1] = 1.0f;
                     perMat.tintColor[2] = 0.6f;
                     perMat.tintColor[3] = 1.0f;
-                    // For terrain, tintColor multiply is skipped, so use highlightColor instead
                     if (isTerrain) {
                         perMat.highlightColor[0] = 0.2f;
                         perMat.highlightColor[1] = 1.0f;
@@ -389,7 +382,9 @@ static void renderLevelStatic(const Model& model, const float* mvp, const float*
                     memcpy(terrCB.palDim, mat->palDim, 16);
                     memcpy(terrCB.palParam, mat->palParam, 16);
                     memcpy(terrCB.uvScales, mat->uvScales, 32);
+                    memcpy(terrCB.reliefScales, mat->reliefScales, 32);
                     terrCB.isTerrain = 1;
+                    terrCB.terrainDebug = settings.terrainDebug ? 1 : 0;
                 }
                 updateTerrainCB(terrCB);
 
@@ -411,6 +406,8 @@ static void renderLevelStatic(const Model& model, const float* mvp, const float*
                     srvs[1] = mat->palNormalTexId ? getTextureSRV(mat->palNormalTexId) : nullptr;
                     srvs[2] = getTextureSRV(mat->maskVTexId);
                     srvs[3] = mat->maskATexId ? getTextureSRV(mat->maskATexId) : nullptr;
+                    srvs[4] = mat->maskA2TexId ? getTextureSRV(mat->maskA2TexId) : nullptr;
+                    srvs[5] = mat->reliefTexId ? getTextureSRV(mat->reliefTexId) : nullptr;
                 } else {
                     if (useShaders && hasDiffuse)  srvs[0] = getTextureSRV(mat->diffuseTexId);
                     if (useShaders && hasNormal)   srvs[1] = getTextureSRV(mat->normalTexId);
@@ -429,7 +426,6 @@ static void renderLevelStatic(const Model& model, const float* mvp, const float*
     ID3D11ShaderResourceView* nullSRVs[9] = {};
     d3d.context->PSSetShaderResources(0, 9, nullSRVs);
 }
-
 
 inline void quatRotate(float qx, float qy, float qz, float qw,
                        float vx, float vy, float vz,
@@ -532,7 +528,6 @@ void transformVertexBySkeleton(const Vertex& v, const Mesh& mesh, const Model& m
     }
 }
 
-
 static void flushLines(const float* mvp) {
     if (s_lineBatch.empty()) return;
     D3DContext& d3d = getD3DContext();
@@ -577,7 +572,6 @@ static void addPoint(float x, float y, float z, float r, float g, float b, float
     addLine(x, y - hs, z, x, y + hs, z, r, g, b);
     addLine(x, y, z - hs, x, y, z + hs, r, g, b);
 }
-
 
 static void buildBoxTris(float hx, float hy, float hz, std::vector<SimpleVertex>& out) {
     auto face = [&](float nx, float ny, float nz,
@@ -666,7 +660,6 @@ void drawSolidBox(float x, float y, float z) {
 void drawSolidSphere(float radius, int slices, int stacks) {}
 void drawSolidCapsule(float radius, float height, int slices, int stacks) {}
 
-
 static void drawSimpleTris(const std::vector<SimpleVertex>& verts, const float* mvp,
                            float r, float g, float b, float a) {
     if (verts.empty()) return;
@@ -693,7 +686,6 @@ static void drawSimpleTris(const std::vector<SimpleVertex>& verts, const float* 
 
     d3d.context->Draw((UINT)verts.size(), 0);
 }
-
 
 void renderModel(Model& model, const Camera& camera, const RenderSettings& settings,
                  int width, int height, bool animating, int selectedBone, int selectedChunk) {
@@ -876,7 +868,6 @@ void renderModel(Model& model, const Camera& camera, const RenderSettings& setti
                 } else {
                     perMat.tintColor[0] = perMat.tintColor[1] = perMat.tintColor[2] = perMat.tintColor[3] = 1.0f;
                 }
-                // Green highlight for selected level chunk
                 if (selectedChunk >= 0 && (int)meshIdx == selectedChunk) {
                     perMat.tintColor[0] = 0.6f;
                     perMat.tintColor[1] = 1.0f;
@@ -912,7 +903,9 @@ void renderModel(Model& model, const Camera& camera, const RenderSettings& setti
                     memcpy(terrCB.palDim, mat->palDim, 16);
                     memcpy(terrCB.palParam, mat->palParam, 16);
                     memcpy(terrCB.uvScales, mat->uvScales, 32);
+                    memcpy(terrCB.reliefScales, mat->reliefScales, 32);
                     terrCB.isTerrain = 1;
+                    terrCB.terrainDebug = settings.terrainDebug ? 1 : 0;
                 }
                 updateTerrainCB(terrCB);
 
@@ -922,6 +915,8 @@ void renderModel(Model& model, const Camera& camera, const RenderSettings& setti
                     srvs[1] = mat->palNormalTexId ? getTextureSRV(mat->palNormalTexId) : nullptr;
                     srvs[2] = getTextureSRV(mat->maskVTexId);
                     srvs[3] = mat->maskATexId ? getTextureSRV(mat->maskATexId) : nullptr;
+                    srvs[4] = mat->maskA2TexId ? getTextureSRV(mat->maskA2TexId) : nullptr;
+                    srvs[5] = mat->reliefTexId ? getTextureSRV(mat->reliefTexId) : nullptr;
                 } else {
                     if (useShaders && hasDiffuse)  srvs[0] = getTextureSRV(mat->diffuseTexId);
                     if (useShaders && hasNormal)   srvs[1] = getTextureSRV(mat->normalTexId);
@@ -938,7 +933,16 @@ void renderModel(Model& model, const Camera& camera, const RenderSettings& setti
                     if (useShaders && hasTattoo) srvs[8] = getTextureSRV(mat->tattooTexId);
                 }
                 d3d.context->PSSetShaderResources(0, 9, srvs);
-                d3d.context->PSSetSamplers(0, 1, &d3d.samplerLinear);
+                static ID3D11SamplerState* s_dynSamplerPoint = nullptr;
+                if (!s_dynSamplerPoint) {
+                    D3D11_SAMPLER_DESC sd = {};
+                    sd.Filter = D3D11_FILTER_MIN_MAG_MIP_POINT;
+                    sd.AddressU = sd.AddressV = sd.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+                    sd.MaxLOD = D3D11_FLOAT32_MAX;
+                    d3d.device->CreateSamplerState(&sd, &s_dynSamplerPoint);
+                }
+                ID3D11SamplerState* dynSamplers[] = { d3d.samplerLinear, s_dynSamplerPoint };
+                d3d.context->PSSetSamplers(0, 2, dynSamplers);
 
                 auto& modelShader = getModelShader();
                 d3d.context->IASetInputLayout(modelShader.inputLayout);
@@ -981,7 +985,7 @@ void renderModel(Model& model, const Camera& camera, const RenderSettings& setti
 
         d3d.context->RSSetState(d3d.rsNoCull);
         d3d.context->OMSetBlendState(d3d.bsOpaque, blendFactor, 0xFFFFFFFF);
-        } // end else (dynamic path)
+        }
     }
 
     if (settings.showCollision && !model.collisionShapes.empty()) {

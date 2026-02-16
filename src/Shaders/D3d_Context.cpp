@@ -1,5 +1,4 @@
 #include "d3d_context.h"
-#include <iostream>
 #include <unordered_map>
 #include <cstring>
 
@@ -29,31 +28,32 @@ uint32_t createTexture2D(const uint8_t* rgbaData, int width, int height) {
     D3D11_TEXTURE2D_DESC desc = {};
     desc.Width            = width;
     desc.Height           = height;
-    desc.MipLevels        = 1;
+    desc.MipLevels        = 0;
     desc.ArraySize        = 1;
     desc.Format           = DXGI_FORMAT_R8G8B8A8_UNORM;
     desc.SampleDesc.Count = 1;
     desc.Usage            = D3D11_USAGE_DEFAULT;
-    desc.BindFlags        = D3D11_BIND_SHADER_RESOURCE;
-
-    D3D11_SUBRESOURCE_DATA init = {};
-    init.pSysMem          = rgbaData;
-    init.SysMemPitch      = width * 4;
+    desc.BindFlags        = D3D11_BIND_SHADER_RESOURCE | D3D11_BIND_RENDER_TARGET;
+    desc.MiscFlags        = D3D11_RESOURCE_MISC_GENERATE_MIPS;
 
     TextureEntry entry;
-    HRESULT hr = s_d3d.device->CreateTexture2D(&desc, &init, &entry.tex);
+    HRESULT hr = s_d3d.device->CreateTexture2D(&desc, nullptr, &entry.tex);
     if (FAILED(hr)) return 0;
+
+    s_d3d.context->UpdateSubresource(entry.tex, 0, nullptr, rgbaData, width * 4, 0);
 
     D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
     srvDesc.Format                    = desc.Format;
     srvDesc.ViewDimension             = D3D11_SRV_DIMENSION_TEXTURE2D;
-    srvDesc.Texture2D.MipLevels       = 1;
+    srvDesc.Texture2D.MipLevels       = (UINT)-1;
 
     hr = s_d3d.device->CreateShaderResourceView(entry.tex, &srvDesc, &entry.srv);
     if (FAILED(hr)) {
         entry.tex->Release();
         return 0;
     }
+
+    s_d3d.context->GenerateMips(entry.srv);
 
     uint32_t id = s_nextTexId++;
     s_textures[id] = entry;
@@ -282,13 +282,8 @@ bool initD3D(GLFWwindow* window, D3DContext& ctx) {
     );
 
     if (FAILED(hr)) {
-        std::cerr << "[D3D11] Failed to create device and swap chain: 0x"
-                  << std::hex << hr << std::dec << std::endl;
         return false;
     }
-
-    std::cout << "[D3D11] Device created, feature level: 0x"
-              << std::hex << featureLevel << std::dec << std::endl;
 
     createRenderTargets(ctx);
     createPipelineStates(ctx);

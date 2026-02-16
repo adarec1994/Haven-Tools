@@ -1,7 +1,6 @@
 #include "mor_loader.h"
 #include <algorithm>
 #include <cstring>
-#include <iostream>
 #include <cstdint>
 static std::string readUTF16(const uint8_t* data, size_t maxSize, size_t offset, size_t maxChars) {
     std::string result;
@@ -12,14 +11,17 @@ static std::string readUTF16(const uint8_t* data, size_t maxSize, size_t offset,
     }
     return result;
 }
+
 static uint32_t readU32(const uint8_t* data, size_t offset) {
     return data[offset] | (data[offset+1] << 8) | (data[offset+2] << 16) | (data[offset+3] << 24);
 }
+
 static float readFloat(const uint8_t* data, size_t offset) {
     float val;
     memcpy(&val, &data[offset], 4);
     return val;
 }
+
 static void parseTargetName(const std::string& name, std::string& category, int& index) {
     category = name;
     index = 1;
@@ -32,33 +34,40 @@ static void parseTargetName(const std::string& name, std::string& category, int&
         }
     }
 }
+
 static bool isMorphTargetName(const std::string& s) {
     if (s.length() < 5 || s.length() > 10) return false;
     if (s.find('M') == std::string::npos) return false;
     return (s.find("Face") == 0 || s.find("Eyes") == 0 || s.find("Lashes") == 0 ||
             s.find("Hair") == 0 || s.find("Beard") == 0);
 }
+
 const MorphMeshTarget* MorphData::findTarget(const std::string& name) const {
     for (const auto& t : meshTargets) {
         if (t.name == name) return &t;
     }
     return nullptr;
 }
+
 MorphMeshTarget* MorphData::findTarget(const std::string& name) {
     for (auto& t : meshTargets) {
         if (t.name == name) return &t;
     }
     return nullptr;
 }
+
 const MorphMeshTarget* MorphData::getFaceTarget() const {
     return findTarget("FaceM1");
 }
+
 const MorphMeshTarget* MorphData::getEyesTarget() const {
     return findTarget("EyesM1");
 }
+
 const MorphMeshTarget* MorphData::getLashesTarget() const {
     return findTarget("LashesM1");
 }
+
 int MorphData::getHairStyleIndex() const {
     if (hairModel.empty()) return -1;
     std::string lower = hairModel;
@@ -74,6 +83,7 @@ int MorphData::getHairStyleIndex() const {
     }
     return -1;
 }
+
 int MorphData::getBeardStyleIndex() const {
     if (beardModel.empty()) return -1;
     std::string lower = beardModel;
@@ -88,6 +98,7 @@ int MorphData::getBeardStyleIndex() const {
     }
     return -1;
 }
+
 bool MorphData::getSkinColor(float& r, float& g, float& b) const {
     if (skinTexture.empty()) return false;
     std::string lower = skinTexture;
@@ -112,6 +123,7 @@ bool MorphData::getSkinColor(float& r, float& g, float& b) const {
     }
     return false;
 }
+
 bool MorphData::getHairColor(float& r, float& g, float& b) const {
     if (hairTexture.empty()) return false;
     std::string lower = hairTexture;
@@ -130,19 +142,15 @@ bool MorphData::getHairColor(float& r, float& g, float& b) const {
     }
     return false;
 }
+
 void debugPrintMorph(const MorphData& morph) {
-    std::cout << "=== MORPH DATA: " << morph.name << " ===" << std::endl;
-    std::cout << "Model refs: " << morph.modelRefs.size() << std::endl;
-    for (const auto& r : morph.modelRefs) std::cout << "  - " << r << std::endl;
-    std::cout << "Mesh targets: " << morph.meshTargets.size() << std::endl;
     for (const auto& t : morph.meshTargets) {
-        std::cout << "  - " << t.name << ": " << t.vertices.size() << " vertices" << std::endl;
         if (!t.vertices.empty()) {
             const auto& v = t.vertices[0];
-            std::cout << "    First vertex: (" << v.x << ", " << v.y << ", " << v.z << ")" << std::endl;
         }
     }
 }
+
 void applyMorphBlend(
     const std::vector<MorphVertex>& baseVertices,
     const std::vector<MorphVertex>& morphVertices,
@@ -158,19 +166,17 @@ void applyMorphBlend(
         outVertices[i].z = baseVertices[i].z * invAmount + morphVertices[i].z * amount;
     }
 }
+
 bool loadMOR(const std::vector<uint8_t>& data, MorphData& outMorph) {
     outMorph = MorphData();
     if (data.size() < 32) {
-        std::cout << "[MOR] File too small: " << data.size() << " bytes" << std::endl;
         return false;
     }
     if (memcmp(data.data(), "GFF V4.0", 8) != 0) {
-        std::cout << "[MOR] Not a GFF V4.0 file" << std::endl;
         return false;
     }
     const uint8_t* ptr = data.data();
     size_t size = data.size();
-    std::cout << "[MOR] Parsing " << size << " bytes" << std::endl;
     struct TargetPattern {
         const char* utf16;
         size_t len;
@@ -214,7 +220,6 @@ bool loadMOR(const std::vector<uint8_t>& data, MorphData& outMorph) {
         }
     }
     std::sort(targetPositions.begin(), targetPositions.end());
-    std::cout << "[MOR] Found " << targetPositions.size() << " morph targets" << std::endl;
     for (size_t i = 0; i < targetPositions.size(); i++) {
         size_t pos = targetPositions[i].first;
         const std::string& name = targetPositions[i].second;
@@ -243,8 +248,6 @@ bool loadMOR(const std::vector<uint8_t>& data, MorphData& outMorph) {
                         target.vertices[v].y = readFloat(ptr, offset + 4);
                         target.vertices[v].z = readFloat(ptr, offset + 8);
                     }
-                    std::cout << "[MOR] " << name << ": " << vertexCount << " vertices at 0x"
-                              << std::hex << dataStart << std::dec << std::endl;
                     outMorph.meshTargets.push_back(std::move(target));
                 }
             }
@@ -271,7 +274,6 @@ bool loadMOR(const std::vector<uint8_t>& data, MorphData& outMorph) {
                     }
                     if (!found) {
                         outMorph.modelRefs.push_back(s);
-                        std::cout << "[MOR] Found model ref: " << s << std::endl;
                         if (sLower.find("_har_") != std::string::npos && sLower.find("bld") == std::string::npos) {
                             outMorph.hairModel = s;
                         }
@@ -322,19 +324,8 @@ bool loadMOR(const std::vector<uint8_t>& data, MorphData& outMorph) {
             }
         }
     }
-    std::cout << "[MOR] Loaded " << outMorph.meshTargets.size() << " mesh targets, "
-              << outMorph.modelRefs.size() << " model refs" << std::endl;
-    if (!outMorph.hairModel.empty()) std::cout << "[MOR] Hair: " << outMorph.hairModel << std::endl;
-    if (!outMorph.beardModel.empty()) std::cout << "[MOR] Beard: " << outMorph.beardModel << std::endl;
-    if (!outMorph.skinTexture.empty()) std::cout << "[MOR] Skin: " << outMorph.skinTexture << std::endl;
-    if (!outMorph.hairTexture.empty()) std::cout << "[MOR] HairTex: " << outMorph.hairTexture << std::endl;
-    if (!outMorph.lipsTint.empty()) std::cout << "[MOR] Lips: " << outMorph.lipsTint << std::endl;
-    if (!outMorph.eyeshadowTint.empty()) std::cout << "[MOR] Eyeshadow: " << outMorph.eyeshadowTint << std::endl;
-    if (!outMorph.blushTint.empty()) std::cout << "[MOR] Blush: " << outMorph.blushTint << std::endl;
     if (!outMorph.textureSlots.empty()) {
-        std::cout << "[MOR] All texture slots:" << std::endl;
         for (const auto& t : outMorph.textureSlots) {
-            std::cout << "[MOR]   - " << t << std::endl;
         }
     }
     return true;

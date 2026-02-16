@@ -7,6 +7,7 @@ struct ExportOptions {
     bool includeAnimations = true;
     bool includeArmature = true;
     bool bakeCharacterSettings = false;
+    bool doubleSided = false;
     float hairColor[3] = {0.4f, 0.25f, 0.15f};
     float skinColor[3] = {1.0f, 1.0f, 1.0f};
     float eyeColor[3] = {0.4f, 0.3f, 0.2f};
@@ -18,3 +19,4 @@ struct ExportOptions {
 };
 bool exportToGLB(const Model& model, const std::vector<Animation>& animations, const std::string& outputPath, const ExportOptions& options = {});
 bool exportToFBX(const Model& model, const std::vector<Animation>& animations, const std::string& outputPath, const ExportOptions& options = {});
+bool saveRGBAToPNG(const std::string& path, const std::vector<uint8_t>& rgba, int width, int height);

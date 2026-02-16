@@ -227,6 +227,8 @@ add_executable(HavenTools
         src/dependencies/speedtree/spt_convert.h
         src/dependencies/speedtree/speedtree_dll.h
         src/ui_speedtree.cpp
+        src/terrain_export.cpp
+        src/terrain_export.h
 )
 
 target_include_directories(HavenTools PRIVATE

@@ -1,6 +1,5 @@
 #include "export.h"
 #include <fstream>
-#include <iostream>
 #include <cstring>
 #include <vector>
 #include <map>
@@ -31,27 +30,33 @@ static std::string escapeJson(const std::string& s) {
     }
     return out;
 }
+
 static void writeU32(std::vector<uint8_t>& buf, uint32_t val) {
     buf.push_back(val & 0xFF);
     buf.push_back((val >> 8) & 0xFF);
     buf.push_back((val >> 16) & 0xFF);
     buf.push_back((val >> 24) & 0xFF);
 }
+
 static void writeFloat(std::vector<uint8_t>& buf, float val) {
     uint32_t bits;
     std::memcpy(&bits, &val, 4);
     writeU32(buf, bits);
 }
+
 static void writeU16(std::vector<uint8_t>& buf, uint16_t val) {
     buf.push_back(val & 0xFF);
     buf.push_back((val >> 8) & 0xFF);
 }
+
 static void padTo4(std::vector<uint8_t>& buf) {
     while (buf.size() % 4 != 0) buf.push_back(0);
 }
+
 static void padJsonTo4(std::string& json) {
     while (json.size() % 4 != 0) json += ' ';
 }
+
 static int findSkeletonBone(const Skeleton& skeleton, const std::string& name) {
     std::string nameLower = name;
     std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), ::tolower);
@@ -62,6 +67,7 @@ static int findSkeletonBone(const Skeleton& skeleton, const std::string& name) {
     }
     return -1;
 }
+
 static void generateBoxMesh(float hx, float hy, float hz,
                             std::vector<float>& outVerts, std::vector<uint32_t>& outIndices) {
     float v[8][3] = {
@@ -83,6 +89,7 @@ static void generateBoxMesh(float hx, float hy, float hz,
     };
     for (int i = 0; i < 36; i++) outIndices.push_back(idx[i]);
 }
+
 static void generateSphereMesh(float radius, std::vector<float>& outVerts, std::vector<uint32_t>& outIndices) {
     const int segments = 16;
     const int rings = 8;
@@ -125,6 +132,7 @@ static void generateSphereMesh(float radius, std::vector<float>& outVerts, std::
         outIndices.push_back(lastRingStart + s);
     }
 }
+
 static void generateCapsuleMesh(float radius, float height,
                                 std::vector<float>& outVerts, std::vector<uint32_t>& outIndices) {
     const int segments = 16;
@@ -181,6 +189,7 @@ static void generateCapsuleMesh(float radius, float height,
         outIndices.push_back(lastRingStart + s);
     }
 }
+
 static void transformVerts(std::vector<float>& verts, float px, float py, float pz,
                            float qx, float qy, float qz, float qw) {
     for (size_t i = 0; i < verts.size(); i += 3) {
@@ -196,6 +205,7 @@ static void transformVerts(std::vector<float>& verts, float px, float py, float 
         verts[i+2] = nz + pz;
     }
 }
+
 bool exportToGLB(const Model& model, const std::vector<Animation>& animations, const std::string& outputPath, const ExportOptions& options) {
     if (model.meshes.empty()) return false;
     std::vector<uint8_t> binBuffer;
@@ -589,11 +599,6 @@ bool exportToGLB(const Model& model, const std::vector<Animation>& animations, c
                                matNameLower.find("_ubm_") != std::string::npos ||
                                matNameLower.find("_ulm_") != std::string::npos) &&
                               matNameLower.find("bld") == std::string::npos;
-        std::cout << "[Export] Material " << mi << ": " << mat.name << std::endl;
-        std::cout << "  diffuse: " << mat.diffuseWidth << "x" << mat.diffuseHeight << " (" << mat.diffuseData.size() << " bytes)" << std::endl;
-        std::cout << "  normal: " << mat.normalWidth << "x" << mat.normalHeight << " (" << mat.normalData.size() << " bytes)" << std::endl;
-        std::cout << "  specular: " << mat.specularWidth << "x" << mat.specularHeight << " (" << mat.specularData.size() << " bytes)" << std::endl;
-        std::cout << "  tint: " << mat.tintWidth << "x" << mat.tintHeight << " (" << mat.tintData.size() << " bytes)" << std::endl;
         if (!mat.diffuseData.empty() && mat.diffuseWidth > 0 && mat.diffuseHeight > 0) {
             mtex.diffuse = encodePNGToBuffer(mat.diffuseData, mat.diffuseWidth, mat.diffuseHeight, isHairMaterial);
         }
@@ -741,6 +746,11 @@ bool exportToGLB(const Model& model, const std::vector<Animation>& animations, c
         }
         json += "],";
     }
+    std::set<int> alphaMaterialIndices;
+    for (size_t mi = 0; mi < model.meshes.size(); mi++) {
+        if (model.meshes[mi].alphaTest && model.meshes[mi].materialIndex >= 0)
+            alphaMaterialIndices.insert(model.meshes[mi].materialIndex);
+    }
     if (!model.materials.empty()) {
         json += "\"materials\":[";
         for (size_t i = 0; i < model.materials.size(); i++) {
@@ -769,6 +779,12 @@ bool exportToGLB(const Model& model, const std::vector<Animation>& animations, c
                     json += "\"tintTexture\":{\"index\":" + std::to_string(materialTextures[i].tint) + "}";
                 }
                 json += "}";
+            }
+            if (options.doubleSided) {
+                json += ",\"doubleSided\":true";
+            }
+            if (alphaMaterialIndices.count((int)i)) {
+                json += ",\"alphaMode\":\"MASK\",\"alphaCutoff\":0.5";
             }
             json += "}";
         }
@@ -836,6 +852,7 @@ bool exportToGLB(const Model& model, const std::vector<Animation>& animations, c
     out.write(reinterpret_cast<const char*>(binBuffer.data()), binBuffer.size());
     return out.good();
 }
+
 struct Mat4 {
     float m[16];
     static Mat4 Identity() {
@@ -866,6 +883,7 @@ struct Mat4 {
         return res;
     }
 };
+
 bool exportToFBX(const Model& model, const std::vector<Animation>& animations, const std::string& outputPath, const ExportOptions& options) {
     if (model.meshes.empty()) return false;
     std::vector<uint8_t> output;
@@ -1135,6 +1153,14 @@ bool exportToFBX(const Model& model, const std::vector<Animation>& animations, c
         animCurveNodeCount += (int)ae.tracks.size();
         animCurveCount += (int)ae.tracks.size() * 3;
     }
+    auto fbxName = [](const std::string& name, const std::string& cls) -> std::string {
+        std::string r = name;
+        r.push_back('\x00');
+        r.push_back('\x01');
+        r += cls;
+        return r;
+    };
+
     struct NodeWriter {
         std::vector<uint8_t>& out;
         std::vector<size_t> nodeStack;
@@ -1233,18 +1259,14 @@ bool exportToFBX(const Model& model, const std::vector<Animation>& animations, c
         void endProps() { uint32_t listLen = (uint32_t)(out.size() - propStart); setPropertyCount(propCount, listLen); }
     };
     auto quatToEuler = [](float qx, float qy, float qz, float qw, double& ex, double& ey, double& ez) {
-        // FBX uses XYZ rotation order, convert quat to euler XYZ
-        // Roll (X)
         double sinr_cosp = 2.0 * (qw * qx + qy * qz);
         double cosr_cosp = 1.0 - 2.0 * (qx * qx + qy * qy);
         ex = std::atan2(sinr_cosp, cosr_cosp) * 180.0 / 3.14159265358979323846;
-        // Pitch (Y)
         double sinp = 2.0 * (qw * qy - qz * qx);
         if (std::abs(sinp) >= 1.0)
             ey = std::copysign(90.0, sinp);
         else
             ey = std::asin(sinp) * 180.0 / 3.14159265358979323846;
-        // Yaw (Z)
         double siny_cosp = 2.0 * (qw * qz + qx * qy);
         double cosy_cosp = 1.0 - 2.0 * (qy * qy + qz * qz);
         ez = std::atan2(siny_cosp, cosy_cosp) * 180.0 / 3.14159265358979323846;
@@ -1272,13 +1294,13 @@ bool exportToFBX(const Model& model, const std::vector<Animation>& animations, c
         auto addPD = [&](const std::string& name, const std::string& t1, const std::string& t2, const std::string& flags, double val) {
             nw.beginNode("P"); nw.beginProps(); nw.addPropString(name); nw.addPropString(t1); nw.addPropString(t2); nw.addPropString(flags); nw.addPropF64(val); nw.endProps(); nw.endNodeNoNested();
         };
-        addPI("UpAxis", "int", "Integer", "", 2);
+        addPI("UpAxis", "int", "Integer", "", 1);
         addPI("UpAxisSign", "int", "Integer", "", 1);
-        addPI("FrontAxis", "int", "Integer", "", 1);
-        addPI("FrontAxisSign", "int", "Integer", "", -1);
+        addPI("FrontAxis", "int", "Integer", "", 2);
+        addPI("FrontAxisSign", "int", "Integer", "", 1);
         addPI("CoordAxis", "int", "Integer", "", 0);
         addPI("CoordAxisSign", "int", "Integer", "", 1);
-        addPI("OriginalUpAxis", "int", "Integer", "", 2);
+        addPI("OriginalUpAxis", "int", "Integer", "", -1);
         addPI("OriginalUpAxisSign", "int", "Integer", "", 1);
         addPD("UnitScaleFactor", "double", "Number", "", (double)options.fbxScale);
         addPD("OriginalUnitScaleFactor", "double", "Number", "", (double)options.fbxScale);
@@ -1361,7 +1383,7 @@ bool exportToFBX(const Model& model, const std::vector<Animation>& animations, c
     }
     nw.endNode();
     nw.beginNode("Objects"); nw.beginProps(); nw.endProps();
-    std::string rootName = model.name + "\x00\x01" + "Null";
+    std::string rootName = fbxName(model.name, "Model");
     nw.beginNode("Model"); nw.beginProps(); nw.addPropI64(ROOT_MODEL_ID); nw.addPropString(rootName); nw.addPropString("Null"); nw.endProps();
     nw.beginNode("Version"); nw.beginProps(); nw.addPropI32(232); nw.endProps(); nw.endNodeNoNested();
     nw.beginNode("Properties70"); nw.beginProps(); nw.endProps();
@@ -1372,7 +1394,7 @@ bool exportToFBX(const Model& model, const std::vector<Animation>& animations, c
     for (size_t mi = 0; mi < model.meshes.size(); mi++) {
         const auto& mesh = model.meshes[mi];
         std::string meshName = mesh.name.empty() ? "Mesh" + std::to_string(mi) : mesh.name;
-        std::string geoName = meshName + "\x00\x01Mesh";
+        std::string geoName = fbxName(meshName, "Geometry");
         nw.beginNode("Geometry"); nw.beginProps(); nw.addPropI64(getGeoID(mi)); nw.addPropString(geoName); nw.addPropString("Mesh"); nw.endProps();
         nw.beginNode("GeometryVersion"); nw.beginProps(); nw.addPropI32(124); nw.endProps(); nw.endNodeNoNested();
         std::vector<double> vertices;
@@ -1445,7 +1467,7 @@ bool exportToFBX(const Model& model, const std::vector<Animation>& animations, c
         nw.endNode();
         nw.endNode();
         nw.endNode();
-        std::string modelMeshName = meshName + "\x00\x01Mesh";
+        std::string modelMeshName = fbxName(meshName, "Model");
         nw.beginNode("Model"); nw.beginProps(); nw.addPropI64(getModelID(mi)); nw.addPropString(modelMeshName); nw.addPropString("Mesh"); nw.endProps();
         nw.beginNode("Version"); nw.beginProps(); nw.addPropI32(232); nw.endProps(); nw.endNodeNoNested();
         nw.beginNode("Properties70"); nw.beginProps(); nw.endProps(); nw.endNode();
@@ -1456,14 +1478,14 @@ bool exportToFBX(const Model& model, const std::vector<Animation>& animations, c
     if (hasSkeleton) {
         for (size_t bi = 0; bi < model.skeleton.bones.size(); bi++) {
             const auto& bone = model.skeleton.bones[bi];
-            std::string attrName = bone.name + "\x00\x01" + "LimbNode";
+            std::string attrName = fbxName(bone.name, "NodeAttribute");
             nw.beginNode("NodeAttribute"); nw.beginProps(); nw.addPropI64(getNodeAttrID(bi)); nw.addPropString(attrName); nw.addPropString("LimbNode"); nw.endProps();
             nw.beginNode("TypeFlags"); nw.beginProps(); nw.addPropString("Skeleton"); nw.endProps(); nw.endNodeNoNested();
             nw.endNode();
         }
         for (size_t bi = 0; bi < model.skeleton.bones.size(); bi++) {
             const auto& bone = model.skeleton.bones[bi];
-            std::string boneName = bone.name + "\x00\x01" + "LimbNode";
+            std::string boneName = fbxName(bone.name, "Model");
             nw.beginNode("Model"); nw.beginProps(); nw.addPropI64(getBoneID(bi)); nw.addPropString(boneName); nw.addPropString("LimbNode"); nw.endProps();
             nw.beginNode("Version"); nw.beginProps(); nw.addPropI32(232); nw.endProps(); nw.endNodeNoNested();
             nw.beginNode("Properties70"); nw.beginProps(); nw.endProps();
@@ -1480,7 +1502,7 @@ bool exportToFBX(const Model& model, const std::vector<Animation>& animations, c
         }
         for (size_t mi = 0; mi < model.meshes.size(); mi++) {
             if (!meshHasSkin[mi]) continue;
-            nw.beginNode("Deformer"); nw.beginProps(); nw.addPropI64(getSkinID(mi)); nw.addPropString("Skin\x00\x01Skin"); nw.addPropString("Skin"); nw.endProps();
+            nw.beginNode("Deformer"); nw.beginProps(); nw.addPropI64(getSkinID(mi)); nw.addPropString(fbxName("Skin", "Deformer")); nw.addPropString("Skin"); nw.endProps();
             nw.beginNode("Version"); nw.beginProps(); nw.addPropI32(101); nw.endProps(); nw.endNodeNoNested();
             nw.beginNode("Link_DeformAcuracy"); nw.beginProps(); nw.addPropF64(50.0); nw.endProps(); nw.endNodeNoNested();
             nw.endNode();
@@ -1488,7 +1510,7 @@ bool exportToFBX(const Model& model, const std::vector<Animation>& animations, c
                 const auto& infs = meshBoneInfluences[mi][boneIdx];
                 const auto& bone = model.skeleton.bones[boneIdx];
                 nw.beginNode("Deformer"); nw.beginProps(); nw.addPropI64(getClusterID(mi, boneIdx));
-                nw.addPropString(bone.name + "\x00\x01Cluster");
+                nw.addPropString(fbxName(bone.name, "SubDeformer"));
                 nw.addPropString("Cluster"); nw.endProps();
                 nw.beginNode("Version"); nw.beginProps(); nw.addPropI32(100); nw.endProps(); nw.endNodeNoNested();
                 nw.beginNode("UserData"); nw.beginProps(); nw.addPropString(""); nw.addPropString(""); nw.endProps(); nw.endNodeNoNested();
@@ -1529,7 +1551,7 @@ bool exportToFBX(const Model& model, const std::vector<Animation>& animations, c
     }
     for (size_t mi = 0; mi < model.materials.size(); mi++) {
         const auto& mat = model.materials[mi];
-        std::string matName = mat.name + "\x00\x01";
+        std::string matName = fbxName(mat.name, "Material");
         nw.beginNode("Material"); nw.beginProps(); nw.addPropI64(getMaterialID(mi)); nw.addPropString(matName); nw.addPropString(""); nw.endProps();
         nw.beginNode("Version"); nw.beginProps(); nw.addPropI32(102); nw.endProps(); nw.endNodeNoNested();
         nw.beginNode("ShadingModel"); nw.beginProps(); nw.addPropString("Phong"); nw.endProps(); nw.endNodeNoNested();
@@ -1550,7 +1572,7 @@ bool exportToFBX(const Model& model, const std::vector<Animation>& animations, c
         const auto& te = textureEntries[ti];
         const auto& mat = model.materials[te.materialIndex];
         std::string texBaseName = mat.name + te.suffix;
-        std::string videoName = texBaseName + "\x00\x01Clip";
+        std::string videoName = fbxName(texBaseName, "Video");
         nw.beginNode("Video"); nw.beginProps(); nw.addPropI64(getVideoID(ti)); nw.addPropString(videoName); nw.addPropString("Clip"); nw.endProps();
         nw.beginNode("Type"); nw.beginProps(); nw.addPropString("Clip"); nw.endProps(); nw.endNodeNoNested();
         nw.beginNode("Properties70"); nw.beginProps(); nw.endProps(); nw.endNode();
@@ -1559,7 +1581,7 @@ bool exportToFBX(const Model& model, const std::vector<Animation>& animations, c
         nw.beginNode("RelativeFilename"); nw.beginProps(); nw.addPropString(texBaseName + ".png"); nw.endProps(); nw.endNodeNoNested();
         nw.beginNode("Content"); nw.beginProps(); nw.addPropRawBytes(te.pngData.data(), te.pngData.size()); nw.endProps(); nw.endNodeNoNested();
         nw.endNode();
-        std::string texName = texBaseName + "\x00\x01";
+        std::string texName = fbxName(texBaseName, "Texture");
         nw.beginNode("Texture"); nw.beginProps(); nw.addPropI64(getTextureID(ti)); nw.addPropString(texName); nw.addPropString(""); nw.endProps();
         nw.beginNode("Type"); nw.beginProps(); nw.addPropString("TextureVideoClip"); nw.endProps(); nw.endNodeNoNested();
         nw.beginNode("Version"); nw.beginProps(); nw.addPropI32(202); nw.endProps(); nw.endNodeNoNested();
@@ -1578,7 +1600,7 @@ bool exportToFBX(const Model& model, const std::vector<Animation>& animations, c
         const auto& ae = animExports[ai];
         int64_t fbxTimeStart = 0;
         int64_t fbxTimeStop = (int64_t)(ae.duration * 46186158000.0);
-        std::string stackName = "AnimStack::" + ae.name + "\x00\x01";
+        std::string stackName = fbxName("AnimStack::" + ae.name, "AnimStack");
         nw.beginNode("AnimationStack"); nw.beginProps(); nw.addPropI64(getAnimStackID(ai)); nw.addPropString(stackName); nw.addPropString(""); nw.endProps();
         nw.beginNode("Properties70"); nw.beginProps(); nw.endProps();
         nw.beginNode("P"); nw.beginProps(); nw.addPropString("LocalStart"); nw.addPropString("KTime"); nw.addPropString("Time"); nw.addPropString(""); nw.addPropI64(fbxTimeStart); nw.endProps(); nw.endNodeNoNested();
@@ -1587,14 +1609,14 @@ bool exportToFBX(const Model& model, const std::vector<Animation>& animations, c
         nw.beginNode("P"); nw.beginProps(); nw.addPropString("ReferenceStop"); nw.addPropString("KTime"); nw.addPropString("Time"); nw.addPropString(""); nw.addPropI64(fbxTimeStop); nw.endProps(); nw.endNodeNoNested();
         nw.endNode();
         nw.endNode();
-        std::string layerName = "AnimLayer::BaseLayer\x00\x01";
+        std::string layerName = fbxName("AnimLayer::BaseLayer", "AnimLayer");
         nw.beginNode("AnimationLayer"); nw.beginProps(); nw.addPropI64(getAnimLayerID(ai)); nw.addPropString(layerName); nw.addPropString(""); nw.endProps();
         nw.beginNode("Properties70"); nw.beginProps(); nw.endProps(); nw.endNode();
         nw.endNode();
         for (size_t ti = 0; ti < ae.tracks.size(); ti++) {
             const auto& track = ae.tracks[ti];
             std::string curveNodeType = track.isRotation ? "R" : "T";
-            std::string curveNodeName = "AnimCurveNode::" + curveNodeType + "\x00\x01";
+            std::string curveNodeName = fbxName("AnimCurveNode::" + curveNodeType, "AnimCurveNode");
             nw.beginNode("AnimationCurveNode"); nw.beginProps(); nw.addPropI64(getAnimCurveNodeID(ai, ti, 0)); nw.addPropString(curveNodeName); nw.addPropString(""); nw.endProps();
             nw.beginNode("Properties70"); nw.beginProps(); nw.endProps();
             nw.beginNode("P"); nw.beginProps(); nw.addPropString("d|X"); nw.addPropString("Number"); nw.addPropString(""); nw.addPropString("A"); nw.addPropF64(track.valuesX.empty() ? 0.0 : track.valuesX[0]); nw.endProps(); nw.endNodeNoNested();
@@ -1604,7 +1626,7 @@ bool exportToFBX(const Model& model, const std::vector<Animation>& animations, c
             nw.endNode();
             for (int axis = 0; axis < 3; axis++) {
                 const std::vector<float>& vals = (axis == 0) ? track.valuesX : (axis == 1) ? track.valuesY : track.valuesZ;
-                nw.beginNode("AnimationCurve"); nw.beginProps(); nw.addPropI64(getAnimCurveID(ai, ti, 0, axis)); nw.addPropString("AnimCurve::\x00\x01"); nw.addPropString(""); nw.endProps();
+                nw.beginNode("AnimationCurve"); nw.beginProps(); nw.addPropI64(getAnimCurveID(ai, ti, 0, axis)); nw.addPropString(fbxName("AnimCurve::", "AnimCurve")); nw.addPropString(""); nw.endProps();
                 nw.beginNode("Default"); nw.beginProps(); nw.addPropF64(vals.empty() ? 0.0 : vals[0]); nw.endProps(); nw.endNodeNoNested();
                 nw.beginNode("KeyVer"); nw.beginProps(); nw.addPropI32(4009); nw.endProps(); nw.endNodeNoNested();
                 std::vector<int64_t> keyTimes;
@@ -1707,4 +1729,72 @@ bool exportToFBX(const Model& model, const std::vector<Animation>& animations, c
     if (!out) return false;
     out.write(reinterpret_cast<const char*>(output.data()), output.size());
     return out.good();
+}
+
+bool saveRGBAToPNG(const std::string& path, const std::vector<uint8_t>& rgba, int width, int height) {
+    if (rgba.empty() || width <= 0 || height <= 0) return false;
+    std::vector<uint8_t> png;
+    uint32_t crc_table[256];
+    for (int n = 0; n < 256; n++) {
+        uint32_t c = n;
+        for (int k = 0; k < 8; k++) c = (c & 1) ? 0xedb88320 ^ (c >> 1) : c >> 1;
+        crc_table[n] = c;
+    }
+    auto crc32 = [&](const uint8_t* data, size_t len) {
+        uint32_t c = 0xffffffff;
+        for (size_t i = 0; i < len; i++) c = crc_table[(c ^ data[i]) & 0xff] ^ (c >> 8);
+        return c ^ 0xffffffff;
+    };
+    auto write32be = [](std::vector<uint8_t>& v, uint32_t val) {
+        v.push_back((val >> 24) & 0xff); v.push_back((val >> 16) & 0xff);
+        v.push_back((val >> 8) & 0xff); v.push_back(val & 0xff);
+    };
+    auto writeChunk = [&](const char* type, const std::vector<uint8_t>& data) {
+        write32be(png, (uint32_t)data.size());
+        png.insert(png.end(), type, type + 4);
+        png.insert(png.end(), data.begin(), data.end());
+        std::vector<uint8_t> forCrc(type, type + 4);
+        forCrc.insert(forCrc.end(), data.begin(), data.end());
+        write32be(png, crc32(forCrc.data(), forCrc.size()));
+    };
+    png = {0x89, 'P', 'N', 'G', 0x0D, 0x0A, 0x1A, 0x0A};
+    std::vector<uint8_t> ihdr(13);
+    ihdr[0] = (width >> 24) & 0xff; ihdr[1] = (width >> 16) & 0xff;
+    ihdr[2] = (width >> 8) & 0xff; ihdr[3] = width & 0xff;
+    ihdr[4] = (height >> 24) & 0xff; ihdr[5] = (height >> 16) & 0xff;
+    ihdr[6] = (height >> 8) & 0xff; ihdr[7] = height & 0xff;
+    ihdr[8] = 8; ihdr[9] = 6; ihdr[10] = 0; ihdr[11] = 0; ihdr[12] = 0;
+    writeChunk("IHDR", ihdr);
+    std::vector<uint8_t> raw;
+    for (int y = 0; y < height; y++) {
+        raw.push_back(0);
+        raw.insert(raw.end(), rgba.begin() + y * width * 4, rgba.begin() + (y + 1) * width * 4);
+    }
+    std::vector<uint8_t> deflated;
+    deflated.push_back(0x78); deflated.push_back(0x01);
+    size_t pos = 0;
+    while (pos < raw.size()) {
+        size_t remain = raw.size() - pos;
+        size_t blockLen = remain > 65535 ? 65535 : remain;
+        bool last = (pos + blockLen >= raw.size());
+        deflated.push_back(last ? 1 : 0);
+        deflated.push_back(blockLen & 0xff); deflated.push_back((blockLen >> 8) & 0xff);
+        deflated.push_back(~blockLen & 0xff); deflated.push_back((~blockLen >> 8) & 0xff);
+        deflated.insert(deflated.end(), raw.begin() + pos, raw.begin() + pos + blockLen);
+        pos += blockLen;
+    }
+    uint32_t adler = 1;
+    for (size_t i = 0; i < raw.size(); i++) {
+        uint32_t s1 = adler & 0xffff, s2 = (adler >> 16) & 0xffff;
+        s1 = (s1 + raw[i]) % 65521; s2 = (s2 + s1) % 65521;
+        adler = (s2 << 16) | s1;
+    }
+    deflated.push_back((adler >> 24) & 0xff); deflated.push_back((adler >> 16) & 0xff);
+    deflated.push_back((adler >> 8) & 0xff); deflated.push_back(adler & 0xff);
+    writeChunk("IDAT", deflated);
+    writeChunk("IEND", {});
+    std::ofstream f(path, std::ios::binary);
+    if (!f) return false;
+    f.write(reinterpret_cast<const char*>(png.data()), png.size());
+    return f.good();
 }

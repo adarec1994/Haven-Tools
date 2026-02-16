@@ -11,13 +11,10 @@
 #include <set>
 #include <functional>
 #include <cmath>
-#include <iostream>
-
 
 Material parseMAO(const std::string& maoContent, const std::string& materialName) {
     Material mat;
     mat.name = materialName;
-
 
     std::vector<uint8_t> rawBytes(maoContent.begin(), maoContent.end());
     if (rawBytes.size() >= 8 && GFF32::GFF32File::isGFF32(rawBytes)) {
@@ -25,7 +22,6 @@ Material parseMAO(const std::string& maoContent, const std::string& materialName
         if (gff32.load(rawBytes) && gff32.root()) {
             const auto& root = *gff32.root();
 
-            // First pass: detect terrain/water by scanning all string fields
             for (const auto& fieldName : root.fieldOrder) {
                 auto it = root.fields.find(fieldName);
                 if (it == root.fields.end()) continue;
@@ -41,13 +37,14 @@ Material parseMAO(const std::string& maoContent, const std::string& materialName
                     mat.isTerrain = true;
                     break;
                 }
-                if (valLower == "water.mat") {
+                if (valLower == "water.mat" ||
+                    valLower == "flowingwater" ||
+                    valLower == "water") {
                     mat.isWater = true;
                     break;
                 }
             }
 
-            // Second pass: extract textures with terrain awareness
             for (const auto& fieldName : root.fieldOrder) {
                 auto it = root.fields.find(fieldName);
                 if (it == root.fields.end()) continue;
@@ -74,8 +71,25 @@ Material parseMAO(const std::string& maoContent, const std::string& materialName
                             mat.maskVMap = resName;
                         } else if (labelLower == "maska") {
                             mat.maskAMap = resName;
+                        } else if (labelLower == "maska2") {
+                            mat.maskA2Map = resName;
+                        } else if (labelLower == "mml_treliefmappalette") {
+                            mat.reliefMap = resName;
                         }
-                        // ignore lowlod for terrain - palette is the real diffuse
+                    } else if (mat.isWater) {
+                        if (labelLower == "mat_tnormalmap" ||
+                            labelLower.find("normalmap") != std::string::npos ||
+                            labelLower == "normal") {
+                            mat.normalMap = resName;
+                            mat.waterNormalMap = resName;
+                        } else if (labelLower == "mml_tdecal") {
+                            mat.waterDecalMap = resName;
+                        } else if (labelLower == "mml_twatermask") {
+                            mat.waterMaskMap = resName;
+                        } else if (labelLower.find("diffuse") != std::string::npos ||
+                                   labelLower.find("texture") != std::string::npos) {
+                            if (mat.diffuseMap.empty()) mat.diffuseMap = resName;
+                        }
                     } else {
                         if (labelLower.find("diffuse") != std::string::npos ||
                             labelLower.find("packedtexture") != std::string::npos ||
@@ -106,7 +120,6 @@ Material parseMAO(const std::string& maoContent, const std::string& materialName
                     }
                 }
 
-                // Parse terrain vector/matrix parameters from Structure fields
                 if ((mat.isTerrain || mat.isWater) && field.typeId == GFF32::TypeID::Structure) {
                     std::string labelLower = fieldName;
                     std::transform(labelLower.begin(), labelLower.end(), labelLower.begin(), ::tolower);
@@ -152,6 +165,26 @@ Material parseMAO(const std::string& maoContent, const std::string& materialName
                         }
                         for (int i = 0; i < 4; i++) mat.uvScales[i] = uvMatrix[i];
                         for (int i = 0; i < 4; i++) mat.uvScales[4+i] = uvMatrix[4+i];
+                    } else if (labelLower.find("mml_mreliefscale") != std::string::npos) {
+                        float relMatrix[16] = {};
+                        int floatIdx = 0;
+                        for (const auto& fn : st.fieldOrder) {
+                            auto fit = st.fields.find(fn);
+                            if (fit == st.fields.end()) continue;
+                            if (fit->second.typeId == GFF32::TypeID::FLOAT) {
+                                const float* fp = std::get_if<float>(&fit->second.value);
+                                if (fp && floatIdx < 16) relMatrix[floatIdx] = *fp;
+                                floatIdx++;
+                            } else if (fit->second.typeId == GFF32::TypeID::Structure) {
+                                const auto* rowPtr = std::get_if<GFF32::StructurePtr>(&fit->second.value);
+                                if (rowPtr && *rowPtr) {
+                                    extractFloats(**rowPtr, &relMatrix[floatIdx], 4);
+                                    floatIdx += 4;
+                                }
+                            }
+                        }
+                        for (int i = 0; i < 4; i++) mat.reliefScales[i] = relMatrix[i];
+                        for (int i = 0; i < 4; i++) mat.reliefScales[4+i] = relMatrix[4+i];
                     } else if (labelLower.find("mat_vvshwaterparams") != std::string::npos) {
                         extractFloats(st, mat.waveParams, 12);
                     } else if (labelLower.find("mat_vpshwaterparams") != std::string::npos) {
@@ -179,13 +212,14 @@ Material parseMAO(const std::string& maoContent, const std::string& materialName
         return mat;
     }
 
-
     if (maoContent.find("\"terrain.mat\"") != std::string::npos ||
         maoContent.find("\"terrain_low.mat\"") != std::string::npos) {
         mat.isTerrain = true;
     }
     if (maoContent.find("\"Water.mat\"") != std::string::npos ||
-        maoContent.find("\"water.mat\"") != std::string::npos) {
+        maoContent.find("\"water.mat\"") != std::string::npos ||
+        maoContent.find("\"FlowingWater\"") != std::string::npos ||
+        maoContent.find("\"Water\"") != std::string::npos) {
         mat.isWater = true;
     }
 
@@ -235,6 +269,25 @@ Material parseMAO(const std::string& maoContent, const std::string& materialName
                     mat.maskVMap = resName;
                 } else if (texNameLower == "maska") {
                     mat.maskAMap = resName;
+                } else if (texNameLower == "maska2") {
+                    mat.maskA2Map = resName;
+                } else if (texNameLower == "mml_treliefmappalette") {
+                    mat.reliefMap = resName;
+                }
+            } else if (mat.isWater) {
+                if (texNameLower == "mat_tnormalmap" ||
+                    texNameLower.find("normalmap") != std::string::npos ||
+                    texNameLower.find("normal") != std::string::npos) {
+                    mat.normalMap = resName;
+                    mat.waterNormalMap = resName;
+                } else if (texNameLower == "mml_tdecal") {
+                    mat.waterDecalMap = resName;
+                } else if (texNameLower == "mml_twatermask") {
+                    mat.waterMaskMap = resName;
+                } else if (texNameLower.find("distortion") != std::string::npos) {
+                } else if (texNameLower.find("diffuse") != std::string::npos ||
+                           texNameLower.find("texture") != std::string::npos) {
+                    if (mat.diffuseMap.empty()) mat.diffuseMap = resName;
                 }
             } else {
                 if (texNameLower.find("corneanormal") != std::string::npos ||
@@ -318,6 +371,10 @@ Material parseMAO(const std::string& maoContent, const std::string& materialName
         parseFloats("mml_mUVScaleValues", uvMatrix, 16);
         for (int i = 0; i < 4; i++) mat.uvScales[i] = uvMatrix[i];
         for (int i = 0; i < 4; i++) mat.uvScales[4+i] = uvMatrix[4+i];
+        float relMatrix[16] = {};
+        parseFloats("mml_mReliefScale", relMatrix, 16);
+        for (int i = 0; i < 4; i++) mat.reliefScales[i] = relMatrix[i];
+        for (int i = 0; i < 4; i++) mat.reliefScales[4+i] = relMatrix[4+i];
     }
 
     if (mat.isWater) {
@@ -414,7 +471,6 @@ void loadMMH(const std::vector<uint8_t>& data, Model& model) {
                 meshBonesUsed[meshName] = boneIndices;
             }
 
-            // Read mesh's own local position/rotation from child structs (trsl/rota)
             std::vector<GFFStructRef> children = gff.readStructList(structIdx, 6999, offset);
             for (const auto& child : children) {
                 const GFFField* posField = gff.findField(child.structIndex, 6047);
@@ -528,7 +584,6 @@ void loadMMH(const std::vector<uint8_t>& data, Model& model) {
             }
         }
 
-        // Apply mesh local position/rotation
         auto posIt = meshLocalPos.find(mesh.name);
         if (posIt == meshLocalPos.end()) {
             std::string meshLower = mesh.name;

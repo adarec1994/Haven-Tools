@@ -3,6 +3,7 @@
 #include <thread>
 #include "import.h"
 #include "export.h"
+#include "terrain_export.h"
 #include "update/about_text.h"
 #include "update/changelog_text.h"
 static const char* CURRENT_APP_VERSION = "1.14";
@@ -18,6 +19,9 @@ static bool s_scrollToBottom = false;
 static std::string s_pendingImportGlbPath;
 static std::string s_pendingExportPath;
 static bool s_showExportOptions = false;
+static bool s_showLevelExportOptions = false;
+static std::string s_levelExportDir;
+static bool s_levelExportFbx = false;
 static std::map<std::string, bool> s_animSelection;
 static bool s_selectAllAnims = true;
 static bool s_isFbxExport = false;
@@ -31,6 +35,8 @@ void runLoadingTask(AppState* statePtr) {
     state.preloadProgress = 0.0f;
     state.erfFiles = scanForERFFiles(state.selectedFolder);
     state.rimFiles.clear();
+    state.arlFiles.clear();
+    state.opfFiles.clear();
     state.rimMshCounts.clear();
     try {
         for (const auto& entry : fs::recursive_directory_iterator(state.selectedFolder,
@@ -40,14 +46,29 @@ void runLoadingTask(AppState* statePtr) {
             std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
             if (ext == ".lvl") {
                 state.erfFiles.push_back(entry.path().string());
-            } else if (ext == ".rim") {
+            }
+        }
+    } catch (...) {}
+
+    try {
+        for (const auto& entry : fs::recursive_directory_iterator(state.selectedFolder,
+                fs::directory_options::skip_permission_denied)) {
+            if (!entry.is_regular_file()) continue;
+            std::string ext = entry.path().extension().string();
+            std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
+            if (ext == ".rim") {
                 state.rimFiles.push_back(entry.path().string());
+            } else if (ext == ".arl") {
+                state.arlFiles.push_back(entry.path().string());
+            } else if (ext == ".opf") {
+                state.opfFiles.push_back(entry.path().string());
             }
         }
     } catch (...) {}
     std::sort(state.rimFiles.begin(), state.rimFiles.end());
+    std::sort(state.arlFiles.begin(), state.arlFiles.end());
+    std::sort(state.opfFiles.begin(), state.opfFiles.end());
 
-    // Launch RIM .msh counting on a separate thread (non-blocking)
     state.rimMshCounts.assign(state.rimFiles.size(), 0);
     state.rimScanDone = false;
     std::thread([&state]() {
@@ -205,6 +226,7 @@ void runLoadingTask(AppState* statePtr) {
     state.isPreloading = false;
     showSplash = false;
 }
+
 void runCharDesignerLoading(AppState* statePtr) {
     t_isLoadingContent = true;
     statePtr->preloadProgress = 0.0f;
@@ -212,6 +234,7 @@ void runCharDesignerLoading(AppState* statePtr) {
     statePtr->preloadProgress = 1.0f;
     t_isLoadingContent = false;
 }
+
 void runImportTask(AppState* statePtr) {
     AppState& state = *statePtr;
     state.preloadStatus = "Initializing import...";
@@ -285,6 +308,7 @@ void runImportTask(AppState* statePtr) {
         t_alpha = 0.0f;
     }
 }
+
 void runExportTask(AppState* statePtr) {
     AppState& state = *statePtr;
     state.preloadStatus = "Initializing export...";
@@ -345,7 +369,14 @@ void runExportTask(AppState* statePtr) {
     exportOpts.fbxScale = scaleValues[s_fbxScaleIndex];
     bool success = false;
     if (s_isFbxExport) {
-        success = exportToFBX(state.currentModel, exportAnims, s_pendingExportPath, exportOpts);
+        Model fbxModel = state.currentModel;
+        for (auto& mesh : fbxModel.meshes) {
+            for (auto& v : mesh.vertices) {
+                float oy = v.y; v.y = v.z; v.z = -oy;
+                float ony = v.ny; v.ny = v.nz; v.nz = -ony;
+            }
+        }
+        success = exportToFBX(fbxModel, exportAnims, s_pendingExportPath, exportOpts);
     } else {
         success = exportToGLB(state.currentModel, exportAnims, s_pendingExportPath, exportOpts);
     }
@@ -365,6 +396,7 @@ void runExportTask(AppState* statePtr) {
     t_phase = 0;
     t_alpha = 0.0f;
 }
+
 static float s_scrollAccum = 0.0f;
 static GLFWscrollfun s_prevScrollCb = nullptr;
 static bool s_scrollHooked = false;
@@ -457,7 +489,6 @@ void handleInput(AppState& state, GLFWwindow* window, ImGuiIO& io) {
                 state.selectedBoneIndex = closestBone;
             }
         }
-        // Face-level mesh selection via proper ray unprojection
         if (leftPressed && !wasLeftPressed && state.hasModel && !state.renderSettings.showSkeleton
             && state.currentModel.meshes.size() > 1) {
             int width, height;
@@ -469,8 +500,6 @@ void handleInput(AppState& state, GLFWwindow* window, ImGuiIO& io) {
             float ndcX = (2.0f * (float)mx / width) - 1.0f;
             float ndcY = 1.0f - (2.0f * (float)my / height);
 
-            // Build the SAME view matrix as the renderer
-            // V = I * RX(-90deg) * T(-pos) * RY(-yaw) * RX(-pitch)
             auto identity = [](float* m) { for(int i=0;i<16;i++) m[i]=(i%5==0)?1.0f:0.0f; };
             auto mul = [](const float* a, const float* b, float* out) {
                 for(int i=0;i<4;i++) for(int j=0;j<4;j++) {
@@ -503,7 +532,6 @@ void handleInput(AppState& state, GLFWwindow* window, ImGuiIO& io) {
             applyRY(view, -state.camera.yaw);
             applyRX(view, -state.camera.pitch);
 
-            // Invert the view matrix
             float inv[16], det;
             inv[0] = view[5]*view[10]*view[15]-view[5]*view[11]*view[14]-view[9]*view[6]*view[15]+view[9]*view[7]*view[14]+view[13]*view[6]*view[11]-view[13]*view[7]*view[10];
             inv[4] = -view[4]*view[10]*view[15]+view[4]*view[11]*view[14]+view[8]*view[6]*view[15]-view[8]*view[7]*view[14]-view[12]*view[6]*view[11]+view[12]*view[7]*view[10];
@@ -527,19 +555,16 @@ void handleInput(AppState& state, GLFWwindow* window, ImGuiIO& io) {
                 for(int i=0;i<16;i++) inv[i]*=invDet;
             }
 
-            // Ray in view space: direction from origin through NDC point
             float vx = ndcX * tanHalfFov * aspect;
             float vy = ndcY * tanHalfFov;
             float vz = -1.0f;
 
-            // Transform ray direction to world space (inv * direction, w=0)
             float dirX = inv[0]*vx + inv[4]*vy + inv[8]*vz;
             float dirY = inv[1]*vx + inv[5]*vy + inv[9]*vz;
             float dirZ = inv[2]*vx + inv[6]*vy + inv[10]*vz;
             float len = std::sqrt(dirX*dirX + dirY*dirY + dirZ*dirZ);
             dirX /= len; dirY /= len; dirZ /= len;
 
-            // Ray origin = camera position in world space (extract from inv matrix)
             float origX = inv[12];
             float origY = inv[13];
             float origZ = inv[14];
@@ -547,7 +572,6 @@ void handleInput(AppState& state, GLFWwindow* window, ImGuiIO& io) {
             int closestChunk = -1;
             float closestT = 1e30f;
 
-            // Test every triangle in every visible mesh
             for (size_t mi = 0; mi < state.currentModel.meshes.size(); mi++) {
                 if (mi < state.renderSettings.meshVisible.size() && state.renderSettings.meshVisible[mi] == 0) continue;
                 const auto& m = state.currentModel.meshes[mi];
@@ -556,12 +580,9 @@ void handleInput(AppState& state, GLFWwindow* window, ImGuiIO& io) {
                     const auto& v0 = m.vertices[m.indices[ti]];
                     const auto& v1 = m.vertices[m.indices[ti+1]];
                     const auto& v2 = m.vertices[m.indices[ti+2]];
-                    // Vertices are in model space - no transform needed,
-                    // ray is already in the same space via inverse view matrix
                     float ax = v0.x, ay = v0.y, az = v0.z;
                     float bx = v1.x, by = v1.y, bz = v1.z;
                     float cx = v2.x, cy = v2.y, cz = v2.z;
-                    // Moller-Trumbore intersection
                     float e1x = bx-ax, e1y = by-ay, e1z = bz-az;
                     float e2x = cx-ax, e2y = cy-ay, e2z = cz-az;
                     float px = dirY*e2z - dirZ*e2y;
@@ -627,6 +648,7 @@ void handleInput(AppState& state, GLFWwindow* window, ImGuiIO& io) {
         if (ImGui::IsKeyDown(state.keybinds.panDown)) state.camera.moveUp(-speed);
     }
 }
+
 void drawSplashScreen(AppState& state, int displayW, int displayH) {
     ImGui::SetNextWindowPos(ImVec2(0, 0));
     ImGui::SetNextWindowSize(ImVec2((float)displayW, (float)displayH));
@@ -653,9 +675,11 @@ void drawSplashScreen(AppState& state, int displayW, int displayH) {
     }
     ImGui::End();
 }
+
 void preloadErfs(AppState& state) {
     runLoadingTask(&state);
 }
+
 static int s_listeningBind = -1;
 
 static void drawKeybindRow(const char* label, ImGuiKey& key, int id) {
@@ -709,6 +733,7 @@ void drawKeybindsWindow(AppState& state) {
         ImGui::TableNextColumn();
 
         drawKeybindRow("Deselect", state.keybinds.deselectBone, 6);
+        drawKeybindRow("Delete Object", state.keybinds.deleteObject, 7);
 
         ImGui::EndTable();
     }
@@ -876,6 +901,36 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
             ImGui::OpenPopup("Export Options");
         }
         ImGuiFileDialog::Instance()->Close();
+    }
+    if (ImGuiFileDialog::Instance()->Display("ExportLevelArea", ImGuiWindowFlags_NoCollapse, ImVec2(500, 400))) {
+        if (ImGuiFileDialog::Instance()->IsOk()) {
+            s_levelExportDir = ImGuiFileDialog::Instance()->GetCurrentPath();
+            s_showLevelExportOptions = true;
+            ImGui::OpenPopup("Level Export Options");
+        }
+        ImGuiFileDialog::Instance()->Close();
+    }
+    if (ImGui::BeginPopupModal("Level Export Options", &s_showLevelExportOptions, ImGuiWindowFlags_AlwaysAutoResize)) {
+        ImGui::Text("Export level area: %s", fs::path(state.currentRIMPath).stem().string().c_str());
+        ImGui::Separator();
+        ImGui::Text("Model Format:");
+        if (ImGui::RadioButton("GLB", !s_levelExportFbx)) s_levelExportFbx = false;
+        ImGui::SameLine();
+        if (ImGui::RadioButton("FBX", s_levelExportFbx)) s_levelExportFbx = true;
+        ImGui::Separator();
+        if (ImGui::Button("Export", ImVec2(120, 0))) {
+            LevelExportOptions opts;
+            opts.useFbx = s_levelExportFbx;
+            startLevelExport(state, s_levelExportDir, opts);
+            s_showLevelExportOptions = false;
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Cancel", ImVec2(120, 0))) {
+            s_showLevelExportOptions = false;
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::EndPopup();
     }
     if (ImGui::BeginPopupModal("Export Options", &s_showExportOptions, ImGuiWindowFlags_AlwaysAutoResize)) {
         bool hasCollision = !state.currentModel.collisionShapes.empty();
@@ -1277,7 +1332,11 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
                 ImGui::EndMenu();
             }
             if (ImGui::BeginMenu("Export")) {
-                if (ImGui::MenuItem("To GLB", nullptr, false, state.hasModel)) {
+                bool levelLoaded = state.hasModel && state.levelLoad.stage == 0 &&
+                    state.levelExport.stage == 0 &&
+                    (!state.levelLoad.propQueue.empty() || !state.levelLoad.sptQueue.empty());
+                bool canExportModel = state.hasModel && !levelLoaded;
+                if (ImGui::MenuItem("To GLB", nullptr, false, canExportModel)) {
                     IGFD::FileDialogConfig config;
 #ifdef _WIN32
                     char* userProfile = getenv("USERPROFILE");
@@ -1295,7 +1354,7 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
                     config.fileName = defaultName;
                     ImGuiFileDialog::Instance()->OpenDialog("ExportCurrentGLB", "Export Model as GLB", ".glb", config);
                 }
-                if (ImGui::MenuItem("To FBX", nullptr, false, state.hasModel)) {
+                if (ImGui::MenuItem("To FBX", nullptr, false, canExportModel)) {
                     IGFD::FileDialogConfig config;
 #ifdef _WIN32
                     char* userProfile = getenv("USERPROFILE");
@@ -1312,6 +1371,20 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
                     defaultName += ".fbx";
                     config.fileName = defaultName;
                     ImGuiFileDialog::Instance()->OpenDialog("ExportCurrentFBX", "Export Model as FBX", ".fbx", config);
+                }
+                ImGui::Separator();
+                if (ImGui::MenuItem("Level Area...", nullptr, false, levelLoaded)) {
+                    IGFD::FileDialogConfig config;
+#ifdef _WIN32
+                    char* userProfile = getenv("USERPROFILE");
+                    if (userProfile) config.path = std::string(userProfile) + "\\Documents";
+                    else config.path = ".";
+#else
+                    char* home = getenv("HOME");
+                    if (home) config.path = std::string(home) + "/Documents";
+                    else config.path = ".";
+#endif
+                    ImGuiFileDialog::Instance()->OpenDialog("ExportLevelArea", "Choose Export Folder", nullptr, config);
                 }
                 ImGui::EndMenu();
             }
@@ -1403,6 +1476,37 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
         ImGui::SetCursorPosX(right - verW - ImGui::GetStyle().ItemSpacing.x);
         ImGui::TextUnformatted(ver);
         ImGui::EndMainMenuBar();
+    }
+    if (state.levelExport.stage > 0) {
+        tickLevelExport(state);
+        auto& ex = state.levelExport;
+        float progress = 0.0f;
+        std::string detail;
+        if (ex.stage == 1) {
+            progress = 0.0f;
+            detail = "Terrain...";
+        } else if (ex.stage == 2) {
+            int total = std::max(ex.totalProps, 1);
+            progress = 0.1f + 0.5f * ((float)ex.itemIndex / total);
+            detail = std::to_string(ex.propsExported) + " / " + std::to_string(ex.totalProps) + " props";
+        } else if (ex.stage == 3) {
+            int total = std::max(ex.totalTrees, 1);
+            progress = 0.6f + 0.35f * ((float)ex.itemIndex / total);
+            detail = std::to_string(ex.treesExported) + " / " + std::to_string(ex.totalTrees) + " trees";
+        } else if (ex.stage == 4) {
+            progress = 0.95f;
+            detail = "Writing .havenarea...";
+        }
+        ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+        ImGui::SetNextWindowPos(center, ImGuiCond_Always, ImVec2(0.5f, 0.5f));
+        ImGui::SetNextWindowSize(ImVec2(400, 0));
+        ImGui::Begin("##LevelExporting", nullptr,
+            ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
+            ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar |
+            ImGuiWindowFlags_AlwaysAutoResize);
+        ImGui::Text("%s", ex.stageLabel.c_str());
+        ImGui::ProgressBar(progress, ImVec2(-1, 0), detail.c_str());
+        ImGui::End();
     }
     if (state.mainTab == 0) {
         if (state.showBrowser) drawBrowserWindow(state);

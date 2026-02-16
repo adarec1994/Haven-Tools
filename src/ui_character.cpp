@@ -1,6 +1,5 @@
 #include "ui_internal.h"
 #include "tnt_loader.h"
-#include <iostream>
 #include <set>
 
 static std::set<std::string> s_materialCache;
@@ -29,7 +28,6 @@ void buildMaterialCache(AppState& state, float startProgress, float endProgress)
             ERFFile erf;
             if (!erf.open(erfPath)) continue;
 
-            std::cout << "[MAT] Scanning " << erfPath << std::endl;
 
             for (const auto& entry : erf.entries()) {
                 std::string entryLower = entry.name;
@@ -44,7 +42,6 @@ void buildMaterialCache(AppState& state, float startProgress, float endProgress)
         }
     }
 
-    std::cout << "[MAT] Cached " << totalMats << " materials." << std::endl;
     s_materialCacheBuilt = true;
     state.preloadProgress = endProgress;
 }
@@ -96,7 +93,6 @@ static void loadTintCache(AppState& state, float startProgress = 0.0f, float end
     size_t total = state.erfFiles.size();
     size_t processed = 0;
 
-    std::cout << "[TINT] Scanning " << state.erfFiles.size() << " ERFs for .tnt files" << std::endl;
 
     for (const auto& erfPath : state.erfFiles) {
         processed++;
@@ -124,15 +120,12 @@ static void loadTintCache(AppState& state, float startProgress = 0.0f, float end
 
                     if (name.find("skn") != std::string::npos) {
                         TintColor c = tint.getPrimaryColor();
-                        std::cout << "[TINT] " << name << ": RGB("
-                                  << c.r << ", " << c.g << ", " << c.b << ")" << std::endl;
                     }
                 }
             }
         }
     }
 
-    std::cout << "[TINT] Loaded " << totalLoaded << " tints total" << std::endl;
     state.tintCacheLoaded = true;
     state.preloadProgress = endProgress;
 }
@@ -750,13 +743,11 @@ static void attachWeaponToBone(AppState& state, Model& model, const std::string&
     }
 
     if (boneIdx < 0) {
-        std::cout << "[Weapon] Could not find bone: " << boneName << std::endl;
         return;
     }
 
     Model* weaponModel = getOrLoadPart(state, weaponFile);
     if (!weaponModel) {
-        std::cout << "[Weapon] Could not load weapon: " << weaponFile << std::endl;
         return;
     }
 
