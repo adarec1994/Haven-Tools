@@ -550,10 +550,12 @@ void drawBrowserWindow(AppState& state) {
             ll.stageLabel = "Loading terrain...";
         }
         else if (ll.stage == 2) {
+            if (!state.currentErf) { ll.stage = 0; ll.stageLabel = ""; }
+            else {
             int processed = 0;
             for (int i = ll.itemIndex; i < ll.totalTerrain && processed < BATCH_SIZE; i++) {
                 size_t rimIdx = ll.terrainQueue[i];
-                if (state.rimEntries[rimIdx].entryIdx < state.currentErf->entries().size()) {
+                if (rimIdx < state.rimEntries.size() && state.rimEntries[rimIdx].entryIdx < state.currentErf->entries().size()) {
                     const auto& erfEntry = state.currentErf->entries()[state.rimEntries[rimIdx].entryIdx];
                     size_t meshCountBefore = state.currentModel.meshes.size();
                     if (mergeModelEntry(state, erfEntry)) {
@@ -576,6 +578,7 @@ void drawBrowserWindow(AppState& state) {
                 ll.stage = 3;
                 ll.stageLabel = "Loading props...";
             }
+            } // end currentErf null check
         }
         else if (ll.stage == 3) {
             const int PROP_BATCH_SIZE = 32;
@@ -1745,6 +1748,11 @@ void drawBrowserWindow(AppState& state) {
 
                 bool isRimClick = (state.selectedErfName == "[Env]" && ce.entryIdx == 0);
                 if (isRimClick) {
+                    // Cancel any in-progress level load to prevent it from using stale rimEntries
+                    if (state.levelLoad.stage != 0) {
+                        state.levelLoad.stage = 0;
+                        state.levelLoad.stageLabel = "";
+                    }
                     if (ce.erfIdx < state.rimFiles.size()) {
                         std::string rimPath = state.rimFiles[ce.erfIdx];
                         ERFFile rimErf;
@@ -1814,7 +1822,11 @@ void drawBrowserWindow(AppState& state) {
                             state.statusMessage = "Failed to parse FSB file";
                         }
                     }
-                } else if (ImGui::IsMouseDoubleClicked(0)) {
+                }
+                bool isEnvEntry = (state.selectedErfName == "[Env]" ||
+                                   state.selectedErfName == "[Audio]" ||
+                                   state.selectedErfName == "[VoiceOver]");
+                if (ImGui::IsMouseDoubleClicked(0) && !isRimClick && !isAudio && !isEnvEntry) {
                     if (ce.erfIdx == SIZE_MAX) {
                         std::string ceLower = ce.name;
                         std::transform(ceLower.begin(), ceLower.end(), ceLower.begin(), ::tolower);
@@ -2072,7 +2084,7 @@ void drawBrowserWindow(AppState& state) {
                 if (ImGui::MenuItem("Open with GFF Viewer")) {
                     auto data = readCachedEntryData(state, ce);
                     if (!data.empty() && isGffData(data)) {
-                        std::string erfSrc = (ce.erfIdx == SIZE_MAX) ? "" : state.erfFiles[ce.erfIdx];
+                        std::string erfSrc = (ce.erfIdx == SIZE_MAX || ce.erfIdx >= state.erfFiles.size()) ? "" : state.erfFiles[ce.erfIdx];
                         if (loadGffData(state.gffViewer, data, ce.name, erfSrc, ce.entryIdx)) {
                             state.statusMessage = "Opened: " + ce.name;
                         }
@@ -2140,7 +2152,7 @@ void drawBrowserWindow(AppState& state) {
                 if (ImGui::MenuItem("Open with GFF Viewer")) {
                     auto data = readCachedEntryData(state, ce);
                     if (!data.empty() && isGffData(data)) {
-                        std::string erfSrc = (ce.erfIdx == SIZE_MAX) ? "" : state.erfFiles[ce.erfIdx];
+                        std::string erfSrc = (ce.erfIdx == SIZE_MAX || ce.erfIdx >= state.erfFiles.size()) ? "" : state.erfFiles[ce.erfIdx];
                         if (loadGffData(state.gffViewer, data, ce.name, erfSrc, ce.entryIdx)) {
                             state.statusMessage = "Opened: " + ce.name;
                         }
@@ -2171,7 +2183,7 @@ void drawBrowserWindow(AppState& state) {
                 if (ImGui::MenuItem("Open with GFF Viewer")) {
                     auto data = readCachedEntryData(state, ce);
                     if (!data.empty() && isGffData(data)) {
-                        std::string erfSrc = (ce.erfIdx == SIZE_MAX) ? "" : state.erfFiles[ce.erfIdx];
+                        std::string erfSrc = (ce.erfIdx == SIZE_MAX || ce.erfIdx >= state.erfFiles.size()) ? "" : state.erfFiles[ce.erfIdx];
                         if (loadGffData(state.gffViewer, data, ce.name, erfSrc, ce.entryIdx)) {
                             state.statusMessage = "Opened: " + ce.name;
                         }

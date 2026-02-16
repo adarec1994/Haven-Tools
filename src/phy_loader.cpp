@@ -256,6 +256,7 @@ bool loadPHY(const std::vector<uint8_t>& data, Model& model) {
 static void loadTextureErfs(AppState& state) {
     if (state.textureErfsLoaded) return;
     state.textureErfs.clear();
+    state.textureErfPaths.clear();
     for (const auto& erfPath : state.erfFiles) {
         std::string filename = fs::path(erfPath).filename().string();
         std::string filenameLower = filename;
@@ -264,6 +265,7 @@ static void loadTextureErfs(AppState& state) {
             auto erf = std::make_unique<ERFFile>();
             if (erf->open(erfPath) && erf->encryption() == 0) {
                 state.textureErfs.push_back(std::move(erf));
+                state.textureErfPaths.push_back(erfPath);
             }
         }
     }
@@ -273,14 +275,23 @@ static void loadTextureErfs(AppState& state) {
 static void loadModelErfs(AppState& state) {
     if (state.modelErfsLoaded) return;
     state.modelErfs.clear();
+    state.modelErfPaths.clear();
     for (const auto& erfPath : state.erfFiles) {
-        std::string filename = fs::path(erfPath).filename().string();
-        std::string filenameLower = filename;
-        std::transform(filenameLower.begin(), filenameLower.end(), filenameLower.begin(), ::tolower);
-        if (filenameLower.find("modelhierarch") != std::string::npos) {
+        std::string extLower = fs::path(erfPath).extension().string();
+        std::transform(extLower.begin(), extLower.end(), extLower.begin(), ::tolower);
+        if (extLower == ".lvl") continue;
+
+        std::string pathLower = erfPath;
+        std::transform(pathLower.begin(), pathLower.end(), pathLower.begin(), ::tolower);
+        bool isModel = pathLower.find("model") != std::string::npos ||
+                       pathLower.find("morph") != std::string::npos ||
+                       pathLower.find("face") != std::string::npos ||
+                       pathLower.find("chargen") != std::string::npos;
+        if (isModel) {
             auto erf = std::make_unique<ERFFile>();
             if (erf->open(erfPath) && erf->encryption() == 0) {
                 state.modelErfs.push_back(std::move(erf));
+                state.modelErfPaths.push_back(erfPath);
             }
         }
     }
@@ -290,6 +301,7 @@ static void loadModelErfs(AppState& state) {
 static void loadMaterialErfs(AppState& state) {
     if (state.materialErfsLoaded) return;
     state.materialErfs.clear();
+    state.materialErfPaths.clear();
     for (const auto& erfPath : state.erfFiles) {
         std::string filename = fs::path(erfPath).filename().string();
         std::string filenameLower = filename;
@@ -298,6 +310,7 @@ static void loadMaterialErfs(AppState& state) {
             auto erf = std::make_unique<ERFFile>();
             if (erf->open(erfPath) && erf->encryption() == 0) {
                 state.materialErfs.push_back(std::move(erf));
+                state.materialErfPaths.push_back(erfPath);
             }
         }
     }

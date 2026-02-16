@@ -584,7 +584,10 @@ static void applyMaterialStyle(AppState& state, Model& model, int styleOffset, c
         std::string newMatName = baseName + newStyle;
 
         if (materialExists(state, newMatName)) {
-            std::vector<uint8_t> maoData = readFromErfs(state.materialErfs, newMatName + ".mao");
+            std::vector<uint8_t> maoData = readFromCache(state, newMatName + ".mao", ".mao");
+            if (maoData.empty()) {
+                maoData = readFromErfs(state.materialErfs, newMatName + ".mao");
+            }
             if (!maoData.empty()) {
                 std::string maoContent(maoData.begin(), maoData.end());
                 Material newMat = parseMAO(maoContent, newMatName);
@@ -642,7 +645,7 @@ static Model* getOrLoadPart(AppState& state, const std::string& partFile) {
         mmhCandidates.push_back(variantA + ".mmh");
     }
     for (const auto& candidate : mmhCandidates) {
-        std::vector<uint8_t> mmhData = readFromErfs(state.modelErfs, candidate);
+        std::vector<uint8_t> mmhData = readFromCache(state, candidate, ".mmh");
         if (!mmhData.empty()) {
             loadMMH(mmhData, partModel);
             break;
@@ -655,7 +658,7 @@ static Model* getOrLoadPart(AppState& state, const std::string& partFile) {
         }
     }
     for (const std::string& matName : materialNames) {
-        std::vector<uint8_t> maoData = readFromErfs(state.materialErfs, matName + ".mao");
+        std::vector<uint8_t> maoData = readFromCache(state, matName + ".mao", ".mao");
         if (!maoData.empty()) {
             std::string maoContent(maoData.begin(), maoData.end());
             Material mat = parseMAO(maoContent, matName);

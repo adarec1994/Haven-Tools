@@ -1047,14 +1047,16 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
                 }
             }
         } else if (t_phase == 2) {
+            // Clear render state on any tab switch
+            state.hasModel = false;
+            state.currentModel = Model();
+            state.currentAnim = Animation();
+            state.animPlaying = false;
             if (t_targetTab == 1 && state.mainTab != 1) {
                 state.renderSettings.showSkeleton = false;
                 state.renderSettings.showAxes = false;
                 state.renderSettings.showGrid = false;
-                state.hasModel = false;
-                state.currentModel = Model();
-                state.currentAnim = Animation();
-                state.animPlaying = false;
+                state.charDesigner.needsRebuild = true;
             }
             state.mainTab = t_targetTab;
             t_phase = 3;
