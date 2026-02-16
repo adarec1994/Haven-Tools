@@ -630,16 +630,6 @@ bool DAOImporter::LoadGLB(const std::string& path, DAOModelData& outData) {
         defaultMat.specularMap = "default_spec.dds";
         outData.materials.push_back(defaultMat);
     }
-    auto rotateByQuat = [](float& x, float& y, float& z, const float* q) {
-        float qx = q[0], qy = q[1], qz = q[2], qw = q[3];
-        float tx = 2.0f * (qy * z - qz * y);
-        float ty = 2.0f * (qz * x - qx * z);
-        float tz = 2.0f * (qx * y - qy * x);
-        float nx = x + qw * tx + (qy * tz - qz * ty);
-        float ny = y + qw * ty + (qz * tx - qx * tz);
-        float nz = z + qw * tz + (qx * ty - qy * tx);
-        x = nx; y = ny; z = nz;
-    };
     auto isCollisionMesh = [](const std::string& name) -> bool {
         if (name.size() < 4) return false;
         char c0 = std::tolower((unsigned char)name[0]);
@@ -947,82 +937,36 @@ bool DAOImporter::LoadGLB(const std::string& path, DAOModelData& outData) {
             outData.parts.push_back(part);
         }
     }
-    // Apply armature/root node rotation to convert from Z-up to Y-up
-    // Blender GLB exports put a -90° X rotation on the armature node (parent of skeleton root)
-    float armRot[4] = {0, 0, 0, 1};
-    bool hasArmRotation = false;
-
-    // Find the armature node - it's the PARENT of skin.skeleton (the root bone)
-    if (!model.skins.empty() && model.skins[0].skeleton >= 0) {
-        int skelRootIdx = model.skins[0].skeleton;
-        for (size_t ni = 0; ni < model.nodes.size(); ++ni) {
-            const auto& node = model.nodes[ni];
-            for (int childIdx : node.children) {
-                if (childIdx == skelRootIdx && !node.rotation.empty()) {
-                    armRot[0] = (float)node.rotation[0];
-                    armRot[1] = (float)node.rotation[1];
-                    armRot[2] = (float)node.rotation[2];
-                    armRot[3] = (float)node.rotation[3];
-                    hasArmRotation = true;
-                    break;
-                }
-            }
-            if (hasArmRotation) break;
+    // GLB mesh data from Blender is in Z-up local space.
+    // DAO uses Y-up. Convert: (x, y, z) -> (x, -z, y)
+    for (auto& part : outData.parts) {
+        for (auto& v : part.vertices) {
+            float oy = v.y;  v.y = -v.z;  v.z = oy;
+            float ny = v.ny; v.ny = -v.nz; v.nz = ny;
+            float ty = v.ty; v.ty = -v.tz; v.tz = ty;
         }
     }
-    // Fallback: find any node with rotation that parents mesh or joint nodes
-    if (!hasArmRotation) {
-        for (const auto& node : model.nodes) {
-            if (node.rotation.empty() || node.children.empty()) continue;
-            bool hasRelevantChild = false;
-            for (int c : node.children) {
-                if (c >= 0 && c < (int)model.nodes.size()) {
-                    if (model.nodes[c].mesh >= 0) hasRelevantChild = true;
-                    if (!model.skins.empty()) {
-                        for (int j : model.skins[0].joints) {
-                            if (j == c) { hasRelevantChild = true; break; }
-                        }
-                    }
-                }
-            }
-            if (hasRelevantChild) {
-                armRot[0] = (float)node.rotation[0];
-                armRot[1] = (float)node.rotation[1];
-                armRot[2] = (float)node.rotation[2];
-                armRot[3] = (float)node.rotation[3];
-                hasArmRotation = true;
-                break;
+    // Convert root bone transforms
+    if (outData.skeleton.hasSkeleton) {
+        for (auto& bone : outData.skeleton.bones) {
+            if (bone.parentIndex < 0) {
+                float oy = bone.translation[1];
+                bone.translation[1] = -bone.translation[2];
+                bone.translation[2] = oy;
+                // Prepend +90° X rotation to root bone quaternion
+                // Q_x(+90) = (0.7071068, 0, 0, 0.7071068)
+                float rqx = 0.7071068f, rqy = 0.0f, rqz = 0.0f, rqw = 0.7071068f;
+                float bq[4] = {bone.rotation[0], bone.rotation[1], bone.rotation[2], bone.rotation[3]};
+                bone.rotation[3] = rqw*bq[3] - rqx*bq[0] - rqy*bq[1] - rqz*bq[2];
+                bone.rotation[0] = rqw*bq[0] + rqx*bq[3] + rqy*bq[2] - rqz*bq[1];
+                bone.rotation[1] = rqw*bq[1] - rqx*bq[2] + rqy*bq[3] + rqz*bq[0];
+                bone.rotation[2] = rqw*bq[2] + rqx*bq[1] - rqy*bq[0] + rqz*bq[3];
             }
         }
     }
-
-    if (hasArmRotation) {
-        // Apply rotation to all vertex positions, normals, tangents
-        for (auto& part : outData.parts) {
-            for (auto& v : part.vertices) {
-                rotateByQuat(v.x, v.y, v.z, armRot);
-                rotateByQuat(v.nx, v.ny, v.nz, armRot);
-                rotateByQuat(v.tx, v.ty, v.tz, armRot);
-            }
-        }
-        // Apply rotation to root bone transforms
-        if (outData.skeleton.hasSkeleton) {
-            for (auto& bone : outData.skeleton.bones) {
-                if (bone.parentIndex < 0) {
-                    rotateByQuat(bone.translation[0], bone.translation[1], bone.translation[2], armRot);
-                    // Prepend armature rotation to root bone rotation: R_new = R_arm * R_bone
-                    float bq[4] = {bone.rotation[0], bone.rotation[1], bone.rotation[2], bone.rotation[3]};
-                    bone.rotation[3] = armRot[3]*bq[3] - armRot[0]*bq[0] - armRot[1]*bq[1] - armRot[2]*bq[2];
-                    bone.rotation[0] = armRot[3]*bq[0] + armRot[0]*bq[3] + armRot[1]*bq[2] - armRot[2]*bq[1];
-                    bone.rotation[1] = armRot[3]*bq[1] - armRot[0]*bq[2] + armRot[1]*bq[3] + armRot[2]*bq[0];
-                    bone.rotation[2] = armRot[3]*bq[2] + armRot[0]*bq[1] - armRot[1]*bq[0] + armRot[2]*bq[3];
-                }
-            }
-        }
-        // Apply rotation to collision shapes
-        for (auto& shape : outData.collisionShapes) {
-            rotateByQuat(shape.posX, shape.posY, shape.posZ, armRot);
-        }
+    // Convert collision shapes
+    for (auto& shape : outData.collisionShapes) {
+        float oy = shape.posY; shape.posY = -shape.posZ; shape.posZ = oy;
     }
 
     return !outData.parts.empty() || !outData.collisionShapes.empty();

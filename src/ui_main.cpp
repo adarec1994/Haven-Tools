@@ -35,7 +35,7 @@ static void boneEditAxisAngleToQuat(float ax, float ay, float az, float angle,
     qx = ax * s; qy = ay * s; qz = az * s; qw = cosf(ha);
 }
 
-static void boneEditApply(AppState& state, float mouseDeltaX) {
+static void boneEditApply(AppState& state, float mouseDX, float mouseDY) {
     if (state.boneEditMode == 0 || state.selectedBoneIndex < 0) return;
     if (state.selectedBoneIndex >= (int)state.currentModel.skeleton.bones.size()) return;
     Bone& bone = state.currentModel.skeleton.bones[state.selectedBoneIndex];
@@ -43,28 +43,44 @@ static void boneEditApply(AppState& state, float mouseDeltaX) {
 
     if (state.boneEditMode == 1) {
         sensitivity = 0.005f;
-        float angle = mouseDeltaX * sensitivity;
-        float ax = 0, ay = 0, az = 0;
-        if (state.boneEditAxis == 0) ax = 1;
-        else if (state.boneEditAxis == 1) ay = 1;
-        else if (state.boneEditAxis == 2) az = 1;
-        else ay = 1;
-        float dqx, dqy, dqz, dqw;
-        boneEditAxisAngleToQuat(ax, ay, az, angle, dqx, dqy, dqz, dqw);
-        boneEditQuatMul(state.boneEditSavedRot[0], state.boneEditSavedRot[1],
-                        state.boneEditSavedRot[2], state.boneEditSavedRot[3],
-                        dqx, dqy, dqz, dqw,
-                        bone.rotX, bone.rotY, bone.rotZ, bone.rotW);
+        if (state.boneEditAxis >= 0) {
+            float angle = mouseDX * sensitivity;
+            float ax = 0, ay = 0, az = 0;
+            if (state.boneEditAxis == 0) ax = 1;
+            else if (state.boneEditAxis == 1) ay = 1;
+            else if (state.boneEditAxis == 2) az = 1;
+            float dqx, dqy, dqz, dqw;
+            boneEditAxisAngleToQuat(ax, ay, az, angle, dqx, dqy, dqz, dqw);
+            boneEditQuatMul(state.boneEditSavedRot[0], state.boneEditSavedRot[1],
+                            state.boneEditSavedRot[2], state.boneEditSavedRot[3],
+                            dqx, dqy, dqz, dqw,
+                            bone.rotX, bone.rotY, bone.rotZ, bone.rotW);
+        } else {
+            float angleY = mouseDX * sensitivity;
+            float angleX = -mouseDY * sensitivity;
+            float dqx1, dqy1, dqz1, dqw1;
+            boneEditAxisAngleToQuat(0, 1, 0, angleY, dqx1, dqy1, dqz1, dqw1);
+            float dqx2, dqy2, dqz2, dqw2;
+            boneEditAxisAngleToQuat(1, 0, 0, angleX, dqx2, dqy2, dqz2, dqw2);
+            float cx, cy, cz, cw;
+            boneEditQuatMul(dqx1, dqy1, dqz1, dqw1, dqx2, dqy2, dqz2, dqw2, cx, cy, cz, cw);
+            boneEditQuatMul(state.boneEditSavedRot[0], state.boneEditSavedRot[1],
+                            state.boneEditSavedRot[2], state.boneEditSavedRot[3],
+                            cx, cy, cz, cw,
+                            bone.rotX, bone.rotY, bone.rotZ, bone.rotW);
+        }
     } else if (state.boneEditMode == 2) {
         sensitivity = 0.0005f;
-        float offset = mouseDeltaX * sensitivity;
         bone.posX = state.boneEditSavedPos[0];
         bone.posY = state.boneEditSavedPos[1];
         bone.posZ = state.boneEditSavedPos[2];
-        if (state.boneEditAxis == 0) bone.posX += offset;
-        else if (state.boneEditAxis == 1) bone.posY += offset;
-        else if (state.boneEditAxis == 2) bone.posZ += offset;
-        else bone.posX += offset;
+        if (state.boneEditAxis == 0) bone.posX += mouseDX * sensitivity;
+        else if (state.boneEditAxis == 1) bone.posY += mouseDX * sensitivity;
+        else if (state.boneEditAxis == 2) bone.posZ += mouseDX * sensitivity;
+        else {
+            bone.posX += mouseDX * sensitivity;
+            bone.posY += -mouseDY * sensitivity;
+        }
     }
     computeBoneWorldTransforms(state.currentModel);
     state.bonePoseMode = true;
@@ -555,7 +571,8 @@ void handleInput(AppState& state, GLFWwindow* window, ImGuiIO& io) {
         }
         else if (leftPressed && !wasLeftPressed && state.hasModel && state.renderSettings.showSkeleton) {
             int width, height;
-            glfwGetFramebufferSize(window, &width, &height);
+            glfwGetWindowSize(window, &width, &height);
+            if (width <= 0 || height <= 0) { wasLeftPressed = leftPressed; return; }
             float aspect = (float)width / (float)height;
             float fov = 45.0f * 3.14159f / 180.0f;
             float tanHalfFov = std::tan(fov / 2.0f);
@@ -634,7 +651,6 @@ void handleInput(AppState& state, GLFWwindow* window, ImGuiIO& io) {
 
             int closestBone = -1;
             float closestDist = 999999.0f;
-            float threshold = 0.15f;
             for (size_t i = 0; i < state.currentModel.skeleton.bones.size(); i++) {
                 const auto& bone = state.currentModel.skeleton.bones[i];
                 float bx = bone.worldPosX;
@@ -649,6 +665,7 @@ void handleInput(AppState& state, GLFWwindow* window, ImGuiIO& io) {
                 float cy = origY + dirY * t - by;
                 float cz = origZ + dirZ * t - bz;
                 float dist = std::sqrt(cx*cx + cy*cy + cz*cz);
+                float threshold = std::max(0.05f, t * 0.02f);
                 if (dist < threshold && t < closestDist) {
                     closestDist = t;
                     closestBone = (int)i;
@@ -786,9 +803,7 @@ void handleInput(AppState& state, GLFWwindow* window, ImGuiIO& io) {
         if (state.boneEditMode != 0) {
             float dx = (float)mx - state.boneEditStartX;
             float dy = (float)my - state.boneEditStartY;
-            float delta = std::sqrt(dx*dx + dy*dy);
-            if (dx < 0) delta = -delta;
-            boneEditApply(state, delta);
+            boneEditApply(state, dx, dy);
             if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS) {
                 boneEditCancel(state);
             }
