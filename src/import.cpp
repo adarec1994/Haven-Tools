@@ -3,11 +3,14 @@
 #include <fstream>
 #include <sstream>
 #include <cstring>
+#include <cstdio>
 #include <algorithm>
 #include <iomanip>
 #include <cmath>
 #include <cfloat>
 #include <set>
+#include <map>
+#include <array>
 #include <functional>
 #define TINYGLTF_IMPLEMENTATION
 #define STB_IMAGE_IMPLEMENTATION
@@ -371,7 +374,7 @@ bool DAOImporter::ImportToOverride(const std::string& glbPath, const std::string
     if (!LoadGLB(glbPath, modelData)) return false;
 
     const fs::path baseDir(targetDir);
-    fs::path overrideDir = baseDir / "packages" / "core" / "override";
+    fs::path overrideDir = baseDir / "packages" / "core" / "override" / modelData.name;
     if (!fs::exists(overrideDir)) {
         fs::create_directories(overrideDir);
     }
@@ -937,37 +940,266 @@ bool DAOImporter::LoadGLB(const std::string& path, DAOModelData& outData) {
             outData.parts.push_back(part);
         }
     }
-    // GLB mesh data from Blender is in Z-up local space.
-    // DAO uses Y-up. Convert: (x, y, z) -> (x, -z, y)
-    for (auto& part : outData.parts) {
-        for (auto& v : part.vertices) {
-            float oy = v.y;  v.y = -v.z;  v.z = oy;
-            float ny = v.ny; v.ny = -v.nz; v.nz = ny;
-            float ty = v.ty; v.ty = -v.tz; v.tz = ty;
+
+    // ---- Coordinate system correction ----
+    // Derive the ancestor rotation (armature rotation) that needs to be baked in.
+    // Strategy: walk up from root joint through non-joint ancestors, accumulate rotation.
+
+    float ancestorRot[4] = {0, 0, 0, 1};
+    bool hasAncestorRot = false;
+
+    if (outData.skeleton.hasSkeleton && !model.skins.empty()) {
+        const auto& skin = model.skins[0];
+        // Find first root joint (parentIndex == -1)
+        int rootJointNodeIdx = -1;
+        for (size_t bi = 0; bi < outData.skeleton.bones.size() && bi < skin.joints.size(); bi++) {
+            if (outData.skeleton.bones[bi].parentIndex < 0) {
+                rootJointNodeIdx = skin.joints[bi];
+                break;
+            }
         }
-    }
-    // Convert root bone transforms
-    if (outData.skeleton.hasSkeleton) {
-        for (auto& bone : outData.skeleton.bones) {
-            if (bone.parentIndex < 0) {
-                float oy = bone.translation[1];
-                bone.translation[1] = -bone.translation[2];
-                bone.translation[2] = oy;
-                // Prepend +90° X rotation to root bone quaternion
-                // Q_x(+90) = (0.7071068, 0, 0, 0.7071068)
-                float rqx = 0.7071068f, rqy = 0.0f, rqz = 0.0f, rqw = 0.7071068f;
-                float bq[4] = {bone.rotation[0], bone.rotation[1], bone.rotation[2], bone.rotation[3]};
-                bone.rotation[3] = rqw*bq[3] - rqx*bq[0] - rqy*bq[1] - rqz*bq[2];
-                bone.rotation[0] = rqw*bq[0] + rqx*bq[3] + rqy*bq[2] - rqz*bq[1];
-                bone.rotation[1] = rqw*bq[1] - rqx*bq[2] + rqy*bq[3] + rqz*bq[0];
-                bone.rotation[2] = rqw*bq[2] + rqx*bq[1] - rqy*bq[0] + rqz*bq[3];
+
+        if (rootJointNodeIdx >= 0) {
+            printf("[GLB Import] Root joint: node[%d] '%s'\n",
+                   rootJointNodeIdx, model.nodes[rootJointNodeIdx].name.c_str());
+            // Walk up from root joint through ALL ancestors, accumulating non-joint rotations
+            std::set<int> jointSet(skin.joints.begin(), skin.joints.end());
+            std::vector<int> nonJointAncestors;
+            int cur = rootJointNodeIdx;
+            // Go to parent first
+            if (nodeParent.count(cur)) cur = nodeParent[cur]; else cur = -1;
+            while (cur >= 0) {
+                if (jointSet.count(cur) == 0) {
+                    nonJointAncestors.push_back(cur);
+                }
+                if (nodeParent.count(cur)) cur = nodeParent[cur]; else cur = -1;
+            }
+
+            // Compose rotations from scene root down
+            printf("[GLB Import] Non-joint ancestors: %zu\n", nonJointAncestors.size());
+            for (int ni : nonJointAncestors) {
+                const auto& nd = model.nodes[ni];
+                if (!nd.rotation.empty())
+                    printf("[GLB Import]   node[%d] '%s' rot=[%.4f,%.4f,%.4f,%.4f]\n",
+                           ni, nd.name.c_str(), nd.rotation[0], nd.rotation[1], nd.rotation[2], nd.rotation[3]);
+                else if (!nd.matrix.empty())
+                    printf("[GLB Import]   node[%d] '%s' has matrix\n", ni, nd.name.c_str());
+                else
+                    printf("[GLB Import]   node[%d] '%s' no transform\n", ni, nd.name.c_str());
+            }
+            float rot[4] = {0, 0, 0, 1};
+            for (int i = (int)nonJointAncestors.size() - 1; i >= 0; i--) {
+                int ni = nonJointAncestors[i];
+                float lr[4] = {0, 0, 0, 1};
+                const auto& nd = model.nodes[ni];
+                if (!nd.rotation.empty()) {
+                    lr[0] = (float)nd.rotation[0];
+                    lr[1] = (float)nd.rotation[1];
+                    lr[2] = (float)nd.rotation[2];
+                    lr[3] = (float)nd.rotation[3];
+                } else if (!nd.matrix.empty()) {
+                    const auto& m = nd.matrix;
+                    float sx = std::sqrt((float)(m[0]*m[0]+m[1]*m[1]+m[2]*m[2]));
+                    float sy = std::sqrt((float)(m[4]*m[4]+m[5]*m[5]+m[6]*m[6]));
+                    float sz = std::sqrt((float)(m[8]*m[8]+m[9]*m[9]+m[10]*m[10]));
+                    if (sx < 1e-6f) sx = 1; if (sy < 1e-6f) sy = 1; if (sz < 1e-6f) sz = 1;
+                    float r00=(float)(m[0]/sx), r11=(float)(m[5]/sy), r22=(float)(m[10]/sz);
+                    float r01=(float)(m[4]/sy), r02=(float)(m[8]/sz);
+                    float r10=(float)(m[1]/sx), r12=(float)(m[9]/sz);
+                    float r20=(float)(m[2]/sx), r21=(float)(m[6]/sy);
+                    float tr = r00 + r11 + r22;
+                    if (tr > 0) {
+                        float s = 0.5f / std::sqrt(tr + 1.0f);
+                        lr[0]=(r21-r12)*s; lr[1]=(r02-r20)*s; lr[2]=(r10-r01)*s; lr[3]=0.25f/s;
+                    } else if (r00>r11 && r00>r22) {
+                        float s = 2.0f * std::sqrt(1+r00-r11-r22);
+                        lr[0]=0.25f*s; lr[1]=(r01+r10)/s; lr[2]=(r02+r20)/s; lr[3]=(r21-r12)/s;
+                    } else if (r11>r22) {
+                        float s = 2.0f * std::sqrt(1+r11-r00-r22);
+                        lr[0]=(r01+r10)/s; lr[1]=0.25f*s; lr[2]=(r12+r21)/s; lr[3]=(r02-r20)/s;
+                    } else {
+                        float s = 2.0f * std::sqrt(1+r22-r00-r11);
+                        lr[0]=(r02+r20)/s; lr[1]=(r12+r21)/s; lr[2]=0.25f*s; lr[3]=(r10-r01)/s;
+                    }
+                }
+                // Check if not identity
+                bool isId = std::abs(lr[0]) < 0.001f && std::abs(lr[1]) < 0.001f &&
+                            std::abs(lr[2]) < 0.001f && std::abs(std::abs(lr[3]) - 1.0f) < 0.001f;
+                if (!isId) {
+                    // qMul(rot, lr) -> tmp
+                    float tmp[4];
+                    tmp[3] = rot[3]*lr[3] - rot[0]*lr[0] - rot[1]*lr[1] - rot[2]*lr[2];
+                    tmp[0] = rot[3]*lr[0] + rot[0]*lr[3] + rot[1]*lr[2] - rot[2]*lr[1];
+                    tmp[1] = rot[3]*lr[1] - rot[0]*lr[2] + rot[1]*lr[3] + rot[2]*lr[0];
+                    tmp[2] = rot[3]*lr[2] + rot[0]*lr[1] - rot[1]*lr[0] + rot[2]*lr[3];
+                    rot[0]=tmp[0]; rot[1]=tmp[1]; rot[2]=tmp[2]; rot[3]=tmp[3];
+                }
+            }
+
+            bool rotIsId = std::abs(rot[0]) < 0.001f && std::abs(rot[1]) < 0.001f &&
+                           std::abs(rot[2]) < 0.001f && std::abs(std::abs(rot[3]) - 1.0f) < 0.001f;
+            if (!rotIsId) {
+                ancestorRot[0]=rot[0]; ancestorRot[1]=rot[1];
+                ancestorRot[2]=rot[2]; ancestorRot[3]=rot[3];
+                hasAncestorRot = true;
             }
         }
     }
-    // Convert collision shapes
-    for (auto& shape : outData.collisionShapes) {
-        float oy = shape.posY; shape.posY = -shape.posZ; shape.posZ = oy;
+
+    // Fallback for models without skeleton
+    if (!hasAncestorRot && outData.skeleton.bones.empty()) {
+        for (size_t ni = 0; ni < model.nodes.size(); ni++) {
+            if (model.nodes[ni].mesh < 0) continue;
+            // Walk up to scene root
+            float rot[4] = {0, 0, 0, 1};
+            int cur = (int)ni;
+            std::vector<int> chain;
+            while (cur >= 0) {
+                chain.push_back(cur);
+                if (nodeParent.count(cur)) cur = nodeParent[cur]; else cur = -1;
+            }
+            for (int i = (int)chain.size()-1; i >= 0; i--) {
+                const auto& nd = model.nodes[chain[i]];
+                if (nd.rotation.empty()) continue;
+                float lr[4] = {(float)nd.rotation[0], (float)nd.rotation[1],
+                               (float)nd.rotation[2], (float)nd.rotation[3]};
+                float tmp[4];
+                tmp[3] = rot[3]*lr[3] - rot[0]*lr[0] - rot[1]*lr[1] - rot[2]*lr[2];
+                tmp[0] = rot[3]*lr[0] + rot[0]*lr[3] + rot[1]*lr[2] - rot[2]*lr[1];
+                tmp[1] = rot[3]*lr[1] - rot[0]*lr[2] + rot[1]*lr[3] + rot[2]*lr[0];
+                tmp[2] = rot[3]*lr[2] + rot[0]*lr[1] - rot[1]*lr[0] + rot[2]*lr[3];
+                rot[0]=tmp[0]; rot[1]=tmp[1]; rot[2]=tmp[2]; rot[3]=tmp[3];
+            }
+            bool rotIsId = std::abs(rot[0]) < 0.001f && std::abs(rot[1]) < 0.001f &&
+                           std::abs(rot[2]) < 0.001f && std::abs(std::abs(rot[3]) - 1.0f) < 0.001f;
+            if (!rotIsId) {
+                ancestorRot[0]=rot[0]; ancestorRot[1]=rot[1];
+                ancestorRot[2]=rot[2]; ancestorRot[3]=rot[3];
+                hasAncestorRot = true;
+            }
+            break;
+        }
     }
+
+    printf("[GLB Import] Parts: %zu, Bones: %zu, hasAncestorRot: %s\n",
+           outData.parts.size(), outData.skeleton.bones.size(),
+           hasAncestorRot ? "YES" : "NO");
+    if (hasAncestorRot) {
+        printf("[GLB Import] ancestorRot = [%.4f, %.4f, %.4f, %.4f]\n",
+               ancestorRot[0], ancestorRot[1], ancestorRot[2], ancestorRot[3]);
+    }
+
+    // Determine if vertices need the ancestor rotation.
+    // Bone local transforms are ALWAYS relative to the armature, so bones always need it.
+    // But some exporters bake the armature rotation into vertices, others don't.
+    bool applyToVertices = hasAncestorRot; // default: yes
+    if (hasAncestorRot && !outData.parts.empty()) {
+        // Compute current and rotated Y extents to detect if vertices are already Y-up
+        float bbMinY=1e30f, bbMaxY=-1e30f;
+        float rbMinY=1e30f, rbMaxY=-1e30f;
+
+        for (const auto& part : outData.parts) {
+            for (const auto& v : part.vertices) {
+                if (v.y < bbMinY) bbMinY = v.y; if (v.y > bbMaxY) bbMaxY = v.y;
+                // Compute rotated Y
+                float _tx = 2.0f*(ancestorRot[1]*v.z - ancestorRot[2]*v.y);
+                float _ty = 2.0f*(ancestorRot[2]*v.x - ancestorRot[0]*v.z);
+                float _tz = 2.0f*(ancestorRot[0]*v.y - ancestorRot[1]*v.x);
+                float ry = v.y + ancestorRot[3]*_ty + (ancestorRot[2]*_tx - ancestorRot[0]*_tz);
+                if (ry < rbMinY) rbMinY = ry; if (ry > rbMaxY) rbMaxY = ry;
+            }
+        }
+        float currentYExt = bbMaxY - bbMinY;
+        float rotatedYExt = rbMaxY - rbMinY;
+
+        printf("[GLB Import] Current Y extent: %.3f, After rotation Y extent: %.3f\n",
+               currentYExt, rotatedYExt);
+
+        if (rotatedYExt <= currentYExt * 1.1f) {
+            printf("[GLB Import] Vertices already Y-up, skipping vertex rotation (bones still rotated)\n");
+            applyToVertices = false;
+        } else {
+            printf("[GLB Import] Applying rotation to vertices (Y extent improves %.3f -> %.3f)\n",
+                   currentYExt, rotatedYExt);
+        }
+    }
+
+    #define QROT_VEC(q, vx, vy, vz) do { \
+        float _tx = 2.0f*(q[1]*(vz) - q[2]*(vy)); \
+        float _ty = 2.0f*(q[2]*(vx) - q[0]*(vz)); \
+        float _tz = 2.0f*(q[0]*(vy) - q[1]*(vx)); \
+        float _nx = (vx) + q[3]*_tx + (q[1]*_tz - q[2]*_ty); \
+        float _ny = (vy) + q[3]*_ty + (q[2]*_tx - q[0]*_tz); \
+        float _nz = (vz) + q[3]*_tz + (q[0]*_ty - q[1]*_tx); \
+        (vx) = _nx; (vy) = _ny; (vz) = _nz; \
+    } while(0)
+
+    #define QMUL4(a, b, o) do { \
+        (o)[3] = (a)[3]*(b)[3] - (a)[0]*(b)[0] - (a)[1]*(b)[1] - (a)[2]*(b)[2]; \
+        (o)[0] = (a)[3]*(b)[0] + (a)[0]*(b)[3] + (a)[1]*(b)[2] - (a)[2]*(b)[1]; \
+        (o)[1] = (a)[3]*(b)[1] - (a)[0]*(b)[2] + (a)[1]*(b)[3] + (a)[2]*(b)[0]; \
+        (o)[2] = (a)[3]*(b)[2] + (a)[0]*(b)[1] - (a)[1]*(b)[0] + (a)[2]*(b)[3]; \
+    } while(0)
+
+    // Apply ancestor rotation to vertices (only if they need it)
+    if (applyToVertices) {
+        printf("[GLB Import] Rotating vertices by ancestor rotation\n");
+        for (auto& part : outData.parts) {
+            for (auto& v : part.vertices) {
+                QROT_VEC(ancestorRot, v.x, v.y, v.z);
+                QROT_VEC(ancestorRot, v.nx, v.ny, v.nz);
+                QROT_VEC(ancestorRot, v.tx, v.ty, v.tz);
+            }
+        }
+        // Apply to collision shapes (same space as vertices)
+        for (auto& shape : outData.collisionShapes) {
+            QROT_VEC(ancestorRot, shape.posX, shape.posY, shape.posZ);
+        }
+    }
+
+    // ALWAYS apply ancestor rotation to root bone transforms.
+    // Bone TRS in glTF is always relative to parent node, which includes the armature.
+    // Since we strip the armature from the bone hierarchy, we must bake its rotation
+    // into the root bones so the skeleton matches the mesh.
+    if (hasAncestorRot) {
+        printf("[GLB Import] Rotating root bone transforms by ancestor rotation\n");
+        for (auto& bone : outData.skeleton.bones) {
+            if (bone.parentIndex >= 0) continue;
+            QROT_VEC(ancestorRot, bone.translation[0], bone.translation[1], bone.translation[2]);
+            float nr[4]; QMUL4(ancestorRot, bone.rotation, nr);
+            bone.rotation[0]=nr[0]; bone.rotation[1]=nr[1]; bone.rotation[2]=nr[2]; bone.rotation[3]=nr[3];
+        }
+    }
+
+    // ---- Final Y-up → Z-up conversion for DAO ----
+    // GLB standard is Y-up. DAO engine uses Z-up.
+    // After all ancestor rotation processing above, vertices and bones should be
+    // in consistent Y-up space. Apply +90° X to convert to Z-up.
+    // Quaternion for +90° X: (sin(45°), 0, 0, cos(45°))
+    {
+        float yToZ[4] = {0.7071068f, 0, 0, 0.7071068f};
+
+        for (auto& part : outData.parts) {
+            for (auto& v : part.vertices) {
+                QROT_VEC(yToZ, v.x, v.y, v.z);
+                QROT_VEC(yToZ, v.nx, v.ny, v.nz);
+                QROT_VEC(yToZ, v.tx, v.ty, v.tz);
+            }
+        }
+        for (auto& bone : outData.skeleton.bones) {
+            if (bone.parentIndex >= 0) continue;
+            QROT_VEC(yToZ, bone.translation[0], bone.translation[1], bone.translation[2]);
+            float nr[4]; QMUL4(yToZ, bone.rotation, nr);
+            bone.rotation[0]=nr[0]; bone.rotation[1]=nr[1]; bone.rotation[2]=nr[2]; bone.rotation[3]=nr[3];
+        }
+        for (auto& shape : outData.collisionShapes) {
+            QROT_VEC(yToZ, shape.posX, shape.posY, shape.posZ);
+        }
+        printf("[GLB Import] Applied final Y-up → Z-up conversion (+90° X)\n");
+    }
+
+    #undef QROT_VEC
+    #undef QMUL4
 
     return !outData.parts.empty() || !outData.collisionShapes.empty();
 }
