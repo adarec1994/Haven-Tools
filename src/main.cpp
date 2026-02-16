@@ -56,6 +56,7 @@ int main(int argc, char** argv) {
 
     io.Fonts->AddFontDefault();
 
+    // Load multilingual fonts from Windows system fonts
     auto tryLoadFont = [&](const char* path, float size, const ImWchar* ranges) {
         if (std::filesystem::exists(path)) {
             ImFontConfig cfg;
@@ -69,6 +70,7 @@ int main(int argc, char** argv) {
     tryLoadFont("C:\\Windows\\Fonts\\msyh.ttc",    14.0f, io.Fonts->GetGlyphRangesChineseFull());
     tryLoadFont("C:\\Windows\\Fonts\\YuGothM.ttc", 14.0f, io.Fonts->GetGlyphRangesJapanese());
     tryLoadFont("C:\\Windows\\Fonts\\segoeui.ttf", 14.0f, io.Fonts->GetGlyphRangesGreek());
+
 
     ImFontConfig fa_cfg;
     fa_cfg.MergeMode = true;
@@ -111,7 +113,7 @@ int main(int argc, char** argv) {
         if (state.hasModel) {
             if (state.animPlaying && state.currentAnim.duration > 0)
                 applyAnimation(state.currentModel, state.currentAnim, state.animTime, state.basePoseBones);
-            renderModel(state.currentModel, state.camera, state.renderSettings, display_w, display_h, state.animPlaying, state.selectedBoneIndex, state.selectedLevelChunk);
+            renderModel(state.currentModel, state.camera, state.renderSettings, display_w, display_h, state.animPlaying || state.bonePoseMode, state.selectedBoneIndex, state.selectedLevelChunk);
         } else {
             Model empty;
             renderModel(empty, state.camera, state.renderSettings, display_w, display_h, false, -1, -1);

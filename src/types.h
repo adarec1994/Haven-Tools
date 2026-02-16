@@ -260,6 +260,12 @@ struct AppState {
     int selectedAnimIndex = -1;
     Animation currentAnim;
     bool animPlaying = false;
+    bool bonePoseMode = false;
+    int boneEditMode = 0;
+    int boneEditAxis = -1;
+    float boneEditStartX = 0, boneEditStartY = 0;
+    float boneEditSavedRot[4] = {0,0,0,1};
+    float boneEditSavedPos[3] = {0,0,0};
     bool animLoop = true;
     float animTime = 0.0f;
     float animSpeed = 1.0f;

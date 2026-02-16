@@ -1,12 +1,102 @@
 #include "ui_internal.h"
 #include "update/update.h"
+#include "animation.h"
 #include <thread>
 #include "import.h"
 #include "export.h"
 #include "terrain_export.h"
 #include "update/about_text.h"
 #include "update/changelog_text.h"
+#include "blender_addon_embedded.h"
+
+static bool exportBlenderAddon(const unsigned char* data, unsigned int size, const std::string& destDir) {
+    namespace fs = std::filesystem;
+    fs::path outPath = fs::path(destDir) / "havenarea_importer.zip";
+    std::ofstream out(outPath, std::ios::binary);
+    if (!out) return false;
+    out.write(reinterpret_cast<const char*>(data), size);
+    return out.good();
+}
 static const char* CURRENT_APP_VERSION = "1.14";
+
+static void boneEditQuatMul(float q1x, float q1y, float q1z, float q1w,
+                            float q2x, float q2y, float q2z, float q2w,
+                            float& rx, float& ry, float& rz, float& rw) {
+    rw = q1w*q2w - q1x*q2x - q1y*q2y - q1z*q2z;
+    rx = q1w*q2x + q1x*q2w + q1y*q2z - q1z*q2y;
+    ry = q1w*q2y - q1x*q2z + q1y*q2w + q1z*q2x;
+    rz = q1w*q2z + q1x*q2y - q1y*q2x + q1z*q2w;
+}
+
+static void boneEditAxisAngleToQuat(float ax, float ay, float az, float angle,
+                                    float& qx, float& qy, float& qz, float& qw) {
+    float ha = angle * 0.5f;
+    float s = sinf(ha);
+    qx = ax * s; qy = ay * s; qz = az * s; qw = cosf(ha);
+}
+
+static void boneEditApply(AppState& state, float mouseDeltaX) {
+    if (state.boneEditMode == 0 || state.selectedBoneIndex < 0) return;
+    Bone& bone = state.currentModel.skeleton.bones[state.selectedBoneIndex];
+    float sensitivity;
+
+    if (state.boneEditMode == 1) {
+        sensitivity = 0.005f;
+        float angle = mouseDeltaX * sensitivity;
+        float ax = 0, ay = 0, az = 0;
+        if (state.boneEditAxis == 0) ax = 1;
+        else if (state.boneEditAxis == 1) ay = 1;
+        else if (state.boneEditAxis == 2) az = 1;
+        else ay = 1;
+        float dqx, dqy, dqz, dqw;
+        boneEditAxisAngleToQuat(ax, ay, az, angle, dqx, dqy, dqz, dqw);
+        boneEditQuatMul(state.boneEditSavedRot[0], state.boneEditSavedRot[1],
+                        state.boneEditSavedRot[2], state.boneEditSavedRot[3],
+                        dqx, dqy, dqz, dqw,
+                        bone.rotX, bone.rotY, bone.rotZ, bone.rotW);
+    } else if (state.boneEditMode == 2) {
+        sensitivity = 0.0005f;
+        float offset = mouseDeltaX * sensitivity;
+        bone.posX = state.boneEditSavedPos[0];
+        bone.posY = state.boneEditSavedPos[1];
+        bone.posZ = state.boneEditSavedPos[2];
+        if (state.boneEditAxis == 0) bone.posX += offset;
+        else if (state.boneEditAxis == 1) bone.posY += offset;
+        else if (state.boneEditAxis == 2) bone.posZ += offset;
+        else bone.posX += offset;
+    }
+    computeBoneWorldTransforms(state.currentModel);
+    state.bonePoseMode = true;
+}
+
+static void boneEditCancel(AppState& state) {
+    if (state.boneEditMode == 0 || state.selectedBoneIndex < 0) return;
+    Bone& bone = state.currentModel.skeleton.bones[state.selectedBoneIndex];
+    bone.rotX = state.boneEditSavedRot[0]; bone.rotY = state.boneEditSavedRot[1];
+    bone.rotZ = state.boneEditSavedRot[2]; bone.rotW = state.boneEditSavedRot[3];
+    bone.posX = state.boneEditSavedPos[0]; bone.posY = state.boneEditSavedPos[1];
+    bone.posZ = state.boneEditSavedPos[2];
+    computeBoneWorldTransforms(state.currentModel);
+    state.boneEditMode = 0;
+    state.boneEditAxis = -1;
+}
+
+static void boneEditStart(AppState& state, int mode) {
+    if (state.selectedBoneIndex < 0 || !state.renderSettings.showSkeleton) return;
+    if (state.basePoseBones.empty())
+        state.basePoseBones = state.currentModel.skeleton.bones;
+    const Bone& bone = state.currentModel.skeleton.bones[state.selectedBoneIndex];
+    state.boneEditSavedRot[0] = bone.rotX; state.boneEditSavedRot[1] = bone.rotY;
+    state.boneEditSavedRot[2] = bone.rotZ; state.boneEditSavedRot[3] = bone.rotW;
+    state.boneEditSavedPos[0] = bone.posX; state.boneEditSavedPos[1] = bone.posY;
+    state.boneEditSavedPos[2] = bone.posZ;
+    double mx, my;
+    glfwGetCursorPos(glfwGetCurrentContext(), &mx, &my);
+    state.boneEditStartX = (float)mx;
+    state.boneEditStartY = (float)my;
+    state.boneEditMode = mode;
+    state.boneEditAxis = -1;
+}
 bool showSplash = true;
 static bool t_active = false;
 static float t_alpha = 0.0f;
@@ -17,6 +107,8 @@ static bool s_showAbout = false;
 static bool s_showChangelog = false;
 static bool s_scrollToBottom = false;
 static std::string s_pendingImportGlbPath;
+static bool s_showImportOptions = false;
+static int s_importMode = 1;
 static std::string s_pendingExportPath;
 static bool s_showExportOptions = false;
 static bool s_showLevelExportOptions = false;
@@ -247,56 +339,64 @@ void runImportTask(AppState* statePtr) {
         state.preloadProgress = progress * 0.9f;
         state.preloadStatus = status;
     });
-    bool success = importer.ImportToDirectory(s_pendingImportGlbPath, state.selectedFolder);
+    bool success;
+    if (s_importMode == 1) {
+        success = importer.ImportToOverride(s_pendingImportGlbPath, state.selectedFolder);
+    } else {
+        success = importer.ImportToDirectory(s_pendingImportGlbPath, state.selectedFolder);
+    }
     if (success) {
         std::string modelName = fs::path(s_pendingImportGlbPath).stem().string() + ".msh";
         markModelAsImported(modelName);
-        state.preloadStatus = "Refreshing modified ERFs...";
-        state.preloadProgress = 0.92f;
-        fs::path baseDir(state.selectedFolder);
-        fs::path corePath = baseDir / "packages" / "core" / "data";
-        fs::path texturePath = baseDir / "packages" / "core" / "textures" / "high";
-        std::vector<std::string> modifiedErfs = {
-            (corePath / "modelmeshdata.erf").string(),
-            (corePath / "modelhierarchies.erf").string(),
-            (corePath / "materialobjects.erf").string(),
-            (texturePath / "texturepack.erf").string()
-        };
-        for (const auto& erfPath : modifiedErfs) {
-            if (!fs::exists(erfPath)) continue;
-            std::string pathLower = erfPath;
-            std::transform(pathLower.begin(), pathLower.end(), pathLower.begin(), ::tolower);
-            auto removeAndReload = [&](std::vector<std::unique_ptr<ERFFile>>& erfs,
-                                       std::vector<std::string>& paths) {
-                for (size_t i = 0; i < paths.size(); ++i) {
-                    std::string existingLower = paths[i];
-                    std::transform(existingLower.begin(), existingLower.end(), existingLower.begin(), ::tolower);
-                    if (existingLower == pathLower) {
-                        erfs.erase(erfs.begin() + i);
-                        paths.erase(paths.begin() + i);
-                        break;
-                    }
-                }
-                auto erfPtr = std::make_unique<ERFFile>();
-                if (erfPtr->open(erfPath)) {
-                    erfs.push_back(std::move(erfPtr));
-                    paths.push_back(erfPath);
-                }
+        if (s_importMode == 0) {
+            state.preloadStatus = "Refreshing modified ERFs...";
+            state.preloadProgress = 0.92f;
+            fs::path baseDir(state.selectedFolder);
+            fs::path corePath = baseDir / "packages" / "core" / "data";
+            fs::path texturePath = baseDir / "packages" / "core" / "textures" / "high";
+            std::vector<std::string> modifiedErfs = {
+                (corePath / "modelmeshdata.erf").string(),
+                (corePath / "modelhierarchies.erf").string(),
+                (corePath / "materialobjects.erf").string(),
+                (texturePath / "texturepack.erf").string()
             };
-            if (pathLower.find("modelmesh") != std::string::npos ||
-                pathLower.find("modelhierarch") != std::string::npos) {
-                removeAndReload(state.modelErfs, state.modelErfPaths);
-            }
-            if (pathLower.find("material") != std::string::npos) {
-                removeAndReload(state.materialErfs, state.materialErfPaths);
-            }
-            if (pathLower.find("texture") != std::string::npos) {
-                removeAndReload(state.textureErfs, state.textureErfPaths);
+            for (const auto& erfPath : modifiedErfs) {
+                if (!fs::exists(erfPath)) continue;
+                std::string pathLower = erfPath;
+                std::transform(pathLower.begin(), pathLower.end(), pathLower.begin(), ::tolower);
+                auto removeAndReload = [&](std::vector<std::unique_ptr<ERFFile>>& erfs,
+                                           std::vector<std::string>& paths) {
+                    for (size_t i = 0; i < paths.size(); ++i) {
+                        std::string existingLower = paths[i];
+                        std::transform(existingLower.begin(), existingLower.end(), existingLower.begin(), ::tolower);
+                        if (existingLower == pathLower) {
+                            erfs.erase(erfs.begin() + i);
+                            paths.erase(paths.begin() + i);
+                            break;
+                        }
+                    }
+                    auto erfPtr = std::make_unique<ERFFile>();
+                    if (erfPtr->open(erfPath)) {
+                        erfs.push_back(std::move(erfPtr));
+                        paths.push_back(erfPath);
+                    }
+                };
+                if (pathLower.find("modelmesh") != std::string::npos ||
+                    pathLower.find("modelhierarch") != std::string::npos) {
+                    removeAndReload(state.modelErfs, state.modelErfPaths);
+                }
+                if (pathLower.find("material") != std::string::npos) {
+                    removeAndReload(state.materialErfs, state.materialErfPaths);
+                }
+                if (pathLower.find("texture") != std::string::npos) {
+                    removeAndReload(state.textureErfs, state.textureErfPaths);
+                }
             }
         }
         state.preloadProgress = 1.0f;
         state.preloadStatus = "Import complete!";
-        state.statusMessage = "Model imported successfully!";
+        std::string dest = (s_importMode == 1) ? "override folder" : "ERF archives";
+        state.statusMessage = "Model imported to " + dest + " successfully!";
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
         t_isLoadingContent = false;
         t_active = false;
@@ -429,13 +529,25 @@ void handleInput(AppState& state, GLFWwindow* window, ImGuiIO& io) {
             saveSettings(state);
         }
         settingsLoaded = true;
+        if (!state.selectedFolder.empty() && !state.isPreloading) {
+            fs::path launcherPath = fs::path(state.selectedFolder) / "DAOriginsLauncher.exe";
+            fs::path exePath = fs::path(state.selectedFolder) / "DAOrigins.exe";
+            if (fs::exists(launcherPath) || fs::exists(exePath)) {
+                state.isPreloading = true;
+                std::thread(runLoadingTask, &state).detach();
+            }
+        }
     }
     if (!io.WantCaptureMouse) {
         double mx, my;
         glfwGetCursorPos(window, &mx, &my);
         static bool wasLeftPressed = false;
         bool leftPressed = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS;
-        if (leftPressed && !wasLeftPressed && state.hasModel && state.renderSettings.showSkeleton) {
+        if (leftPressed && !wasLeftPressed && state.boneEditMode != 0) {
+            state.boneEditMode = 0;
+            state.boneEditAxis = -1;
+        }
+        else if (leftPressed && !wasLeftPressed && state.hasModel && state.renderSettings.showSkeleton) {
             int width, height;
             glfwGetFramebufferSize(window, &width, &height);
             float aspect = (float)width / (float)height;
@@ -616,7 +728,15 @@ void handleInput(AppState& state, GLFWwindow* window, ImGuiIO& io) {
     {
         double mx, my;
         glfwGetCursorPos(window, &mx, &my);
-        if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS) {
+
+        if (state.boneEditMode != 0) {
+            float dx = (float)mx - state.boneEditStartX;
+            boneEditApply(state, dx);
+            if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS) {
+                boneEditCancel(state);
+            }
+        }
+        else if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS) {
             ImGui::SetWindowFocus(nullptr);
             if (state.isPanning) {
                 float dx = static_cast<float>(mx - state.lastMouseX);
@@ -641,14 +761,51 @@ void handleInput(AppState& state, GLFWwindow* window, ImGuiIO& io) {
         state.lastMouseY = my;
     }
     if (!io.WantCaptureKeyboard) {
-        float deltaTime = io.DeltaTime;
-        float speed = state.camera.moveSpeed * deltaTime;
-        if (ImGui::IsKeyDown(state.keybinds.moveForward)) state.camera.moveForward(speed);
-        if (ImGui::IsKeyDown(state.keybinds.moveBackward)) state.camera.moveForward(-speed);
-        if (ImGui::IsKeyDown(state.keybinds.moveLeft)) state.camera.moveRight(-speed);
-        if (ImGui::IsKeyDown(state.keybinds.moveRight)) state.camera.moveRight(speed);
-        if (ImGui::IsKeyDown(state.keybinds.panUp)) state.camera.moveUp(speed);
-        if (ImGui::IsKeyDown(state.keybinds.panDown)) state.camera.moveUp(-speed);
+        if (state.boneEditMode != 0) {
+            if (ImGui::IsKeyPressed(ImGuiKey_X)) state.boneEditAxis = 0;
+            if (ImGui::IsKeyPressed(ImGuiKey_Y)) state.boneEditAxis = 1;
+            if (ImGui::IsKeyPressed(ImGuiKey_Z)) state.boneEditAxis = 2;
+            if (ImGui::IsKeyPressed(ImGuiKey_Enter) || ImGui::IsKeyPressed(ImGuiKey_KeypadEnter)) {
+                state.boneEditMode = 0;
+                state.boneEditAxis = -1;
+            }
+            if (ImGui::IsKeyPressed(ImGuiKey_Escape)) {
+                boneEditCancel(state);
+            }
+        } else {
+            if (state.selectedBoneIndex >= 0 && state.renderSettings.showSkeleton) {
+                if (ImGui::IsKeyPressed(ImGuiKey_R))
+                    boneEditStart(state, 1);
+                if (ImGui::IsKeyPressed(ImGuiKey_G))
+                    boneEditStart(state, 2);
+            }
+            float deltaTime = io.DeltaTime;
+            float speed = state.camera.moveSpeed * deltaTime;
+            if (ImGui::IsKeyDown(state.keybinds.moveForward)) state.camera.moveForward(speed);
+            if (ImGui::IsKeyDown(state.keybinds.moveBackward)) state.camera.moveForward(-speed);
+            if (ImGui::IsKeyDown(state.keybinds.moveLeft)) state.camera.moveRight(-speed);
+            if (ImGui::IsKeyDown(state.keybinds.moveRight)) state.camera.moveRight(speed);
+            if (ImGui::IsKeyDown(state.keybinds.panUp)) state.camera.moveUp(speed);
+            if (ImGui::IsKeyDown(state.keybinds.panDown)) state.camera.moveUp(-speed);
+        }
+    }
+
+    if (state.boneEditMode != 0 && state.selectedBoneIndex >= 0) {
+        const char* modeName = (state.boneEditMode == 1) ? "ROTATE" : "GRAB";
+        const char* axisName = "Free";
+        if (state.boneEditAxis == 0) axisName = "X";
+        else if (state.boneEditAxis == 1) axisName = "Y";
+        else if (state.boneEditAxis == 2) axisName = "Z";
+        const auto& boneName = state.currentModel.skeleton.bones[state.selectedBoneIndex].name;
+        char buf[256];
+        snprintf(buf, sizeof(buf), "%s [%s] - %s  |  X/Y/Z: axis  LMB/Enter: confirm  RMB/Esc: cancel",
+                 modeName, axisName, boneName.c_str());
+        ImVec2 textSize = ImGui::CalcTextSize(buf);
+        ImVec2 pos(io.DisplaySize.x * 0.5f - textSize.x * 0.5f, 30.0f);
+        ImGui::GetForegroundDrawList()->AddRectFilled(
+            ImVec2(pos.x - 8, pos.y - 4), ImVec2(pos.x + textSize.x + 8, pos.y + textSize.y + 4),
+            IM_COL32(0, 0, 0, 180), 4.0f);
+        ImGui::GetForegroundDrawList()->AddText(pos, IM_COL32(255, 200, 50, 255), buf);
     }
 }
 
@@ -663,10 +820,10 @@ void drawSplashScreen(AppState& state, int displayW, int displayH) {
     if (!state.isPreloading) {
         ImVec2 buttonSize(250, 40);
         ImGui::SetCursorPos(ImVec2(centerX - buttonSize.x * 0.5f, centerY));
-        if (ImGui::Button("Browse to DAOriginsLauncher.exe", buttonSize)) {
+        if (ImGui::Button("Browse to Game Executable", buttonSize)) {
             IGFD::FileDialogConfig config;
             config.path = state.lastDialogPath.empty() ? "." : state.lastDialogPath;
-            ImGuiFileDialog::Instance()->OpenDialog("ChooseLauncher", "Select DAOriginsLauncher.exe", ".exe", config);
+            ImGuiFileDialog::Instance()->OpenDialog("ChooseLauncher", "Select DAOriginsLauncher.exe or DAOrigins.exe", ".exe", config);
         }
     } else {
         ImGui::SetCursorPos(ImVec2(centerX - 150, centerY));
@@ -850,14 +1007,48 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
     if (ImGuiFileDialog::Instance()->Display("ImportGLB", ImGuiWindowFlags_NoCollapse, ImVec2(600, 400))) {
         if (ImGuiFileDialog::Instance()->IsOk()) {
             s_pendingImportGlbPath = ImGuiFileDialog::Instance()->GetFilePathName();
+            s_showImportOptions = true;
+            s_importMode = 1;
+        }
+        ImGuiFileDialog::Instance()->Close();
+    }
+    if (s_showImportOptions) {
+        ImGui::OpenPopup("Import Options");
+        s_showImportOptions = false;
+    }
+    if (ImGui::BeginPopupModal("Import Options", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+        ImGui::Text("Import: %s", fs::path(s_pendingImportGlbPath).filename().string().c_str());
+        ImGui::Separator();
+        ImGui::Text("Choose import destination:");
+        ImGui::Spacing();
+        ImGui::RadioButton("Override Folder", &s_importMode, 1);
+        ImGui::SameLine(); ImGui::TextDisabled("(?)");
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Writes loose files to packages/core/override/.\nSafe and easy to revert - just delete the files.");
+        ImGui::RadioButton("ERF Embedding", &s_importMode, 0);
+        ImGui::SameLine(); ImGui::TextDisabled("(?)");
+        if (ImGui::IsItemHovered()) ImGui::SetTooltip("Repacks game ERF archives directly.\nBackups are created automatically.");
+        ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.7f, 0.3f, 1.0f));
+        ImGui::TextWrapped("Note: ERF embedding is experimental!");
+        ImGui::PopStyleColor();
+        ImGui::Spacing();
+        ImGui::Separator();
+        if (ImGui::Button("Import", ImVec2(120, 0))) {
+            s_showImportOptions = false;
             t_active = true;
             t_targetTab = state.mainTab;
             t_phase = 1;
             t_alpha = 0.0f;
             t_isLoadingContent = true;
             std::thread(runImportTask, &state).detach();
+            ImGui::CloseCurrentPopup();
         }
-        ImGuiFileDialog::Instance()->Close();
+        ImGui::SameLine();
+        if (ImGui::Button("Cancel", ImVec2(120, 0))) {
+            s_showImportOptions = false;
+            s_pendingImportGlbPath.clear();
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::EndPopup();
     }
     if (ImGuiFileDialog::Instance()->Display("ExportCurrentGLB", ImGuiWindowFlags_NoCollapse, ImVec2(600, 400))) {
         if (ImGuiFileDialog::Instance()->IsOk() && state.hasModel) {
@@ -1324,10 +1515,21 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
         }
         ImGuiFileDialog::Instance()->Close();
     }
+    if (ImGuiFileDialog::Instance()->Display("ExportBlenderAddon", ImGuiWindowFlags_NoCollapse, ImVec2(500, 400))) {
+        if (ImGuiFileDialog::Instance()->IsOk()) {
+            std::string outDir = ImGuiFileDialog::Instance()->GetCurrentPath();
+            if (kBlenderAddonZipSize > 0 && exportBlenderAddon(kBlenderAddonZip, kBlenderAddonZipSize, outDir)) {
+                state.statusMessage = "Exported havenarea_importer.zip to: " + outDir;
+            } else {
+                state.statusMessage = "Failed to export Blender importer";
+            }
+        }
+        ImGuiFileDialog::Instance()->Close();
+    }
     if (ImGui::BeginMainMenuBar()) {
         if (ImGui::BeginMenu("File")) {
             if (ImGui::BeginMenu("Import")) {
-                if (ImGui::MenuItem("GLB to ERF...")) {
+                if (ImGui::MenuItem("GLB...")) {
                     IGFD::FileDialogConfig cfg;
                     cfg.path = state.selectedFolder;
                     ImGuiFileDialog::Instance()->OpenDialog("ImportGLB", "Choose GLB File", ".glb", cfg);
@@ -1419,6 +1621,14 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
         if (ImGui::BeginMenu("Settings")) {
             if (ImGui::MenuItem("Keybinds")) {
                 state.showKeybinds = true;
+            }
+            ImGui::EndMenu();
+        }
+        if (ImGui::BeginMenu("Add Ons")) {
+            if (ImGui::MenuItem("Export Blender Importer")) {
+                IGFD::FileDialogConfig config;
+                config.path = state.lastDialogPath.empty() ? "." : state.lastDialogPath;
+                ImGuiFileDialog::Instance()->OpenDialog("ExportBlenderAddon", "Select Output Folder", nullptr, config);
             }
             ImGui::EndMenu();
         }

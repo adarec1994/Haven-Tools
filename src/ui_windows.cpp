@@ -1,11 +1,12 @@
 #include "ui_internal.h"
 #include "renderer.h"
+#include "animation.h"
 
 void drawRenderSettingsWindow(AppState& state) {
     ImGui::SetNextWindowPos(ImVec2(20, 40), ImGuiCond_FirstUseEver);
     ImGui::SetNextWindowSizeConstraints(ImVec2(300, 100), ImVec2(500, 800));
 
-    if (ImGui::IsKeyPressed(ImGuiKey_Escape)) {
+    if (ImGui::IsKeyPressed(ImGuiKey_Escape) && state.boneEditMode == 0) {
         state.selectedLevelChunk = -1;
         state.selectedBoneIndex = -1;
     }
@@ -226,15 +227,24 @@ void drawRenderSettingsWindow(AppState& state) {
         if (!state.currentModel.skeleton.bones.empty()) {
             ImGui::Separator();
             if (ImGui::TreeNode("Skeleton", "Skeleton (%zu bones)", state.currentModel.skeleton.bones.size())) {
-                if (ImGui::IsKeyPressed(state.keybinds.deselectBone)) {
+                if (ImGui::IsKeyPressed(state.keybinds.deselectBone) && state.boneEditMode == 0) {
                     state.selectedBoneIndex = -1;
                     state.selectedLevelChunk = -1;
                 }
                 if (state.selectedBoneIndex >= 0) {
                     ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Selected: %s",
                         state.currentModel.skeleton.bones[state.selectedBoneIndex].name.c_str());
+                    ImGui::TextDisabled("R: rotate  G: grab  X/Y/Z: axis");
                 } else {
                     ImGui::TextDisabled("Click a bone to highlight it");
+                }
+                if (state.bonePoseMode && !state.basePoseBones.empty()) {
+                    if (ImGui::SmallButton("Reset Pose")) {
+                        state.currentModel.skeleton.bones = state.basePoseBones;
+                        computeBoneWorldTransforms(state.currentModel);
+                        state.bonePoseMode = false;
+                        state.boneEditMode = 0;
+                    }
                 }
                 ImGui::BeginChild("BoneList", ImVec2(0, 200), true);
                 for (size_t i = 0; i < state.currentModel.skeleton.bones.size(); i++) {

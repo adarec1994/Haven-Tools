@@ -52,7 +52,6 @@ void decompressQuat(uint32_t quat32, uint32_t quat64, uint16_t quat48, int quali
         outX = q1; outY = q2; outZ = q3; outW = q0;
     }
 }
-
 Animation loadANI(const std::vector<uint8_t>& data, const std::string& filename) {
     Animation anim;
     anim.filename = filename;
@@ -167,7 +166,6 @@ Animation loadANI(const std::vector<uint8_t>& data, const std::string& filename)
     }
     return anim;
 }
-
 void findAnimationsForModel(AppState& state, const std::string& modelBaseName) {
     state.availableAnimFiles.clear();
     state.selectedAnimIndex = -1;
@@ -235,7 +233,6 @@ void findAnimationsForModel(AppState& state, const std::string& modelBaseName) {
     std::sort(state.availableAnimFiles.begin(), state.availableAnimFiles.end());
     state.basePoseBones = state.currentModel.skeleton.bones;
 }
-
 void dumpAllAnimFileNames(const AppState& state) {
     std::set<std::string> allAnis;
     for (const auto& erfPath : state.erfFiles) {
@@ -251,7 +248,6 @@ void dumpAllAnimFileNames(const AppState& state) {
     for (const auto& name : allAnis) {
     }
 }
-
 void applyAnimation(Model& model, const Animation& anim, float time, const std::vector<Bone>& basePose) {
     if (anim.tracks.empty()) return;
     if (basePose.empty() || basePose.size() != model.skeleton.bones.size()) return;
@@ -390,6 +386,69 @@ void applyAnimation(Model& model, const Animation& anim, float time, const std::
             bone.worldPosX = parent.worldPosX + rotatedX;
             bone.worldPosY = parent.worldPosY + rotatedY;
             bone.worldPosZ = parent.worldPosZ + rotatedZ;
+            quatMul(parent.worldRotX, parent.worldRotY, parent.worldRotZ, parent.worldRotW,
+                    bone.rotX, bone.rotY, bone.rotZ, bone.rotW,
+                    bone.worldRotX, bone.worldRotY, bone.worldRotZ, bone.worldRotW);
+        }
+    }
+}
+
+void computeBoneWorldTransforms(Model& model) {
+    auto quatRotate = [](float qx, float qy, float qz, float qw,
+                         float vx, float vy, float vz,
+                         float& ox, float& oy, float& oz) {
+        float tx = 2.0f * (qy * vz - qz * vy);
+        float ty = 2.0f * (qz * vx - qx * vz);
+        float tz = 2.0f * (qx * vy - qy * vx);
+        ox = vx + qw * tx + (qy * tz - qz * ty);
+        oy = vy + qw * ty + (qz * tx - qx * tz);
+        oz = vz + qw * tz + (qx * ty - qy * tx);
+    };
+    auto quatMul = [](float q1x, float q1y, float q1z, float q1w,
+                      float q2x, float q2y, float q2z, float q2w,
+                      float& rx, float& ry, float& rz, float& rw) {
+        rw = q1w*q2w - q1x*q2x - q1y*q2y - q1z*q2z;
+        rx = q1w*q2x + q1x*q2w + q1y*q2z - q1z*q2y;
+        ry = q1w*q2y - q1x*q2z + q1y*q2w + q1z*q2x;
+        rz = q1w*q2z + q1x*q2y - q1y*q2x + q1z*q2w;
+    };
+    std::vector<int> order;
+    std::vector<bool> done(model.skeleton.bones.size(), false);
+    while (order.size() < model.skeleton.bones.size()) {
+        bool any = false;
+        for (size_t i = 0; i < model.skeleton.bones.size(); i++) {
+            if (done[i]) continue;
+            if (model.skeleton.bones[i].parentIndex < 0 || done[model.skeleton.bones[i].parentIndex]) {
+                order.push_back((int)i);
+                done[i] = true;
+                any = true;
+            }
+        }
+        if (!any) {
+            for (size_t i = 0; i < model.skeleton.bones.size(); i++) {
+                if (!done[i]) { order.push_back((int)i); done[i] = true; }
+            }
+            break;
+        }
+    }
+    for (int idx : order) {
+        Bone& bone = model.skeleton.bones[idx];
+        if (bone.parentIndex < 0) {
+            bone.worldPosX = bone.posX;
+            bone.worldPosY = bone.posY;
+            bone.worldPosZ = bone.posZ;
+            bone.worldRotX = bone.rotX;
+            bone.worldRotY = bone.rotY;
+            bone.worldRotZ = bone.rotZ;
+            bone.worldRotW = bone.rotW;
+        } else {
+            const Bone& parent = model.skeleton.bones[bone.parentIndex];
+            float rx, ry, rz;
+            quatRotate(parent.worldRotX, parent.worldRotY, parent.worldRotZ, parent.worldRotW,
+                       bone.posX, bone.posY, bone.posZ, rx, ry, rz);
+            bone.worldPosX = parent.worldPosX + rx;
+            bone.worldPosY = parent.worldPosY + ry;
+            bone.worldPosZ = parent.worldPosZ + rz;
             quatMul(parent.worldRotX, parent.worldRotY, parent.worldRotZ, parent.worldRotW,
                     bone.rotX, bone.rotY, bone.rotZ, bone.rotW,
                     bone.worldRotX, bone.worldRotY, bone.worldRotZ, bone.worldRotW);

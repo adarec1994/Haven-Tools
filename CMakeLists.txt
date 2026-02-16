@@ -156,6 +156,30 @@ static unsigned int spt_dll_len = 0;
     message(WARNING "SpeedTreeRT.dll not found at ${SPT_DLL_PATH}")
 endif()
 
+set(BLENDER_ADDON_PATH "${CMAKE_SOURCE_DIR}/src/python/havenarea_importer.zip")
+if(EXISTS "${BLENDER_ADDON_PATH}")
+    file(READ "${BLENDER_ADDON_PATH}" ADDON_DATA HEX)
+    string(LENGTH "${ADDON_DATA}" ADDON_HEX_LEN)
+    math(EXPR ADDON_LEN "${ADDON_HEX_LEN} / 2")
+    string(REGEX REPLACE "([0-9a-f][0-9a-f])" "0x\\1," ADDON_ARRAY "${ADDON_DATA}")
+    string(REGEX REPLACE ",$" "" ADDON_ARRAY "${ADDON_ARRAY}")
+    file(WRITE "${CMAKE_BINARY_DIR}/blender_addon_embedded.h"
+            "#pragma once
+static const unsigned char kBlenderAddonZip[] = {
+${ADDON_ARRAY}
+};
+static const unsigned int kBlenderAddonZipSize = ${ADDON_LEN};
+")
+    message(STATUS "Embedded Blender addon: ${BLENDER_ADDON_PATH} (${ADDON_LEN} bytes)")
+else()
+    file(WRITE "${CMAKE_BINARY_DIR}/blender_addon_embedded.h"
+            "#pragma once
+static const unsigned char kBlenderAddonZip[] = {0};
+static const unsigned int kBlenderAddonZipSize = 0;
+")
+    message(WARNING "Blender addon not found at ${BLENDER_ADDON_PATH}")
+endif()
+
 add_executable(HavenTools
         src/main.cpp
         src/types.cpp

@@ -10,7 +10,6 @@
 #include <fstream>
 #include <set>
 
-
 static const std::vector<LevelGame>& getLevelDB() {
     static std::vector<LevelGame> db = buildLevelDatabase();
     return db;
@@ -129,6 +128,7 @@ static bool isGffFile(const std::string& name) {
     }
     return false;
 }
+
 static std::string GetErfSource(const std::string& erfPath) {
     std::string pathLower = erfPath;
     std::transform(pathLower.begin(), pathLower.end(), pathLower.begin(), ::tolower);
@@ -186,6 +186,7 @@ static std::vector<uint8_t> readCachedEntryData(AppState& state, const CachedEnt
     if (ce.entryIdx >= erf.entries().size()) return {};
     return erf.readEntry(erf.entries()[ce.entryIdx]);
 }
+
 static int s_meshDataSourceFilter = 0;
 static int s_hierDataSourceFilter = 0;
 static std::set<std::string> s_importedModels;
@@ -193,6 +194,7 @@ static bool s_importedModelsLoaded = false;
 static std::string getImportedModelsPath() {
     return (fs::path(getExeDir()) / "imported_models.txt").string();
 }
+
 static void loadImportedModels() {
     if (s_importedModelsLoaded) return;
     s_importedModelsLoaded = true;
@@ -207,6 +209,7 @@ static void loadImportedModels() {
         s_importedModels.insert(lower);
     }
 }
+
 static void saveImportedModels() {
     std::ofstream file(getImportedModelsPath());
     if (!file) {
@@ -216,6 +219,7 @@ static void saveImportedModels() {
         file << name << "\n";
     }
 }
+
 void markModelAsImported(const std::string& modelName) {
     loadImportedModels();
     std::string nameLower = modelName;
@@ -223,12 +227,14 @@ void markModelAsImported(const std::string& modelName) {
     s_importedModels.insert(nameLower);
     saveImportedModels();
 }
+
 static bool isImportedModel(const std::string& modelName) {
     loadImportedModels();
     std::string nameLower = modelName;
     std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), ::tolower);
     return s_importedModels.find(nameLower) != s_importedModels.end();
 }
+
 static void unmarkModelAsImported(const std::string& modelName) {
     loadImportedModels();
     std::string nameLower = modelName;
@@ -236,6 +242,7 @@ static void unmarkModelAsImported(const std::string& modelName) {
     s_importedModels.erase(nameLower);
     saveImportedModels();
 }
+
 static bool s_showDeleteConfirm = false;
 static std::string s_deleteModelName;
 static CachedEntry s_deleteEntry;
@@ -334,6 +341,7 @@ static bool deleteFromERF(const std::string& erfPath, const std::vector<std::str
     out.write(reinterpret_cast<const char*>(newErf.data()), newErf.size());
     return true;
 }
+
 void drawBrowserWindow(AppState& state) {
     if (state.levelLoad.stage > 0) {
         auto& ll = state.levelLoad;
@@ -522,7 +530,6 @@ void drawBrowserWindow(AppState& state) {
             registerErfIndex(&state.materialErfs, &state.materialErfIndex);
             registerErfIndex(&state.textureErfs, &state.textureErfIndex);
 
-
             std::sort(ll.propQueue.begin(), ll.propQueue.end(),
                 [](const AppState::PropWork& a, const AppState::PropWork& b) {
                     return a.modelName < b.modelName;
@@ -701,7 +708,6 @@ void drawBrowserWindow(AppState& state) {
             ll.itemIndex = 0;
             ll.sptLoaded = 0;
 
-
             if (!ll.sptCache.empty()) {
                 size_t estimatedNewMeshes = 0;
                 for (const auto& sw : ll.sptQueue) {
@@ -716,7 +722,6 @@ void drawBrowserWindow(AppState& state) {
             ll.stageLabel = "Placing trees...";
         }
         else if (ll.stage == 5) {
-
 
             const int SPT_BATCH_SIZE = 200;
             if (!ll.sptSetupDone || ll.sptCache.empty()) {
@@ -811,7 +816,6 @@ void drawBrowserWindow(AppState& state) {
 
             if (!state.currentModel.meshes.empty()) {
 
-
                 float minX = 1e30f, maxX = -1e30f;
                 float minY = 1e30f, maxY = -1e30f;
                 float minZ = 1e30f, maxZ = -1e30f;
@@ -885,7 +889,6 @@ void drawBrowserWindow(AppState& state) {
         }
         return;
     }
-
 
     ImGui::SetNextWindowSize(ImVec2(500, 600), ImGuiCond_FirstUseEver);
     ImGui::Begin("ERF Browser", &state.showBrowser, ImGuiWindowFlags_MenuBar);
@@ -2424,7 +2427,6 @@ void drawBrowserWindow(AppState& state) {
                                     state.modelErfs.push_back(std::move(rimForModel));
                                     state.materialErfs.push_back(std::move(rimForMat));
 
-
                                     std::string rimDir = fs::path(state.currentRIMPath).parent_path().string();
                                     int gpuPushed = 0;
                                     for (const auto& dirEntry : fs::directory_iterator(rimDir)) {
@@ -2455,7 +2457,6 @@ void drawBrowserWindow(AppState& state) {
                                             state.statusMessage = "Failed to parse: " + re.name;
                                         }
                                     }
-
 
                                     for (int p = 0; p < gpuPushed / 2; p++) {
                                         state.materialErfs.pop_back();

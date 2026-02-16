@@ -231,7 +231,9 @@ Thank you for downloading or updating to version 2.0!
 
 - Controls update:
 -- Added vertical panning with Q/E.
+-- Added bone selection with rotations and movement.
 -- Controls can be rebound in the Keybind settings.
+-- Added right click dialog for opening files GFF files in the GFF Viewer.
 
 - Levels:
 -- Added .LVL file's to the list of files that can be loaded.
@@ -250,6 +252,12 @@ Thank you for downloading or updating to version 2.0!
 -- Added Gff Value editing ~ fast and efficient.
 --- Default save location is in core/override.
 -- Added Core/Override to the ERF browser to access mods, load mods, and edit mods.
+-- Updated to skip the splashscreen on subsequent loads.
+-- Updated the .exe selection to include DAOrigins for EA versions of the game.
+-- Added "Add Ons" to the toolbar for extracting the blender importer for levels.
+
+- Importing
+-- Added import to override/ embedding in ERF as options when importing
 
 - Bug fixes:
 -- Fixed a bug with a rogue separator in the ERF browser.

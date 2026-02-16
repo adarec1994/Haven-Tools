@@ -98,6 +98,7 @@ public:
     void SetBackupCallback(BackupCallback cb) { m_backupCallback = cb; }
     void SetProgressCallback(ProgressCallback cb) { m_progressCallback = cb; }
     bool ImportToDirectory(const std::string& glbPath, const std::string& targetDir);
+    bool ImportToOverride(const std::string& glbPath, const std::string& targetDir);
     static bool BackupExists(const std::string& erfPath);
     static std::string GetBackupDir();
 private:
