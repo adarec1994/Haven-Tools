@@ -56,7 +56,6 @@ int main(int argc, char** argv) {
 
     io.Fonts->AddFontDefault();
 
-    // Load multilingual fonts from Windows system fonts
     auto tryLoadFont = [&](const char* path, float size, const ImWchar* ranges) {
         if (std::filesystem::exists(path)) {
             ImFontConfig cfg;
@@ -108,15 +107,21 @@ int main(int argc, char** argv) {
         int display_w, display_h;
         glfwGetFramebufferSize(window, &display_w, &display_h);
 
-        beginFrame(g_d3d, 0.15f, 0.15f, 0.15f, 1.0f);
+        if (state.envSettings.loaded) {
+            beginFrame(g_d3d, state.envSettings.atmoFogColor[0] * 0.3f,
+                              state.envSettings.atmoFogColor[1] * 0.3f,
+                              state.envSettings.atmoFogColor[2] * 0.3f, 1.0f);
+        } else {
+            beginFrame(g_d3d, 0.15f, 0.15f, 0.15f, 1.0f);
+        }
 
         if (state.hasModel) {
             if (state.animPlaying && state.currentAnim.duration > 0)
                 applyAnimation(state.currentModel, state.currentAnim, state.animTime, state.basePoseBones);
-            renderModel(state.currentModel, state.camera, state.renderSettings, display_w, display_h, state.animPlaying || state.bonePoseMode, state.selectedBoneIndex, state.selectedLevelChunk);
+            renderModel(state.currentModel, state.camera, state.renderSettings, display_w, display_h, state.animPlaying, state.selectedBoneIndex, state.selectedLevelChunk, &state.envSettings, state.skyboxLoaded ? &state.skyboxModel : nullptr);
         } else {
             Model empty;
-            renderModel(empty, state.camera, state.renderSettings, display_w, display_h, false, -1, -1);
+            renderModel(empty, state.camera, state.renderSettings, display_w, display_h, false, -1, -1, &state.envSettings, state.skyboxLoaded ? &state.skyboxModel : nullptr);
         }
 
         ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());

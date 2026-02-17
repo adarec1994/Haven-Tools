@@ -1,5 +1,6 @@
 #include "export.h"
 #include <fstream>
+#include <iostream>
 #include <cstring>
 #include <vector>
 #include <map>
@@ -30,33 +31,27 @@ static std::string escapeJson(const std::string& s) {
     }
     return out;
 }
-
 static void writeU32(std::vector<uint8_t>& buf, uint32_t val) {
     buf.push_back(val & 0xFF);
     buf.push_back((val >> 8) & 0xFF);
     buf.push_back((val >> 16) & 0xFF);
     buf.push_back((val >> 24) & 0xFF);
 }
-
 static void writeFloat(std::vector<uint8_t>& buf, float val) {
     uint32_t bits;
     std::memcpy(&bits, &val, 4);
     writeU32(buf, bits);
 }
-
 static void writeU16(std::vector<uint8_t>& buf, uint16_t val) {
     buf.push_back(val & 0xFF);
     buf.push_back((val >> 8) & 0xFF);
 }
-
 static void padTo4(std::vector<uint8_t>& buf) {
     while (buf.size() % 4 != 0) buf.push_back(0);
 }
-
 static void padJsonTo4(std::string& json) {
     while (json.size() % 4 != 0) json += ' ';
 }
-
 static int findSkeletonBone(const Skeleton& skeleton, const std::string& name) {
     std::string nameLower = name;
     std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), ::tolower);
@@ -67,7 +62,6 @@ static int findSkeletonBone(const Skeleton& skeleton, const std::string& name) {
     }
     return -1;
 }
-
 static void generateBoxMesh(float hx, float hy, float hz,
                             std::vector<float>& outVerts, std::vector<uint32_t>& outIndices) {
     float v[8][3] = {
@@ -89,7 +83,6 @@ static void generateBoxMesh(float hx, float hy, float hz,
     };
     for (int i = 0; i < 36; i++) outIndices.push_back(idx[i]);
 }
-
 static void generateSphereMesh(float radius, std::vector<float>& outVerts, std::vector<uint32_t>& outIndices) {
     const int segments = 16;
     const int rings = 8;
@@ -132,7 +125,6 @@ static void generateSphereMesh(float radius, std::vector<float>& outVerts, std::
         outIndices.push_back(lastRingStart + s);
     }
 }
-
 static void generateCapsuleMesh(float radius, float height,
                                 std::vector<float>& outVerts, std::vector<uint32_t>& outIndices) {
     const int segments = 16;
@@ -189,7 +181,6 @@ static void generateCapsuleMesh(float radius, float height,
         outIndices.push_back(lastRingStart + s);
     }
 }
-
 static void transformVerts(std::vector<float>& verts, float px, float py, float pz,
                            float qx, float qy, float qz, float qw) {
     for (size_t i = 0; i < verts.size(); i += 3) {
@@ -205,7 +196,6 @@ static void transformVerts(std::vector<float>& verts, float px, float py, float 
         verts[i+2] = nz + pz;
     }
 }
-
 bool exportToGLB(const Model& model, const std::vector<Animation>& animations, const std::string& outputPath, const ExportOptions& options) {
     if (model.meshes.empty()) return false;
     std::vector<uint8_t> binBuffer;
@@ -852,7 +842,6 @@ bool exportToGLB(const Model& model, const std::vector<Animation>& animations, c
     out.write(reinterpret_cast<const char*>(binBuffer.data()), binBuffer.size());
     return out.good();
 }
-
 struct Mat4 {
     float m[16];
     static Mat4 Identity() {
@@ -883,7 +872,6 @@ struct Mat4 {
         return res;
     }
 };
-
 bool exportToFBX(const Model& model, const std::vector<Animation>& animations, const std::string& outputPath, const ExportOptions& options) {
     if (model.meshes.empty()) return false;
     std::vector<uint8_t> output;
@@ -1153,6 +1141,8 @@ bool exportToFBX(const Model& model, const std::vector<Animation>& animations, c
         animCurveNodeCount += (int)ae.tracks.size();
         animCurveCount += (int)ae.tracks.size() * 3;
     }
+    // FBX element names use \x00\x01 as a class separator.
+    // C++ string literals truncate at \x00, so we build these explicitly.
     auto fbxName = [](const std::string& name, const std::string& cls) -> std::string {
         std::string r = name;
         r.push_back('\x00');
@@ -1259,14 +1249,18 @@ bool exportToFBX(const Model& model, const std::vector<Animation>& animations, c
         void endProps() { uint32_t listLen = (uint32_t)(out.size() - propStart); setPropertyCount(propCount, listLen); }
     };
     auto quatToEuler = [](float qx, float qy, float qz, float qw, double& ex, double& ey, double& ez) {
+        // FBX uses XYZ rotation order, convert quat to euler XYZ
+        // Roll (X)
         double sinr_cosp = 2.0 * (qw * qx + qy * qz);
         double cosr_cosp = 1.0 - 2.0 * (qx * qx + qy * qy);
         ex = std::atan2(sinr_cosp, cosr_cosp) * 180.0 / 3.14159265358979323846;
+        // Pitch (Y)
         double sinp = 2.0 * (qw * qy - qz * qx);
         if (std::abs(sinp) >= 1.0)
             ey = std::copysign(90.0, sinp);
         else
             ey = std::asin(sinp) * 180.0 / 3.14159265358979323846;
+        // Yaw (Z)
         double siny_cosp = 2.0 * (qw * qz + qx * qy);
         double cosy_cosp = 1.0 - 2.0 * (qy * qy + qz * qz);
         ez = std::atan2(siny_cosp, cosy_cosp) * 180.0 / 3.14159265358979323846;

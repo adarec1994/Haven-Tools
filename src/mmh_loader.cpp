@@ -3,6 +3,7 @@
 #include "dds_loader.h"
 #include "animation.h"
 #include "Gff.h"
+#include <iostream>
 #include "gff32.h"
 #include "erf.h"
 #include <algorithm>
@@ -115,6 +116,16 @@ Material parseMAO(const std::string& maoContent, const std::string& materialName
                                 if (mat.specularMap.empty()) mat.specularMap = resName;
                             } else {
                                 if (mat.diffuseMap.empty()) mat.diffuseMap = resName;
+                            }
+                        } else {
+                            // Fallback: unrecognized field name (skybox, custom shaders, etc)
+                            if (mat.diffuseMap.empty() &&
+                                resLower.find(".mat") == std::string::npos &&
+                                resLower.find(".fx") == std::string::npos &&
+                                resLower.find(".mfx") == std::string::npos) {
+                                mat.diffuseMap = resName;
+                                std::cout << "[MAO] Fallback: using field '" << fieldName
+                                          << "' value '" << resName << "' as diffuse for '" << materialName << "'" << std::endl;
                             }
                         }
                     }

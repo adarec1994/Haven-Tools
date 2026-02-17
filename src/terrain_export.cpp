@@ -259,7 +259,7 @@ static Model buildModelFromSpt(const SptModel& spt, const std::string& baseName)
 
 static bool exportModel(Model& model, const std::string& path, bool useFbx) {
     if (model.meshes.empty()) return false;
-    convertModelToYUp(model);
+    if (useFbx) convertModelToYUp(model);
     ExportOptions opts;
     opts.doubleSided = true;
     if (useFbx) return exportToFBX(model, {}, path, opts);

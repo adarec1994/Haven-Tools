@@ -17,6 +17,20 @@ struct alignas(16) CBPerFrame {
     float ambientStrength;
     float specularPower;
     float padding0[2];
+    float lightColor[4];
+    float fogColor[4];
+    float fogParams[4];
+};
+
+struct alignas(16) CBSkyDome {
+    float viewProj[16];
+    float sunDir[4];
+    float sunColor[4];
+    float fogColor[4];
+    float cloudColor[4];
+    float cloudParams[4];
+    float atmoParams[4];
+    float timeAndPad[4];
 };
 
 struct alignas(16) CBPerMaterial {
@@ -43,7 +57,7 @@ struct alignas(16) CBPerMaterial {
     int useStubble;
     int useTattoo;
     float padding1[2];
-    float highlightColor[4];  // rgb = color, a = mix amount (0 = no highlight)
+    float highlightColor[4];
 };
 
 struct alignas(16) CBSimple {
@@ -62,11 +76,11 @@ struct alignas(16) CBTerrain {
 };
 
 struct alignas(16) CBWater {
-    float wave0[4];       // dirX, dirY, uvScale, unused  (from mat_vVSHWaterParams[0])
-    float wave1[4];       // dirX, dirY, uvScale, unused  (from mat_vVSHWaterParams[1])
-    float wave2[4];       // dirX, dirY, uvScale, unused  (from mat_vVSHWaterParams[2])
-    float waterColor[4];  // xyz = normal blend weights per layer, w = extra (mat_vPSHWaterParams[0])
-    float waterVisual[4]; // x = fresnelPow, y = specIntensity, z = specPower, w = extra (mat_vPSHWaterParams[1])
+    float wave0[4];
+    float wave1[4];
+    float wave2[4];
+    float waterColor[4];
+    float waterVisual[4];
     float time;
     int isWater;
     int _pad[2];
@@ -101,5 +115,9 @@ void updateTerrainCB(const CBTerrain& data);
 ID3D11Buffer* getTerrainCB();
 void updateWaterCB(const CBWater& data);
 ID3D11Buffer* getWaterCB();
+
+ShaderProgram& getSkyShader();
+ID3D11Buffer* getSkyDomeCB();
+void updateSkyDomeCB(const CBSkyDome& data);
 
 ID3DBlob* compileShader(const char* source, const char* entryPoint, const char* target);

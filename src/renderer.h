@@ -13,9 +13,11 @@ void buildSkinningCache(Mesh& mesh, const Model& model);
 
 void renderModel(Model& model, const Camera& camera, const RenderSettings& settings,
                  int width, int height, bool animating = false, int selectedBone = -1,
-                 int selectedChunk = -1);
+                 int selectedChunk = -1, const EnvironmentSettings* envSettings = nullptr,
+                 Model* skyboxModel = nullptr);
 
 void drawSolidBox(float x, float y, float z);
+void destroySkyDome();
 void drawSolidSphere(float radius, int slices, int stacks);
 void drawSolidCapsule(float radius, float height, int slices, int stacks);
 

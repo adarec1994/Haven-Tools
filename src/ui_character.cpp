@@ -1,6 +1,7 @@
 #include "ui_internal.h"
 #include "tnt_loader.h"
 #include <set>
+#include <map>
 
 static std::set<std::string> s_materialCache;
 static bool s_materialCacheBuilt = false;
@@ -530,6 +531,248 @@ void buildCharacterLists(AppState& state) {
     cd.listsBuilt = true;
 }
 
+// Face morph category definitions
+struct FaceMorphDef {
+    const char* code;
+    const char* name;
+};
+
+// Forward declaration
+static std::vector<Vertex> loadFaceMorphMesh(AppState& state, const std::string& mshFile);
+
+static void buildFaceMorphCategories(AppState& state) {
+    auto& cd = state.charDesigner;
+    if (cd.faceMorphsBuilt) return;
+
+    // Define universal categories (present for all races)
+    std::vector<FaceMorphDef> catDefs = {
+        {"nos", "Nose"}, {"jaw", "Jaw"}, {"mth", "Mouth"}, {"ear", "Ears"},
+        {"eye", "Eyes"}, {"brw", "Brow"}, {"chk", "Cheeks"}, {"nec", "Neck"},
+        {"shp", "Head Shape"}, {"tee", "Teeth"}
+    };
+
+    // Add race/gender-specific chin code
+    std::string chinCode;
+    if (cd.race == 2) chinCode = cd.isMale ? "cdm" : "cdf";       // dwarf
+    else if (cd.race == 1) chinCode = cd.isMale ? "cem" : "cef";   // elf
+    else chinCode = cd.isMale ? "cdm" : "cdf";                      // human fallback
+    catDefs.push_back({chinCode.c_str(), "Chin"});
+
+    // Add gender-specific cheek variants
+    std::string cheekCode = cd.isMale ? "chm" : "chf";
+    catDefs.push_back({cheekCode.c_str(), "Cheeks 2"});
+
+    // Scan ERFs for uh_/uhm_/uem_/ulm_ mesh entries
+    // key = "prefix_code_number" (e.g., "uh_nos_01"), value = full filename
+    std::map<std::string, std::string> uhMap, uhmMap, uemMap, ulmMap;
+
+    auto scanEntries = [](const std::vector<std::unique_ptr<ERFFile>>& erfs,
+                          std::map<std::string, std::string>& uhMap,
+                          std::map<std::string, std::string>& uhmMap,
+                          std::map<std::string, std::string>& uemMap,
+                          std::map<std::string, std::string>& ulmMap) {
+        for (auto& erf : erfs) {
+            for (const auto& entry : erf->entries()) {
+                std::string name = entry.name;
+                std::transform(name.begin(), name.end(), name.begin(), ::tolower);
+                if (name.size() < 12) continue;
+                if (name.substr(name.size() - 4) != ".msh") continue;
+
+                // Parse: {prefix}_{code}_{num}_0.msh
+                std::string prefix, code, num;
+                if (name.substr(0, 3) == "uh_") {
+                    prefix = "uh";
+                    size_t p1 = name.find('_', 3);
+                    if (p1 == std::string::npos) continue;
+                    code = name.substr(3, p1 - 3);
+                    size_t p2 = name.find('_', p1 + 1);
+                    if (p2 == std::string::npos) continue;
+                    num = name.substr(p1 + 1, p2 - p1 - 1);
+                    // Skip base meshes
+                    if (code == "uhm" || code == "uem" || code == "ulm") continue;
+                    uhMap[code + "_" + num] = name;
+                } else if (name.substr(0, 4) == "uhm_") {
+                    size_t p1 = name.find('_', 4);
+                    if (p1 == std::string::npos) continue;
+                    code = name.substr(4, p1 - 4);
+                    size_t p2 = name.find('_', p1 + 1);
+                    if (p2 == std::string::npos) continue;
+                    num = name.substr(p1 + 1, p2 - p1 - 1);
+                    uhmMap[code + "_" + num] = name;
+                } else if (name.substr(0, 4) == "uem_") {
+                    size_t p1 = name.find('_', 4);
+                    if (p1 == std::string::npos) continue;
+                    code = name.substr(4, p1 - 4);
+                    size_t p2 = name.find('_', p1 + 1);
+                    if (p2 == std::string::npos) continue;
+                    num = name.substr(p1 + 1, p2 - p1 - 1);
+                    uemMap[code + "_" + num] = name;
+                } else if (name.substr(0, 4) == "ulm_") {
+                    size_t p1 = name.find('_', 4);
+                    if (p1 == std::string::npos) continue;
+                    code = name.substr(4, p1 - 4);
+                    size_t p2 = name.find('_', p1 + 1);
+                    if (p2 == std::string::npos) continue;
+                    num = name.substr(p1 + 1, p2 - p1 - 1);
+                    ulmMap[code + "_" + num] = name;
+                }
+            }
+        }
+    };
+
+    scanEntries(state.modelErfs, uhMap, uhmMap, uemMap, ulmMap);
+
+    // Load and scan chargen.rim (contains face morph component meshes)
+    if (!cd.chargenRim) {
+        fs::path chargenPath = fs::path(state.selectedFolder) / "packages" / "core" / "data" / "chargen.rim";
+        if (fs::exists(chargenPath)) {
+            cd.chargenRim = std::make_unique<ERFFile>();
+            if (!cd.chargenRim->open(chargenPath.string())) {
+                cd.chargenRim.reset();
+                printf("[FACE] Failed to open chargen.rim\n");
+            } else {
+                printf("[FACE] Loaded chargen.rim: %zu entries\n", cd.chargenRim->entries().size());
+            }
+        } else {
+            printf("[FACE] chargen.rim not found at: %s\n", chargenPath.string().c_str());
+        }
+    }
+    if (cd.chargenRim) {
+        // Wrap in a temp vector so we can reuse scanEntries
+        std::vector<std::unique_ptr<ERFFile>> tempVec;
+        tempVec.push_back(std::move(cd.chargenRim));
+        scanEntries(tempVec, uhMap, uhmMap, uemMap, ulmMap);
+        cd.chargenRim = std::move(tempVec[0]);
+    }
+
+    // Build categories
+    cd.faceCategories.clear();
+    for (const auto& def : catDefs) {
+        std::string code = def.code;
+
+        // Collect all number keys for this code from uh_ entries
+        std::set<std::string> numbers;
+        for (const auto& [key, val] : uhMap) {
+            if (key.substr(0, code.size() + 1) == code + "_") {
+                numbers.insert(key.substr(code.size() + 1));
+            }
+        }
+        // Also from uhm_ entries (some categories only exist in uhm_)
+        for (const auto& [key, val] : uhmMap) {
+            if (key.substr(0, code.size() + 1) == code + "_") {
+                numbers.insert(key.substr(code.size() + 1));
+            }
+        }
+
+        if (numbers.empty()) continue;
+
+        AppState::CharacterDesigner::FaceMorphCategory cat;
+        cat.name = def.name;
+        cat.code = code;
+
+        for (const auto& num : numbers) {
+            std::string key = code + "_" + num;
+            AppState::CharacterDesigner::FaceMorphCategory::Variant v;
+            auto uhIt = uhMap.find(key);
+            if (uhIt != uhMap.end()) v.uhMsh = uhIt->second;
+            auto uhmIt = uhmMap.find(key);
+            if (uhmIt != uhmMap.end()) v.uhmMsh = uhmIt->second;
+            auto uemIt = uemMap.find(key);
+            if (uemIt != uemMap.end()) v.uemMsh = uemIt->second;
+            auto ulmIt = ulmMap.find(key);
+            if (ulmIt != ulmMap.end()) v.ulmMsh = ulmIt->second;
+            v.label = num;
+            cat.variants.push_back(v);
+        }
+
+        // Sort by label number
+        std::sort(cat.variants.begin(), cat.variants.end(),
+            [](const auto& a, const auto& b) {
+                int na = 0, nb = 0;
+                try { na = std::stoi(a.label); } catch (...) {}
+                try { nb = std::stoi(b.label); } catch (...) {}
+                return na < nb;
+            });
+
+        cd.faceCategories.push_back(std::move(cat));
+    }
+
+    cd.faceMorphsBuilt = true;
+
+    // Load universal morph base meshes from chargen.rim
+    if (!cd.morphBasesLoaded && cd.chargenRim) {
+        cd.morphBaseHead = loadFaceMorphMesh(state, "uh_uhm_bas_0.msh");
+        cd.morphBaseEyes = loadFaceMorphMesh(state, "uh_uem_bas_0.msh");
+        cd.morphBaseLashes = loadFaceMorphMesh(state, "uh_ulm_bas_0.msh");
+        cd.morphBasesLoaded = true;
+        printf("[FACE] Morph bases: head=%zu eyes=%zu lashes=%zu\n",
+               cd.morphBaseHead.size(), cd.morphBaseEyes.size(), cd.morphBaseLashes.size());
+    }
+    printf("[FACE] Built %zu face morph categories\n", cd.faceCategories.size());
+    for (const auto& cat : cd.faceCategories) {
+        printf("[FACE]   %s (%s): %zu variants\n", cat.name.c_str(), cat.code.c_str(), cat.variants.size());
+    }
+}
+
+// Load a face morph component mesh and return its first mesh's vertices
+static std::vector<Vertex> loadFaceMorphMesh(AppState& state, const std::string& mshFile) {
+    if (mshFile.empty()) return {};
+    std::vector<uint8_t> data = readFromCache(state, mshFile, ".msh");
+    if (data.empty()) {
+        data = readFromErfs(state.modelErfs, mshFile);
+    }
+    // Try chargen.rim (face morph component meshes live here)
+    if (data.empty() && state.charDesigner.chargenRim) {
+        std::string nameLower = mshFile;
+        std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), ::tolower);
+        for (const auto& entry : state.charDesigner.chargenRim->entries()) {
+            std::string entryLower = entry.name;
+            std::transform(entryLower.begin(), entryLower.end(), entryLower.begin(), ::tolower);
+            if (entryLower == nameLower) {
+                data = state.charDesigner.chargenRim->readEntry(entry);
+                break;
+            }
+        }
+    }
+    if (data.empty()) return {};
+    Model tempModel;
+    if (!loadMSH(data, tempModel) || tempModel.meshes.empty()) return {};
+    return tempModel.meshes[0].vertices;
+}
+
+// Load morph targets for a category's current selection
+static void loadFaceMorphTargets(AppState& state, AppState::CharacterDesigner::FaceMorphCategory& cat) {
+    cat.headTarget.clear();
+    cat.eyesTarget.clear();
+    cat.lashesTarget.clear();
+    if (cat.selected <= 0 || cat.selected > (int)cat.variants.size()) return;
+
+    const auto& v = cat.variants[cat.selected - 1];
+    printf("[FMORPH] Loading targets for %s variant %d: uh='%s' uhm='%s' uem='%s' ulm='%s'\n",
+           cat.name.c_str(), cat.selected, v.uhMsh.c_str(), v.uhmMsh.c_str(), v.uemMsh.c_str(), v.ulmMsh.c_str());
+
+    // Load uh_ mesh (primary head morph)
+    if (!v.uhMsh.empty()) {
+        cat.headTarget = loadFaceMorphMesh(state, v.uhMsh);
+        printf("[FMORPH]   uh_ head: %zu verts\n", cat.headTarget.size());
+    }
+    // If no uh_ but uhm_ exists, use that for head
+    if (cat.headTarget.empty() && !v.uhmMsh.empty()) {
+        cat.headTarget = loadFaceMorphMesh(state, v.uhmMsh);
+        printf("[FMORPH]   uhm_ head fallback: %zu verts\n", cat.headTarget.size());
+    }
+    // Load uem_ for eyes
+    if (!v.uemMsh.empty()) {
+        cat.eyesTarget = loadFaceMorphMesh(state, v.uemMsh);
+        printf("[FMORPH]   uem_ eyes: %zu verts\n", cat.eyesTarget.size());
+    }
+    // Load ulm_ for lashes
+    if (!v.ulmMsh.empty()) {
+        cat.lashesTarget = loadFaceMorphMesh(state, v.ulmMsh);
+        printf("[FMORPH]   ulm_ lashes: %zu verts\n", cat.lashesTarget.size());
+    }
+}
+
 static int getMaxMaterialStyle(AppState& state, const std::string& baseName) {
     buildMaterialCache(state);
 
@@ -850,6 +1093,7 @@ void loadCharacterModel(AppState& state) {
         return;
     }
     buildCharacterLists(state);
+    buildFaceMorphCategories(state);
     Animation savedAnim = state.currentAnim;
     bool wasPlaying = state.animPlaying;
     float savedTime = state.animTime;
@@ -1125,6 +1369,66 @@ void loadCharacterModel(AppState& state) {
         }
     }
 
+    // Apply face morph components additively using spatial nearest-vertex matching
+    auto applyFaceMorphSpatial = [&](const std::vector<Vertex>& target,
+                                      const std::vector<Vertex>& base,
+                                      Mesh& mesh,
+                                      const std::vector<Vertex>& meshBaseVerts) {
+        if (target.empty() || base.empty() || meshBaseVerts.empty()) return;
+        // Build base→target mapping (target is similar to base but may have ±few verts)
+        // Compute deltas for each base vertex from nearest target vertex
+        std::vector<float> dx(base.size(), 0), dy(base.size(), 0), dz(base.size(), 0);
+        for (size_t j = 0; j < base.size(); j++) {
+            float bestDist = 1e30f;
+            int bestIdx = 0;
+            for (size_t t = 0; t < target.size(); t++) {
+                float ddx = base[j].x - target[t].x;
+                float ddy = base[j].y - target[t].y;
+                float ddz = base[j].z - target[t].z;
+                float d = ddx*ddx + ddy*ddy + ddz*ddz;
+                if (d < bestDist) { bestDist = d; bestIdx = (int)t; }
+            }
+            dx[j] = target[bestIdx].x - base[j].x;
+            dy[j] = target[bestIdx].y - base[j].y;
+            dz[j] = target[bestIdx].z - base[j].z;
+        }
+        // Map mesh vertices to nearest base vertex and apply deltas
+        for (size_t i = 0; i < mesh.vertices.size() && i < meshBaseVerts.size(); i++) {
+            float bestDist = 1e30f;
+            int bestIdx = 0;
+            for (size_t j = 0; j < base.size(); j++) {
+                float ddx = meshBaseVerts[i].x - base[j].x;
+                float ddy = meshBaseVerts[i].y - base[j].y;
+                float ddz = meshBaseVerts[i].z - base[j].z;
+                float d = ddx*ddx + ddy*ddy + ddz*ddz;
+                if (d < bestDist) { bestDist = d; bestIdx = (int)j; }
+            }
+            // Only apply if mesh vertex is close to a base vertex (within ~threshold)
+            if (bestDist < 0.01f) {
+                mesh.vertices[i].x += dx[bestIdx];
+                mesh.vertices[i].y += dy[bestIdx];
+                mesh.vertices[i].z += dz[bestIdx];
+            }
+        }
+    };
+
+    for (auto& cat : cd.faceCategories) {
+        if (cat.selected <= 0) continue;
+
+        if (!cat.headTarget.empty() && cd.headMeshIndex >= 0 && !cd.morphBaseHead.empty()) {
+            Mesh& headMesh = state.currentModel.meshes[cd.headMeshIndex];
+            applyFaceMorphSpatial(cat.headTarget, cd.morphBaseHead, headMesh, cd.baseHeadVertices);
+        }
+        if (!cat.eyesTarget.empty() && cd.eyesMeshIndex >= 0 && !cd.morphBaseEyes.empty()) {
+            Mesh& eyesMesh = state.currentModel.meshes[cd.eyesMeshIndex];
+            applyFaceMorphSpatial(cat.eyesTarget, cd.morphBaseEyes, eyesMesh, cd.baseEyesVertices);
+        }
+        if (!cat.lashesTarget.empty() && cd.lashesMeshIndex >= 0 && !cd.morphBaseLashes.empty()) {
+            Mesh& lashesMesh = state.currentModel.meshes[cd.lashesMeshIndex];
+            applyFaceMorphSpatial(cat.lashesTarget, cd.morphBaseLashes, lashesMesh, cd.baseLashesVertices);
+        }
+    }
+
     state.basePoseBones = state.currentModel.skeleton.bones;
 
     if (cd.animsLoaded && savedAnimIdx >= 0 && !savedAnim.tracks.empty()) {
@@ -1353,6 +1657,13 @@ void drawCharacterDesigner(AppState& state, ImGuiIO& io) {
         cd.selectedBoots = 0;
         cd.selectedGloves = 0;
         cd.selectedHelmet = -1;
+        cd.faceMorphsBuilt = false;
+        for (auto& cat : cd.faceCategories) {
+            cat.selected = 0;
+            cat.headTarget.clear();
+            cat.eyesTarget.clear();
+            cat.lashesTarget.clear();
+        }
     }
 
     buildCharacterLists(state);
@@ -1484,6 +1795,49 @@ void drawCharacterDesigner(AppState& state, ImGuiIO& io) {
             ImGui::ColorEdit3("Lips", cd.headTintZone1, ImGuiColorEditFlags_NoInputs);
             ImGui::ColorEdit3("Eyeshadow", cd.headTintZone2, ImGuiColorEditFlags_NoInputs);
             ImGui::ColorEdit3("Blush", cd.headTintZone3, ImGuiColorEditFlags_NoInputs);
+            ImGui::EndTabItem();
+        }
+
+        if (ImGui::BeginTabItem("Face")) {
+            if (cd.faceCategories.empty()) {
+                ImGui::TextDisabled("No face morphs available");
+            } else {
+                bool anyChanged = false;
+                for (int ci = 0; ci < (int)cd.faceCategories.size(); ci++) {
+                    auto& cat = cd.faceCategories[ci];
+                    ImGui::Text("%s:", cat.name.c_str());
+
+                    std::string currentLabel = (cat.selected <= 0) ? "Default" :
+                        ((cat.selected <= (int)cat.variants.size())
+                            ? cat.variants[cat.selected - 1].label : "Default");
+
+                    int val = cat.selected;
+                    int maxVal = (int)cat.variants.size();
+                    std::string sliderLabel = (val == 0) ? "Default" : currentLabel;
+                    std::string id = "##face_" + cat.code;
+                    if (ImGui::SliderInt(id.c_str(), &val, 0, maxVal, sliderLabel.c_str())) {
+                        if (val != cat.selected) {
+                            cat.selected = val;
+                            loadFaceMorphTargets(state, cat);
+                            anyChanged = true;
+                        }
+                    }
+                }
+                if (anyChanged) {
+                    cd.needsRebuild = true;
+                }
+
+                ImGui::Separator();
+                if (ImGui::Button("Reset All Face Morphs")) {
+                    for (auto& cat : cd.faceCategories) {
+                        cat.selected = 0;
+                        cat.headTarget.clear();
+                        cat.eyesTarget.clear();
+                        cat.lashesTarget.clear();
+                    }
+                    cd.needsRebuild = true;
+                }
+            }
             ImGui::EndTabItem();
         }
 

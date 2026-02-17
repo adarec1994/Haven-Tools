@@ -104,6 +104,9 @@ static void startLevelLoad(AppState& state, const std::string& rimPath, const st
         if (mat.maskATexId != 0) destroyTexture(mat.maskATexId);
     }
     destroyLevelBuffers();
+    state.envSettings = EnvironmentSettings();
+    state.skyboxModel = Model();
+    state.skyboxLoaded = false;
     state.currentModel = Model();
     state.currentModel.name = displayName + " (" + fs::path(rimPath).stem().string() + ")";
     state.hasModel = true;
@@ -131,7 +134,8 @@ static bool isGffFile(const std::string& name) {
     static const std::vector<std::string> gffExtensions = {
         ".utc", ".uti", ".utp", ".utd", ".uts", ".utm", ".utt", ".utw", ".ute",
         ".dlg", ".jrl", ".fac", ".ifo", ".are", ".git", ".gic", ".gui",
-        ".plt", ".ptm", ".ptt", ".qst", ".stg", ".cre", ".bic", ".cam", ".caf", ".cut", ".ldf"
+        ".plt", ".ptm", ".ptt", ".qst", ".stg", ".cre", ".bic", ".cam", ".caf", ".cut", ".ldf",
+        ".arl", ".opf", ".mmh", ".mao", ".phy", ".mop", ".fxa", ".tnt"
     };
     for (const auto& gffExt : gffExtensions) {
         if (ext == gffExt) return true;
@@ -502,6 +506,156 @@ void drawBrowserWindow(AppState& state) {
                                         ll.sptIdToFile[i] = it->second;
                                     }
                                 }
+
+                                auto& env = state.envSettings;
+                                env = EnvironmentSettings();
+
+                                auto readVec3 = [&](uint32_t si, uint32_t label, uint32_t base, float* out) {
+                                    const GFFField* f = arlGff.findField(si, label);
+                                    if (!f) return;
+                                    uint32_t pos = arlGff.dataOffset() + base + f->dataOffset;
+                                    out[0] = arlGff.readFloatAt(pos);
+                                    out[1] = arlGff.readFloatAt(pos + 4);
+                                    out[2] = arlGff.readFloatAt(pos + 8);
+                                };
+                                auto readColor4 = [&](uint32_t si, uint32_t label, uint32_t base, float* out) {
+                                    const GFFField* f = arlGff.findField(si, label);
+                                    if (!f) return;
+                                    uint32_t pos = arlGff.dataOffset() + base + f->dataOffset;
+                                    out[0] = arlGff.readFloatAt(pos);
+                                    out[1] = arlGff.readFloatAt(pos + 4);
+                                    out[2] = arlGff.readFloatAt(pos + 8);
+                                    out[3] = arlGff.readFloatAt(pos + 12);
+                                };
+
+                                env.skydomeModel = arlGff.readStringByLabel(areaIdx, 3025, 0);
+                                readVec3(areaIdx, 3024, 0, env.areaCenter);
+                                readVec3(areaIdx, 3150, 0, env.sunDirection);
+                                float sunCol4[4] = {1,1,1,1};
+                                readColor4(areaIdx, 3152, 0, sunCol4);
+                                env.sunColor[0] = sunCol4[0]; env.sunColor[1] = sunCol4[1]; env.sunColor[2] = sunCol4[2];
+                                readColor4(areaIdx, 3149, 0, env.sunColorChar);
+
+                                const GFFField* atmoField = arlGff.findField(areaIdx, 22500);
+                                if (atmoField && (atmoField->flags & 0x4000)) {
+                                    uint32_t atmoSI = atmoField->typeId;
+                                    uint32_t atmoBase = atmoField->dataOffset;
+                                    readVec3(atmoSI, 22519, atmoBase, env.atmoSunColor);
+                                    env.atmoSunIntensity = arlGff.readFloatByLabel(atmoSI, 22520, atmoBase);
+                                    env.atmoDistanceMultiplier = arlGff.readFloatByLabel(atmoSI, 22526, atmoBase);
+                                    env.atmoAlpha = arlGff.readFloatByLabel(atmoSI, 22528, atmoBase);
+                                    readVec3(atmoSI, 22529, atmoBase, env.atmoFogColor);
+                                    env.atmoFogIntensity = arlGff.readFloatByLabel(atmoSI, 22530, atmoBase);
+                                    env.atmoFogCap = arlGff.readFloatByLabel(atmoSI, 22531, atmoBase);
+                                    env.atmoFogZenith = arlGff.readFloatByLabel(atmoSI, 22532, atmoBase);
+                                    env.moonScale = arlGff.readFloatByLabel(atmoSI, 22700, atmoBase);
+                                    env.moonAlpha = arlGff.readFloatByLabel(atmoSI, 22701, atmoBase);
+                                    env.moonRotation = arlGff.readFloatByLabel(atmoSI, 22703, atmoBase);
+                                }
+
+                                const GFFField* cldsField = arlGff.findField(areaIdx, 22600);
+                                if (cldsField && (cldsField->flags & 0x4000)) {
+                                    uint32_t cldsSI = cldsField->typeId;
+                                    uint32_t cldsBase = cldsField->dataOffset;
+                                    env.cloudDensity = arlGff.readFloatByLabel(cldsSI, 22620, cldsBase);
+                                    env.cloudSharpness = arlGff.readFloatByLabel(cldsSI, 22621, cldsBase);
+                                    env.cloudDepth = arlGff.readFloatByLabel(cldsSI, 22622, cldsBase);
+                                    env.cloudRange1 = arlGff.readFloatByLabel(cldsSI, 22623, cldsBase);
+                                    env.cloudRange2 = arlGff.readFloatByLabel(cldsSI, 22624, cldsBase);
+                                    readVec3(cldsSI, 22625, cldsBase, env.cloudColor);
+                                }
+
+                                env.loaded = true;
+                                std::cout << "[ARL] Environment: sky='" << env.skydomeModel
+                                          << "' sunDir=(" << env.sunDirection[0] << "," << env.sunDirection[1] << "," << env.sunDirection[2]
+                                          << ") atmoSun=(" << env.atmoSunColor[0] << "," << env.atmoSunColor[1] << "," << env.atmoSunColor[2]
+                                          << ") fog=(" << env.atmoFogColor[0] << "," << env.atmoFogColor[1] << "," << env.atmoFogColor[2]
+                                          << ") clouds=" << env.cloudDensity << std::endl;
+
+                                if (!env.skydomeModel.empty()) {
+                                    std::string skyMshName = env.skydomeModel + ".msh";
+                                    std::string skyMshLower = skyMshName;
+                                    std::transform(skyMshLower.begin(), skyMshLower.end(), skyMshLower.begin(), ::tolower);
+                                    std::vector<uint8_t> skyData;
+                                    if (state.currentErf) {
+                                        for (const auto& e : state.currentErf->entries()) {
+                                            std::string eLower = e.name;
+                                            std::transform(eLower.begin(), eLower.end(), eLower.begin(), ::tolower);
+                                            if (eLower == skyMshLower) { skyData = state.currentErf->readEntry(e); break; }
+                                        }
+                                    }
+                                    if (skyData.empty()) {
+                                        for (const auto& erf : state.modelErfs) {
+                                            for (const auto& e : erf->entries()) {
+                                                std::string eLower = e.name;
+                                                std::transform(eLower.begin(), eLower.end(), eLower.begin(), ::tolower);
+                                                if (eLower == skyMshLower) { skyData = erf->readEntry(e); break; }
+                                            }
+                                            if (!skyData.empty()) break;
+                                        }
+                                    }
+                                    if (!skyData.empty()) {
+                                        Model skyModel;
+                                        if (loadMSH(skyData, skyModel)) {
+                                            std::string skyMmhName = env.skydomeModel + ".mmh";
+                                            std::string skyMmhLower = skyMmhName;
+                                            std::transform(skyMmhLower.begin(), skyMmhLower.end(), skyMmhLower.begin(), ::tolower);
+                                            std::vector<uint8_t> mmhData;
+                                            if (state.currentErf) {
+                                                for (const auto& e : state.currentErf->entries()) {
+                                                    std::string eLower = e.name;
+                                                    std::transform(eLower.begin(), eLower.end(), eLower.begin(), ::tolower);
+                                                    if (eLower == skyMmhLower) { mmhData = state.currentErf->readEntry(e); break; }
+                                                }
+                                            }
+                                            if (mmhData.empty()) {
+                                                for (const auto& erf : state.modelErfs) {
+                                                    for (const auto& e : erf->entries()) {
+                                                        std::string eLower = e.name;
+                                                        std::transform(eLower.begin(), eLower.end(), eLower.begin(), ::tolower);
+                                                        if (eLower == skyMmhLower) { mmhData = erf->readEntry(e); break; }
+                                                    }
+                                                    if (!mmhData.empty()) break;
+                                                }
+                                            }
+                                            if (!mmhData.empty()) {
+                                                loadMMH(mmhData, skyModel);
+                                                std::cout << "[ARL] Loaded skybox MMH, " << skyModel.meshes.size() << " meshes" << std::endl;
+                                                for (size_t mi = 0; mi < skyModel.meshes.size(); mi++)
+                                                    std::cout << "[ARL]   mesh[" << mi << "] mat='" << skyModel.meshes[mi].materialName << "'" << std::endl;
+                                            } else {
+                                                std::cout << "[ARL] Skybox MMH '" << skyMmhName << "' not found" << std::endl;
+                                            }
+                                            finalizeModelMaterials(state, skyModel);
+                                            for (size_t mi = 0; mi < skyModel.materials.size(); mi++) {
+                                                auto& mat = skyModel.materials[mi];
+                                                std::cout << "[ARL] Skybox material[" << mi << "] '" << mat.name
+                                                          << "' diffuse='" << mat.diffuseMap << "' texId=" << mat.diffuseTexId;
+                                                if (mat.diffuseMap.empty())
+                                                    std::cout << " [WARNING: no diffuse map from MAO - check MAO field names]";
+                                                if (!mat.diffuseMap.empty() && mat.diffuseTexId == 0)
+                                                    std::cout << " [WARNING: texture not found in ERFs]";
+                                                std::cout << std::endl;
+                                            }
+                                            float skyScale = 50000.0f;
+                                            for (auto& mesh : skyModel.meshes) {
+                                                for (auto& v : mesh.vertices) {
+                                                    v.x *= skyScale; v.y *= skyScale; v.z *= skyScale;
+                                                }
+                                                mesh.calculateBounds();
+                                            }
+                                            state.skyboxModel = skyModel;
+                                            state.skyboxLoaded = true;
+                                            std::cout << "[ARL] Loaded skybox '" << env.skydomeModel
+                                                      << "' (" << skyModel.meshes.size() << " meshes, "
+                                                      << skyModel.materials.size() << " materials)" << std::endl;
+                                        } else {
+                                            std::cout << "[ARL] Failed to parse skybox mesh '" << skyMshName << "'" << std::endl;
+                                        }
+                                    } else {
+                                        std::cout << "[ARL] Skybox mesh '" << skyMshName << "' not found in ERFs" << std::endl;
+                                    }
+                                }
                             }
                         }
                     }
@@ -578,7 +732,7 @@ void drawBrowserWindow(AppState& state) {
                 ll.stage = 3;
                 ll.stageLabel = "Loading props...";
             }
-            } // end currentErf null check
+            }
         }
         else if (ll.stage == 3) {
             const int PROP_BATCH_SIZE = 32;
@@ -1748,7 +1902,6 @@ void drawBrowserWindow(AppState& state) {
 
                 bool isRimClick = (state.selectedErfName == "[Env]" && ce.entryIdx == 0);
                 if (isRimClick) {
-                    // Cancel any in-progress level load to prevent it from using stale rimEntries
                     if (state.levelLoad.stage != 0) {
                         state.levelLoad.stage = 0;
                         state.levelLoad.stageLabel = "";
@@ -1820,6 +1973,28 @@ void drawBrowserWindow(AppState& state) {
                              }
                         } else {
                             state.statusMessage = "Failed to parse FSB file";
+                        }
+                    }
+                }
+                bool isArlOpfClick = (state.selectedErfName == "[Env]" && (ce.entryIdx == 1 || ce.entryIdx == 2));
+                if (ImGui::IsMouseDoubleClicked(0) && isArlOpfClick) {
+                    std::string fullPath;
+                    if (ce.entryIdx == 1 && ce.erfIdx < state.arlFiles.size()) {
+                        fullPath = state.arlFiles[ce.erfIdx];
+                    } else if (ce.entryIdx == 2 && ce.erfIdx < state.opfFiles.size()) {
+                        fullPath = state.opfFiles[ce.erfIdx];
+                    }
+                    if (!fullPath.empty()) {
+                        std::ifstream ifs(fullPath, std::ios::binary);
+                        if (ifs) {
+                            std::vector<uint8_t> data((std::istreambuf_iterator<char>(ifs)),
+                                                       std::istreambuf_iterator<char>());
+                            if (loadGffData(state.gffViewer, data, ce.name, fullPath)) {
+                                state.gffViewer.showWindow = true;
+                                state.statusMessage = "GFF: " + ce.name;
+                            } else {
+                                state.statusMessage = "Failed to parse GFF: " + ce.name;
+                            }
                         }
                     }
                 }

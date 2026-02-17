@@ -267,4 +267,7 @@ Thank you for downloading or updating to version 2.0!
 -- Fixed a bug in audio banks where it spat out garbage data or cut off the file names.
 -- Fixed a bug with Awakening .fsb files causing a crash.
 
+- Additional notes:
+-- Many things here are WIP. I wanted to get v2.0 out, so expect ongoing updates as I continue to bugfix and refine features.
+
 )";

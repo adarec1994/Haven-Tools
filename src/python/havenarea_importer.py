@@ -429,7 +429,7 @@ def import_havenarea(context, filepath, do_terrain, do_props, do_trees):
                     build_terrain_shader(bl_mat, info, base_dir)
                     matched += 1
                 except Exception as e:
-
+                    print(f"[HavenArea] Failed to build terrain shader for '{bl_mat.name}': {e}")
     context.view_layer.update()
     return {'FINISHED'}
 

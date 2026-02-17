@@ -179,6 +179,170 @@ void destroyLevelBuffers() {
     s_levelBaked = false;
 }
 
+static ID3D11Buffer* s_skyVB = nullptr;
+static ID3D11Buffer* s_skyIB = nullptr;
+static int s_skyIndexCount = 0;
+static bool s_skyDomeReady = false;
+static float s_skyTime = 0.0f;
+
+static void createSkyDomeMesh() {
+    if (s_skyDomeReady) return;
+    D3DContext& d3d = getD3DContext();
+    if (!d3d.valid) return;
+    const int rings = 32, segments = 64;
+    const float radius = 5000.0f;
+    std::vector<float> verts;
+    std::vector<uint32_t> indices;
+    verts.insert(verts.end(), {0, 0, radius, 0, 0, 1, 0.5f, 0.0f});
+    for (int r = 1; r <= rings; r++) {
+        float phi = (3.14159265f * 0.5f) * (1.0f - (float)r / rings);
+        float z = radius * sinf(phi), ringR = radius * cosf(phi);
+        for (int s = 0; s < segments; s++) {
+            float theta = 2.0f * 3.14159265f * s / segments;
+            float x = ringR * cosf(theta), y = ringR * sinf(theta);
+            verts.insert(verts.end(), {x, y, z, cosf(phi)*cosf(theta), cosf(phi)*sinf(theta), sinf(phi),
+                                       (float)s/segments, (float)r/rings});
+        }
+    }
+    for (int s = 0; s < segments; s++) {
+        float theta = 2.0f * 3.14159265f * s / segments;
+        verts.insert(verts.end(), {radius*cosf(theta), radius*sinf(theta), -radius*0.1f,
+                                   0, 0, -1, (float)s/segments, 1.05f});
+    }
+    for (int s = 0; s < segments; s++) {
+        indices.push_back(0); indices.push_back(1+s); indices.push_back(1+(s+1)%segments);
+    }
+    for (int r = 0; r < rings-1; r++) {
+        int r0 = 1+r*segments, r1 = 1+(r+1)*segments;
+        for (int s = 0; s < segments; s++) {
+            int s1 = (s+1)%segments;
+            indices.insert(indices.end(), {(uint32_t)(r0+s),(uint32_t)(r1+s),(uint32_t)(r1+s1),
+                                           (uint32_t)(r0+s),(uint32_t)(r1+s1),(uint32_t)(r0+s1)});
+        }
+    }
+    int last = 1+(rings-1)*segments, below = 1+rings*segments;
+    for (int s = 0; s < segments; s++) {
+        int s1 = (s+1)%segments;
+        indices.insert(indices.end(), {(uint32_t)(last+s),(uint32_t)(below+s),(uint32_t)(below+s1),
+                                       (uint32_t)(last+s),(uint32_t)(below+s1),(uint32_t)(last+s1)});
+    }
+    s_skyIndexCount = (int)indices.size();
+    D3D11_BUFFER_DESC vbd = {}; vbd.ByteWidth = (UINT)(verts.size()*sizeof(float));
+    vbd.Usage = D3D11_USAGE_DEFAULT; vbd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+    D3D11_SUBRESOURCE_DATA vi = {}; vi.pSysMem = verts.data();
+    if (FAILED(d3d.device->CreateBuffer(&vbd, &vi, &s_skyVB))) return;
+    D3D11_BUFFER_DESC ibd = {}; ibd.ByteWidth = (UINT)(indices.size()*sizeof(uint32_t));
+    ibd.Usage = D3D11_USAGE_DEFAULT; ibd.BindFlags = D3D11_BIND_INDEX_BUFFER;
+    D3D11_SUBRESOURCE_DATA ii = {}; ii.pSysMem = indices.data();
+    if (FAILED(d3d.device->CreateBuffer(&ibd, &ii, &s_skyIB))) { s_skyVB->Release(); s_skyVB=nullptr; return; }
+    s_skyDomeReady = true;
+}
+
+static void renderSkyDome(const float* view, const float* proj, const EnvironmentSettings& env) {
+    if (!s_skyDomeReady) createSkyDomeMesh();
+    if (!s_skyDomeReady || !getSkyShader().vs) return;
+    D3DContext& d3d = getD3DContext();
+    float vp[16]; mat4Multiply(view, proj, vp);
+    CBSkyDome skyCB = {};
+    memcpy(skyCB.viewProj, vp, 64);
+    skyCB.sunDir[0]=env.sunDirection[0]; skyCB.sunDir[1]=env.sunDirection[1]; skyCB.sunDir[2]=env.sunDirection[2];
+    skyCB.sunColor[0]=env.atmoSunColor[0]; skyCB.sunColor[1]=env.atmoSunColor[1]; skyCB.sunColor[2]=env.atmoSunColor[2];
+    skyCB.sunColor[3]=env.atmoSunIntensity;
+    skyCB.fogColor[0]=env.atmoFogColor[0]; skyCB.fogColor[1]=env.atmoFogColor[1]; skyCB.fogColor[2]=env.atmoFogColor[2];
+    skyCB.cloudColor[0]=env.cloudColor[0]; skyCB.cloudColor[1]=env.cloudColor[1]; skyCB.cloudColor[2]=env.cloudColor[2];
+    skyCB.cloudParams[0]=env.cloudDensity; skyCB.cloudParams[1]=env.cloudSharpness;
+    skyCB.cloudParams[2]=env.cloudDepth; skyCB.cloudParams[3]=env.cloudRange1;
+    skyCB.atmoParams[0]=env.atmoSunIntensity; skyCB.atmoParams[2]=env.atmoDistanceMultiplier;
+    skyCB.atmoParams[3]=env.atmoAlpha;
+    skyCB.timeAndPad[0]=s_skyTime; skyCB.timeAndPad[1]=env.moonScale;
+    skyCB.timeAndPad[2]=env.moonAlpha; skyCB.timeAndPad[3]=env.moonRotation;
+    updateSkyDomeCB(skyCB);
+    d3d.context->OMSetDepthStencilState(d3d.dssLessEqual, 0);
+    d3d.context->RSSetState(d3d.rsNoCull);
+    float bf[]={1,1,1,1}; d3d.context->OMSetBlendState(d3d.bsOpaque, bf, 0xFFFFFFFF);
+    auto& shader = getSkyShader();
+    d3d.context->VSSetShader(shader.vs, nullptr, 0);
+    d3d.context->PSSetShader(shader.ps, nullptr, 0);
+    d3d.context->IASetInputLayout(shader.inputLayout);
+    ID3D11Buffer* cbs[] = { getSkyDomeCB() };
+    d3d.context->VSSetConstantBuffers(0, 1, cbs);
+    d3d.context->PSSetConstantBuffers(0, 1, cbs);
+    UINT stride = 8*sizeof(float), offset = 0;
+    d3d.context->IASetVertexBuffers(0, 1, &s_skyVB, &stride, &offset);
+    d3d.context->IASetIndexBuffer(s_skyIB, DXGI_FORMAT_R32_UINT, 0);
+    d3d.context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+    d3d.context->DrawIndexed(s_skyIndexCount, 0, 0);
+    d3d.context->OMSetDepthStencilState(d3d.dssDefault, 0);
+}
+
+static void renderSkyboxModel(Model& skyModel, const float* view, const float* proj, const float* viewPos) {
+    D3DContext& d3d = getD3DContext();
+    float mvp[16]; mat4Multiply(view, proj, mvp);
+    d3d.context->OMSetDepthStencilState(d3d.dssLessEqual, 0);
+    d3d.context->RSSetState(d3d.rsNoCull);
+    float bf[]={1,1,1,1}; d3d.context->OMSetBlendState(d3d.bsOpaque, bf, 0xFFFFFFFF);
+    auto& shader = getModelShader();
+    d3d.context->VSSetShader(shader.vs, nullptr, 0);
+    d3d.context->PSSetShader(shader.ps, nullptr, 0);
+    d3d.context->IASetInputLayout(shader.inputLayout);
+    CBPerFrame pf = {};
+    memcpy(pf.modelViewProj, mvp, 64);
+    memcpy(pf.modelView, view, 64);
+    pf.viewPos[0]=viewPos[0]; pf.viewPos[1]=viewPos[1]; pf.viewPos[2]=viewPos[2];
+    pf.lightDir[0]=0; pf.lightDir[1]=0; pf.lightDir[2]=1;
+    pf.lightColor[0]=1; pf.lightColor[1]=1; pf.lightColor[2]=1; pf.lightColor[3]=1;
+    pf.ambientStrength = 1.0f;
+    pf.specularPower = 1.0f;
+    updatePerFrameCB(pf);
+    CBPerMaterial pm = {};
+    ID3D11Buffer* vsCBs[] = { getPerFrameCB() };
+    ID3D11Buffer* psCBs[] = { getPerFrameCB(), getPerMaterialCB(), getTerrainCB(), getWaterCB() };
+    d3d.context->VSSetConstantBuffers(0, 1, vsCBs);
+    d3d.context->PSSetConstantBuffers(0, 4, psCBs);
+    ID3D11SamplerState* samplers[] = { d3d.samplerLinear };
+    d3d.context->PSSetSamplers(0, 1, samplers);
+    for (auto& mesh : skyModel.meshes) {
+        if (mesh.vertices.empty() || mesh.indices.empty()) continue;
+        std::vector<ModelVertex> vertData(mesh.vertices.size());
+        for (size_t vi = 0; vi < mesh.vertices.size(); vi++) {
+            const Vertex& v = mesh.vertices[vi];
+            vertData[vi] = { v.x, v.y, v.z, v.nx, v.ny, v.nz, v.u, 1.0f - v.v };
+        }
+        s_modelBuffer.update(d3d.context, vertData.data(), (uint32_t)vertData.size());
+        D3D11_MAPPED_SUBRESOURCE mapped;
+        if (SUCCEEDED(d3d.context->Map(s_modelIndexBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped))) {
+            memcpy(mapped.pData, mesh.indices.data(), mesh.indices.size() * sizeof(uint32_t));
+            d3d.context->Unmap(s_modelIndexBuffer, 0);
+        }
+        pm.useDiffuse = 0;
+        if (mesh.materialIndex >= 0 && mesh.materialIndex < (int)skyModel.materials.size()) {
+            auto& mat = skyModel.materials[mesh.materialIndex];
+            if (mat.diffuseTexId) {
+                ID3D11ShaderResourceView* srv = getTextureSRV(mat.diffuseTexId);
+                if (srv) {
+                    d3d.context->PSSetShaderResources(0, 1, &srv);
+                    pm.useDiffuse = 1;
+                }
+            }
+        }
+        updatePerMaterialCB(pm);
+        UINT stride = sizeof(ModelVertex), offset = 0;
+        d3d.context->IASetVertexBuffers(0, 1, &s_modelBuffer.buffer, &stride, &offset);
+        d3d.context->IASetIndexBuffer(s_modelIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+        d3d.context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+        d3d.context->DrawIndexed((UINT)mesh.indices.size(), 0, 0);
+    }
+    ID3D11ShaderResourceView* nullSRVs[9] = {};
+    d3d.context->PSSetShaderResources(0, 9, nullSRVs);
+    d3d.context->OMSetDepthStencilState(d3d.dssDefault, 0);
+}
+
+void destroySkyDome() {
+    if (s_skyVB) { s_skyVB->Release(); s_skyVB = nullptr; }
+    if (s_skyIB) { s_skyIB->Release(); s_skyIB = nullptr; }
+    s_skyDomeReady = false;
+}
+
 void bakeLevelBuffers(Model& model) {
     destroyLevelBuffers();
     if (model.meshes.empty()) return;
@@ -688,7 +852,8 @@ static void drawSimpleTris(const std::vector<SimpleVertex>& verts, const float* 
 }
 
 void renderModel(Model& model, const Camera& camera, const RenderSettings& settings,
-                 int width, int height, bool animating, int selectedBone, int selectedChunk) {
+                 int width, int height, bool animating, int selectedBone, int selectedChunk,
+                 const EnvironmentSettings* envSettings, Model* skyboxModel) {
 
     if (!s_rendererInit) initRenderer();
     if (!shadersAvailable()) return;
@@ -731,6 +896,24 @@ void renderModel(Model& model, const Camera& camera, const RenderSettings& setti
         flushLines(mvp);
     }
 
+    if (envSettings && envSettings->loaded && settings.showTextures) {
+        static auto lastTime = std::chrono::steady_clock::now();
+        auto now = std::chrono::steady_clock::now();
+        float dt = std::chrono::duration<float>(now - lastTime).count();
+        lastTime = now;
+        s_skyTime += dt;
+        float skyView[16];
+        mat4Identity(skyView);
+        mat4RotateX(skyView, -90.0f * 3.14159f / 180.0f);
+        mat4RotateY(skyView, -camera.yaw);
+        mat4RotateX(skyView, -camera.pitch);
+        if (skyboxModel && !skyboxModel->meshes.empty()) {
+            renderSkyboxModel(*skyboxModel, skyView, proj, viewPos);
+        } else {
+            renderSkyDome(skyView, proj, *envSettings);
+        }
+    }
+
     if (g_terrainLoader.isLoaded()) {
         d3d.context->RSSetState(d3d.rsNoCull);
         renderTerrain(mvp);
@@ -743,14 +926,33 @@ void renderModel(Model& model, const Camera& camera, const RenderSettings& setti
             d3d.context->RSSetState(d3d.rsNoCull);
         }
 
-        CBPerFrame perFrame;
+        CBPerFrame perFrame = {};
         memcpy(perFrame.modelViewProj, mvp, 64);
         memcpy(perFrame.modelView, view, 64);
         perFrame.viewPos[0] = viewPos[0]; perFrame.viewPos[1] = viewPos[1];
         perFrame.viewPos[2] = viewPos[2]; perFrame.viewPos[3] = 0;
-        perFrame.lightDir[0] = 0.3f; perFrame.lightDir[1] = 0.5f;
-        perFrame.lightDir[2] = 1.0f; perFrame.lightDir[3] = 0;
-        perFrame.ambientStrength = 0.35f;
+        if (envSettings && envSettings->loaded) {
+            perFrame.lightDir[0] = envSettings->sunDirection[0];
+            perFrame.lightDir[1] = envSettings->sunDirection[1];
+            perFrame.lightDir[2] = envSettings->sunDirection[2];
+            perFrame.lightColor[0] = envSettings->sunColor[0];
+            perFrame.lightColor[1] = envSettings->sunColor[1];
+            perFrame.lightColor[2] = envSettings->sunColor[2];
+            perFrame.lightColor[3] = 1.0f;
+            perFrame.fogColor[0] = envSettings->atmoFogColor[0];
+            perFrame.fogColor[1] = envSettings->atmoFogColor[1];
+            perFrame.fogColor[2] = envSettings->atmoFogColor[2];
+            perFrame.fogColor[3] = envSettings->atmoFogIntensity;
+            perFrame.fogParams[0] = envSettings->atmoFogCap;
+            perFrame.fogParams[1] = envSettings->atmoFogZenith;
+            perFrame.ambientStrength = 0.30f;
+        } else {
+            perFrame.lightDir[0] = 0.3f; perFrame.lightDir[1] = 0.5f;
+            perFrame.lightDir[2] = 1.0f; perFrame.lightDir[3] = 0;
+            perFrame.lightColor[0] = 1; perFrame.lightColor[1] = 1;
+            perFrame.lightColor[2] = 1; perFrame.lightColor[3] = 1;
+            perFrame.ambientStrength = 0.35f;
+        }
         perFrame.specularPower = 32.0f;
         updatePerFrameCB(perFrame);
 

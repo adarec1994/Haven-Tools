@@ -5,6 +5,7 @@
 #include <vector>
 
 #include <cstring>
+#include <iostream>
 
 static bool s_shadersInitialized = false;
 
@@ -16,6 +17,8 @@ static ShaderProgram s_simpleShader;
 
 static ShaderProgram s_simpleLineShader;
 
+static ShaderProgram s_skyShader;
+
 static ID3D11Buffer* s_cbPerFrame    = nullptr;
 
 static ID3D11Buffer* s_cbPerMaterial = nullptr;
@@ -23,6 +26,7 @@ static ID3D11Buffer* s_cbPerMaterial = nullptr;
 static ID3D11Buffer* s_cbSimple      = nullptr;
 static ID3D11Buffer* s_cbTerrain     = nullptr;
 static ID3D11Buffer* s_cbWater       = nullptr;
+static ID3D11Buffer* s_cbSkyDome     = nullptr;
 
 static const char* MODEL_VS = R"(
 cbuffer CBPerFrame : register(b0) {
@@ -33,6 +37,9 @@ cbuffer CBPerFrame : register(b0) {
     float    uAmbientStrength;
     float    uSpecularPower;
     float2   pad0;
+    float4   uLightColor;
+    float4   uFogColor;
+    float4   uFogParams;
 };
 
 struct VSInput {
@@ -72,6 +79,9 @@ cbuffer CBPerFrame : register(b0) {
     float    uAmbientStrength;
     float    uSpecularPower;
     float2   pad0;
+    float4   uLightColor;
+    float4   uFogColor;
+    float4   uFogParams;
 };
 
 cbuffer CBPerMaterial : register(b1) {
@@ -374,20 +384,30 @@ float4 main(PSInput input) : SV_TARGET {
     if (uUseNormal != 0 || uIsTerrain != 0 || (uIsFaceMesh != 0 && (uUseAge != 0 || uUseStubble != 0))) {
         N = normalize(N + baseNormal * 0.3);
     }
-    float3 L = normalize(float3(0.3, 0.5, 1.0));
+    float3 L = normalize(uLightDir.xyz);
     float3 V = normalize(-input.eyePos);
     float NdotL = max(dot(N, L), 0.0);
+    float3 sunCol = uLightColor.rgb * uLightColor.a;
     float3 ambient  = uAmbientStrength * diffuseColor.rgb;
-    float3 diffuse  = NdotL * diffuseColor.rgb;
+    float3 diffuse  = NdotL * diffuseColor.rgb * sunCol;
     float3 specular = float3(0.0, 0.0, 0.0);
     if (uIsTerrain == 0 && uUseSpecular != 0 && NdotL > 0.0) {
         float3 H = normalize(L + V);
         float NdotH = max(dot(N, H), 0.0);
         float spec = pow(NdotH, uSpecularPower);
         float4 specMap = texSpecular.Sample(sampLinear, input.texcoord);
-        specular = spec * specMap.rgb * 0.5;
+        specular = spec * specMap.rgb * 0.5 * sunCol;
     }
     float3 finalColor = ambient + diffuse + specular;
+    float fogIntensity = uFogColor.a;
+    if (fogIntensity > 0.001) {
+        float dist = length(input.eyePos);
+        float fogCap = uFogParams.x;
+        float fogZenith = max(uFogParams.y, 1.0);
+        float fogFactor = saturate((dist / fogZenith) * fogIntensity);
+        fogFactor = min(fogFactor, fogCap);
+        finalColor = lerp(finalColor, uFogColor.rgb, fogFactor);
+    }
     if (uHighlightColor.a > 0.0)
         finalColor = lerp(finalColor, uHighlightColor.rgb, uHighlightColor.a);
     return float4(saturate(finalColor), diffuseColor.a);
@@ -475,6 +495,84 @@ float4 main(PSInput input) : SV_TARGET {
     return input.color;
 }
 
+)";
+
+static const char* SKY_VS = R"(
+cbuffer CBSkyDome : register(b0) {
+    row_major float4x4 uViewProj;
+    float4 uSunDir;
+    float4 uSunColor;
+    float4 uFogColor;
+    float4 uCloudColor;
+    float4 uCloudParams;
+    float4 uAtmoParams;
+    float4 uTimeAndPad;
+};
+struct VSInput { float3 position : POSITION; float3 normal : NORMAL; float2 texcoord : TEXCOORD0; };
+struct VSOutput { float4 position : SV_POSITION; float3 worldDir : TEXCOORD0; float2 texcoord : TEXCOORD1; };
+VSOutput main(VSInput input) {
+    VSOutput output;
+    output.position = mul(float4(input.position, 1.0), uViewProj);
+    output.position.z = output.position.w * 0.9999;
+    output.worldDir = normalize(input.position);
+    output.texcoord = input.texcoord;
+    return output;
+}
+)";
+
+static const char* SKY_PS = R"(
+cbuffer CBSkyDome : register(b0) {
+    row_major float4x4 uViewProj;
+    float4 uSunDir;
+    float4 uSunColor;
+    float4 uFogColor;
+    float4 uCloudColor;
+    float4 uCloudParams;
+    float4 uAtmoParams;
+    float4 uTimeAndPad;
+};
+float hash2(float2 p) {
+    float3 p3 = frac(float3(p.xyx) * 0.1031);
+    p3 += dot(p3, p3.yzx + 33.33);
+    return frac((p3.x + p3.y) * p3.z);
+}
+float noise2(float2 p) {
+    float2 i = floor(p), f = frac(p);
+    f = f*f*(3.0-2.0*f);
+    return lerp(lerp(hash2(i), hash2(i+float2(1,0)), f.x),
+                lerp(hash2(i+float2(0,1)), hash2(i+float2(1,1)), f.x), f.y);
+}
+float fbm2(float2 p) {
+    float v=0, a=0.5; float2 sh=float2(100,100);
+    for(int i=0;i<5;i++){v+=a*noise2(p);p=p*2.0+sh;a*=0.5;}
+    return v;
+}
+struct VSOutput { float4 position : SV_POSITION; float3 worldDir : TEXCOORD0; float2 texcoord : TEXCOORD1; };
+float4 main(VSOutput input) : SV_TARGET {
+    float3 dir = normalize(input.worldDir);
+    float3 sunDir = normalize(uSunDir.xyz);
+    float elev = dir.z;
+    float3 zenith = float3(0.15,0.3,0.65);
+    zenith = lerp(zenith, uSunColor.rgb*0.3+float3(0.1,0.15,0.35), 0.3);
+    float3 horiz = uFogColor.rgb;
+    float sunH = saturate(dot(float3(dir.x,dir.y,0), float3(sunDir.x,sunDir.y,0)));
+    horiz = lerp(horiz, uSunColor.rgb*0.6, sunH*0.4);
+    float3 sky = lerp(horiz, zenith, pow(saturate(elev), 0.5));
+    float sd = dot(dir, sunDir);
+    sky += (smoothstep(0.9994,0.9998,sd) + pow(saturate(sd),128.0)*0.6 + pow(saturate(sd),8.0)*0.15) * uSunColor.rgb * uAtmoParams.x * 0.1;
+    float cd = uCloudParams.x;
+    if(cd>0.01 && elev>-0.05){
+        float t=800.0/max(elev,0.01);
+        float2 cuv=dir.xy*t*0.0005; cuv.x+=uTimeAndPad.x*uCloudParams.z*0.001;
+        float cn=fbm2(cuv*3.0);
+        float cs=smoothstep(1.0-cd,1.0-cd*uCloudParams.y,cn)*smoothstep(-0.05,0.15,elev);
+        float cl=saturate(dot(float3(0,0,1),sunDir)*0.5+0.5);
+        float3 cc=lerp(uCloudColor.rgb*0.5,uCloudColor.rgb+uSunColor.rgb*0.3,cl);
+        sky=lerp(sky,cc,cs*0.85);
+    }
+    if(elev<0) sky=lerp(sky,horiz*0.3,saturate(-elev*3.0));
+    return float4(sky,1.0);
+}
 )";
 
 void ShaderProgram::release() {
@@ -671,6 +769,28 @@ static bool createSimpleLineShader(ID3D11Device* device) {
 
 }
 
+static bool createSkyShader(ID3D11Device* device) {
+    ID3DBlob* vsBlob = compileShader(SKY_VS, "main", "vs_5_0");
+    if (!vsBlob) return false;
+    ID3DBlob* psBlob = compileShader(SKY_PS, "main", "ps_5_0");
+    if (!psBlob) { vsBlob->Release(); return false; }
+    HRESULT hr;
+    hr = device->CreateVertexShader(vsBlob->GetBufferPointer(), vsBlob->GetBufferSize(), nullptr, &s_skyShader.vs);
+    if (FAILED(hr)) { vsBlob->Release(); psBlob->Release(); return false; }
+    hr = device->CreatePixelShader(psBlob->GetBufferPointer(), psBlob->GetBufferSize(), nullptr, &s_skyShader.ps);
+    if (FAILED(hr)) { vsBlob->Release(); psBlob->Release(); return false; }
+    D3D11_INPUT_ELEMENT_DESC layout[] = {
+        {"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0},
+        {"NORMAL",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0},
+        {"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, 24, D3D11_INPUT_PER_VERTEX_DATA, 0},
+    };
+    hr = device->CreateInputLayout(layout, 3, vsBlob->GetBufferPointer(), vsBlob->GetBufferSize(), &s_skyShader.inputLayout);
+    vsBlob->Release(); psBlob->Release();
+    if (FAILED(hr)) return false;
+    std::cout << "[SHADER] Sky dome shader created" << std::endl;
+    return true;
+}
+
 static bool createConstantBuffers(ID3D11Device* device) {
 
     auto makeCB = [&](UINT size, ID3D11Buffer** out) -> bool {
@@ -696,6 +816,7 @@ static bool createConstantBuffers(ID3D11Device* device) {
     if (!makeCB(sizeof(CBSimple), &s_cbSimple))            return false;
     if (!makeCB(sizeof(CBTerrain), &s_cbTerrain))           return false;
     if (!makeCB(sizeof(CBWater), &s_cbWater))              return false;
+    if (!makeCB(sizeof(CBSkyDome), &s_cbSkyDome))          return false;
 
     return true;
 
@@ -724,6 +845,7 @@ bool initShaderSystem() {
     if (!createSimpleShader(d3d.device))          { s_shadersAvailable = false; return false; }
 
     if (!createSimpleLineShader(d3d.device))      { s_shadersAvailable = false; return false; }
+    if (!createSkyShader(d3d.device))             { std::cerr << "[SHADER] Sky shader failed (non-fatal)" << std::endl; }
 
     s_shadersAvailable = true;
 
@@ -738,6 +860,7 @@ void cleanupShaderSystem() {
     s_simpleShader.release();
 
     s_simpleLineShader.release();
+    s_skyShader.release();
 
     if (s_cbPerFrame)    { s_cbPerFrame->Release();    s_cbPerFrame    = nullptr; }
 
@@ -746,6 +869,7 @@ void cleanupShaderSystem() {
     if (s_cbSimple)      { s_cbSimple->Release();      s_cbSimple      = nullptr; }
     if (s_cbTerrain)     { s_cbTerrain->Release();     s_cbTerrain     = nullptr; }
     if (s_cbWater)       { s_cbWater->Release();       s_cbWater       = nullptr; }
+    if (s_cbSkyDome)     { s_cbSkyDome->Release();     s_cbSkyDome     = nullptr; }
 
     s_shadersInitialized = false;
 
@@ -792,3 +916,7 @@ void updatePerMaterialCB(const CBPerMaterial& data)  { updateCB(s_cbPerMaterial,
 void updateSimpleCB(const CBSimple& data)            { updateCB(s_cbSimple, &data, sizeof(data)); }
 void updateTerrainCB(const CBTerrain& data)           { updateCB(s_cbTerrain, &data, sizeof(data)); }
 void updateWaterCB(const CBWater& data)               { updateCB(s_cbWater, &data, sizeof(data)); }
+
+ShaderProgram& getSkyShader()        { return s_skyShader; }
+ID3D11Buffer* getSkyDomeCB()         { return s_cbSkyDome; }
+void updateSkyDomeCB(const CBSkyDome& data) { updateCB(s_cbSkyDome, &data, sizeof(data)); }

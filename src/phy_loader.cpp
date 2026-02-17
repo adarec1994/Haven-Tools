@@ -1095,6 +1095,51 @@ static std::vector<uint8_t> readFromAnyErf(AppState& state, const std::string& n
         }
     }
 
+    // Search global ERF files as fallback
+    for (const auto& erfPath : state.erfFiles) {
+        ERFFile erf;
+        if (erf.open(erfPath) && erf.encryption() == 0) {
+            for (const auto& entry : erf.entries()) {
+                std::string entryLower = entry.name;
+                std::transform(entryLower.begin(), entryLower.end(), entryLower.begin(), ::tolower);
+                if (entryLower == nameLower) return erf.readEntry(entry);
+            }
+        }
+    }
+
+    return {};
+}
+
+static std::vector<uint8_t> readFromSiblingRims(AppState& state, const std::string& name) {
+    if (state.currentRIMPath.empty()) return {};
+    std::string nameLower = name;
+    std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), ::tolower);
+    namespace fs = std::filesystem;
+    std::string rimDir = fs::path(state.currentRIMPath).parent_path().string();
+    try {
+        for (const auto& dirEntry : fs::directory_iterator(rimDir)) {
+            if (!dirEntry.is_regular_file()) continue;
+            std::string dpath = dirEntry.path().string();
+            if (dpath == state.currentRIMPath) continue;
+            std::string fnameLower = dirEntry.path().filename().string();
+            std::transform(fnameLower.begin(), fnameLower.end(), fnameLower.begin(), ::tolower);
+            if (fnameLower.size() < 5 || fnameLower.substr(fnameLower.size() - 4) != ".rim") continue;
+            if (fnameLower.find(".gpu.rim") != std::string::npos) continue;
+            ERFFile rim;
+            if (!rim.open(dpath)) continue;
+            for (const auto& entry : rim.entries()) {
+                std::string eLower = entry.name;
+                std::transform(eLower.begin(), eLower.end(), eLower.begin(), ::tolower);
+                if (eLower == nameLower) {
+                    auto data = rim.readEntry(entry);
+                    if (!data.empty()) {
+                        std::cout << "[LEVEL] Found '" << name << "' in sibling rim: " << dirEntry.path().filename().string() << std::endl;
+                        return data;
+                    }
+                }
+            }
+        }
+    } catch (...) {}
     return {};
 }
 
@@ -1128,15 +1173,27 @@ bool mergeModelByName(AppState& state, const std::string& modelName,
             mshData = readFromAnyErf(state, mshName);
         }
         if (mshData.empty()) {
-            std::cout << "[LEVEL] MISSING model mesh: " << modelName
-                      << " (tried " << modelName << ".msh and " << modelName << "_0.msh)" << std::endl;
+            mshName = modelName + ".msh";
+            mshData = readFromSiblingRims(state, mshName);
+        }
+        if (mshData.empty()) {
+            mshName = modelName + "_0.msh";
+            mshData = readFromSiblingRims(state, mshName);
+        }
+        if (mshData.empty()) {
+            std::cout << "[LEVEL] MSH NOT FOUND: " << modelName
+                      << " (searched ERFs + sibling rims for " << modelName << ".msh and " << modelName << "_0.msh)" << std::endl;
             s_propMissingModels.insert(nameLower);
             return false;
         }
 
         Model tempModel;
         if (!loadMSH(mshData, tempModel)) {
-            std::cout << "[LEVEL] FAILED to parse MSH: " << modelName << std::endl;
+            std::cout << "[LEVEL] MSH FOUND BUT PARSE FAILED: " << mshName
+                      << " (" << mshData.size() << " bytes, header: ";
+            for (size_t i = 0; i < std::min(mshData.size(), (size_t)8); i++)
+                printf("%02X ", mshData[i]);
+            std::cout << ")" << std::endl;
             s_propMissingModels.insert(nameLower);
             return false;
         }
@@ -1241,4 +1298,49 @@ void finalizeLevelMaterials(AppState& state) {
     }
 
     state.renderSettings.initMeshVisibility(state.currentModel.meshes.size());
+}
+void finalizeModelMaterials(AppState& state, Model& model) {
+    loadTextureErfs(state);
+    loadModelErfs(state);
+    loadMaterialErfs(state);
+    std::set<std::string> newMaterials;
+    for (const auto& mesh : model.meshes) {
+        if (!mesh.materialName.empty() && model.findMaterial(mesh.materialName) < 0)
+            newMaterials.insert(mesh.materialName);
+    }
+    for (const std::string& matName : newMaterials) {
+        std::string maoLookup = matName;
+        {
+            std::string lower = matName;
+            std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
+            if (lower.size() < 4 || lower.substr(lower.size() - 4) != ".mao")
+                maoLookup += ".mao";
+        }
+        std::vector<uint8_t> maoData = readFromMaterialErfs(state, maoLookup);
+        if (maoData.empty()) maoData = readFromAnyErf(state, maoLookup);
+        if (!maoData.empty()) {
+            std::string maoContent(maoData.begin(), maoData.end());
+            Material mat = parseMAO(maoContent, matName);
+            mat.maoContent = maoContent;
+            model.materials.push_back(mat);
+        } else {
+            Material mat;
+            mat.name = matName;
+            model.materials.push_back(mat);
+        }
+    }
+    for (auto& mesh : model.meshes) {
+        if (!mesh.materialName.empty())
+            mesh.materialIndex = model.findMaterial(mesh.materialName);
+    }
+    for (auto& mat : model.materials) {
+        if (!mat.diffuseMap.empty() && mat.diffuseTexId == 0)
+            mat.diffuseTexId = loadTextureByName(state, mat.diffuseMap, &mat.diffuseData, &mat.diffuseWidth, &mat.diffuseHeight);
+        if (!mat.normalMap.empty() && mat.normalTexId == 0)
+            mat.normalTexId = loadTextureByName(state, mat.normalMap, &mat.normalData, &mat.normalWidth, &mat.normalHeight);
+        if (!mat.specularMap.empty() && mat.specularTexId == 0)
+            mat.specularTexId = loadTextureByName(state, mat.specularMap, &mat.specularData, &mat.specularWidth, &mat.specularHeight);
+        if (!mat.tintMap.empty() && mat.tintTexId == 0)
+            mat.tintTexId = loadTextureByName(state, mat.tintMap, &mat.tintData, &mat.tintWidth, &mat.tintHeight);
+    }
 }

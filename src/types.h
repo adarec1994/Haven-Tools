@@ -36,9 +36,9 @@ struct Keybinds {
     ImGuiKey panUp         = ImGuiKey_E;
     ImGuiKey panDown       = ImGuiKey_Q;
     ImGuiKey deselectBone  = ImGuiKey_Escape;
-    ImGuiKey deleteObject  = ImGuiKey_Delete;
     ImGuiKey boneRotate    = ImGuiKey_R;
     ImGuiKey boneGrab      = ImGuiKey_G;
+    ImGuiKey deleteObject  = ImGuiKey_Delete;
 };
 
 struct GDAEditorState {
@@ -203,8 +203,37 @@ struct MeshBrowserState {
     bool loaded = false;
     char meshFilter[64] = "";
 };
+
+struct EnvironmentSettings {
+    float sunDirection[3] = {0.3f, 0.5f, 1.0f};
+    float sunColor[3] = {1.0f, 1.0f, 1.0f};
+    float sunColorChar[4] = {1.0f, 1.0f, 1.0f, 1.0f};
+    float atmoSunColor[3] = {0.74f, 0.32f, 0.14f};
+    float atmoSunIntensity = 17.0f;
+    float atmoFogColor[3] = {0.5f, 0.6f, 0.7f};
+    float atmoFogIntensity = 0.0f;
+    float atmoFogCap = 1.0f;
+    float atmoFogZenith = 100.0f;
+    float atmoDistanceMultiplier = 1.0f;
+    float atmoAlpha = 1.0f;
+    float cloudDensity = 0.5f;
+    float cloudSharpness = 0.5f;
+    float cloudDepth = 0.0f;
+    float cloudRange1 = 1.0f;
+    float cloudRange2 = 1.0f;
+    float cloudColor[3] = {0.8f, 0.8f, 0.8f};
+    float moonScale = 1.0f;
+    float moonAlpha = 1.0f;
+    float moonRotation = 0.0f;
+    std::string skydomeModel;
+    float areaCenter[3] = {0, 0, 0};
+    bool loaded = false;
+};
+
 struct AppState {
     bool showTerrain = false;
+    bool showSkyDome = true;
+    EnvironmentSettings envSettings;
     bool showBrowser = true;
     bool showRenderSettings = false;
     bool showMaoViewer = false;
@@ -252,6 +281,8 @@ struct AppState {
     bool pendingTexDumpPng = false;
     Model currentModel;
     bool hasModel = false;
+    Model skyboxModel;
+    bool skyboxLoaded = false;
     Camera camera;
     RenderSettings renderSettings;
     bool isPanning = false;
@@ -468,6 +499,29 @@ struct AppState {
         int headMeshIndex = -1;
         int eyesMeshIndex = -1;
         int lashesMeshIndex = -1;
+        std::vector<Vertex> morphBaseHead;
+        std::vector<Vertex> morphBaseEyes;
+        std::vector<Vertex> morphBaseLashes;
+        bool morphBasesLoaded = false;
+        struct FaceMorphCategory {
+            std::string name;       // "Nose", "Jaw", etc.
+            std::string code;       // "nos", "jaw", etc.
+            struct Variant {
+                std::string uhMsh;
+                std::string uhmMsh;
+                std::string uemMsh;
+                std::string ulmMsh;
+                std::string label;
+            };
+            std::vector<Variant> variants;
+            int selected = 0;
+            std::vector<Vertex> headTarget;
+            std::vector<Vertex> eyesTarget;
+            std::vector<Vertex> lashesTarget;
+        };
+        std::vector<FaceMorphCategory> faceCategories;
+        bool faceMorphsBuilt = false;
+        std::unique_ptr<ERFFile> chargenRim;
     } charDesigner;
 
     bool showFSBBrowser = false;
