@@ -1063,35 +1063,41 @@ static std::vector<uint8_t> readFromErfIndex(const std::string& name) {
     return {};
 }
 
-static std::vector<uint8_t> readFromAnyErf(AppState& state, const std::string& name) {
+static std::vector<uint8_t> readFromAnyErf(AppState& state, const std::string& name, std::string* sourceOut = nullptr) {
     if (s_erfIndexBuilt) return readFromErfIndex(name);
 
     std::string nameLower = name;
     std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), ::tolower);
 
-    auto tryErfSet = [&](const std::vector<std::unique_ptr<ERFFile>>& erfs) -> std::vector<uint8_t> {
+    auto tryErfSet = [&](const std::vector<std::unique_ptr<ERFFile>>& erfs, const std::string& setName) -> std::vector<uint8_t> {
         for (const auto& erf : erfs) {
             for (const auto& entry : erf->entries()) {
                 std::string entryLower = entry.name;
                 std::transform(entryLower.begin(), entryLower.end(), entryLower.begin(), ::tolower);
-                if (entryLower == nameLower) return erf->readEntry(entry);
+                if (entryLower == nameLower) {
+                    if (sourceOut) *sourceOut = setName + ": " + erf->path();
+                    return erf->readEntry(entry);
+                }
             }
         }
         return {};
     };
 
-    auto result = tryErfSet(state.modelErfs);
+    auto result = tryErfSet(state.modelErfs, "modelErfs");
     if (!result.empty()) return result;
-    result = tryErfSet(state.materialErfs);
+    result = tryErfSet(state.materialErfs, "materialErfs");
     if (!result.empty()) return result;
-    result = tryErfSet(state.textureErfs);
+    result = tryErfSet(state.textureErfs, "textureErfs");
     if (!result.empty()) return result;
 
     if (state.currentErf) {
         for (const auto& entry : state.currentErf->entries()) {
             std::string entryLower = entry.name;
             std::transform(entryLower.begin(), entryLower.end(), entryLower.begin(), ::tolower);
-            if (entryLower == nameLower) return state.currentErf->readEntry(entry);
+            if (entryLower == nameLower) {
+                if (sourceOut) *sourceOut = "currentErf";
+                return state.currentErf->readEntry(entry);
+            }
         }
     }
 
@@ -1102,7 +1108,13 @@ static std::vector<uint8_t> readFromAnyErf(AppState& state, const std::string& n
             for (const auto& entry : erf.entries()) {
                 std::string entryLower = entry.name;
                 std::transform(entryLower.begin(), entryLower.end(), entryLower.begin(), ::tolower);
-                if (entryLower == nameLower) return erf.readEntry(entry);
+                if (entryLower == nameLower) {
+                    if (sourceOut) {
+                        namespace fs = std::filesystem;
+                        *sourceOut = "global: " + fs::path(erfPath).filename().string();
+                    }
+                    return erf.readEntry(entry);
+                }
             }
         }
     }
@@ -1167,33 +1179,62 @@ bool mergeModelByName(AppState& state, const std::string& modelName,
     auto cacheIt = s_propModelCache.find(nameLower);
     if (cacheIt == s_propModelCache.end()) {
         std::string mshName = modelName + ".msh";
-        std::vector<uint8_t> mshData = readFromAnyErf(state, mshName);
+        std::string mshSource;
+        std::vector<uint8_t> mshData = readFromAnyErf(state, mshName, &mshSource);
         if (mshData.empty()) {
             mshName = modelName + "_0.msh";
-            mshData = readFromAnyErf(state, mshName);
-        }
-        if (mshData.empty()) {
-            mshName = modelName + ".msh";
-            mshData = readFromSiblingRims(state, mshName);
-        }
-        if (mshData.empty()) {
-            mshName = modelName + "_0.msh";
-            mshData = readFromSiblingRims(state, mshName);
-        }
-        if (mshData.empty()) {
-            std::cout << "[LEVEL] MSH NOT FOUND: " << modelName
-                      << " (searched ERFs + sibling rims for " << modelName << ".msh and " << modelName << "_0.msh)" << std::endl;
-            s_propMissingModels.insert(nameLower);
-            return false;
+            mshData = readFromAnyErf(state, mshName, &mshSource);
         }
 
         Model tempModel;
-        if (!loadMSH(mshData, tempModel)) {
-            std::cout << "[LEVEL] MSH FOUND BUT PARSE FAILED: " << mshName
-                      << " (" << mshData.size() << " bytes, header: ";
-            for (size_t i = 0; i < std::min(mshData.size(), (size_t)8); i++)
-                printf("%02X ", mshData[i]);
-            std::cout << ")" << std::endl;
+        bool parsed = false;
+        if (!mshData.empty()) {
+            parsed = loadMSH(mshData, tempModel);
+            if (!parsed) {
+                // Data found but wrong format (likely GFF4 from global ERFs) - try sibling rims
+                std::cout << "[LEVEL] MSH FOUND BUT PARSE FAILED: " << mshName
+                          << " (" << mshData.size() << " bytes, header: ";
+                for (size_t i = 0; i < std::min(mshData.size(), (size_t)8); i++)
+                    printf("%02X ", mshData[i]);
+                std::cout << ") from [" << mshSource << "] - trying sibling rims..." << std::endl;
+                mshName = modelName + ".msh";
+                mshData = readFromSiblingRims(state, mshName);
+                if (mshData.empty()) {
+                    mshName = modelName + "_0.msh";
+                    mshData = readFromSiblingRims(state, mshName);
+                }
+                if (!mshData.empty()) {
+                    parsed = loadMSH(mshData, tempModel);
+                    if (!parsed) {
+                        std::cout << "[LEVEL] Sibling rim MSH also failed to parse: " << mshName
+                                  << " (" << mshData.size() << " bytes)" << std::endl;
+                    }
+                } else {
+                    std::cout << "[LEVEL] MSH not found in sibling rims either" << std::endl;
+                }
+            }
+        } else {
+            // Not found in any indexed ERF - try sibling rims
+            mshName = modelName + ".msh";
+            mshData = readFromSiblingRims(state, mshName);
+            if (mshData.empty()) {
+                mshName = modelName + "_0.msh";
+                mshData = readFromSiblingRims(state, mshName);
+            }
+            if (!mshData.empty()) {
+                parsed = loadMSH(mshData, tempModel);
+                if (!parsed) {
+                    std::cout << "[LEVEL] Sibling rim MSH parse failed: " << mshName
+                              << " (" << mshData.size() << " bytes)" << std::endl;
+                }
+            }
+        }
+
+        if (!parsed) {
+            if (mshData.empty()) {
+                std::cout << "[LEVEL] MSH NOT FOUND: " << modelName
+                          << " (searched ERFs + sibling rims)" << std::endl;
+            }
             s_propMissingModels.insert(nameLower);
             return false;
         }
@@ -1322,8 +1363,45 @@ void finalizeModelMaterials(AppState& state, Model& model) {
             std::string maoContent(maoData.begin(), maoData.end());
             Material mat = parseMAO(maoContent, matName);
             mat.maoContent = maoContent;
+            if (mat.diffuseMap.empty()) {
+                // Dump all MAO fields to help debug
+                if (maoData.size() >= 8 && GFF32::GFF32File::isGFF32(maoData)) {
+                    GFF32::GFF32File gff32;
+                    if (gff32.load(maoData) && gff32.root()) {
+                        if (gff32.root()->fieldOrder.empty()) {
+                            std::cout << "[MAO] WARNING: '" << matName << "' is valid GFF32 but has NO fields" << std::endl;
+                        } else {
+                            std::cout << "[MAO] WARNING: No diffuse map for '" << matName << "'. Fields:" << std::endl;
+                            for (const auto& fn : gff32.root()->fieldOrder) {
+                                auto it = gff32.root()->fields.find(fn);
+                                if (it == gff32.root()->fields.end()) continue;
+                                const auto& field = it->second;
+                                if (field.typeId == GFF32::TypeID::ExoString || field.typeId == GFF32::TypeID::ResRef) {
+                                    const std::string* v = std::get_if<std::string>(&field.value);
+                                    if (v) std::cout << "[MAO]   STRING '" << fn << "' = '" << *v << "'" << std::endl;
+                                } else if (field.typeId == GFF32::TypeID::FLOAT) {
+                                    const float* v = std::get_if<float>(&field.value);
+                                    if (v) std::cout << "[MAO]   FLOAT  '" << fn << "' = " << *v << std::endl;
+                                } else if (field.typeId == GFF32::TypeID::Structure) {
+                                    std::cout << "[MAO]   STRUCT '" << fn << "'" << std::endl;
+                                } else {
+                                    std::cout << "[MAO]   TYPE(" << (int)field.typeId << ") '" << fn << "'" << std::endl;
+                                }
+                            }
+                        }
+                    } else {
+                        std::cout << "[MAO] WARNING: '" << matName << "' GFF32 load failed" << std::endl;
+                    }
+                } else {
+                    std::cout << "[MAO] WARNING: '" << matName << "' not GFF32 format (" << maoData.size() << " bytes, header: ";
+                    for (size_t i = 0; i < std::min(maoData.size(), (size_t)16); i++)
+                        printf("%02X ", maoData[i]);
+                    std::cout << ")" << std::endl;
+                }
+            }
             model.materials.push_back(mat);
         } else {
+            std::cout << "[MAO] NOT FOUND: '" << maoLookup << "' for material '" << matName << "'" << std::endl;
             Material mat;
             mat.name = matName;
             model.materials.push_back(mat);

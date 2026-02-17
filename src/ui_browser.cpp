@@ -570,7 +570,10 @@ void drawBrowserWindow(AppState& state) {
                                           << "' sunDir=(" << env.sunDirection[0] << "," << env.sunDirection[1] << "," << env.sunDirection[2]
                                           << ") atmoSun=(" << env.atmoSunColor[0] << "," << env.atmoSunColor[1] << "," << env.atmoSunColor[2]
                                           << ") fog=(" << env.atmoFogColor[0] << "," << env.atmoFogColor[1] << "," << env.atmoFogColor[2]
-                                          << ") clouds=" << env.cloudDensity << std::endl;
+                                          << ") clouds=" << env.cloudDensity
+                                          << " depth=" << env.cloudDepth
+                                          << " sharp=" << env.cloudSharpness
+                                          << " sunI=" << env.atmoSunIntensity << std::endl;
 
                                 if (!env.skydomeModel.empty()) {
                                     std::string skyMshName = env.skydomeModel + ".msh";

@@ -218,9 +218,7 @@ Note: Importing does not currently work on Linux.
 - Added option to export a 1x, 10x, 100x, or 1000x scale for FBX.
 - Added option to export without a skeleton.
 -- You must follow the naming convention UCX_MeshName_01 for collision.
-)";
 
-static const char* s_changelogLatest = R"(
 [Release 2.0]
 
 Thank you for downloading or updating to version 2.0!
@@ -269,5 +267,11 @@ Thank you for downloading or updating to version 2.0!
 
 - Additional notes:
 -- Many things here are WIP. I wanted to get v2.0 out, so expect ongoing updates as I continue to bugfix and refine features.
+)";
 
+static const char* s_changelogLatest = R"(
+[Release 2.1]
+
+Hotfix:
+- Fixed the clouds in the renderer.
 )";

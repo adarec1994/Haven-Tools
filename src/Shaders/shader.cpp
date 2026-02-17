@@ -559,11 +559,11 @@ float4 main(VSOutput input) : SV_TARGET {
     horiz = lerp(horiz, uSunColor.rgb*0.6, sunH*0.4);
     float3 sky = lerp(horiz, zenith, pow(saturate(elev), 0.5));
     float sd = dot(dir, sunDir);
-    sky += (smoothstep(0.9994,0.9998,sd) + pow(saturate(sd),128.0)*0.6 + pow(saturate(sd),8.0)*0.15) * uSunColor.rgb * uAtmoParams.x * 0.1;
+    sky += (smoothstep(0.9994,0.9998,sd) + pow(saturate(sd),128.0)*0.6 + pow(saturate(sd),8.0)*0.15) * uSunColor.rgb * max(uAtmoParams.x, 1.0);
     float cd = uCloudParams.x;
     if(cd>0.01 && elev>-0.05){
         float t=800.0/max(elev,0.01);
-        float2 cuv=dir.xy*t*0.0005; cuv.x+=uTimeAndPad.x*uCloudParams.z*0.001;
+        float2 cuv=dir.xy*t*0.0005; cuv.x+=uTimeAndPad.x*uCloudParams.z*0.0001;
         float cn=fbm2(cuv*3.0);
         float cs=smoothstep(1.0-cd,1.0-cd*uCloudParams.y,cn)*smoothstep(-0.05,0.15,elev);
         float cl=saturate(dot(float3(0,0,1),sunDir)*0.5+0.5);

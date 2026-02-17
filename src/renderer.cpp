@@ -245,7 +245,8 @@ static void renderSkyDome(const float* view, const float* proj, const Environmen
     float vp[16]; mat4Multiply(view, proj, vp);
     CBSkyDome skyCB = {};
     memcpy(skyCB.viewProj, vp, 64);
-    skyCB.sunDir[0]=env.sunDirection[0]; skyCB.sunDir[1]=env.sunDirection[1]; skyCB.sunDir[2]=env.sunDirection[2];
+    // ARL stores sun direction in Y-up convention, sky dome uses Z-up
+    skyCB.sunDir[0]=env.sunDirection[0]; skyCB.sunDir[1]=-env.sunDirection[2]; skyCB.sunDir[2]=env.sunDirection[1];
     skyCB.sunColor[0]=env.atmoSunColor[0]; skyCB.sunColor[1]=env.atmoSunColor[1]; skyCB.sunColor[2]=env.atmoSunColor[2];
     skyCB.sunColor[3]=env.atmoSunIntensity;
     skyCB.fogColor[0]=env.atmoFogColor[0]; skyCB.fogColor[1]=env.atmoFogColor[1]; skyCB.fogColor[2]=env.atmoFogColor[2];
@@ -280,7 +281,7 @@ static void renderSkyboxModel(Model& skyModel, const float* view, const float* p
     float mvp[16]; mat4Multiply(view, proj, mvp);
     d3d.context->OMSetDepthStencilState(d3d.dssLessEqual, 0);
     d3d.context->RSSetState(d3d.rsNoCull);
-    float bf[]={1,1,1,1}; d3d.context->OMSetBlendState(d3d.bsOpaque, bf, 0xFFFFFFFF);
+    float bf[]={1,1,1,1}; d3d.context->OMSetBlendState(d3d.bsAlpha, bf, 0xFFFFFFFF);
     auto& shader = getModelShader();
     d3d.context->VSSetShader(shader.vs, nullptr, 0);
     d3d.context->PSSetShader(shader.ps, nullptr, 0);
@@ -303,6 +304,16 @@ static void renderSkyboxModel(Model& skyModel, const float* view, const float* p
     d3d.context->PSSetSamplers(0, 1, samplers);
     for (auto& mesh : skyModel.meshes) {
         if (mesh.vertices.empty() || mesh.indices.empty()) continue;
+        // Check if this mesh has a valid diffuse texture - skip if not
+        bool hasDiffuse = false;
+        if (mesh.materialIndex >= 0 && mesh.materialIndex < (int)skyModel.materials.size()) {
+            auto& mat = skyModel.materials[mesh.materialIndex];
+            if (mat.diffuseTexId) {
+                ID3D11ShaderResourceView* srv = getTextureSRV(mat.diffuseTexId);
+                if (srv) hasDiffuse = true;
+            }
+        }
+        if (!hasDiffuse) continue; // Skip untextured skybox meshes
         std::vector<ModelVertex> vertData(mesh.vertices.size());
         for (size_t vi = 0; vi < mesh.vertices.size(); vi++) {
             const Vertex& v = mesh.vertices[vi];
@@ -907,10 +918,9 @@ void renderModel(Model& model, const Camera& camera, const RenderSettings& setti
         mat4RotateX(skyView, -90.0f * 3.14159f / 180.0f);
         mat4RotateY(skyView, -camera.yaw);
         mat4RotateX(skyView, -camera.pitch);
+        renderSkyDome(skyView, proj, *envSettings);
         if (skyboxModel && !skyboxModel->meshes.empty()) {
             renderSkyboxModel(*skyboxModel, skyView, proj, viewPos);
-        } else {
-            renderSkyDome(skyView, proj, *envSettings);
         }
     }
 
@@ -933,8 +943,8 @@ void renderModel(Model& model, const Camera& camera, const RenderSettings& setti
         perFrame.viewPos[2] = viewPos[2]; perFrame.viewPos[3] = 0;
         if (envSettings && envSettings->loaded) {
             perFrame.lightDir[0] = envSettings->sunDirection[0];
-            perFrame.lightDir[1] = envSettings->sunDirection[1];
-            perFrame.lightDir[2] = envSettings->sunDirection[2];
+            perFrame.lightDir[1] = -envSettings->sunDirection[2];
+            perFrame.lightDir[2] = envSettings->sunDirection[1];
             perFrame.lightColor[0] = envSettings->sunColor[0];
             perFrame.lightColor[1] = envSettings->sunColor[1];
             perFrame.lightColor[2] = envSettings->sunColor[2];
