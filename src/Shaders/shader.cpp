@@ -138,6 +138,7 @@ cbuffer CBWater : register(b3) {
     float4 uWave2;
     float4 uWaterColor;
     float4 uWaterVisual;
+    float4 uBodyColor;
     float  uTime;
     int    uIsWater;
     int2   wpad;
@@ -261,7 +262,7 @@ float4 main(PSInput input) : SV_TARGET {
             diffuseColor = float4(dbgColors[domCell], 1.0);
         }
     } else if (uIsWater != 0) {
-        float2 uv = input.texcoord;
+        float2 uv = input.worldPos.xy;
         float t = uTime;
 
         float scale0 = max(uWave0.z, 0.01);
@@ -297,25 +298,34 @@ float4 main(PSInput input) : SV_TARGET {
 
         float NdotV = saturate(dot(surfaceN, viewDir));
         float fresnelPow = max(uWaterVisual.x, 0.1);
-        float fresnel = 0.02 + 0.98 * pow(1.0 - NdotV, fresnelPow);
+        float fresnel = pow(1.0 - NdotV, fresnelPow);
 
-        float3 reflColor = float3(0.0, 0.0, 0.0);
+        float3 reflDir = reflect(-viewDir, surfaceN);
+        float reflElev = saturate(reflDir.z);
+        float3 sunDir = normalize(uLightDir.xyz);
+        float3 sunCol = uLightColor.rgb * uLightColor.a;
 
-        float3 bodyColor = float3(0.15, 0.18, 0.22);
+        float3 zenith = float3(0.15, 0.3, 0.65);
+        zenith = lerp(zenith, sunCol * 0.3 + float3(0.1, 0.15, 0.35), 0.3);
+        float3 horiz = uFogColor.rgb;
+        float sunH = saturate(dot(float3(reflDir.x, reflDir.y, 0), float3(sunDir.x, sunDir.y, 0)));
+        horiz = lerp(horiz, sunCol * 0.6, sunH * 0.4);
+        float3 reflColor = lerp(horiz, zenith, pow(reflElev, 0.5));
+        float sd = dot(reflDir, sunDir);
+        reflColor += pow(saturate(sd), 128.0) * 0.6 * sunCol;
+        reflColor += pow(saturate(sd), 8.0) * 0.15 * sunCol;
+
+        float3 bodyColor = uBodyColor.rgb;
 
         float3 waterCol = lerp(bodyColor, reflColor, fresnel);
 
-        float3 L = normalize(uLightDir.xyz);
-        float3 H = normalize(L + viewDir);
+        float3 H = normalize(sunDir + viewDir);
         float NdotH = saturate(dot(surfaceN, H));
         float specPow = max(uWaterVisual.z, 1.0);
         float specInt = uWaterVisual.y;
-        waterCol += pow(NdotH, specPow) * specInt;
+        waterCol += pow(NdotH, specPow) * specInt * sunCol;
 
-        float viewDist = length(uViewPos.xyz - input.worldPos);
-        waterCol *= saturate(1.0 - viewDist * 0.002);
-
-        float alpha = 0.7 + fresnel * 0.25;
+        float alpha = saturate(uWaterColor.w + fresnel);
         diffuseColor = float4(waterCol, alpha);
     } else if (uUseDiffuse != 0) {
         diffuseColor = texDiffuse.Sample(sampLinear, input.texcoord);
@@ -559,7 +569,7 @@ float4 main(VSOutput input) : SV_TARGET {
     horiz = lerp(horiz, uSunColor.rgb*0.6, sunH*0.4);
     float3 sky = lerp(horiz, zenith, pow(saturate(elev), 0.5));
     float sd = dot(dir, sunDir);
-    sky += (smoothstep(0.9994,0.9998,sd) + pow(saturate(sd),128.0)*0.6 + pow(saturate(sd),8.0)*0.15) * uSunColor.rgb * max(uAtmoParams.x, 1.0);
+    sky += (smoothstep(0.9994,0.9998,sd) + pow(saturate(sd),128.0)*0.6 + pow(saturate(sd),8.0)*0.15) * uSunColor.rgb * uAtmoParams.x * 0.1;
     float cd = uCloudParams.x;
     if(cd>0.01 && elev>-0.05){
         float t=800.0/max(elev,0.01);

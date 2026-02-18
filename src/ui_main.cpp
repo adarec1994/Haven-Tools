@@ -160,21 +160,8 @@ void runLoadingTask(AppState* statePtr) {
             std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
             if (ext == ".lvl") {
                 state.erfFiles.push_back(entry.path().string());
-            }
-        }
-    } catch (...) {}
-
-    try {
-        for (const auto& entry : fs::recursive_directory_iterator(state.selectedFolder,
-                fs::directory_options::skip_permission_denied)) {
-            if (!entry.is_regular_file()) continue;
-            std::string ext = entry.path().extension().string();
-            std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
-            if (ext == ".rim") {
-                std::string fname = entry.path().filename().string();
-                std::transform(fname.begin(), fname.end(), fname.begin(), ::tolower);
-                if (fname.size() <= 8 || fname.substr(fname.size() - 8) != ".gpu.rim")
-                    state.rimFiles.push_back(entry.path().string());
+            } else if (ext == ".rim") {
+                state.rimFiles.push_back(entry.path().string());
             } else if (ext == ".arl") {
                 state.arlFiles.push_back(entry.path().string());
             } else if (ext == ".opf") {

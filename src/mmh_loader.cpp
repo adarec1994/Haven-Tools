@@ -78,6 +78,7 @@ Material parseMAO(const std::string& maoContent, const std::string& materialName
                             mat.reliefMap = resName;
                         }
                     } else if (mat.isWater) {
+                        std::cout << "[WATER-GFF] field='" << labelLower << "' resName='" << resName << "'" << std::endl;
                         if (labelLower == "mat_tnormalmap" ||
                             labelLower.find("normalmap") != std::string::npos ||
                             labelLower == "normal") {
@@ -118,7 +119,6 @@ Material parseMAO(const std::string& maoContent, const std::string& materialName
                                 if (mat.diffuseMap.empty()) mat.diffuseMap = resName;
                             }
                         } else {
-                            // Fallback: unrecognized field name (skybox, custom shaders, etc)
                             if (mat.diffuseMap.empty() &&
                                 resLower.find(".mat") == std::string::npos &&
                                 resLower.find(".fx") == std::string::npos &&
@@ -223,45 +223,62 @@ Material parseMAO(const std::string& maoContent, const std::string& materialName
         return mat;
     }
 
-    if (maoContent.find("\"terrain.mat\"") != std::string::npos ||
-        maoContent.find("\"terrain_low.mat\"") != std::string::npos) {
+    std::string maoLower = maoContent;
+    std::transform(maoLower.begin(), maoLower.end(), maoLower.begin(), ::tolower);
+    if (maoLower.find("\"terrain.mat\"") != std::string::npos ||
+        maoLower.find("'terrain.mat'") != std::string::npos ||
+        maoLower.find("\"terrain_low.mat\"") != std::string::npos ||
+        maoLower.find("'terrain_low.mat'") != std::string::npos) {
         mat.isTerrain = true;
     }
-    if (maoContent.find("\"Water.mat\"") != std::string::npos ||
-        maoContent.find("\"water.mat\"") != std::string::npos ||
-        maoContent.find("\"FlowingWater\"") != std::string::npos ||
-        maoContent.find("\"Water\"") != std::string::npos) {
+    if (maoLower.find("\"water.mat\"") != std::string::npos ||
+        maoLower.find("'water.mat'") != std::string::npos ||
+        maoLower.find("\"flowingwater") != std::string::npos ||
+        maoLower.find("'flowingwater") != std::string::npos) {
         mat.isWater = true;
     }
 
+
     size_t pos = 0;
-    while ((pos = maoContent.find("<Texture", pos)) != std::string::npos) {
-        size_t endTag = maoContent.find("/>", pos);
+    while ((pos = maoLower.find("<texture", pos)) != std::string::npos) {
+        if (pos + 8 < maoLower.size() && maoLower[pos+8] != ' ' && maoLower[pos+8] != '\t' && maoLower[pos+8] != '\n' && maoLower[pos+8] != '\r') {
+            pos++;
+            continue;
+        }
+        size_t endTag = maoLower.find("/>", pos);
         if (endTag == std::string::npos) {
-            endTag = maoContent.find("</Texture>", pos);
+            endTag = maoLower.find("</texture>", pos);
             if (endTag == std::string::npos) break;
         }
 
         std::string tag = maoContent.substr(pos, endTag - pos);
-        std::string texName;
-        size_t namePos = tag.find("Name=\"");
-        if (namePos != std::string::npos) {
-            namePos += 6;
-            size_t nameEnd = tag.find("\"", namePos);
-            if (nameEnd != std::string::npos) {
-                texName = tag.substr(namePos, nameEnd - namePos);
-            }
-        }
 
-        std::string resName;
-        size_t resPos = tag.find("ResName=\"");
-        if (resPos != std::string::npos) {
-            resPos += 9;
-            size_t resEnd = tag.find("\"", resPos);
-            if (resEnd != std::string::npos) {
-                resName = tag.substr(resPos, resEnd - resPos);
+        auto extractAttr = [&](const std::string& attrName) -> std::string {
+            std::string tagLow = tag;
+            std::transform(tagLow.begin(), tagLow.end(), tagLow.begin(), ::tolower);
+            std::string attrLow = attrName;
+            std::transform(attrLow.begin(), attrLow.end(), attrLow.begin(), ::tolower);
+
+            for (char q : {'\"', '\''}) {
+                std::string pattern = attrLow + "=" + q;
+                size_t searchPos = 0;
+                while ((searchPos = tagLow.find(pattern, searchPos)) != std::string::npos) {
+                    if (searchPos > 0 && tagLow[searchPos-1] != ' ' && tagLow[searchPos-1] != '\t') {
+                        searchPos++;
+                        continue;
+                    }
+                    size_t valStart = searchPos + pattern.size();
+                    size_t valEnd = tag.find(q, valStart);
+                    if (valEnd != std::string::npos)
+                        return tag.substr(valStart, valEnd - valStart);
+                    searchPos++;
+                }
             }
-        }
+            return "";
+        };
+
+        std::string texName = extractAttr("Name");
+        std::string resName = extractAttr("ResName");
 
         if (!texName.empty() && !resName.empty()) {
             std::string texNameLower = texName;
@@ -286,6 +303,7 @@ Material parseMAO(const std::string& maoContent, const std::string& materialName
                     mat.reliefMap = resName;
                 }
             } else if (mat.isWater) {
+                std::cout << "[WATER-MAO] texture Name='" << texName << "' ResName='" << resName << "'" << std::endl;
                 if (texNameLower == "mat_tnormalmap" ||
                     texNameLower.find("normalmap") != std::string::npos ||
                     texNameLower.find("normal") != std::string::npos) {

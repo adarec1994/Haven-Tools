@@ -534,6 +534,7 @@ struct AppState {
     std::vector<CachedEntry> rimEntries;
     int selectedRIMEntry = -1;
     char rimEntryFilter[128] = "";
+    std::vector<std::string> gpuRimPaths;
 
     GDAEditorState gdaEditor;
     GffViewerState gffViewer;

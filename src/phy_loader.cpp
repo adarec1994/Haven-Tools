@@ -7,13 +7,12 @@
 #include "erf.h"
 #include "Shaders/d3d_context.h"
 #include "renderer.h"
+#include "terrain_loader.h"
 #include <algorithm>
 #include <functional>
 #include <cmath>
 #include <iostream>
 
-// Apply mesh-local position/rotation from MMH hierarchy into vertices
-// (MaxScript equivalent: in coordsys parent MeshObj.Position/Rotation)
 static void applyMeshLocalTransforms(Model& model) {
     auto quatRot = [](float qx, float qy, float qz, float qw,
                       float vx, float vy, float vz,
@@ -32,7 +31,6 @@ static void applyMeshLocalTransforms(Model& model) {
         float posX = mesh.localPosX, posY = mesh.localPosY, posZ = mesh.localPosZ;
         float rotX = mesh.localRotX, rotY = mesh.localRotY, rotZ = mesh.localRotZ, rotW = mesh.localRotW;
 
-        // Combine with parent bone world transform if present
         if (!mesh.parentBoneName.empty()) {
             int boneIdx = model.skeleton.findBone(mesh.parentBoneName);
             if (boneIdx >= 0) {
@@ -264,11 +262,19 @@ static void loadTextureErfs(AppState& state) {
         if (filenameLower.find("texture") != std::string::npos) {
             auto erf = std::make_unique<ERFFile>();
             if (erf->open(erfPath) && erf->encryption() == 0) {
+                std::cout << "[TEX-ERFS] Loaded: " << filename << " (" << erf->entries().size() << " entries)" << std::endl;
                 state.textureErfs.push_back(std::move(erf));
                 state.textureErfPaths.push_back(erfPath);
+            } else {
+                auto erf2 = std::make_unique<ERFFile>();
+                if (erf2->open(erfPath))
+                    std::cout << "[TEX-ERFS] SKIPPED: " << filename << " (encryption=" << erf2->encryption() << ", entries=" << erf2->entries().size() << ")" << std::endl;
+                else
+                    std::cout << "[TEX-ERFS] FAILED: " << filename << std::endl;
             }
         }
     }
+    std::cout << "[TEX-ERFS] Total: " << state.textureErfs.size() << " texture ERFs loaded" << std::endl;
     state.textureErfsLoaded = true;
 }
 
@@ -396,6 +402,10 @@ static uint32_t loadTextureByName(AppState& state, const std::string& texName,
     std::string texNameLower = texName;
     std::transform(texNameLower.begin(), texNameLower.end(), texNameLower.begin(), ::tolower);
 
+    bool debugTex = (texNameLower.find("water") != std::string::npos ||
+                     texNameLower.find("bump") != std::string::npos);
+    if (debugTex) std::cout << "[TEX-DBG] Looking for '" << texName << "'" << std::endl;
+
 
     std::string withDdsLower = texNameLower;
     if (withDdsLower.size() < 4 || withDdsLower.substr(withDdsLower.size() - 4) != ".dds")
@@ -426,26 +436,66 @@ static uint32_t loadTextureByName(AppState& state, const std::string& texName,
     const std::vector<std::unique_ptr<ERFFile>>* erfSets[] = {
         &state.textureErfs, &state.materialErfs, &state.modelErfs
     };
-    for (const auto* erfs : erfSets) {
-        for (const auto& erf : *erfs) {
+    const char* erfSetNames[] = {"textureErfs", "materialErfs", "modelErfs"};
+    for (int s = 0; s < 3; s++) {
+        if (debugTex) std::cout << "[TEX-DBG]   Searching " << erfSetNames[s] << " (" << erfSets[s]->size() << " ERFs)" << std::endl;
+        for (const auto& erf : *erfSets[s]) {
             uint32_t id = tryLoadFromErf(*erf);
-            if (id != 0) return id;
+            if (id != 0) {
+                if (debugTex) std::cout << "[TEX-DBG]   FOUND in " << erfSetNames[s] << std::endl;
+                return id;
+            }
         }
     }
     if (state.currentErf) {
+        if (debugTex) std::cout << "[TEX-DBG]   Searching currentErf" << std::endl;
         uint32_t id = tryLoadFromErf(*state.currentErf);
         if (id != 0) return id;
     }
 
     for (const auto& erfPath : state.erfFiles) {
-        ERFFile erf;
-        if (erf.open(erfPath) && erf.encryption() == 0) {
-            uint32_t id = tryLoadFromErf(erf);
-            if (id != 0) return id;
+        std::string fname = erfPath;
+        size_t slash = fname.find_last_of("/\\");
+        if (slash != std::string::npos) fname = fname.substr(slash + 1);
+        std::string fnameLower = fname;
+        std::transform(fnameLower.begin(), fnameLower.end(), fnameLower.begin(), ::tolower);
+        if (fnameLower == "textures.erf" || fnameLower == "texturepack.erf") {
+            if (debugTex) std::cout << "[TEX-DBG]   Trying " << fname << " (encryption=" ;
+            ERFFile erf;
+            if (erf.open(erfPath)) {
+                if (debugTex) std::cout << erf.encryption() << ", entries=" << erf.entries().size() << ")" << std::endl;
+                if (erf.encryption() == 0) {
+                    uint32_t id = tryLoadFromErf(erf);
+                    if (id != 0) {
+                        if (debugTex) std::cout << "[TEX-DBG]   FOUND in " << fname << std::endl;
+                        return id;
+                    }
+                } else {
+                    if (debugTex) std::cout << "[TEX-DBG]   SKIPPED (encryption != 0)" << std::endl;
+                }
+            } else {
+                if (debugTex) std::cout << "OPEN FAILED)" << std::endl;
+            }
         }
     }
 
-    // Texture not found - scan all ERFs to help debug
+    if (debugTex) std::cout << "[TEX-DBG]   Scanning ALL erfFiles (" << state.erfFiles.size() << ")" << std::endl;
+    for (const auto& erfPath : state.erfFiles) {
+        ERFFile erf;
+        if (erf.open(erfPath) && erf.encryption() == 0) {
+            uint32_t id = tryLoadFromErf(erf);
+            if (id != 0) {
+                if (debugTex) {
+                    std::string fn = erfPath;
+                    size_t sl = fn.find_last_of("/\\");
+                    if (sl != std::string::npos) fn = fn.substr(sl + 1);
+                    std::cout << "[TEX-DBG]   FOUND in " << fn << std::endl;
+                }
+                return id;
+            }
+        }
+    }
+
     std::cout << "[TEX] FAILED to load: \"" << texName << "\"" << std::endl;
     std::cout << "[TEX]   Searching all ERFs for \"" << noExtLower << "\"..." << std::endl;
     bool found = false;
@@ -465,7 +515,6 @@ static uint32_t loadTextureByName(AppState& state, const std::string& texName,
             }
         }
     }
-    // Also check loaded ERF sets
     const char* setNames[] = {"textureErfs", "materialErfs", "modelErfs"};
     const std::vector<std::unique_ptr<ERFFile>>* erfSets2[] = {
         &state.textureErfs, &state.materialErfs, &state.modelErfs
@@ -529,6 +578,13 @@ bool loadModelFromEntry(AppState& state, const ERFEntry& entry) {
         if (mat.maskA2TexId != 0)           destroyTexture(mat.maskA2TexId);
         if (mat.reliefTexId != 0)           destroyTexture(mat.reliefTexId);
     }
+    for (const auto& mat : state.skyboxModel.materials) {
+        if (mat.diffuseTexId != 0) destroyTexture(mat.diffuseTexId);
+        if (mat.normalTexId != 0)  destroyTexture(mat.normalTexId);
+    }
+    state.skyboxModel = Model();
+    state.skyboxLoaded = false;
+    state.envSettings = EnvironmentSettings();
     destroyLevelBuffers();
 
     state.currentModel = model;
@@ -702,6 +758,13 @@ bool loadModelFromOverride(AppState& state, const std::string& mshPath) {
         if (mat.maskA2TexId != 0)           destroyTexture(mat.maskA2TexId);
         if (mat.reliefTexId != 0)           destroyTexture(mat.reliefTexId);
     }
+    for (const auto& mat : state.skyboxModel.materials) {
+        if (mat.diffuseTexId != 0) destroyTexture(mat.diffuseTexId);
+        if (mat.normalTexId != 0)  destroyTexture(mat.normalTexId);
+    }
+    state.skyboxModel = Model();
+    state.skyboxLoaded = false;
+    state.envSettings = EnvironmentSettings();
     destroyLevelBuffers();
 
     state.currentModel = model;
@@ -1033,14 +1096,19 @@ void buildErfIndex(AppState& state) {
     s_erfIndexBuilt = true;
 }
 
-static std::vector<uint8_t> readFromErfIndex(const std::string& name) {
+static std::vector<uint8_t> readFromErfIndex(const std::string& name, std::string* sourceOut = nullptr) {
     std::string key = name;
     std::transform(key.begin(), key.end(), key.begin(), ::tolower);
     auto it = s_erfIndex.find(key);
     if (it != s_erfIndex.end()) {
         const auto& entries = it->second.erf->entries();
-        if (it->second.entryIdx < entries.size())
+        if (it->second.entryIdx < entries.size()) {
+            if (sourceOut) {
+                namespace fs = std::filesystem;
+                *sourceOut = "indexed: " + fs::path(it->second.erf->path()).filename().string();
+            }
             return it->second.erf->readEntry(entries[it->second.entryIdx]);
+        }
     }
 
     std::string noExt = key;
@@ -1055,8 +1123,13 @@ static std::vector<uint8_t> readFromErfIndex(const std::string& name) {
             if (kdp != std::string::npos) kNoExt = k.substr(0, kdp);
             if (kNoExt == noExt) {
                 const auto& entries = v.erf->entries();
-                if (v.entryIdx < entries.size())
+                if (v.entryIdx < entries.size()) {
+                    if (sourceOut) {
+                        namespace fs = std::filesystem;
+                        *sourceOut = "indexed: " + fs::path(v.erf->path()).filename().string();
+                    }
                     return v.erf->readEntry(entries[v.entryIdx]);
+                }
             }
         }
     }
@@ -1064,7 +1137,7 @@ static std::vector<uint8_t> readFromErfIndex(const std::string& name) {
 }
 
 static std::vector<uint8_t> readFromAnyErf(AppState& state, const std::string& name, std::string* sourceOut = nullptr) {
-    if (s_erfIndexBuilt) return readFromErfIndex(name);
+    if (s_erfIndexBuilt) return readFromErfIndex(name, sourceOut);
 
     std::string nameLower = name;
     std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), ::tolower);
@@ -1101,7 +1174,6 @@ static std::vector<uint8_t> readFromAnyErf(AppState& state, const std::string& n
         }
     }
 
-    // Search global ERF files as fallback
     for (const auto& erfPath : state.erfFiles) {
         ERFFile erf;
         if (erf.open(erfPath) && erf.encryption() == 0) {
@@ -1122,6 +1194,33 @@ static std::vector<uint8_t> readFromAnyErf(AppState& state, const std::string& n
     return {};
 }
 
+static std::vector<uint8_t> readFromModelMeshDataErfs(AppState& state, const std::string& name) {
+    std::string nameLower = name;
+    std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), ::tolower);
+    namespace fs = std::filesystem;
+    for (const auto& erfPath : state.erfFiles) {
+        std::string pathLower = erfPath;
+        std::transform(pathLower.begin(), pathLower.end(), pathLower.begin(), ::tolower);
+        if (pathLower.find("modelmeshdata") == std::string::npos &&
+            pathLower.find("meshdata") == std::string::npos) continue;
+        ERFFile erf;
+        if (!erf.open(erfPath) || erf.encryption() != 0) continue;
+        for (const auto& entry : erf.entries()) {
+            std::string eLower = entry.name;
+            std::transform(eLower.begin(), eLower.end(), eLower.begin(), ::tolower);
+            if (eLower == nameLower) {
+                auto data = erf.readEntry(entry);
+                if (!data.empty()) {
+                    std::cout << "[LEVEL] Found '" << name << "' in ModelMeshData: "
+                              << fs::path(erfPath).filename().string() << std::endl;
+                    return data;
+                }
+            }
+        }
+    }
+    return {};
+}
+
 static std::vector<uint8_t> readFromSiblingRims(AppState& state, const std::string& name) {
     if (state.currentRIMPath.empty()) return {};
     std::string nameLower = name;
@@ -1136,7 +1235,6 @@ static std::vector<uint8_t> readFromSiblingRims(AppState& state, const std::stri
             std::string fnameLower = dirEntry.path().filename().string();
             std::transform(fnameLower.begin(), fnameLower.end(), fnameLower.begin(), ::tolower);
             if (fnameLower.size() < 5 || fnameLower.substr(fnameLower.size() - 4) != ".rim") continue;
-            if (fnameLower.find(".gpu.rim") != std::string::npos) continue;
             ERFFile rim;
             if (!rim.open(dpath)) continue;
             for (const auto& entry : rim.entries()) {
@@ -1191,7 +1289,6 @@ bool mergeModelByName(AppState& state, const std::string& modelName,
         if (!mshData.empty()) {
             parsed = loadMSH(mshData, tempModel);
             if (!parsed) {
-                // Data found but wrong format (likely GFF4 from global ERFs) - try sibling rims
                 std::cout << "[LEVEL] MSH FOUND BUT PARSE FAILED: " << mshName
                           << " (" << mshData.size() << " bytes, header: ";
                 for (size_t i = 0; i < std::min(mshData.size(), (size_t)8); i++)
@@ -1209,22 +1306,45 @@ bool mergeModelByName(AppState& state, const std::string& modelName,
                         std::cout << "[LEVEL] Sibling rim MSH also failed to parse: " << mshName
                                   << " (" << mshData.size() << " bytes)" << std::endl;
                     }
-                } else {
-                    std::cout << "[LEVEL] MSH not found in sibling rims either" << std::endl;
+                }
+                if (!parsed) {
+                    mshName = modelName + ".msh";
+                    mshData = readFromModelMeshDataErfs(state, mshName);
+                    if (mshData.empty()) {
+                        mshName = modelName + "_0.msh";
+                        mshData = readFromModelMeshDataErfs(state, mshName);
+                    }
+                    if (!mshData.empty()) {
+                        parsed = loadMSH(mshData, tempModel);
+                        if (!parsed) {
+                            std::cout << "[LEVEL] ModelMeshData MSH also failed to parse: " << mshName
+                                      << " (" << mshData.size() << " bytes, header: ";
+                            for (size_t i = 0; i < std::min(mshData.size(), (size_t)8); i++)
+                                printf("%02X ", mshData[i]);
+                            std::cout << ")" << std::endl;
+                        }
+                    }
                 }
             }
         } else {
-            // Not found in any indexed ERF - try sibling rims
             mshName = modelName + ".msh";
             mshData = readFromSiblingRims(state, mshName);
             if (mshData.empty()) {
                 mshName = modelName + "_0.msh";
                 mshData = readFromSiblingRims(state, mshName);
             }
+            if (mshData.empty()) {
+                mshName = modelName + ".msh";
+                mshData = readFromModelMeshDataErfs(state, mshName);
+            }
+            if (mshData.empty()) {
+                mshName = modelName + "_0.msh";
+                mshData = readFromModelMeshDataErfs(state, mshName);
+            }
             if (!mshData.empty()) {
                 parsed = loadMSH(mshData, tempModel);
                 if (!parsed) {
-                    std::cout << "[LEVEL] Sibling rim MSH parse failed: " << mshName
+                    std::cout << "[LEVEL] Fallback MSH parse failed: " << mshName
                               << " (" << mshData.size() << " bytes)" << std::endl;
                 }
             }
@@ -1233,7 +1353,7 @@ bool mergeModelByName(AppState& state, const std::string& modelName,
         if (!parsed) {
             if (mshData.empty()) {
                 std::cout << "[LEVEL] MSH NOT FOUND: " << modelName
-                          << " (searched ERFs + sibling rims)" << std::endl;
+                          << " (searched ERFs + sibling rims + ModelMeshData)" << std::endl;
             }
             s_propMissingModels.insert(nameLower);
             return false;
@@ -1306,6 +1426,40 @@ void finalizeLevelMaterials(AppState& state) {
     }
 
     for (auto& mat : state.currentModel.materials) {
+        if (mat.isWater) {
+            std::cout << "[WATER] Material '" << mat.name << "'" << std::endl;
+            std::cout << "[WATER]   normalMap='" << mat.normalMap << "' waterNormalMap='" << mat.waterNormalMap << "'" << std::endl;
+            std::cout << "[WATER]   diffuseMap='" << mat.diffuseMap << "' waterDecalMap='" << mat.waterDecalMap << "'" << std::endl;
+            std::cout << "[WATER]   specularMap='" << mat.specularMap << "' waterMaskMap='" << mat.waterMaskMap << "'" << std::endl;
+            if (mat.normalMap.empty() && !mat.waterNormalMap.empty())
+                mat.normalMap = mat.waterNormalMap;
+            if (mat.diffuseMap.empty() && !mat.waterDecalMap.empty())
+                mat.diffuseMap = mat.waterDecalMap;
+            if (mat.specularMap.empty() && !mat.waterMaskMap.empty())
+                mat.specularMap = mat.waterMaskMap;
+            if (g_terrainLoader.isLoaded()) {
+                const auto& tw = g_terrainLoader.getTerrain().water;
+                float rSum = 0, gSum = 0, bSum = 0, aSum = 0;
+                int count = 0;
+                for (const auto& wm : tw) {
+                    for (const auto& v : wm.vertices) {
+                        rSum += v.r; gSum += v.g; bSum += v.b; aSum += v.a;
+                        count++;
+                    }
+                }
+                if (count > 0) {
+                    mat.waterBodyColor[0] = rSum / count;
+                    mat.waterBodyColor[1] = gSum / count;
+                    mat.waterBodyColor[2] = bSum / count;
+                    mat.waterBodyColor[3] = aSum / count;
+                    std::cout << "[WATER]   bodyColor from terrain: ("
+                              << mat.waterBodyColor[0] << ", " << mat.waterBodyColor[1] << ", "
+                              << mat.waterBodyColor[2] << ", " << mat.waterBodyColor[3] << ") from "
+                              << count << " vertices" << std::endl;
+                }
+            }
+            std::cout << "[WATER]   AFTER: normalMap='" << mat.normalMap << "' diffuseMap='" << mat.diffuseMap << "'" << std::endl;
+        }
         if (!mat.diffuseMap.empty() && mat.diffuseTexId == 0)
             mat.diffuseTexId = loadTextureByName(state, mat.diffuseMap, &mat.diffuseData, &mat.diffuseWidth, &mat.diffuseHeight);
         if (!mat.normalMap.empty() && mat.normalTexId == 0)
@@ -1315,7 +1469,6 @@ void finalizeLevelMaterials(AppState& state) {
         if (!mat.tintMap.empty() && mat.tintTexId == 0)
             mat.tintTexId = loadTextureByName(state, mat.tintMap, &mat.tintData, &mat.tintWidth, &mat.tintHeight);
 
-        // Log missing textures
         if (!mat.diffuseMap.empty() && mat.diffuseTexId == 0)
             std::cout << "[LEVEL] MISSING diffuse texture: " << mat.diffuseMap << " (mat=" << mat.name << ")" << std::endl;
         if (!mat.normalMap.empty() && mat.normalTexId == 0)
@@ -1364,7 +1517,6 @@ void finalizeModelMaterials(AppState& state, Model& model) {
             Material mat = parseMAO(maoContent, matName);
             mat.maoContent = maoContent;
             if (mat.diffuseMap.empty()) {
-                // Dump all MAO fields to help debug
                 if (maoData.size() >= 8 && GFF32::GFF32File::isGFF32(maoData)) {
                     GFF32::GFF32File gff32;
                     if (gff32.load(maoData) && gff32.root()) {
@@ -1412,6 +1564,14 @@ void finalizeModelMaterials(AppState& state, Model& model) {
             mesh.materialIndex = model.findMaterial(mesh.materialName);
     }
     for (auto& mat : model.materials) {
+        if (mat.isWater) {
+            if (mat.normalMap.empty() && !mat.waterNormalMap.empty())
+                mat.normalMap = mat.waterNormalMap;
+            if (mat.diffuseMap.empty() && !mat.waterDecalMap.empty())
+                mat.diffuseMap = mat.waterDecalMap;
+            if (mat.specularMap.empty() && !mat.waterMaskMap.empty())
+                mat.specularMap = mat.waterMaskMap;
+        }
         if (!mat.diffuseMap.empty() && mat.diffuseTexId == 0)
             mat.diffuseTexId = loadTextureByName(state, mat.diffuseMap, &mat.diffuseData, &mat.diffuseWidth, &mat.diffuseHeight);
         if (!mat.normalMap.empty() && mat.normalTexId == 0)

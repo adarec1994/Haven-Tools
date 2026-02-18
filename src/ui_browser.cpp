@@ -104,6 +104,10 @@ static void startLevelLoad(AppState& state, const std::string& rimPath, const st
         if (mat.maskATexId != 0) destroyTexture(mat.maskATexId);
     }
     destroyLevelBuffers();
+    for (const auto& mat : state.skyboxModel.materials) {
+        if (mat.diffuseTexId != 0) destroyTexture(mat.diffuseTexId);
+        if (mat.normalTexId != 0)  destroyTexture(mat.normalTexId);
+    }
     state.envSettings = EnvironmentSettings();
     state.skyboxModel = Model();
     state.skyboxLoaded = false;
@@ -431,7 +435,6 @@ void drawBrowserWindow(AppState& state) {
                 std::string fnameLower = dirEntry.path().filename().string();
                 std::transform(fnameLower.begin(), fnameLower.end(), fnameLower.begin(), ::tolower);
                 if (fnameLower.size() > 4 && fnameLower.substr(fnameLower.size() - 4) == ".rim" &&
-                    fnameLower.find(".gpu.") == std::string::npos &&
                     dirEntry.path().string() != state.currentRIMPath) {
                     ERFFile siblingRim;
                     if (siblingRim.open(dirEntry.path().string()))
@@ -755,7 +758,6 @@ void drawBrowserWindow(AppState& state) {
                         }
                     }
                 } else {
-                    std::cout << "[LEVEL LOAD] Missing MSH: " << pw.modelName << std::endl;
                 }
                 ll.itemIndex = i + 1;
                 processed++;
@@ -1742,6 +1744,135 @@ void drawBrowserWindow(AppState& state) {
         float availW = ImGui::GetContentRegionAvail().x;
         float entryListW = showSubPanel ? availW * 0.5f : 0.0f;
 
+        static char s_rimDeepSearch[128] = "";
+        struct RimDeepEntry { std::string name; size_t rimIdx; size_t entryIdx; };
+        static std::vector<std::vector<RimDeepEntry>> s_rimEntryCache;
+        static size_t s_rimCacheCount = 0;
+        static std::string s_lastDeepFilter;
+        static std::vector<RimDeepEntry*> s_deepResults;
+        bool isEnvTab = (state.selectedErfName == "[Env]");
+        bool deepSearchActive = isEnvTab && s_rimDeepSearch[0] != '\0';
+
+        if (isEnvTab) {
+            ImGui::SetNextItemWidth(ImGui::GetContentRegionAvail().x);
+            ImGui::InputTextWithHint("##rimDeepSearch", "Search inside RIMs...", s_rimDeepSearch, sizeof(s_rimDeepSearch));
+
+            if (s_rimDeepSearch[0] != '\0') {
+                if (s_rimEntryCache.empty() || s_rimCacheCount != state.rimFiles.size()) {
+                    s_rimEntryCache.clear();
+                    s_rimEntryCache.resize(state.rimFiles.size());
+                    for (size_t ri = 0; ri < state.rimFiles.size(); ri++) {
+                        ERFFile rim;
+                        if (rim.open(state.rimFiles[ri])) {
+                            for (size_t ei = 0; ei < rim.entries().size(); ei++) {
+                                RimDeepEntry rde;
+                                rde.name = rim.entries()[ei].name;
+                                rde.rimIdx = ri;
+                                rde.entryIdx = ei;
+                                s_rimEntryCache[ri].push_back(std::move(rde));
+                            }
+                        }
+                    }
+                    s_rimCacheCount = state.rimFiles.size();
+                    s_lastDeepFilter.clear();
+                }
+
+                std::string deepFilter = s_rimDeepSearch;
+                std::transform(deepFilter.begin(), deepFilter.end(), deepFilter.begin(), ::tolower);
+                if (deepFilter != s_lastDeepFilter) {
+                    s_lastDeepFilter = deepFilter;
+                    s_deepResults.clear();
+                    for (auto& rimEntries : s_rimEntryCache) {
+                        for (auto& rde : rimEntries) {
+                            std::string nl = rde.name;
+                            std::transform(nl.begin(), nl.end(), nl.begin(), ::tolower);
+                            if (nl.find(deepFilter) != std::string::npos)
+                                s_deepResults.push_back(&rde);
+                        }
+                    }
+                }
+                ImGui::Text("Results: %zu", s_deepResults.size());
+            }
+        }
+
+        if (deepSearchActive) {
+            ImGui::BeginChild("EntryList", ImVec2(entryListW, 0), true);
+            ImGuiListClipper clipper;
+            clipper.Begin((int)s_deepResults.size());
+            while (clipper.Step()) {
+                for (int i = clipper.DisplayStart; i < clipper.DisplayEnd; i++) {
+                    auto* rde = s_deepResults[i];
+                    namespace fs = std::filesystem;
+                    std::string rimName = fs::path(state.rimFiles[rde->rimIdx]).filename().string();
+
+                    std::string nameLower = rde->name;
+                    std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), ::tolower);
+                    bool isModel = isModelFile(rde->name);
+                    bool isMao = isMaoFile(rde->name);
+                    bool isTexture = (nameLower.size() > 4 && nameLower.substr(nameLower.size() - 4) == ".dds");
+                    if (isModel) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.4f, 1.0f, 0.4f, 1.0f));
+                    else if (isMao) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.8f, 0.4f, 1.0f));
+                    else if (isTexture) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.4f, 0.8f, 1.0f, 1.0f));
+                    else ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 1.0f, 1.0f, 1.0f));
+
+                    char label[512];
+                    snprintf(label, sizeof(label), "%s  (%s)##deep%d", rde->name.c_str(), rimName.c_str(), i);
+                    if (ImGui::Selectable(label, false, ImGuiSelectableFlags_AllowDoubleClick)) {
+                        if (ImGui::IsMouseDoubleClicked(0)) {
+                            std::string rimPath = state.rimFiles[rde->rimIdx];
+                            ERFFile rimErf;
+                            if (rimErf.open(rimPath)) {
+                                state.currentRIMPath = rimPath;
+                                state.rimEntries.clear();
+                                state.selectedRIMEntry = -1;
+                                state.rimEntryFilter[0] = '\0';
+                                for (size_t ei = 0; ei < rimErf.entries().size(); ei++) {
+                                    CachedEntry re;
+                                    re.name = rimErf.entries()[ei].name;
+                                    re.erfIdx = (size_t)0;
+                                    re.entryIdx = ei;
+                                    state.rimEntries.push_back(re);
+                                }
+                                state.gpuRimPaths.clear();
+                                std::string rimDir = fs::path(rimPath).parent_path().string();
+                                try {
+                                    for (const auto& dirEntry : fs::directory_iterator(rimDir)) {
+                                        if (!dirEntry.is_regular_file()) continue;
+                                        std::string fname = dirEntry.path().filename().string();
+                                        std::string fnameLower2 = fname;
+                                        std::transform(fnameLower2.begin(), fnameLower2.end(), fnameLower2.begin(), ::tolower);
+                                        if (fnameLower2.find(".gpu.rim") == std::string::npos) continue;
+                                        ERFFile gpuRim;
+                                        if (gpuRim.open(dirEntry.path().string())) {
+                                            size_t gpuIdx = state.gpuRimPaths.size() + 1;
+                                            state.gpuRimPaths.push_back(dirEntry.path().string());
+                                            for (size_t ei = 0; ei < gpuRim.entries().size(); ei++) {
+                                                CachedEntry re;
+                                                re.name = gpuRim.entries()[ei].name;
+                                                re.erfIdx = gpuIdx;
+                                                re.entryIdx = ei;
+                                                state.rimEntries.push_back(re);
+                                            }
+                                        }
+                                    }
+                                } catch (...) {}
+                                state.showRIMBrowser = true;
+                                state.statusMessage = rimName + ": " + std::to_string(state.rimEntries.size()) + " entries";
+
+                                for (int ri = 0; ri < (int)state.rimEntries.size(); ri++) {
+                                    if (state.rimEntries[ri].name == rde->name && state.rimEntries[ri].entryIdx == rde->entryIdx) {
+                                        state.selectedRIMEntry = ri;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    ImGui::PopStyleColor();
+                }
+            }
+            ImGui::EndChild();
+        } else {
         ImGui::BeginChild("EntryList", ImVec2(entryListW, 0), true);
         if (hasTerrain) {
             std::string loadLabel = ">> Load " + state.selectedErfName;
@@ -1755,6 +1886,13 @@ void drawBrowserWindow(AppState& state) {
                             state.showTerrain = true;
                             state.hasModel = false;
                             destroyLevelBuffers();
+                            for (const auto& mat : state.skyboxModel.materials) {
+                                if (mat.diffuseTexId != 0) destroyTexture(mat.diffuseTexId);
+                                if (mat.normalTexId != 0)  destroyTexture(mat.normalTexId);
+                            }
+                            state.skyboxModel = Model();
+                            state.skyboxLoaded = false;
+                            state.envSettings = EnvironmentSettings();
                             state.currentModel = Model();
                             auto& t = g_terrainLoader.getTerrain();
                             float cx = (t.minX + t.maxX) * 0.5f;
@@ -1924,8 +2062,37 @@ void drawBrowserWindow(AppState& state) {
                                 re.entryIdx = ei;
                                 state.rimEntries.push_back(re);
                             }
+                            namespace fs = std::filesystem;
+                            std::string rimDir = fs::path(rimPath).parent_path().string();
+                            std::string rimStem = fs::path(rimPath).stem().string();
+                            std::string rimStemLower = rimStem;
+                            std::transform(rimStemLower.begin(), rimStemLower.end(), rimStemLower.begin(), ::tolower);
+                            state.gpuRimPaths.clear();
+                            try {
+                                for (const auto& dirEntry : fs::directory_iterator(rimDir)) {
+                                    if (!dirEntry.is_regular_file()) continue;
+                                    std::string fname = dirEntry.path().filename().string();
+                                    std::string fnameLower = fname;
+                                    std::transform(fnameLower.begin(), fnameLower.end(), fnameLower.begin(), ::tolower);
+                                    if (fnameLower.find(".gpu.rim") == std::string::npos) continue;
+                                    ERFFile gpuRim;
+                                    if (gpuRim.open(dirEntry.path().string())) {
+                                        size_t gpuIdx = state.gpuRimPaths.size() + 1;
+                                        state.gpuRimPaths.push_back(dirEntry.path().string());
+                                        for (size_t ei = 0; ei < gpuRim.entries().size(); ei++) {
+                                            CachedEntry re;
+                                            re.name = gpuRim.entries()[ei].name;
+                                            re.erfIdx = gpuIdx;
+                                            re.entryIdx = ei;
+                                            state.rimEntries.push_back(re);
+                                        }
+                                    }
+                                }
+                            } catch (...) {}
                             state.showRIMBrowser = true;
                             state.statusMessage = ce.name + ": " + std::to_string(state.rimEntries.size()) + " entries";
+                            if (!state.gpuRimPaths.empty())
+                                state.statusMessage += " (+" + std::to_string(state.gpuRimPaths.size()) + " gpu.rim)";
                         }
                     }
                 }
@@ -2392,6 +2559,7 @@ void drawBrowserWindow(AppState& state) {
         });
         }
         ImGui::EndChild();
+        }
 
         if (showFSBPanel) {
             ImGui::SameLine();
@@ -2713,6 +2881,12 @@ void drawBrowserWindow(AppState& state) {
                     bool selected = (state.selectedRIMEntry == i);
                     if (ImGui::Selectable(label, selected, ImGuiSelectableFlags_AllowDoubleClick)) {
                         state.selectedRIMEntry = i;
+                        auto resolveRimPath = [&]() -> std::string {
+                            if (re.erfIdx == 0) return state.currentRIMPath;
+                            size_t gpuIdx = re.erfIdx - 1;
+                            if (gpuIdx < state.gpuRimPaths.size()) return state.gpuRimPaths[gpuIdx];
+                            return state.currentRIMPath;
+                        };
                         if (ImGui::IsMouseDoubleClicked(0)) {
                             if (isModel) {
 

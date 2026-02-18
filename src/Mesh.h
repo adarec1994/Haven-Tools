@@ -70,6 +70,7 @@ struct Material {
     std::string waterNormalMap;     // mat_tNormalMap
     std::string waterDecalMap;      // mml_tDecal (foam/flow texture for flowing water)
     std::string waterMaskMap;       // mml_tWaterMask
+    float waterBodyColor[4] = {0.3f, 0.25f, 0.15f, 1.0f}; // avg vertex COLOR from water mesh
 };
 enum class CollisionShapeType {
     Box,

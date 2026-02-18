@@ -570,6 +570,7 @@ static void renderLevelStatic(const Model& model, const float* mvp, const float*
                     memcpy(waterCB.wave2, &mat->waveParams[8], 16);
                     memcpy(waterCB.waterColor, mat->waterColor, 16);
                     memcpy(waterCB.waterVisual, mat->waterVisual, 16);
+                    memcpy(waterCB.bodyColor, mat->waterBodyColor, 16);
                     waterCB.time = waterTime;
                     waterCB.isWater = 1;
                 }
@@ -583,6 +584,10 @@ static void renderLevelStatic(const Model& model, const float* mvp, const float*
                     srvs[3] = mat->maskATexId ? getTextureSRV(mat->maskATexId) : nullptr;
                     srvs[4] = mat->maskA2TexId ? getTextureSRV(mat->maskA2TexId) : nullptr;
                     srvs[5] = mat->reliefTexId ? getTextureSRV(mat->reliefTexId) : nullptr;
+                } else if (isWaterMat && useShaders) {
+                    if (mat->normalTexId != 0)   srvs[1] = getTextureSRV(mat->normalTexId);
+                    if (mat->diffuseTexId != 0)  srvs[0] = getTextureSRV(mat->diffuseTexId);
+                    if (mat->specularTexId != 0) srvs[2] = getTextureSRV(mat->specularTexId);
                 } else {
                     if (useShaders && hasDiffuse)  srvs[0] = getTextureSRV(mat->diffuseTexId);
                     if (useShaders && hasNormal)   srvs[1] = getTextureSRV(mat->normalTexId);

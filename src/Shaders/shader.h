@@ -81,6 +81,7 @@ struct alignas(16) CBWater {
     float wave2[4];
     float waterColor[4];
     float waterVisual[4];
+    float bodyColor[4];
     float time;
     int isWater;
     int _pad[2];
