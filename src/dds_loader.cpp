@@ -1,4 +1,5 @@
 #include "dds_loader.h"
+#include <iostream>
 #include <cstring>
 
 #pragma pack(push, 1)
@@ -235,6 +236,123 @@ bool decodeDDSToRGBA(const std::vector<uint8_t>& data, std::vector<uint8_t>& rgb
         return true;
     }
     return false;
+}
+
+#define DDSCAPS2_CUBEMAP 0x200
+
+bool isDDSCubemap(const std::vector<uint8_t>& data) {
+    if (data.size() < sizeof(DDSHeader)) return false;
+    const DDSHeader* header = reinterpret_cast<const DDSHeader*>(data.data());
+    if (header->magic != 0x20534444) return false;
+    return (header->caps2 & DDSCAPS2_CUBEMAP) != 0;
+}
+
+static size_t computeMipSize(int w, int h, uint32_t fourCC, int bpp) {
+    if (fourCC == FOURCC_DXT1) {
+        return (size_t)(((w + 3) / 4) * ((h + 3) / 4)) * 8;
+    } else if (fourCC == FOURCC_DXT5 || fourCC == FOURCC_DXT3 || fourCC == FOURCC_DXT4 ||
+               fourCC == FOURCC_ATI2 || fourCC == FOURCC_BC5U || fourCC == FOURCC_BC5S) {
+        return (size_t)(((w + 3) / 4) * ((h + 3) / 4)) * 16;
+    } else if (fourCC == FOURCC_ATI1 || fourCC == FOURCC_BC4U || fourCC == FOURCC_BC4S) {
+        return (size_t)(((w + 3) / 4) * ((h + 3) / 4)) * 8;
+    } else {
+        return (size_t)w * h * (bpp > 0 ? bpp : 4);
+    }
+}
+
+static size_t computeMipChainSize(int w, int h, int mipCount, uint32_t fourCC, int bpp) {
+    size_t total = 0;
+    for (int m = 0; m < mipCount; m++) {
+        int mw = w >> m; if (mw < 1) mw = 1;
+        int mh = h >> m; if (mh < 1) mh = 1;
+        total += computeMipSize(mw, mh, fourCC, bpp);
+    }
+    return total;
+}
+
+bool decodeDDSCubemapFaces(const std::vector<uint8_t>& data, std::vector<uint8_t> faces[6], int& faceSize) {
+    if (data.size() < sizeof(DDSHeader)) return false;
+    const DDSHeader* header = reinterpret_cast<const DDSHeader*>(data.data());
+    if (header->magic != 0x20534444) return false;
+    if (!(header->caps2 & DDSCAPS2_CUBEMAP)) return false;
+
+    int w = header->width;
+    int h = header->height;
+    if (w != h) return false;
+    faceSize = w;
+
+    int mipCount = header->mipMapCount;
+    if (mipCount == 0) mipCount = 1;
+
+    const uint32_t DDPF_FOURCC = 0x4;
+    uint32_t fourCC = 0;
+    int bpp = 0;
+    bool isCompressed = (header->pixelFormat.flags & DDPF_FOURCC) != 0;
+    if (isCompressed) {
+        fourCC = header->pixelFormat.fourCC;
+    } else {
+        bpp = header->pixelFormat.rgbBitCount / 8;
+        if (bpp == 0) bpp = 4;
+    }
+
+    size_t mip0Size = computeMipSize(w, h, fourCC, bpp);
+    size_t faceChainSize = computeMipChainSize(w, h, mipCount, fourCC, bpp);
+    size_t headerSize = sizeof(DDSHeader);
+    const uint8_t* pixelData = data.data() + headerSize;
+    size_t pixelDataSize = data.size() - headerSize;
+
+    if (pixelDataSize < faceChainSize * 6) return false;
+
+    for (int face = 0; face < 6; face++) {
+        const uint8_t* faceStart = pixelData + face * faceChainSize;
+        std::vector<uint8_t> faceRaw(faceStart, faceStart + mip0Size);
+
+        faces[face].resize(w * h * 4);
+        if (isCompressed) {
+            if (fourCC == FOURCC_DXT1) {
+                const uint8_t* src = faceRaw.data();
+                for (int by = 0; by < h; by += 4) {
+                    for (int bx = 0; bx < w; bx += 4) {
+                        uint8_t block[4 * 4 * 4];
+                        decompressDXT1Block(src, block, 16);
+                        src += 8;
+                        for (int y = 0; y < 4 && by + y < h; y++)
+                            for (int x = 0; x < 4 && bx + x < w; x++) {
+                                int di = ((by + y) * w + (bx + x)) * 4;
+                                memcpy(&faces[face][di], &block[y * 16 + x * 4], 4);
+                            }
+                    }
+                }
+            } else if (fourCC == FOURCC_DXT5 || fourCC == FOURCC_DXT3) {
+                const uint8_t* src = faceRaw.data();
+                for (int by = 0; by < h; by += 4) {
+                    for (int bx = 0; bx < w; bx += 4) {
+                        uint8_t block[4 * 4 * 4];
+                        decompressDXT5Block(src, block, 16);
+                        src += 16;
+                        for (int y = 0; y < 4 && by + y < h; y++)
+                            for (int x = 0; x < 4 && bx + x < w; x++) {
+                                int di = ((by + y) * w + (bx + x)) * 4;
+                                memcpy(&faces[face][di], &block[y * 16 + x * 4], 4);
+                            }
+                    }
+                }
+            } else {
+                memset(faces[face].data(), 128, faces[face].size());
+            }
+        } else {
+            const uint8_t* src = faceRaw.data();
+            for (int i = 0; i < w * h; i++) {
+                if (bpp >= 3) {
+                    faces[face][i * 4 + 0] = src[i * bpp + 0];
+                    faces[face][i * 4 + 1] = src[i * bpp + 1];
+                    faces[face][i * 4 + 2] = src[i * bpp + 2];
+                    faces[face][i * 4 + 3] = (bpp >= 4) ? src[i * bpp + 3] : 255;
+                }
+            }
+        }
+    }
+    return true;
 }
 
 bool decodeTGAToRGBA(const std::vector<uint8_t>& data, std::vector<uint8_t>& rgba, int& width, int& height) {

@@ -329,6 +329,18 @@ void ensureBaseErfsLoaded(AppState& state) {
     loadMaterialErfs(state);
 }
 
+// Forward declarations for ERF index system (defined later in file)
+struct ErfIndexEntry {
+    ERFFile* erf;
+    size_t entryIdx;
+};
+static std::unordered_map<std::string, ErfIndexEntry> s_erfIndex;
+static std::unordered_map<std::string, ErfIndexEntry> s_erfIndexNoExt;
+static bool s_erfIndexBuilt = false;
+static std::vector<std::unique_ptr<ERFFile>> s_indexedErfs;
+static std::unordered_map<std::string, uint32_t> s_texIdCache;
+static std::vector<uint8_t> readFromErfIndex(const std::string& name, std::string* sourceOut = nullptr);
+
 static std::vector<uint8_t> readFromModelErfs(AppState& state, const std::string& name) {
     std::string nameLower = name;
     std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), ::tolower);
@@ -339,16 +351,34 @@ static std::vector<uint8_t> readFromModelErfs(AppState& state, const std::string
             if (entryLower == nameLower) return erf->readEntry(entry);
         }
     }
+    // Fallback: search the source ERF the model was loaded from
+    if (state.currentErf) {
+        std::string noExtLower = nameLower;
+        size_t dp = noExtLower.rfind('.');
+        if (dp != std::string::npos) noExtLower = noExtLower.substr(0, dp);
+        for (const auto& entry : state.currentErf->entries()) {
+            std::string entryLower = entry.name;
+            std::transform(entryLower.begin(), entryLower.end(), entryLower.begin(), ::tolower);
+            std::string entryNoExt = entryLower;
+            size_t edp = entryNoExt.rfind('.');
+            if (edp != std::string::npos) entryNoExt = entryNoExt.substr(0, edp);
+            if (entryLower == nameLower || entryNoExt == noExtLower) return state.currentErf->readEntry(entry);
+        }
+    }
     return {};
 }
 
 static std::vector<uint8_t> readFromMaterialErfs(AppState& state, const std::string& name) {
+    if (s_erfIndexBuilt) {
+        auto result = readFromErfIndex(name);
+        if (!result.empty()) return result;
+    }
+
     std::string nameLower = name;
     std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), ::tolower);
     std::string noExtLower = nameLower;
     size_t dp = noExtLower.rfind('.');
     if (dp != std::string::npos) noExtLower = noExtLower.substr(0, dp);
-
 
     const std::vector<std::unique_ptr<ERFFile>>* erfSets[] = {
         &state.materialErfs, &state.modelErfs, &state.textureErfs
@@ -377,22 +407,93 @@ static std::vector<uint8_t> readFromMaterialErfs(AppState& state, const std::str
         }
     }
 
-    for (const auto& erfPath : state.erfFiles) {
-        ERFFile erf;
-        if (erf.open(erfPath) && erf.encryption() == 0) {
-            for (const auto& entry : erf.entries()) {
-                std::string entryLower = entry.name;
-                std::transform(entryLower.begin(), entryLower.end(), entryLower.begin(), ::tolower);
-                std::string entryNoExt = entryLower;
-                size_t edp = entryNoExt.rfind('.');
-                if (edp != std::string::npos) entryNoExt = entryNoExt.substr(0, edp);
-                if (entryLower == nameLower || entryNoExt == noExtLower) {
-                    return erf.readEntry(entry);
+    return {};
+}
+
+static uint32_t loadCubemapByName(AppState& state, const std::string& texName) {
+    if (texName.empty()) return 0;
+    std::string lower = texName;
+    std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
+    std::string withDds = lower;
+    if (withDds.size() < 4 || withDds.substr(withDds.size() - 4) != ".dds")
+        withDds += ".dds";
+
+    if (s_erfIndexBuilt) {
+        auto tryKey = [&](const std::string& key) -> uint32_t {
+            auto it = s_erfIndex.find(key);
+            if (it != s_erfIndex.end()) {
+                const auto& entries = it->second.erf->entries();
+                if (it->second.entryIdx < entries.size()) {
+                    auto data = it->second.erf->readEntry(entries[it->second.entryIdx]);
+                    if (!data.empty() && isDDSCubemap(data))
+                        return createTextureCubeFromDDS(data);
+                }
+            }
+            return 0;
+        };
+        uint32_t id = tryKey(withDds);
+        if (!id) id = tryKey(lower);
+        if (!id) {
+            std::string noext = lower;
+            size_t dp = noext.rfind('.');
+            if (dp != std::string::npos) noext = noext.substr(0, dp);
+            auto it = s_erfIndexNoExt.find(noext);
+            if (it != s_erfIndexNoExt.end()) {
+                const auto& entries = it->second.erf->entries();
+                if (it->second.entryIdx < entries.size()) {
+                    auto data = it->second.erf->readEntry(entries[it->second.entryIdx]);
+                    if (!data.empty() && isDDSCubemap(data))
+                        id = createTextureCubeFromDDS(data);
                 }
             }
         }
+        return id;
     }
-    return {};
+
+    auto tryErf = [&](ERFFile& erf) -> uint32_t {
+        for (const auto& e : erf.entries()) {
+            std::string eName = e.name;
+            std::transform(eName.begin(), eName.end(), eName.begin(), ::tolower);
+            if (eName == lower || eName == withDds) {
+                auto data = erf.readEntry(e);
+                if (!data.empty() && isDDSCubemap(data)) {
+                    return createTextureCubeFromDDS(data);
+                }
+            }
+        }
+        return 0;
+    };
+
+    for (auto& erf : state.textureErfs)   { uint32_t id = tryErf(*erf); if (id) return id; }
+    for (auto& erf : state.materialErfs)   { uint32_t id = tryErf(*erf); if (id) return id; }
+    for (auto& erf : state.modelErfs)      { uint32_t id = tryErf(*erf); if (id) return id; }
+
+    return 0;
+}
+
+static uint32_t findAnyCubemapInErfs(AppState& state) {
+    auto scanErf = [&](ERFFile& erf) -> uint32_t {
+        for (const auto& e : erf.entries()) {
+            std::string eName = e.name;
+            std::transform(eName.begin(), eName.end(), eName.begin(), ::tolower);
+            if (eName.find("cubemap") != std::string::npos ||
+                eName.find("probe") != std::string::npos ||
+                eName.find("envmap") != std::string::npos) {
+                std::vector<uint8_t> data = erf.readEntry(e);
+                if (!data.empty() && isDDSCubemap(data)) {
+                    uint32_t id = createTextureCubeFromDDS(data);
+                    if (id) {
+                        std::cout << "[CUBEMAP] Found cubemap: '" << e.name << "'" << std::endl;
+                        return id;
+                    }
+                }
+            }
+        }
+        return 0;
+    };
+
+    for (auto& erf : state.textureErfs) { uint32_t id = scanErf(*erf); if (id) return id; }
+    return 0;
 }
 
 static uint32_t loadTextureByName(AppState& state, const std::string& texName,
@@ -402,11 +503,6 @@ static uint32_t loadTextureByName(AppState& state, const std::string& texName,
     std::string texNameLower = texName;
     std::transform(texNameLower.begin(), texNameLower.end(), texNameLower.begin(), ::tolower);
 
-    bool debugTex = (texNameLower.find("water") != std::string::npos ||
-                     texNameLower.find("bump") != std::string::npos);
-    if (debugTex) std::cout << "[TEX-DBG] Looking for '" << texName << "'" << std::endl;
-
-
     std::string withDdsLower = texNameLower;
     if (withDdsLower.size() < 4 || withDdsLower.substr(withDdsLower.size() - 4) != ".dds")
         withDdsLower += ".dds";
@@ -414,6 +510,44 @@ static uint32_t loadTextureByName(AppState& state, const std::string& texName,
     size_t dp = noExtLower.rfind('.');
     if (dp != std::string::npos) noExtLower = noExtLower.substr(0, dp);
 
+    // Check dedup cache (skip if caller wants RGBA data back)
+    if (!rgbaOut) {
+        auto cit = s_texIdCache.find(noExtLower);
+        if (cit != s_texIdCache.end()) return cit->second;
+    }
+
+    // Fast path: use the global ERF index if available
+    if (s_erfIndexBuilt) {
+        auto tryIndex = [&](const std::string& key) -> std::vector<uint8_t> {
+            auto it = s_erfIndex.find(key);
+            if (it != s_erfIndex.end()) {
+                const auto& entries = it->second.erf->entries();
+                if (it->second.entryIdx < entries.size())
+                    return it->second.erf->readEntry(entries[it->second.entryIdx]);
+            }
+            return {};
+        };
+
+        std::vector<uint8_t> texData = tryIndex(withDdsLower);
+        if (texData.empty()) texData = tryIndex(texNameLower);
+        if (texData.empty()) {
+            auto it = s_erfIndexNoExt.find(noExtLower);
+            if (it != s_erfIndexNoExt.end()) {
+                const auto& entries = it->second.erf->entries();
+                if (it->second.entryIdx < entries.size())
+                    texData = it->second.erf->readEntry(entries[it->second.entryIdx]);
+            }
+        }
+        if (!texData.empty()) {
+            if (rgbaOut && wOut && hOut) decodeDDSToRGBA(texData, *rgbaOut, *wOut, *hOut);
+            uint32_t id = createTextureFromDDS(texData);
+            if (id && !rgbaOut) s_texIdCache[noExtLower] = id;
+            return id;
+        }
+        // Index had nothing — fall through to currentErf fallback below
+    }
+
+    // Slow fallback: linear scan (only used if index not built yet)
     auto tryLoadFromErf = [&](ERFFile& erf) -> uint32_t {
         for (const auto& entry : erf.entries()) {
             std::string entryLower = entry.name;
@@ -432,116 +566,21 @@ static uint32_t loadTextureByName(AppState& state, const std::string& texName,
         return 0;
     };
 
-
-    const std::vector<std::unique_ptr<ERFFile>>* erfSets[] = {
-        &state.textureErfs, &state.materialErfs, &state.modelErfs
-    };
-    const char* erfSetNames[] = {"textureErfs", "materialErfs", "modelErfs"};
-    for (int s = 0; s < 3; s++) {
-        if (debugTex) std::cout << "[TEX-DBG]   Searching " << erfSetNames[s] << " (" << erfSets[s]->size() << " ERFs)" << std::endl;
-        for (const auto& erf : *erfSets[s]) {
-            uint32_t id = tryLoadFromErf(*erf);
-            if (id != 0) {
-                if (debugTex) std::cout << "[TEX-DBG]   FOUND in " << erfSetNames[s] << std::endl;
-                return id;
+    if (!s_erfIndexBuilt) {
+        const std::vector<std::unique_ptr<ERFFile>>* erfSets[] = {
+            &state.textureErfs, &state.materialErfs, &state.modelErfs
+        };
+        for (int s = 0; s < 3; s++) {
+            for (const auto& erf : *erfSets[s]) {
+                uint32_t id = tryLoadFromErf(*erf);
+                if (id != 0) return id;
             }
         }
     }
     if (state.currentErf) {
-        if (debugTex) std::cout << "[TEX-DBG]   Searching currentErf" << std::endl;
         uint32_t id = tryLoadFromErf(*state.currentErf);
         if (id != 0) return id;
     }
-
-    for (const auto& erfPath : state.erfFiles) {
-        std::string fname = erfPath;
-        size_t slash = fname.find_last_of("/\\");
-        if (slash != std::string::npos) fname = fname.substr(slash + 1);
-        std::string fnameLower = fname;
-        std::transform(fnameLower.begin(), fnameLower.end(), fnameLower.begin(), ::tolower);
-        if (fnameLower == "textures.erf" || fnameLower == "texturepack.erf") {
-            if (debugTex) std::cout << "[TEX-DBG]   Trying " << fname << " (encryption=" ;
-            ERFFile erf;
-            if (erf.open(erfPath)) {
-                if (debugTex) std::cout << erf.encryption() << ", entries=" << erf.entries().size() << ")" << std::endl;
-                if (erf.encryption() == 0) {
-                    uint32_t id = tryLoadFromErf(erf);
-                    if (id != 0) {
-                        if (debugTex) std::cout << "[TEX-DBG]   FOUND in " << fname << std::endl;
-                        return id;
-                    }
-                } else {
-                    if (debugTex) std::cout << "[TEX-DBG]   SKIPPED (encryption != 0)" << std::endl;
-                }
-            } else {
-                if (debugTex) std::cout << "OPEN FAILED)" << std::endl;
-            }
-        }
-    }
-
-    if (debugTex) std::cout << "[TEX-DBG]   Scanning ALL erfFiles (" << state.erfFiles.size() << ")" << std::endl;
-    for (const auto& erfPath : state.erfFiles) {
-        ERFFile erf;
-        if (erf.open(erfPath) && erf.encryption() == 0) {
-            uint32_t id = tryLoadFromErf(erf);
-            if (id != 0) {
-                if (debugTex) {
-                    std::string fn = erfPath;
-                    size_t sl = fn.find_last_of("/\\");
-                    if (sl != std::string::npos) fn = fn.substr(sl + 1);
-                    std::cout << "[TEX-DBG]   FOUND in " << fn << std::endl;
-                }
-                return id;
-            }
-        }
-    }
-
-    std::cout << "[TEX] FAILED to load: \"" << texName << "\"" << std::endl;
-    std::cout << "[TEX]   Searching all ERFs for \"" << noExtLower << "\"..." << std::endl;
-    bool found = false;
-    for (const auto& erfPath : state.erfFiles) {
-        ERFFile erf;
-        if (erf.open(erfPath) && erf.encryption() == 0) {
-            for (const auto& entry : erf.entries()) {
-                std::string entryLower = entry.name;
-                std::transform(entryLower.begin(), entryLower.end(), entryLower.begin(), ::tolower);
-                if (entryLower.find(noExtLower) != std::string::npos) {
-                    std::string erfName = erfPath;
-                    size_t slash = erfName.find_last_of("/\\");
-                    if (slash != std::string::npos) erfName = erfName.substr(slash + 1);
-                    std::cout << "[TEX]   FOUND \"" << entry.name << "\" in " << erfName << std::endl;
-                    found = true;
-                }
-            }
-        }
-    }
-    const char* setNames[] = {"textureErfs", "materialErfs", "modelErfs"};
-    const std::vector<std::unique_ptr<ERFFile>>* erfSets2[] = {
-        &state.textureErfs, &state.materialErfs, &state.modelErfs
-    };
-    for (int s = 0; s < 3; s++) {
-        for (size_t ei = 0; ei < erfSets2[s]->size(); ei++) {
-            for (const auto& entry : (*erfSets2[s])[ei]->entries()) {
-                std::string entryLower = entry.name;
-                std::transform(entryLower.begin(), entryLower.end(), entryLower.begin(), ::tolower);
-                if (entryLower.find(noExtLower) != std::string::npos) {
-                    std::cout << "[TEX]   FOUND \"" << entry.name << "\" in " << setNames[s] << "[" << ei << "]" << std::endl;
-                    found = true;
-                }
-            }
-        }
-    }
-    if (state.currentErf) {
-        for (const auto& entry : state.currentErf->entries()) {
-            std::string entryLower = entry.name;
-            std::transform(entryLower.begin(), entryLower.end(), entryLower.begin(), ::tolower);
-            if (entryLower.find(noExtLower) != std::string::npos) {
-                std::cout << "[TEX]   FOUND \"" << entry.name << "\" in currentErf" << std::endl;
-                found = true;
-            }
-        }
-    }
-    if (!found) std::cout << "[TEX]   NOT FOUND anywhere!" << std::endl;
 
     return 0;
 }
@@ -1040,28 +1079,29 @@ bool mergeModelEntry(AppState& state, const ERFEntry& entry) {
 }
 
 
-struct ErfIndexEntry {
-    ERFFile* erf;
-    size_t entryIdx;
-};
-
-static std::unordered_map<std::string, ErfIndexEntry> s_erfIndex;
-static bool s_erfIndexBuilt = false;
-static std::vector<std::unique_ptr<ERFFile>> s_indexedErfs;
-
 void buildErfIndex(AppState& state) {
     s_erfIndex.clear();
+    s_erfIndexNoExt.clear();
     s_indexedErfs.clear();
+    s_texIdCache.clear();
+
+    auto addToIndex = [&](ERFFile* erf, size_t entryIdx, const std::string& name) {
+        std::string key = name;
+        std::transform(key.begin(), key.end(), key.begin(), ::tolower);
+        if (s_erfIndex.find(key) == s_erfIndex.end())
+            s_erfIndex[key] = {erf, entryIdx};
+        std::string noext = key;
+        size_t dp = noext.rfind('.');
+        if (dp != std::string::npos) noext = noext.substr(0, dp);
+        if (s_erfIndexNoExt.find(noext) == s_erfIndexNoExt.end())
+            s_erfIndexNoExt[noext] = {erf, entryIdx};
+    };
 
     auto indexErfSet = [&](const std::vector<std::unique_ptr<ERFFile>>& erfs) {
         for (const auto& erf : erfs) {
             const auto& entries = erf->entries();
-            for (size_t i = 0; i < entries.size(); i++) {
-                std::string key = entries[i].name;
-                std::transform(key.begin(), key.end(), key.begin(), ::tolower);
-                if (s_erfIndex.find(key) == s_erfIndex.end())
-                    s_erfIndex[key] = {erf.get(), i};
-            }
+            for (size_t i = 0; i < entries.size(); i++)
+                addToIndex(erf.get(), i, entries[i].name);
         }
     };
 
@@ -1071,24 +1111,16 @@ void buildErfIndex(AppState& state) {
 
     if (state.currentErf) {
         const auto& entries = state.currentErf->entries();
-        for (size_t i = 0; i < entries.size(); i++) {
-            std::string key = entries[i].name;
-            std::transform(key.begin(), key.end(), key.begin(), ::tolower);
-            if (s_erfIndex.find(key) == s_erfIndex.end())
-                s_erfIndex[key] = {state.currentErf.get(), i};
-        }
+        for (size_t i = 0; i < entries.size(); i++)
+            addToIndex(state.currentErf.get(), i, entries[i].name);
     }
 
     for (const auto& erfPath : state.erfFiles) {
         auto erf = std::make_unique<ERFFile>();
         if (erf->open(erfPath) && erf->encryption() == 0) {
             const auto& entries = erf->entries();
-            for (size_t i = 0; i < entries.size(); i++) {
-                std::string key = entries[i].name;
-                std::transform(key.begin(), key.end(), key.begin(), ::tolower);
-                if (s_erfIndex.find(key) == s_erfIndex.end())
-                    s_erfIndex[key] = {erf.get(), i};
-            }
+            for (size_t i = 0; i < entries.size(); i++)
+                addToIndex(erf.get(), i, entries[i].name);
             s_indexedErfs.push_back(std::move(erf));
         }
     }
@@ -1096,43 +1128,31 @@ void buildErfIndex(AppState& state) {
     s_erfIndexBuilt = true;
 }
 
-static std::vector<uint8_t> readFromErfIndex(const std::string& name, std::string* sourceOut = nullptr) {
+static std::vector<uint8_t> readFromErfIndex(const std::string& name, std::string* sourceOut) {
     std::string key = name;
     std::transform(key.begin(), key.end(), key.begin(), ::tolower);
-    auto it = s_erfIndex.find(key);
-    if (it != s_erfIndex.end()) {
-        const auto& entries = it->second.erf->entries();
-        if (it->second.entryIdx < entries.size()) {
+
+    auto tryRead = [&](const ErfIndexEntry& entry) -> std::vector<uint8_t> {
+        const auto& entries = entry.erf->entries();
+        if (entry.entryIdx < entries.size()) {
             if (sourceOut) {
                 namespace fs = std::filesystem;
-                *sourceOut = "indexed: " + fs::path(it->second.erf->path()).filename().string();
+                *sourceOut = "indexed: " + fs::path(entry.erf->path()).filename().string();
             }
-            return it->second.erf->readEntry(entries[it->second.entryIdx]);
+            return entry.erf->readEntry(entries[entry.entryIdx]);
         }
-    }
+        return {};
+    };
 
-    std::string noExt = key;
-    size_t dp = noExt.rfind('.');
-    std::string ext = (dp != std::string::npos) ? key.substr(dp) : "";
-    if (dp != std::string::npos) noExt = key.substr(0, dp);
+    auto it = s_erfIndex.find(key);
+    if (it != s_erfIndex.end()) return tryRead(it->second);
 
-    if (!ext.empty()) {
-        for (const auto& [k, v] : s_erfIndex) {
-            std::string kNoExt = k;
-            size_t kdp = kNoExt.rfind('.');
-            if (kdp != std::string::npos) kNoExt = k.substr(0, kdp);
-            if (kNoExt == noExt) {
-                const auto& entries = v.erf->entries();
-                if (v.entryIdx < entries.size()) {
-                    if (sourceOut) {
-                        namespace fs = std::filesystem;
-                        *sourceOut = "indexed: " + fs::path(v.erf->path()).filename().string();
-                    }
-                    return v.erf->readEntry(entries[v.entryIdx]);
-                }
-            }
-        }
-    }
+    std::string noext = key;
+    size_t dp = noext.rfind('.');
+    if (dp != std::string::npos) noext = noext.substr(0, dp);
+    auto it2 = s_erfIndexNoExt.find(noext);
+    if (it2 != s_erfIndexNoExt.end()) return tryRead(it2->second);
+
     return {};
 }
 
@@ -1260,8 +1280,10 @@ void clearPropCache() {
     s_propModelCache.clear();
     s_propMissingModels.clear();
     s_erfIndex.clear();
+    s_erfIndexNoExt.clear();
     s_indexedErfs.clear();
     s_erfIndexBuilt = false;
+    s_texIdCache.clear();
 }
 
 bool mergeModelByName(AppState& state, const std::string& modelName,
@@ -1459,15 +1481,25 @@ void finalizeLevelMaterials(AppState& state) {
                 }
             }
             std::cout << "[WATER]   AFTER: normalMap='" << mat.normalMap << "' diffuseMap='" << mat.diffuseMap << "'" << std::endl;
+            if (mat.envCubemapTexId == 0) {
+                mat.envCubemapTexId = loadCubemapByName(state, "Default_BlackCubemap");
+            }
+            if (mat.envCubemapTexId == 0) {
+                mat.envCubemapTexId = findAnyCubemapInErfs(state);
+            }
+            if (mat.envCubemapTexId != 0)
+                std::cout << "[WATER]   cubemap texId=" << mat.envCubemapTexId << std::endl;
+            else
+                std::cout << "[WATER]   no cubemap found, using procedural sky reflection" << std::endl;
         }
         if (!mat.diffuseMap.empty() && mat.diffuseTexId == 0)
-            mat.diffuseTexId = loadTextureByName(state, mat.diffuseMap, &mat.diffuseData, &mat.diffuseWidth, &mat.diffuseHeight);
+            mat.diffuseTexId = loadTextureByName(state, mat.diffuseMap, nullptr, nullptr, nullptr);
         if (!mat.normalMap.empty() && mat.normalTexId == 0)
-            mat.normalTexId = loadTextureByName(state, mat.normalMap, &mat.normalData, &mat.normalWidth, &mat.normalHeight);
+            mat.normalTexId = loadTextureByName(state, mat.normalMap, nullptr, nullptr, nullptr);
         if (!mat.specularMap.empty() && mat.specularTexId == 0)
-            mat.specularTexId = loadTextureByName(state, mat.specularMap, &mat.specularData, &mat.specularWidth, &mat.specularHeight);
+            mat.specularTexId = loadTextureByName(state, mat.specularMap, nullptr, nullptr, nullptr);
         if (!mat.tintMap.empty() && mat.tintTexId == 0)
-            mat.tintTexId = loadTextureByName(state, mat.tintMap, &mat.tintData, &mat.tintWidth, &mat.tintHeight);
+            mat.tintTexId = loadTextureByName(state, mat.tintMap, nullptr, nullptr, nullptr);
 
         if (!mat.diffuseMap.empty() && mat.diffuseTexId == 0)
             std::cout << "[LEVEL] MISSING diffuse texture: " << mat.diffuseMap << " (mat=" << mat.name << ")" << std::endl;

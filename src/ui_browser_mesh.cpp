@@ -1,5 +1,4 @@
 #include "ui_internal.h"
-
 void drawMeshBrowserWindow(AppState& state) {
     loadMeshDatabase(state);
     ImGui::SetNextWindowSize(ImVec2(400, 500), ImGuiCond_FirstUseEver);
@@ -9,6 +8,13 @@ void drawMeshBrowserWindow(AppState& state) {
         ImGui::TextDisabled("Place model_names.csv in exe directory.");
         ImGui::End();
         return;
+    }
+    if (state.meshBrowser.categories.empty()) {
+        state.meshBrowser.categories.push_back("All");
+    }
+    if (state.meshBrowser.selectedCategory < 0 ||
+        state.meshBrowser.selectedCategory >= (int)state.meshBrowser.categories.size()) {
+        state.meshBrowser.selectedCategory = 0;
     }
     ImGui::Checkbox("Categorized", &state.meshBrowser.categorized);
     ImGui::SameLine();

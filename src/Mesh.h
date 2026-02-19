@@ -71,6 +71,7 @@ struct Material {
     std::string waterDecalMap;      // mml_tDecal (foam/flow texture for flowing water)
     std::string waterMaskMap;       // mml_tWaterMask
     float waterBodyColor[4] = {0.3f, 0.25f, 0.15f, 1.0f}; // avg vertex COLOR from water mesh
+    uint32_t envCubemapTexId = 0;  // environment cubemap for reflections
 };
 enum class CollisionShapeType {
     Box,

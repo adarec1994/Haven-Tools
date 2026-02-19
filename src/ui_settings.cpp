@@ -7,6 +7,7 @@ void saveSettings(const AppState& state) {
     if (f.is_open()) {
         f << "lastDialogPath=" << state.lastDialogPath << "\n";
         f << "selectedFolder=" << state.selectedFolder << "\n";
+        f << "overrideFolder=" << state.overrideFolder << "\n";
         f << "lastRunVersion=" << state.lastRunVersion << "\n";
         f << "kb_moveForward=" << (int)state.keybinds.moveForward << "\n";
         f << "kb_moveBackward=" << (int)state.keybinds.moveBackward << "\n";
@@ -33,6 +34,7 @@ void loadSettings(AppState& state) {
 
                 if (key == "lastDialogPath") state.lastDialogPath = val;
                 else if (key == "selectedFolder") { state.selectedFolder = val; state.gffViewer.gamePath = val; }
+                else if (key == "overrideFolder") { state.overrideFolder = val; state.gffViewer.overridePath = val; }
                 else if (key == "lastRunVersion") state.lastRunVersion = val;
                 else if (key == "kb_moveForward") state.keybinds.moveForward = (ImGuiKey)std::stoi(val);
                 else if (key == "kb_moveBackward") state.keybinds.moveBackward = (ImGuiKey)std::stoi(val);

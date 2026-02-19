@@ -267,11 +267,33 @@ Thank you for downloading or updating to version 2.0!
 
 - Additional notes:
 -- Many things here are WIP. I wanted to get v2.0 out, so expect ongoing updates as I continue to bugfix and refine features.
-)";
 
-static const char* s_changelogLatest = R"(
 [Release 2.1]
 
 Hotfix:
 - Fixed the clouds in the renderer.
+)";
+
+static const char* s_changelogLatest = R"(
+[Release 2.2]
+
+- Crash & Stability Fixes
+-- D3D Initialization Fallback — App no longer crashes if Graphics Tools aren't installed. Tries hardware+debug → hardware (no debug) → WARP software renderer.
+-- Level Texture Loading OOM Fix — Fixed std::bad_alloc crash when loading levels. Stopped storing full RGBA texture copies in RAM alongside GPU textures during level material loading (~4.8GB savings on large levels).
+-- Crashlog System Removed — Removed all crashlog() / crashlog_clear() infrastructure, calls, and crash popup MessageBox across all files. Top-level try/catch in main.cpp retained for silent crash prevention.
+
+- Performance
+-- Texture/Material Loading Optimization — Rewrote ERF lookup system from O(N×M) linear scans to O(1) hash-based indexing. Added s_erfIndex, s_erfIndexNoExt hash maps and s_texIdCache for texture deduplication. Expected 100–1000× speedup for typical levels.
+-- GFF4 Tree Building — Added maxForceDepth limit (depth 3) to prevent full recursive tree expansion on load. Large DLG files (e.g. 4.8MB alistair_main.dlg) now open instantly instead of hanging. Deeper nodes load on-demand when expanded.
+
+- Talktable Loading
+-- Removed TLK loading from startup — No longer scans the entire game directory for .tlk files during the splash screen loading phase. TLK strings still load on-demand when opening GFF4 files in the viewer.
+
+- Model Loading Fallback
+-- Same-ERF asset resolution — readFromModelErfs, readFromMaterialErfs, and loadTextureByName now fall back to searching state.currentErf (the source ERF) when dedicated model/material/texture ERFs don't contain the needed MMH, MAO, PHY, or DDS files. Enables loading models from non-standard game versions where assets are bundled together.
+
+- UI Changes
+-- Override Folder Button — Replaced "Add Ons" menu button with "Override" button in the ERF Browser menu bar. Opens a folder chooser to set a custom override directory.
+-- Override Folder Persistence — Selected override folder saved to haventools_settings.ini and restored on next launch.
+-- Override Folder Integration — Override Folder selectable in the left pane now uses the user-configured path (falls back to packages/core/override if not set). GFF save dialog defaults to the override folder for modified files.
 )";

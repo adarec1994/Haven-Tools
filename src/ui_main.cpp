@@ -8,7 +8,6 @@
 #include "update/about_text.h"
 #include "update/changelog_text.h"
 #include "blender_addon_embedded.h"
-
 static bool exportBlenderAddon(const unsigned char* data, unsigned int size, const std::string& destDir) {
     namespace fs = std::filesystem;
     fs::path outPath = fs::path(destDir) / "havenarea_importer.zip";
@@ -17,8 +16,7 @@ static bool exportBlenderAddon(const unsigned char* data, unsigned int size, con
     out.write(reinterpret_cast<const char*>(data), size);
     return out.good();
 }
-static const char* CURRENT_APP_VERSION = "2.1";
-
+static const char* CURRENT_APP_VERSION = "2.2";
 static void boneEditQuatMul(float q1x, float q1y, float q1z, float q1w,
                             float q2x, float q2y, float q2z, float q2w,
                             float& rx, float& ry, float& rz, float& rw) {
@@ -27,20 +25,17 @@ static void boneEditQuatMul(float q1x, float q1y, float q1z, float q1w,
     ry = q1w*q2y - q1x*q2z + q1y*q2w + q1z*q2x;
     rz = q1w*q2z + q1x*q2y - q1y*q2x + q1z*q2w;
 }
-
 static void boneEditAxisAngleToQuat(float ax, float ay, float az, float angle,
                                     float& qx, float& qy, float& qz, float& qw) {
     float ha = angle * 0.5f;
     float s = sinf(ha);
     qx = ax * s; qy = ay * s; qz = az * s; qw = cosf(ha);
 }
-
 static void boneEditApply(AppState& state, float mouseDX, float mouseDY) {
     if (state.boneEditMode == 0 || state.selectedBoneIndex < 0) return;
     if (state.selectedBoneIndex >= (int)state.currentModel.skeleton.bones.size()) return;
     Bone& bone = state.currentModel.skeleton.bones[state.selectedBoneIndex];
     float sensitivity;
-
     if (state.boneEditMode == 1) {
         sensitivity = 0.005f;
         if (state.boneEditAxis >= 0) {
@@ -85,7 +80,6 @@ static void boneEditApply(AppState& state, float mouseDX, float mouseDY) {
     computeBoneWorldTransforms(state.currentModel);
     state.bonePoseMode = true;
 }
-
 static void boneEditCancel(AppState& state) {
     if (state.boneEditMode == 0 || state.selectedBoneIndex < 0) return;
     if (state.selectedBoneIndex >= (int)state.currentModel.skeleton.bones.size()) {
@@ -100,7 +94,6 @@ static void boneEditCancel(AppState& state) {
     state.boneEditMode = 0;
     state.boneEditAxis = -1;
 }
-
 static void boneEditStart(AppState& state, int mode, GLFWwindow* window) {
     if (state.selectedBoneIndex < 0 || !state.renderSettings.showSkeleton) return;
     if (!state.hasModel || state.currentModel.skeleton.bones.empty()) return;
@@ -145,8 +138,16 @@ static bool s_animListExpanded = false;
 static int s_fbxScaleIndex = 0;
 void runLoadingTask(AppState* statePtr) {
     AppState& state = *statePtr;
+    try {
     state.preloadStatus = "Scanning game folders...";
     state.preloadProgress = 0.0f;
+    if (state.selectedFolder.empty() || !fs::exists(state.selectedFolder)) {
+        state.statusMessage = "Error: Game folder not found";
+        state.isPreloading = false;
+        showSplash = true;
+        state.selectedFolder.clear();
+        return;
+    }
     state.erfFiles = scanForERFFiles(state.selectedFolder);
     state.rimFiles.clear();
     state.arlFiles.clear();
@@ -172,41 +173,37 @@ void runLoadingTask(AppState* statePtr) {
     std::sort(state.rimFiles.begin(), state.rimFiles.end());
     std::sort(state.arlFiles.begin(), state.arlFiles.end());
     std::sort(state.opfFiles.begin(), state.opfFiles.end());
-
     state.rimMshCounts.assign(state.rimFiles.size(), 0);
     state.rimScanDone = false;
     std::thread([&state]() {
+        try {
         for (size_t i = 0; i < state.rimFiles.size(); i++) {
-            ERFFile rim;
-            if (rim.open(state.rimFiles[i])) {
-                int mshCount = 0;
-                for (const auto& e : rim.entries()) {
-                    size_t len = e.name.size();
-                    if (len > 4) {
-                        std::string ext = e.name.substr(len - 4);
-                        std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
-                        if (ext == ".msh") mshCount++;
+            try {
+                ERFFile rim;
+                if (rim.open(state.rimFiles[i])) {
+                    int mshCount = 0;
+                    for (const auto& e : rim.entries()) {
+                        size_t len = e.name.size();
+                        if (len > 4) {
+                            std::string ext = e.name.substr(len - 4);
+                            std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
+                            if (ext == ".msh") mshCount++;
+                        }
+                    }
+                    if (i < state.rimMshCounts.size()) {
+                        state.rimMshCounts[i] = mshCount;
                     }
                 }
-                state.rimMshCounts[i] = mshCount;
+            } catch (...) {
             }
+        }
+        } catch (...) {
         }
         state.rimScanDone = true;
     }).detach();
-
     state.preloadStatus = "Filtering encrypted files...";
     state.preloadProgress = 0.05f;
     filterEncryptedErfs(state);
-
-    state.preloadStatus = "Loading talk tables...";
-    state.preloadProgress = 0.07f;
-    GFF4TLK::clear();
-    {
-        int tlkCount = GFF4TLK::loadAllFromPath(state.selectedFolder);
-        if (tlkCount > 0)
-            state.gffViewer.tlkStatus = "Loaded " + std::to_string(GFF4TLK::count()) + " strings from " + std::to_string(tlkCount) + " TLK files";
-    }
-
     state.meshCache.clear();
     state.mmhCache.clear();
     state.maoCache.clear();
@@ -220,14 +217,15 @@ void runLoadingTask(AppState* statePtr) {
     std::vector<std::string> charPrefixes = {"df_", "dm_", "hf_", "hm_", "ef_", "em_", "cn_"};
     std::vector<std::string> erfPaths;
     for (size_t i : state.filteredErfIndices) {
-        erfPaths.push_back(state.erfFiles[i]);
+        if (i < state.erfFiles.size()) {
+            erfPaths.push_back(state.erfFiles[i]);
+        }
     }
     size_t totalErfs = erfPaths.size();
     size_t processed = 0;
     for (const auto& erfPath : erfPaths) {
         std::string filename = fs::path(erfPath).filename().string();
         state.preloadStatus = filename;
-
         std::string extLower = fs::path(erfPath).extension().string();
         std::transform(extLower.begin(), extLower.end(), extLower.begin(), ::tolower);
         if (extLower == ".lvl") {
@@ -235,7 +233,6 @@ void runLoadingTask(AppState* statePtr) {
             state.preloadProgress = 0.1f + ((float)processed / (float)totalErfs) * 0.8f;
             continue;
         }
-
         std::string pathLower = erfPath;
         std::transform(pathLower.begin(), pathLower.end(), pathLower.begin(), ::tolower);
         bool isModel = pathLower.find("model") != std::string::npos ||
@@ -244,20 +241,17 @@ void runLoadingTask(AppState* statePtr) {
                        pathLower.find("chargen") != std::string::npos;
         bool isMaterial = pathLower.find("material") != std::string::npos;
         bool isTexture = pathLower.find("texture") != std::string::npos;
-
         if (!isModel && !isMaterial && !isTexture) {
             processed++;
             state.preloadProgress = 0.1f + ((float)processed / (float)totalErfs) * 0.8f;
             continue;
         }
-
         ERFFile erf;
         if (!erf.open(erfPath)) {
             processed++;
             state.preloadProgress = 0.1f + ((float)processed / (float)totalErfs) * 0.8f;
             continue;
         }
-
         for (const auto& entry : erf.entries()) {
             std::string nameLower = entry.name;
             std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), ::tolower);
@@ -329,8 +323,16 @@ void runLoadingTask(AppState* statePtr) {
     saveSettings(state);
     state.isPreloading = false;
     showSplash = false;
+    } catch (const std::exception& e) {
+        state.statusMessage = std::string("Loading error: ") + e.what();
+        state.isPreloading = false;
+        showSplash = true;
+    } catch (...) {
+        state.statusMessage = "Unknown loading error";
+        state.isPreloading = false;
+        showSplash = true;
+    }
 }
-
 void runCharDesignerLoading(AppState* statePtr) {
     t_isLoadingContent = true;
     statePtr->preloadProgress = 0.0f;
@@ -338,7 +340,6 @@ void runCharDesignerLoading(AppState* statePtr) {
     statePtr->preloadProgress = 1.0f;
     t_isLoadingContent = false;
 }
-
 void runImportTask(AppState* statePtr) {
     AppState& state = *statePtr;
     state.preloadStatus = "Initializing import...";
@@ -420,7 +421,6 @@ void runImportTask(AppState* statePtr) {
         t_alpha = 0.0f;
     }
 }
-
 void runExportTask(AppState* statePtr) {
     AppState& state = *statePtr;
     state.preloadStatus = "Initializing export...";
@@ -508,16 +508,13 @@ void runExportTask(AppState* statePtr) {
     t_phase = 0;
     t_alpha = 0.0f;
 }
-
 static float s_scrollAccum = 0.0f;
 static GLFWscrollfun s_prevScrollCb = nullptr;
 static bool s_scrollHooked = false;
-
 static void scrollCallbackWrapper(GLFWwindow* window, double x, double y) {
     s_scrollAccum += (float)y;
     if (s_prevScrollCb) s_prevScrollCb(window, x, y);
 }
-
 void handleInput(AppState& state, GLFWwindow* window, ImGuiIO& io) {
     if (!s_scrollHooked) {
         s_prevScrollCb = glfwSetScrollCallback(window, scrollCallbackWrapper);
@@ -539,11 +536,19 @@ void handleInput(AppState& state, GLFWwindow* window, ImGuiIO& io) {
         }
         settingsLoaded = true;
         if (!state.selectedFolder.empty() && !state.isPreloading) {
-            fs::path launcherPath = fs::path(state.selectedFolder) / "DAOriginsLauncher.exe";
-            fs::path exePath = fs::path(state.selectedFolder) / "DAOrigins.exe";
-            if (fs::exists(launcherPath) || fs::exists(exePath)) {
-                state.isPreloading = true;
-                std::thread(runLoadingTask, &state).detach();
+            try {
+                fs::path launcherPath = fs::path(state.selectedFolder) / "DAOriginsLauncher.exe";
+                fs::path exePath = fs::path(state.selectedFolder) / "DAOrigins.exe";
+                if (fs::exists(state.selectedFolder) && (fs::exists(launcherPath) || fs::exists(exePath))) {
+                    state.isPreloading = true;
+                    std::thread(runLoadingTask, &state).detach();
+                } else {
+                    if (!fs::exists(state.selectedFolder)) {
+                        state.selectedFolder.clear();
+                    }
+                }
+            } catch (const std::exception& e) {
+                state.selectedFolder.clear();
             }
         }
     }
@@ -563,10 +568,8 @@ void handleInput(AppState& state, GLFWwindow* window, ImGuiIO& io) {
             float aspect = (float)width / (float)height;
             float fov = 45.0f * 3.14159f / 180.0f;
             float tanHalfFov = std::tan(fov / 2.0f);
-
             float ndcX = (2.0f * (float)mx / width) - 1.0f;
             float ndcY = 1.0f - (2.0f * (float)my / height);
-
             auto identity = [](float* m) { for(int i=0;i<16;i++) m[i]=(i%5==0)?1.0f:0.0f; };
             auto mul = [](const float* a, const float* b, float* out) {
                 for(int i=0;i<4;i++) for(int j=0;j<4;j++) {
@@ -591,14 +594,12 @@ void handleInput(AppState& state, GLFWwindow* window, ImGuiIO& io) {
                 t[12]=x; t[13]=y; t[14]=z;
                 float tmp[16]; mul(m,t,tmp); memcpy(m,tmp,64);
             };
-
             float view[16];
             identity(view);
             applyRX(view, -90.0f * 3.14159f / 180.0f);
             applyT(view, -state.camera.x, -state.camera.y, -state.camera.z);
             applyRY(view, -state.camera.yaw);
             applyRX(view, -state.camera.pitch);
-
             float inv[16], det;
             inv[0] = view[5]*view[10]*view[15]-view[5]*view[11]*view[14]-view[9]*view[6]*view[15]+view[9]*view[7]*view[14]+view[13]*view[6]*view[11]-view[13]*view[7]*view[10];
             inv[4] = -view[4]*view[10]*view[15]+view[4]*view[11]*view[14]+view[8]*view[6]*view[15]-view[8]*view[7]*view[14]-view[12]*view[6]*view[11]+view[12]*view[7]*view[10];
@@ -621,21 +622,17 @@ void handleInput(AppState& state, GLFWwindow* window, ImGuiIO& io) {
                 float invDet = 1.0f / det;
                 for(int i=0;i<16;i++) inv[i]*=invDet;
             }
-
             float vx = ndcX * tanHalfFov * aspect;
             float vy = ndcY * tanHalfFov;
             float vz = -1.0f;
-
             float dirX = inv[0]*vx + inv[4]*vy + inv[8]*vz;
             float dirY = inv[1]*vx + inv[5]*vy + inv[9]*vz;
             float dirZ = inv[2]*vx + inv[6]*vy + inv[10]*vz;
             float len = std::sqrt(dirX*dirX + dirY*dirY + dirZ*dirZ);
             dirX /= len; dirY /= len; dirZ /= len;
-
             float origX = inv[12];
             float origY = inv[13];
             float origZ = inv[14];
-
             int closestBone = -1;
             float closestDist = 999999.0f;
             for (size_t i = 0; i < state.currentModel.skeleton.bones.size(); i++) {
@@ -669,10 +666,8 @@ void handleInput(AppState& state, GLFWwindow* window, ImGuiIO& io) {
             float aspect = (float)width / (float)height;
             float fov = 45.0f * 3.14159f / 180.0f;
             float tanHalfFov = std::tan(fov / 2.0f);
-
             float ndcX = (2.0f * (float)mx / width) - 1.0f;
             float ndcY = 1.0f - (2.0f * (float)my / height);
-
             auto identity = [](float* m) { for(int i=0;i<16;i++) m[i]=(i%5==0)?1.0f:0.0f; };
             auto mul = [](const float* a, const float* b, float* out) {
                 for(int i=0;i<4;i++) for(int j=0;j<4;j++) {
@@ -697,14 +692,12 @@ void handleInput(AppState& state, GLFWwindow* window, ImGuiIO& io) {
                 t[12]=x; t[13]=y; t[14]=z;
                 float tmp[16]; mul(m,t,tmp); memcpy(m,tmp,64);
             };
-
             float view[16];
             identity(view);
             applyRX(view, -90.0f * 3.14159f / 180.0f);
             applyT(view, -state.camera.x, -state.camera.y, -state.camera.z);
             applyRY(view, -state.camera.yaw);
             applyRX(view, -state.camera.pitch);
-
             float inv[16], det;
             inv[0] = view[5]*view[10]*view[15]-view[5]*view[11]*view[14]-view[9]*view[6]*view[15]+view[9]*view[7]*view[14]+view[13]*view[6]*view[11]-view[13]*view[7]*view[10];
             inv[4] = -view[4]*view[10]*view[15]+view[4]*view[11]*view[14]+view[8]*view[6]*view[15]-view[8]*view[7]*view[14]-view[12]*view[6]*view[11]+view[12]*view[7]*view[10];
@@ -727,24 +720,19 @@ void handleInput(AppState& state, GLFWwindow* window, ImGuiIO& io) {
                 float invDet = 1.0f / det;
                 for(int i=0;i<16;i++) inv[i]*=invDet;
             }
-
             float vx = ndcX * tanHalfFov * aspect;
             float vy = ndcY * tanHalfFov;
             float vz = -1.0f;
-
             float dirX = inv[0]*vx + inv[4]*vy + inv[8]*vz;
             float dirY = inv[1]*vx + inv[5]*vy + inv[9]*vz;
             float dirZ = inv[2]*vx + inv[6]*vy + inv[10]*vz;
             float len = std::sqrt(dirX*dirX + dirY*dirY + dirZ*dirZ);
             dirX /= len; dirY /= len; dirZ /= len;
-
             float origX = inv[12];
             float origY = inv[13];
             float origZ = inv[14];
-
             int closestChunk = -1;
             float closestT = 1e30f;
-
             for (size_t mi = 0; mi < state.currentModel.meshes.size(); mi++) {
                 if (mi < state.renderSettings.meshVisible.size() && state.renderSettings.meshVisible[mi] == 0) continue;
                 const auto& m = state.currentModel.meshes[mi];
@@ -786,7 +774,6 @@ void handleInput(AppState& state, GLFWwindow* window, ImGuiIO& io) {
     {
         double mx, my;
         glfwGetCursorPos(window, &mx, &my);
-
         if (state.boneEditMode != 0) {
             float dx = (float)mx - state.boneEditStartX;
             float dy = (float)my - state.boneEditStartY;
@@ -848,8 +835,8 @@ void handleInput(AppState& state, GLFWwindow* window, ImGuiIO& io) {
             if (ImGui::IsKeyDown(state.keybinds.panDown)) state.camera.moveUp(-speed);
         }
     }
-
-    if (state.boneEditMode != 0 && state.selectedBoneIndex >= 0) {
+    if (state.boneEditMode != 0 && state.selectedBoneIndex >= 0
+        && state.selectedBoneIndex < (int)state.currentModel.skeleton.bones.size()) {
         const char* modeName = (state.boneEditMode == 1) ? "ROTATE" : "GRAB";
         const char* axisName = "Free";
         if (state.boneEditAxis == 0) axisName = "X";
@@ -867,7 +854,6 @@ void handleInput(AppState& state, GLFWwindow* window, ImGuiIO& io) {
         ImGui::GetForegroundDrawList()->AddText(pos, IM_COL32(255, 200, 50, 255), buf);
     }
 }
-
 void drawSplashScreen(AppState& state, int displayW, int displayH) {
     ImGui::SetNextWindowPos(ImVec2(0, 0));
     ImGui::SetNextWindowSize(ImVec2((float)displayW, (float)displayH));
@@ -894,13 +880,10 @@ void drawSplashScreen(AppState& state, int displayW, int displayH) {
     }
     ImGui::End();
 }
-
 void preloadErfs(AppState& state) {
     runLoadingTask(&state);
 }
-
 static int s_listeningBind = -1;
-
 static void drawKeybindRow(const char* label, ImGuiKey& key, int id) {
     ImGui::TableNextRow();
     ImGui::TableNextColumn();
@@ -923,42 +906,33 @@ static void drawKeybindRow(const char* label, ImGuiKey& key, int id) {
     }
     ImGui::PopID();
 }
-
 void drawKeybindsWindow(AppState& state) {
     ImGui::SetNextWindowSize(ImVec2(340, 0), ImGuiCond_FirstUseEver);
     ImGui::Begin("Keybinds", &state.showKeybinds, ImGuiWindowFlags_AlwaysAutoResize);
-
     if (s_listeningBind >= 0 && ImGui::IsKeyPressed(ImGuiKey_Escape)) {
         s_listeningBind = -1;
     }
-
     if (ImGui::BeginTable("##keybinds", 2, ImGuiTableFlags_RowBg | ImGuiTableFlags_BordersInnerH)) {
-
         ImGui::TableNextRow();
         ImGui::TableNextColumn();
         ImGui::TextColored(ImVec4(0.6f, 0.8f, 1.0f, 1.0f), "Movement");
         ImGui::TableNextColumn();
-
         drawKeybindRow("Forward",     state.keybinds.moveForward,  0);
         drawKeybindRow("Backward",    state.keybinds.moveBackward, 1);
         drawKeybindRow("Left",        state.keybinds.moveLeft,     2);
         drawKeybindRow("Right",       state.keybinds.moveRight,    3);
         drawKeybindRow("Pan Up",      state.keybinds.panUp,        4);
         drawKeybindRow("Pan Down",    state.keybinds.panDown,      5);
-
         ImGui::TableNextRow();
         ImGui::TableNextColumn();
         ImGui::TextColored(ImVec4(0.6f, 0.8f, 1.0f, 1.0f), "General");
         ImGui::TableNextColumn();
-
         drawKeybindRow("Deselect", state.keybinds.deselectBone, 6);
         drawKeybindRow("Delete Object", state.keybinds.deleteObject, 7);
         drawKeybindRow("Bone Rotate", state.keybinds.boneRotate, 8);
         drawKeybindRow("Bone Grab", state.keybinds.boneGrab, 9);
-
         ImGui::EndTable();
     }
-
     ImGui::Spacing();
     if (ImGui::Button("Reset to Defaults")) {
         state.keybinds = Keybinds();
@@ -968,10 +942,8 @@ void drawKeybindsWindow(AppState& state) {
     if (ImGui::Button("Save")) {
         saveSettings(state);
     }
-
     ImGui::End();
 }
-
 void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
     int displayW, displayH;
     glfwGetFramebufferSize(window, &displayW, &displayH);
@@ -1034,7 +1006,6 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
                 }
             }
         } else if (t_phase == 2) {
-            // Clear render state on any tab switch
             state.hasModel = false;
             state.currentModel = Model();
             state.currentAnim = Animation();
@@ -1064,6 +1035,14 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
             state.isPreloading = true;
             showSplash = true;
             std::thread(runLoadingTask, &state).detach();
+        }
+        ImGuiFileDialog::Instance()->Close();
+    }
+    if (ImGuiFileDialog::Instance()->Display("ChooseOverrideFolder", ImGuiWindowFlags_NoCollapse, ImVec2(600, 400))) {
+        if (ImGuiFileDialog::Instance()->IsOk()) {
+            state.overrideFolder = ImGuiFileDialog::Instance()->GetCurrentPath();
+            state.gffViewer.overridePath = state.overrideFolder;
+            saveSettings(state);
         }
         ImGuiFileDialog::Instance()->Close();
     }
@@ -1810,6 +1789,7 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
             bool selected = (state.selectedHeadIndex == i);
             if (ImGui::Selectable(state.availableHeadNames[i].c_str(), selected, ImGuiSelectableFlags_AllowDoubleClick)) {
                 if (ImGui::IsMouseDoubleClicked(0) && i != state.selectedHeadIndex) {
+                    if (state.pendingBodyEntry.erfIdx < state.erfFiles.size()) {
                     ERFFile erf;
                     if (erf.open(state.erfFiles[state.pendingBodyEntry.erfIdx])) {
                         if (state.pendingBodyEntry.entryIdx < erf.entries().size()) {
@@ -1837,6 +1817,7 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
                                 state.selectedHeadIndex = i;
                             }
                         }
+                    }
                     }
                 }
             }

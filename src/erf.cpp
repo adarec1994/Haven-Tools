@@ -6,6 +6,7 @@
 #include <sstream>
 #include <iomanip>
 #include <map>
+#include <zlib.h>
 
 namespace fs = std::filesystem;
 
@@ -77,6 +78,9 @@ bool ERFFile::open(const std::string& path) {
         } else if (std::memcmp(magic + 4, "V1.1", 4) == 0) {
             m_version = ERFVersion::V1_1;
             return parseV1();
+        } else if (std::memcmp(magic + 4, "V2.1", 4) == 0) {
+            m_version = ERFVersion::V2_1;
+            return parseV2_1();
         }
     }
 
@@ -175,6 +179,34 @@ bool ERFFile::parseV2_0() {
         m_entries[i].packed_length = readLE<uint32_t>(m_file);
         m_entries[i].length = m_entries[i].packed_length;
         m_entries[i].name_hash = fnv64(m_entries[i].name);
+        m_entries[i].type_hash = 0;
+        m_entries[i].resid = i;
+        m_entries[i].restype = 0;
+    }
+
+    return true;
+}
+
+bool ERFFile::parseV2_1() {
+    uint32_t fileCount = readLE<uint32_t>(m_file);
+    readLE<uint32_t>(m_file);
+    readLE<uint16_t>(m_file);
+    readLE<uint16_t>(m_file);
+    readLE<uint32_t>(m_file);
+
+    m_encryption = 0;
+    m_compression = 1;
+
+    m_entries.resize(fileCount);
+    for (uint32_t i = 0; i < fileCount; i++) {
+        std::string name = readString(m_file, 32);
+        size_t nullPos = name.find('\0');
+        if (nullPos != std::string::npos) name.resize(nullPos);
+        m_entries[i].name = name;
+        m_entries[i].offset = readLE<uint32_t>(m_file);
+        m_entries[i].packed_length = readLE<uint32_t>(m_file);
+        m_entries[i].length = readLE<uint32_t>(m_file);
+        m_entries[i].name_hash = fnv64(name);
         m_entries[i].type_hash = 0;
         m_entries[i].resid = i;
         m_entries[i].restype = 0;
@@ -286,6 +318,18 @@ std::vector<uint8_t> ERFFile::readEntry(const ERFEntry& entry) {
 
     std::vector<uint8_t> data(entry.packed_length);
     m_file.read(reinterpret_cast<char*>(data.data()), entry.packed_length);
+
+    if (m_version == ERFVersion::V2_1 && entry.packed_length != entry.length && entry.length > 0) {
+        std::vector<uint8_t> decompressed(entry.length);
+        uLongf destLen = entry.length;
+        int ret = uncompress(decompressed.data(), &destLen,
+                             data.data(), static_cast<uLong>(data.size()));
+        if (ret == Z_OK) {
+            decompressed.resize(destLen);
+            return decompressed;
+        }
+    }
+
     return data;
 }
 

@@ -1156,7 +1156,10 @@ void drawGffViewerWindow(GffViewerState& state) {
         if (state.hasUnsavedChanges) {
             IGFD::FileDialogConfig config;
             std::string defaultPath = ".";
-            if (!state.gamePath.empty()) {
+            if (!state.overridePath.empty()) {
+                std::filesystem::create_directories(state.overridePath);
+                defaultPath = state.overridePath;
+            } else if (!state.gamePath.empty()) {
                 std::filesystem::path overridePath = std::filesystem::path(state.gamePath) / "packages" / "core" / "override";
                 std::filesystem::create_directories(overridePath);
                 defaultPath = overridePath.string();

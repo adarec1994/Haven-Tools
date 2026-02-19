@@ -69,6 +69,7 @@ struct GffViewerState {
     std::string tlkPath;
     std::string tlkStatus;
     std::string gamePath;
+    std::string overridePath;
 
     bool hasUnsavedChanges = false;
     int editingNodeIndex = -1;

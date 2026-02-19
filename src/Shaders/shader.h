@@ -84,7 +84,8 @@ struct alignas(16) CBWater {
     float bodyColor[4];
     float time;
     int isWater;
-    int _pad[2];
+    int hasCubemap;
+    int _pad[1];
 };
 
 struct ShaderProgram {

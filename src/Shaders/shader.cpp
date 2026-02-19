@@ -141,8 +141,11 @@ cbuffer CBWater : register(b3) {
     float4 uBodyColor;
     float  uTime;
     int    uIsWater;
-    int2   wpad;
+    int    uHasCubemap;
+    int    wpad;
 };
+
+TextureCube texEnvCube : register(t9);
 
 struct PSInput {
     float4 position : SV_POSITION;
@@ -301,19 +304,24 @@ float4 main(PSInput input) : SV_TARGET {
         float fresnel = pow(1.0 - NdotV, fresnelPow);
 
         float3 reflDir = reflect(-viewDir, surfaceN);
-        float reflElev = saturate(reflDir.z);
         float3 sunDir = normalize(uLightDir.xyz);
         float3 sunCol = uLightColor.rgb * uLightColor.a;
 
-        float3 zenith = float3(0.15, 0.3, 0.65);
-        zenith = lerp(zenith, sunCol * 0.3 + float3(0.1, 0.15, 0.35), 0.3);
-        float3 horiz = uFogColor.rgb;
-        float sunH = saturate(dot(float3(reflDir.x, reflDir.y, 0), float3(sunDir.x, sunDir.y, 0)));
-        horiz = lerp(horiz, sunCol * 0.6, sunH * 0.4);
-        float3 reflColor = lerp(horiz, zenith, pow(reflElev, 0.5));
-        float sd = dot(reflDir, sunDir);
-        reflColor += pow(saturate(sd), 128.0) * 0.6 * sunCol;
-        reflColor += pow(saturate(sd), 8.0) * 0.15 * sunCol;
+        float3 reflColor;
+        if (uHasCubemap != 0) {
+            reflColor = texEnvCube.Sample(sampLinear, reflDir).rgb;
+        } else {
+            float reflElev = saturate(reflDir.z);
+            float3 zenith = float3(0.15, 0.3, 0.65);
+            zenith = lerp(zenith, sunCol * 0.3 + float3(0.1, 0.15, 0.35), 0.3);
+            float3 horiz = uFogColor.rgb;
+            float sunH = saturate(dot(float3(reflDir.x, reflDir.y, 0), float3(sunDir.x, sunDir.y, 0)));
+            horiz = lerp(horiz, sunCol * 0.6, sunH * 0.4);
+            reflColor = lerp(horiz, zenith, pow(reflElev, 0.5));
+            float sd = dot(reflDir, sunDir);
+            reflColor += pow(saturate(sd), 128.0) * 0.6 * sunCol;
+            reflColor += pow(saturate(sd), 8.0) * 0.15 * sunCol;
+        }
 
         float3 bodyColor = uBodyColor.rgb;
 

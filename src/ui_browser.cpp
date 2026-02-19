@@ -1071,16 +1071,15 @@ void drawBrowserWindow(AppState& state) {
                 (state.selectedFolder.empty() ? "." : state.selectedFolder) : state.lastDialogPath;
             ImGuiFileDialog::Instance()->OpenDialog("ChooseFolder", "Choose Folder", nullptr, config);
         }
-        if (ImGui::Button("Add Ons")) {
-            ImGui::OpenPopup("AddOnsPopup");
+        if (ImGui::Button("Override")) {
+            IGFD::FileDialogConfig config;
+            config.path = state.overrideFolder.empty() ?
+                (state.selectedFolder.empty() ? "." : state.selectedFolder) : state.overrideFolder;
+            ImGuiFileDialog::Instance()->OpenDialog("ChooseOverrideFolder", "Choose Override Folder", nullptr, config);
         }
-        if (ImGui::BeginPopup("AddOnsPopup")) {
-            if (ImGui::MenuItem("Export Blender Importer")) {
-                IGFD::FileDialogConfig config;
-                config.path = state.lastDialogPath.empty() ? "." : state.lastDialogPath;
-                ImGuiFileDialog::Instance()->OpenDialog("ExportBlenderAddon", "Select Output Folder", nullptr, config);
-            }
-            ImGui::EndPopup();
+        if (!state.overrideFolder.empty()) {
+            ImGui::SameLine();
+            ImGui::TextDisabled("%s", std::filesystem::path(state.overrideFolder).filename().string().c_str());
         }
         if (!state.statusMessage.empty()) { ImGui::SameLine(); ImGui::Text("%s", state.statusMessage.c_str()); }
         ImGui::EndMenuBar();
@@ -1378,7 +1377,7 @@ void drawBrowserWindow(AppState& state) {
         }
     }
 
-    if (!state.selectedFolder.empty()) {
+    if (!state.selectedFolder.empty() || !state.overrideFolder.empty()) {
         ImGui::Separator();
         bool overrideSelected = (state.selectedErfName == "[Override]");
         if (ImGui::Selectable("Override Folder", overrideSelected)) {
@@ -1393,7 +1392,9 @@ void drawBrowserWindow(AppState& state) {
                 state.rimEntries.clear();
                 state.showFSBBrowser = false;
                 state.currentFSBSamples.clear();
-                fs::path overrideDir = fs::path(state.selectedFolder) / "packages" / "core" / "override";
+                fs::path overrideDir = state.overrideFolder.empty()
+                    ? fs::path(state.selectedFolder) / "packages" / "core" / "override"
+                    : fs::path(state.overrideFolder);
                 if (fs::exists(overrideDir) && fs::is_directory(overrideDir)) {
                     for (const auto& entry : fs::recursive_directory_iterator(overrideDir,
                              fs::directory_options::skip_permission_denied)) {

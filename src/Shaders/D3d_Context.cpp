@@ -7,6 +7,7 @@
 #include <GLFW/glfw3native.h>
 
 #include "dds_loader.h"
+#include <iostream>
 
 static D3DContext s_d3d;
 
@@ -81,6 +82,52 @@ uint32_t createTextureFromDDSHair(const std::vector<uint8_t>& ddsData) {
         rgba[i * 4 + 3] = b;
     }
     return createTexture2D(rgba.data(), w, h);
+}
+
+uint32_t createTextureCubeFromDDS(const std::vector<uint8_t>& ddsData) {
+    if (!s_d3d.device) return 0;
+    std::vector<uint8_t> faces[6];
+    int faceSize = 0;
+    if (!decodeDDSCubemapFaces(ddsData, faces, faceSize) || faceSize <= 0) return 0;
+
+    D3D11_TEXTURE2D_DESC desc = {};
+    desc.Width            = faceSize;
+    desc.Height           = faceSize;
+    desc.MipLevels        = 1;
+    desc.ArraySize        = 6;
+    desc.Format           = DXGI_FORMAT_R8G8B8A8_UNORM;
+    desc.SampleDesc.Count = 1;
+    desc.Usage            = D3D11_USAGE_DEFAULT;
+    desc.BindFlags        = D3D11_BIND_SHADER_RESOURCE;
+    desc.MiscFlags        = D3D11_RESOURCE_MISC_TEXTURECUBE;
+
+    D3D11_SUBRESOURCE_DATA initData[6] = {};
+    for (int i = 0; i < 6; i++) {
+        initData[i].pSysMem          = faces[i].data();
+        initData[i].SysMemPitch      = faceSize * 4;
+        initData[i].SysMemSlicePitch = 0;
+    }
+
+    TextureEntry entry;
+    HRESULT hr = s_d3d.device->CreateTexture2D(&desc, initData, &entry.tex);
+    if (FAILED(hr)) return 0;
+
+    D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc = {};
+    srvDesc.Format                      = desc.Format;
+    srvDesc.ViewDimension               = D3D11_SRV_DIMENSION_TEXTURECUBE;
+    srvDesc.TextureCube.MipLevels       = 1;
+    srvDesc.TextureCube.MostDetailedMip = 0;
+
+    hr = s_d3d.device->CreateShaderResourceView(entry.tex, &srvDesc, &entry.srv);
+    if (FAILED(hr)) {
+        entry.tex->Release();
+        return 0;
+    }
+
+    uint32_t id = s_nextTexId++;
+    s_textures[id] = entry;
+    std::cout << "[CUBEMAP] Created cubemap texture " << id << " (" << faceSize << "x" << faceSize << ")" << std::endl;
+    return id;
 }
 
 void destroyTexture(uint32_t texId) {

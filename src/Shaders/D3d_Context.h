@@ -48,6 +48,7 @@ D3DContext& getD3DContext();
 uint32_t createTexture2D(const uint8_t* rgbaData, int width, int height);
 uint32_t createTextureFromDDS(const std::vector<uint8_t>& ddsData);
 uint32_t createTextureFromDDSHair(const std::vector<uint8_t>& ddsData);
+uint32_t createTextureCubeFromDDS(const std::vector<uint8_t>& ddsData);
 void     destroyTexture(uint32_t texId);
 ID3D11ShaderResourceView* getTextureSRV(uint32_t texId);
 

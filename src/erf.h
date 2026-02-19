@@ -20,6 +20,7 @@ enum class ERFVersion {
     V1_0,
     V1_1,
     V2_0,
+    V2_1,
     V2_2,
     V3_0
 };
@@ -47,6 +48,7 @@ public:
 private:
     bool parseV1();
     bool parseV2_0();
+    bool parseV2_1();
     bool parseV2_2();
     bool parseV3_0();
 

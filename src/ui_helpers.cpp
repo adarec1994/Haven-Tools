@@ -1,30 +1,24 @@
 #include "ui_internal.h"
 #include "model_names_csv.h"
-
 void ErfEntryIndex::build(const std::vector<std::unique_ptr<ERFFile>>& erfs) {
     exact.clear();
     basename.clear();
     noext.clear();
-
     size_t total = 0;
     for (const auto& erf : erfs) total += erf->entries().size();
     exact.reserve(total);
     basename.reserve(total);
     noext.reserve(total);
-
     for (size_t ei = 0; ei < erfs.size(); ei++) {
         const auto& entries = erfs[ei]->entries();
         for (size_t enti = 0; enti < entries.size(); enti++) {
             std::string entryLower = entries[enti].name;
             std::transform(entryLower.begin(), entryLower.end(), entryLower.begin(), ::tolower);
-
             exact.try_emplace(entryLower, ei, enti);
-
             std::string base = entryLower;
             size_t sl = base.find_last_of("/\\");
             if (sl != std::string::npos) base = base.substr(sl + 1);
             basename.try_emplace(base, ei, enti);
-
             std::string ne = base;
             size_t dp = ne.rfind('.');
             if (dp != std::string::npos) ne = ne.substr(0, dp);
@@ -33,9 +27,7 @@ void ErfEntryIndex::build(const std::vector<std::unique_ptr<ERFFile>>& erfs) {
     }
     built = true;
 }
-
 static size_t lastMeshCacheSize = 0;
-
 void loadMeshDatabase(AppState& state) {
     bool needsCacheUpdate = (state.meshCache.size() != lastMeshCacheSize);
     if (state.meshBrowser.loaded && !needsCacheUpdate) return;
@@ -59,7 +51,11 @@ void loadMeshDatabase(AppState& state) {
             if (p3 == std::string::npos) continue;
             std::string lodStr = line.substr(p2 + 1, p3 - p2 - 1);
             if (!lodStr.empty()) {
-                entry.lod = std::stoi(lodStr);
+                try {
+                    entry.lod = std::stoi(lodStr);
+                } catch (...) {
+                    entry.lod = 0;
+                }
             } else {
                 entry.lod = 0;
                 size_t dotPos = entry.mshFile.rfind('.');
@@ -131,7 +127,6 @@ void loadMeshDatabase(AppState& state) {
         state.charDesigner.listsBuilt = false;
     }
 }
-
 std::vector<std::pair<std::string, std::string>> findAssociatedHeads(AppState& state, const std::string& bodyMsh) {
     std::vector<std::pair<std::string, std::string>> heads;
     std::string bodyLower = bodyMsh;
@@ -168,7 +163,6 @@ std::vector<std::pair<std::string, std::string>> findAssociatedHeads(AppState& s
     }
     return heads;
 }
-
 std::vector<std::pair<std::string, std::string>> findAssociatedEyes(AppState& state, const std::string& bodyMsh) {
     std::vector<std::pair<std::string, std::string>> eyes;
     std::string bodyLower = bodyMsh;
@@ -205,7 +199,6 @@ std::vector<std::pair<std::string, std::string>> findAssociatedEyes(AppState& st
     }
     return eyes;
 }
-
 std::vector<uint8_t> readFromCache(AppState& state, const std::string& name, const std::string& ext) {
     std::string nameLower = name;
     std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), ::tolower);
@@ -246,29 +239,22 @@ std::vector<uint8_t> readFromCache(AppState& state, const std::string& name, con
     }
     return {};
 }
-
 static std::unordered_map<uintptr_t, const ErfEntryIndex*> g_erfIndexRegistry;
-
 void registerErfIndex(const void* erfsPtr, const ErfEntryIndex* index) {
     g_erfIndexRegistry[reinterpret_cast<uintptr_t>(erfsPtr)] = index;
 }
-
 void clearErfIndices() {
     g_erfIndexRegistry.clear();
 }
-
 std::vector<uint8_t> readFromErfs(const std::vector<std::unique_ptr<ERFFile>>& erfs, const std::string& name) {
     std::string nameLower = name;
     std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), ::tolower);
-
     std::string baseNameLower = nameLower;
     size_t lastSlash = baseNameLower.find_last_of("/\\");
     if (lastSlash != std::string::npos) baseNameLower = baseNameLower.substr(lastSlash + 1);
-
     std::string noExtLower = baseNameLower;
     size_t dotPos = noExtLower.rfind('.');
     if (dotPos != std::string::npos) noExtLower = noExtLower.substr(0, dotPos);
-
     auto regIt = g_erfIndexRegistry.find(reinterpret_cast<uintptr_t>(&erfs));
     if (regIt != g_erfIndexRegistry.end() && regIt->second && regIt->second->built) {
         const ErfEntryIndex* idx = regIt->second;
@@ -287,7 +273,6 @@ std::vector<uint8_t> readFromErfs(const std::vector<std::unique_ptr<ERFFile>>& e
             return erfs[ei]->readEntry(erfs[ei]->entries()[enti]);
         return {};
     }
-
     for (const auto& erf : erfs) {
         for (const auto& entry : erf->entries()) {
             std::string entryLower = entry.name;
@@ -320,7 +305,6 @@ std::vector<uint8_t> readFromErfs(const std::vector<std::unique_ptr<ERFFile>>& e
     }
     return {};
 }
-
 uint32_t loadTexByNameCached(AppState& state, const std::string& texName,
                              std::vector<uint8_t>* rgbaOut, int* wOut, int* hOut) {
     if (texName.empty()) return 0;
@@ -379,7 +363,6 @@ uint32_t loadTexByNameCached(AppState& state, const std::string& texName,
     }
     return 0;
 }
-
 uint32_t loadTexByName(AppState& state, const std::string& texName,
                        std::vector<uint8_t>* rgbaOut, int* wOut, int* hOut) {
     if (texName.empty()) return 0;
@@ -416,7 +399,6 @@ uint32_t loadTexByName(AppState& state, const std::string& texName,
     }
     return 0;
 }
-
 std::vector<uint8_t> loadTextureData(AppState& state, const std::string& texName) {
     if (texName.empty()) return {};
     std::string texNameLower = texName;
@@ -454,7 +436,6 @@ std::vector<uint8_t> loadTextureData(AppState& state, const std::string& texName
     }
     return {};
 }
-
 void drawVirtualList(int itemCount, std::function<void(int)> renderItem) {
     ImGuiListClipper clipper;
     clipper.Begin(itemCount);
@@ -464,7 +445,6 @@ void drawVirtualList(int itemCount, std::function<void(int)> renderItem) {
         }
     }
 }
-
 void loadAndMergeHead(AppState& state, const std::string& headMshFile) {
     if (!state.hasModel) {
         return;

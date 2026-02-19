@@ -41,6 +41,15 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(tinygltf)
 
+FetchContent_Declare(
+        zlib
+        GIT_REPOSITORY https://github.com/madler/zlib.git
+        GIT_TAG v1.3.1
+)
+set(ZLIB_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+FetchContent_MakeAvailable(zlib)
+target_include_directories(zlibstatic PUBLIC ${zlib_SOURCE_DIR} ${zlib_BINARY_DIR})
+
 add_library(imgui_lib STATIC
         ${imgui_SOURCE_DIR}/imgui.cpp
         ${imgui_SOURCE_DIR}/imgui_demo.cpp
@@ -261,7 +270,7 @@ target_include_directories(HavenTools PRIVATE
         ${CMAKE_BINARY_DIR}
 )
 
-target_link_libraries(HavenTools PRIVATE imgui_lib imguifiledialog_lib tinygltf)
+target_link_libraries(HavenTools PRIVATE imgui_lib imguifiledialog_lib tinygltf zlibstatic)
 
 if(EXISTS "${CMAKE_SOURCE_DIR}/src/dependencies/SpeedTreeRT.lib")
     target_link_libraries(HavenTools PRIVATE

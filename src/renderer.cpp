@@ -343,8 +343,8 @@ static void renderSkyboxModel(Model& skyModel, const float* view, const float* p
         d3d.context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
         d3d.context->DrawIndexed((UINT)mesh.indices.size(), 0, 0);
     }
-    ID3D11ShaderResourceView* nullSRVs[9] = {};
-    d3d.context->PSSetShaderResources(0, 9, nullSRVs);
+    ID3D11ShaderResourceView* nullSRVs[10] = {};
+    d3d.context->PSSetShaderResources(0, 10, nullSRVs);
     d3d.context->OMSetDepthStencilState(d3d.dssDefault, 0);
 }
 
@@ -573,10 +573,11 @@ static void renderLevelStatic(const Model& model, const float* mvp, const float*
                     memcpy(waterCB.bodyColor, mat->waterBodyColor, 16);
                     waterCB.time = waterTime;
                     waterCB.isWater = 1;
+                    waterCB.hasCubemap = (mat->envCubemapTexId != 0) ? 1 : 0;
                 }
                 updateWaterCB(waterCB);
 
-                ID3D11ShaderResourceView* srvs[9] = {};
+                ID3D11ShaderResourceView* srvs[10] = {};
                 if (isTerrain && useShaders) {
                     srvs[0] = getTextureSRV(mat->paletteTexId);
                     srvs[1] = mat->palNormalTexId ? getTextureSRV(mat->palNormalTexId) : nullptr;
@@ -588,13 +589,14 @@ static void renderLevelStatic(const Model& model, const float* mvp, const float*
                     if (mat->normalTexId != 0)   srvs[1] = getTextureSRV(mat->normalTexId);
                     if (mat->diffuseTexId != 0)  srvs[0] = getTextureSRV(mat->diffuseTexId);
                     if (mat->specularTexId != 0) srvs[2] = getTextureSRV(mat->specularTexId);
+                    if (mat->envCubemapTexId != 0) srvs[9] = getTextureSRV(mat->envCubemapTexId);
                 } else {
                     if (useShaders && hasDiffuse)  srvs[0] = getTextureSRV(mat->diffuseTexId);
                     if (useShaders && hasNormal)   srvs[1] = getTextureSRV(mat->normalTexId);
                     if (useShaders && hasSpecular) srvs[2] = getTextureSRV(mat->specularTexId);
                     if (useShaders && hasTint)     srvs[3] = getTextureSRV(mat->tintTexId);
                 }
-                d3d.context->PSSetShaderResources(0, 9, srvs);
+                d3d.context->PSSetShaderResources(0, 10, srvs);
             }
             wasSelected = isSelected;
 
@@ -603,8 +605,8 @@ static void renderLevelStatic(const Model& model, const float* mvp, const float*
     }
 
     d3d.context->OMSetBlendState(d3d.bsOpaque, blendFactor, 0xFFFFFFFF);
-    ID3D11ShaderResourceView* nullSRVs[9] = {};
-    d3d.context->PSSetShaderResources(0, 9, nullSRVs);
+    ID3D11ShaderResourceView* nullSRVs[10] = {};
+    d3d.context->PSSetShaderResources(0, 10, nullSRVs);
 }
 
 inline void quatRotate(float qx, float qy, float qz, float qw,
@@ -1126,7 +1128,7 @@ void renderModel(Model& model, const Camera& camera, const RenderSettings& setti
                 }
                 updateTerrainCB(terrCB);
 
-                ID3D11ShaderResourceView* srvs[9] = {};
+                ID3D11ShaderResourceView* srvs[10] = {};
                 if (isTerrain && useShaders) {
                     srvs[0] = getTextureSRV(mat->paletteTexId);
                     srvs[1] = mat->palNormalTexId ? getTextureSRV(mat->palNormalTexId) : nullptr;
@@ -1149,7 +1151,7 @@ void renderModel(Model& model, const Camera& camera, const RenderSettings& setti
                     }
                     if (useShaders && hasTattoo) srvs[8] = getTextureSRV(mat->tattooTexId);
                 }
-                d3d.context->PSSetShaderResources(0, 9, srvs);
+                d3d.context->PSSetShaderResources(0, 10, srvs);
                 static ID3D11SamplerState* s_dynSamplerPoint = nullptr;
                 if (!s_dynSamplerPoint) {
                     D3D11_SAMPLER_DESC sd = {};
@@ -1195,8 +1197,8 @@ void renderModel(Model& model, const Camera& camera, const RenderSettings& setti
                 d3d.context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
                 d3d.context->DrawIndexed((UINT)mesh.indices.size(), 0, 0);
 
-                ID3D11ShaderResourceView* nullSRVs[9] = {};
-                d3d.context->PSSetShaderResources(0, 9, nullSRVs);
+                ID3D11ShaderResourceView* nullSRVs[10] = {};
+                d3d.context->PSSetShaderResources(0, 10, nullSRVs);
             }
         }
 

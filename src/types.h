@@ -272,6 +272,7 @@ struct AppState {
     std::string statusMessage;
     std::string extractPath;
     std::string lastDialogPath;
+    std::string overrideFolder;
     char contentFilter[128] = "";
     float leftPaneWidth = 200.0f;
     CachedEntry pendingTextureExport;
