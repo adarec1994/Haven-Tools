@@ -503,18 +503,32 @@ static uint32_t loadTextureByName(AppState& state, const std::string& texName,
     std::string texNameLower = texName;
     std::transform(texNameLower.begin(), texNameLower.end(), texNameLower.begin(), ::tolower);
 
-    std::string withDdsLower = texNameLower;
-    if (withDdsLower.size() < 4 || withDdsLower.substr(withDdsLower.size() - 4) != ".dds")
-        withDdsLower += ".dds";
     std::string noExtLower = texNameLower;
     size_t dp = noExtLower.rfind('.');
     if (dp != std::string::npos) noExtLower = noExtLower.substr(0, dp);
+
+    std::string withDdsLower = noExtLower + ".dds";
+    std::string withXdsLower = noExtLower + ".xds";
 
     // Check dedup cache (skip if caller wants RGBA data back)
     if (!rgbaOut) {
         auto cit = s_texIdCache.find(noExtLower);
         if (cit != s_texIdCache.end()) return cit->second;
     }
+
+    // Helper: create GL texture from raw data (DDS, XDS, or TGA)
+    auto createTextureFromAny = [&](const std::vector<uint8_t>& texData) -> uint32_t {
+        if (isXDS(texData)) {
+            std::vector<uint8_t> rgba; int w, h;
+            if (decodeXDSToRGBA(texData, rgba, w, h)) {
+                if (rgbaOut && wOut && hOut) { *rgbaOut = rgba; *wOut = w; *hOut = h; }
+                return createTexture2D(rgba.data(), w, h);
+            }
+            return 0;
+        }
+        if (rgbaOut && wOut && hOut) decodeDDSToRGBA(texData, *rgbaOut, *wOut, *hOut);
+        return createTextureFromDDS(texData);
+    };
 
     // Fast path: use the global ERF index if available
     if (s_erfIndexBuilt) {
@@ -529,6 +543,7 @@ static uint32_t loadTextureByName(AppState& state, const std::string& texName,
         };
 
         std::vector<uint8_t> texData = tryIndex(withDdsLower);
+        if (texData.empty()) texData = tryIndex(withXdsLower);
         if (texData.empty()) texData = tryIndex(texNameLower);
         if (texData.empty()) {
             auto it = s_erfIndexNoExt.find(noExtLower);
@@ -539,8 +554,7 @@ static uint32_t loadTextureByName(AppState& state, const std::string& texName,
             }
         }
         if (!texData.empty()) {
-            if (rgbaOut && wOut && hOut) decodeDDSToRGBA(texData, *rgbaOut, *wOut, *hOut);
-            uint32_t id = createTextureFromDDS(texData);
+            uint32_t id = createTextureFromAny(texData);
             if (id && !rgbaOut) s_texIdCache[noExtLower] = id;
             return id;
         }
@@ -555,11 +569,11 @@ static uint32_t loadTextureByName(AppState& state, const std::string& texName,
             std::string entryNoExt = entryLower;
             size_t edp = entryNoExt.rfind('.');
             if (edp != std::string::npos) entryNoExt = entryNoExt.substr(0, edp);
-            if (entryLower == texNameLower || entryLower == withDdsLower || entryNoExt == noExtLower) {
+            if (entryLower == texNameLower || entryLower == withDdsLower ||
+                entryLower == withXdsLower || entryNoExt == noExtLower) {
                 std::vector<uint8_t> texData = erf.readEntry(entry);
                 if (!texData.empty()) {
-                    if (rgbaOut && wOut && hOut) decodeDDSToRGBA(texData, *rgbaOut, *wOut, *hOut);
-                    return createTextureFromDDS(texData);
+                    return createTextureFromAny(texData);
                 }
             }
         }
@@ -915,13 +929,27 @@ bool loadModelFromOverride(AppState& state, const std::string& mshPath) {
         if (texName.empty()) return 0;
         std::string texLower = texName;
         std::transform(texLower.begin(), texLower.end(), texLower.begin(), ::tolower);
-        if (texLower.size() < 4 || texLower.substr(texLower.size() - 4) != ".dds")
-            texLower += ".dds";
-        for (const auto& dir : searchDirs) {
-            std::string found = findInDir(dir, texLower);
-            if (!found.empty()) {
-                std::vector<uint8_t> texData = readFile(found);
-                if (!texData.empty()) return createTextureFromDDS(texData);
+        std::string noExt = texLower;
+        size_t dp = noExt.rfind('.');
+        if (dp != std::string::npos) noExt = noExt.substr(0, dp);
+
+        // Try both .dds and .xds
+        for (const std::string& ext : { ".dds", ".xds" }) {
+            std::string withExt = noExt + ext;
+            for (const auto& dir : searchDirs) {
+                std::string found = findInDir(dir, withExt);
+                if (!found.empty()) {
+                    std::vector<uint8_t> texData = readFile(found);
+                    if (!texData.empty()) {
+                        if (isXDS(texData)) {
+                            std::vector<uint8_t> rgba; int w, h;
+                            if (decodeXDSToRGBA(texData, rgba, w, h))
+                                return createTexture2D(rgba.data(), w, h);
+                            return 0;
+                        }
+                        return createTextureFromDDS(texData);
+                    }
+                }
             }
         }
         return 0;

@@ -296,4 +296,11 @@ static const char* s_changelogLatest = R"(
 -- Override Folder Button — Replaced "Add Ons" menu button with "Override" button in the ERF Browser menu bar. Opens a folder chooser to set a custom override directory.
 -- Override Folder Persistence — Selected override folder saved to haventools_settings.ini and restored on next launch.
 -- Override Folder Integration — Override Folder selectable in the left pane now uses the user-configured path (falls back to packages/core/override if not set). GFF save dialog defaults to the override folder for modified files.
+
+- Xbox 360 Support
+-- Big-Endian GFF4 Parsing — GFF4 parser now detects X360/PS3 platform tags and automatically byte-swaps all numeric fields (uint16, uint32, float). ASCII tag fields (magic, version, platform, fileType) read raw without swapping. Field layout differences (flags/typeId positions) handled per-platform.
+-- Big-Endian Model Loading — MSH vertex/index data (positions, normals, UVs, blend weights/indices) and MMH/PHY fields all byte-swap correctly when loading X360 models.
+-- XDS Texture Decoding — Added full Xbox 360 .xds texture support (GPU-tiled textures with 52-byte footer). Handles 16-bit endian swap, Morton/Z-order untiling (8×8 block tiles), and decompression for DXT1, DXT3, DXT5, and DXN/BC5 (normal maps with Z reconstruction). Integrated into dds_loader alongside existing DDS/TGA paths without modifying them.
+-- XDS-to-DDS Converter — Standalone Python tool (xds_to_dds.py) for batch converting .xds files to standard .dds. Supports directory input and all X360 GPU texture formats.
+-- Same-ERF Texture Fallback — X360 bundles MSH, MMH, PHY, and XDS together in one ERF with MAOs in a separate materialobjects.erf. Existing same-ERF fallback from 2.2 covers this layout automatically.
 )";

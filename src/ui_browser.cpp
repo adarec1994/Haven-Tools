@@ -169,6 +169,7 @@ static void classifyCachedEntry(CachedEntry& ce) {
         std::string ext = ce.name.substr(ce.name.size() - 4);
         std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
         if (ext == ".dds") ce.flags |= CachedEntry::FLAG_TEXTURE;
+        if (ext == ".xds") ce.flags |= CachedEntry::FLAG_TEXTURE;
         if (ext == ".tga") ce.flags |= CachedEntry::FLAG_TEXTURE;
         if (ext == ".fsb") ce.flags |= CachedEntry::FLAG_AUDIO;
         if (ext == ".gda") ce.flags |= CachedEntry::FLAG_GDA;
@@ -1810,7 +1811,7 @@ void drawBrowserWindow(AppState& state) {
                     std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), ::tolower);
                     bool isModel = isModelFile(rde->name);
                     bool isMao = isMaoFile(rde->name);
-                    bool isTexture = (nameLower.size() > 4 && nameLower.substr(nameLower.size() - 4) == ".dds");
+                    bool isTexture = (nameLower.size() > 4 && (nameLower.substr(nameLower.size() - 4) == ".dds" || nameLower.substr(nameLower.size() - 4) == ".xds"));
                     if (isModel) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.4f, 1.0f, 0.4f, 1.0f));
                     else if (isMao) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.8f, 0.4f, 1.0f));
                     else if (isTexture) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.4f, 0.8f, 1.0f, 1.0f));
@@ -1968,7 +1969,7 @@ void drawBrowserWindow(AppState& state) {
                 bool isModel = (nameLower.size() > 4 && nameLower.substr(nameLower.size() - 4) == ".msh");
                 bool isMao = (nameLower.size() > 4 && nameLower.substr(nameLower.size() - 4) == ".mao");
                 bool isPhy = (nameLower.size() > 4 && nameLower.substr(nameLower.size() - 4) == ".phy");
-                bool isTexture = (nameLower.size() > 4 && nameLower.substr(nameLower.size() - 4) == ".dds");
+                bool isTexture = (nameLower.size() > 4 && (nameLower.substr(nameLower.size() - 4) == ".dds" || nameLower.substr(nameLower.size() - 4) == ".xds"));
                 bool isMmh = (nameLower.size() > 4 && nameLower.substr(nameLower.size() - 4) == ".mmh");
                 if (isModel) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.4f, 1.0f, 0.4f, 1.0f));
                 else if (isMao) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.8f, 0.4f, 1.0f));
@@ -2272,6 +2273,10 @@ void drawBrowserWindow(AppState& state) {
                                         if (isTga) {
                                             std::vector<uint8_t> rgba; int w, h;
                                             if (decodeTGAToRGBA(data, rgba, w, h))
+                                                state.previewTextureId = createTexture2D(rgba.data(), w, h);
+                                        } else if (isXDS(data)) {
+                                            std::vector<uint8_t> rgba; int w, h;
+                                            if (decodeXDSToRGBA(data, rgba, w, h))
                                                 state.previewTextureId = createTexture2D(rgba.data(), w, h);
                                         } else {
                                             state.previewTextureId = createTextureFromDDS(data);
@@ -2870,7 +2875,7 @@ void drawBrowserWindow(AppState& state) {
                     bool isModel = isModelFile(re.name);
                     bool isMao = isMaoFile(re.name);
                     bool isPhy = isPhyFile(re.name);
-                    bool isTexture = re.name.size() > 4 && re.name.substr(re.name.size() - 4) == ".dds";
+                    bool isTexture = re.name.size() > 4 && (re.name.substr(re.name.size() - 4) == ".dds" || re.name.substr(re.name.size() - 4) == ".xds");
                     if (isModel) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.4f, 1.0f, 0.4f, 1.0f));
                     else if (isMao) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.8f, 0.4f, 1.0f));
                     else if (isPhy) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.4f, 1.0f, 1.0f));
@@ -2956,6 +2961,10 @@ void drawBrowserWindow(AppState& state) {
                                             if (isTga) {
                                                 std::vector<uint8_t> rgba; int w, h;
                                                 if (decodeTGAToRGBA(data, rgba, w, h))
+                                                    state.previewTextureId = createTexture2D(rgba.data(), w, h);
+                                            } else if (isXDS(data)) {
+                                                std::vector<uint8_t> rgba; int w, h;
+                                                if (decodeXDSToRGBA(data, rgba, w, h))
                                                     state.previewTextureId = createTexture2D(rgba.data(), w, h);
                                             } else {
                                                 state.previewTextureId = createTextureFromDDS(data);

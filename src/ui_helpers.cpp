@@ -1,5 +1,22 @@
 #include "ui_internal.h"
 #include "model_names_csv.h"
+
+// Helper: create GL texture from raw data (DDS, XDS, or TGA), with optional RGBA extraction
+static uint32_t createTextureAny(const std::vector<uint8_t>& data,
+                                  std::vector<uint8_t>* rgbaOut = nullptr,
+                                  int* wOut = nullptr, int* hOut = nullptr) {
+    if (isXDS(data)) {
+        std::vector<uint8_t> rgba; int w, h;
+        if (decodeXDSToRGBA(data, rgba, w, h)) {
+            if (rgbaOut && wOut && hOut) { *rgbaOut = rgba; *wOut = w; *hOut = h; }
+            return createTexture2D(rgba.data(), w, h);
+        }
+        return 0;
+    }
+    if (rgbaOut && wOut && hOut) decodeDDSToRGBA(data, *rgbaOut, *wOut, *hOut);
+    return createTextureFromDDS(data);
+}
+
 void ErfEntryIndex::build(const std::vector<std::unique_ptr<ERFFile>>& erfs) {
     exact.clear();
     basename.clear();
@@ -310,24 +327,20 @@ uint32_t loadTexByNameCached(AppState& state, const std::string& texName,
     if (texName.empty()) return 0;
     std::string texNameLower = texName;
     std::transform(texNameLower.begin(), texNameLower.end(), texNameLower.begin(), ::tolower);
-    std::string texKey = texNameLower;
-    if (texKey.size() < 4 || texKey.substr(texKey.size() - 4) != ".dds") {
-        texKey += ".dds";
-    }
-    auto it = state.textureCache.find(texKey);
-    if (it != state.textureCache.end() && !it->second.empty()) {
-        if (rgbaOut && wOut && hOut) {
-            decodeDDSToRGBA(it->second, *rgbaOut, *wOut, *hOut);
+    std::string noExtLower = texNameLower;
+    size_t dp = noExtLower.rfind('.');
+    if (dp != std::string::npos) noExtLower = noExtLower.substr(0, dp);
+    std::string texKeyDds = noExtLower + ".dds";
+    std::string texKeyXds = noExtLower + ".xds";
+
+    // Check cache with both extensions
+    for (const std::string& cacheKey : { texKeyDds, texKeyXds, texNameLower }) {
+        auto it = state.textureCache.find(cacheKey);
+        if (it != state.textureCache.end() && !it->second.empty()) {
+            return createTextureAny(it->second, rgbaOut, wOut, hOut);
         }
-        return createTextureFromDDS(it->second);
     }
-    it = state.textureCache.find(texNameLower);
-    if (it != state.textureCache.end() && !it->second.empty()) {
-        if (rgbaOut && wOut && hOut) {
-            decodeDDSToRGBA(it->second, *rgbaOut, *wOut, *hOut);
-        }
-        return createTextureFromDDS(it->second);
-    }
+
     if (state.textureErfIndex.built) {
         auto findInIndex = [&](const std::string& key) -> std::vector<uint8_t> {
             auto eit = state.textureErfIndex.exact.find(key);
@@ -338,11 +351,11 @@ uint32_t loadTexByNameCached(AppState& state, const std::string& texName,
             }
             return {};
         };
-        std::vector<uint8_t> texData = findInIndex(texKey);
+        std::vector<uint8_t> texData = findInIndex(texKeyDds);
+        if (texData.empty()) texData = findInIndex(texKeyXds);
         if (texData.empty()) texData = findInIndex(texNameLower);
         if (!texData.empty()) {
-            if (rgbaOut && wOut && hOut) decodeDDSToRGBA(texData, *rgbaOut, *wOut, *hOut);
-            return createTextureFromDDS(texData);
+            return createTextureAny(texData, rgbaOut, wOut, hOut);
         }
         return 0;
     }
@@ -350,13 +363,10 @@ uint32_t loadTexByNameCached(AppState& state, const std::string& texName,
         for (const auto& entry : erf->entries()) {
             std::string entryLower = entry.name;
             std::transform(entryLower.begin(), entryLower.end(), entryLower.begin(), ::tolower);
-            if (entryLower == texKey || entryLower == texNameLower) {
+            if (entryLower == texKeyDds || entryLower == texKeyXds || entryLower == texNameLower) {
                 std::vector<uint8_t> texData = erf->readEntry(entry);
                 if (!texData.empty()) {
-                    if (rgbaOut && wOut && hOut) {
-                        decodeDDSToRGBA(texData, *rgbaOut, *wOut, *hOut);
-                    }
-                    return createTextureFromDDS(texData);
+                    return createTextureAny(texData, rgbaOut, wOut, hOut);
                 }
             }
         }
@@ -368,15 +378,22 @@ uint32_t loadTexByName(AppState& state, const std::string& texName,
     if (texName.empty()) return 0;
     std::string texNameLower = texName;
     std::transform(texNameLower.begin(), texNameLower.end(), texNameLower.begin(), ::tolower);
+
+    // Also try .xds variant
+    std::string noExt = texNameLower;
+    size_t dp = noExt.rfind('.');
+    if (dp != std::string::npos) noExt = noExt.substr(0, dp);
+    std::string xdsVariant = noExt + ".xds";
+
     if (state.textureErfIndex.built) {
-        auto eit = state.textureErfIndex.exact.find(texNameLower);
-        if (eit != state.textureErfIndex.exact.end()) {
-            auto [ei, enti] = eit->second;
-            if (ei < state.textureErfs.size() && enti < state.textureErfs[ei]->entries().size()) {
-                std::vector<uint8_t> texData = state.textureErfs[ei]->readEntry(state.textureErfs[ei]->entries()[enti]);
-                if (!texData.empty()) {
-                    if (rgbaOut && wOut && hOut) decodeDDSToRGBA(texData, *rgbaOut, *wOut, *hOut);
-                    return createTextureFromDDS(texData);
+        for (const std::string& key : { texNameLower, xdsVariant }) {
+            auto eit = state.textureErfIndex.exact.find(key);
+            if (eit != state.textureErfIndex.exact.end()) {
+                auto [ei, enti] = eit->second;
+                if (ei < state.textureErfs.size() && enti < state.textureErfs[ei]->entries().size()) {
+                    std::vector<uint8_t> texData = state.textureErfs[ei]->readEntry(state.textureErfs[ei]->entries()[enti]);
+                    if (!texData.empty())
+                        return createTextureAny(texData, rgbaOut, wOut, hOut);
                 }
             }
         }
@@ -386,14 +403,10 @@ uint32_t loadTexByName(AppState& state, const std::string& texName,
         for (const auto& entry : erf->entries()) {
             std::string entryLower = entry.name;
             std::transform(entryLower.begin(), entryLower.end(), entryLower.begin(), ::tolower);
-            if (entryLower == texNameLower) {
+            if (entryLower == texNameLower || entryLower == xdsVariant) {
                 std::vector<uint8_t> texData = erf->readEntry(entry);
-                if (!texData.empty()) {
-                    if (rgbaOut && wOut && hOut) {
-                        decodeDDSToRGBA(texData, *rgbaOut, *wOut, *hOut);
-                    }
-                    return createTextureFromDDS(texData);
-                }
+                if (!texData.empty())
+                    return createTextureAny(texData, rgbaOut, wOut, hOut);
             }
         }
     }
