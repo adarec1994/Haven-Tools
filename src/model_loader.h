@@ -16,4 +16,4 @@ bool loadMSH(const std::vector<uint8_t>& data, Model& outModel);
 
 float halfToFloat(uint16_t h);
 
-void readDeclType(const std::vector<uint8_t>& data, uint32_t offset, uint32_t dataType, float* out);
+void readDeclType(const std::vector<uint8_t>& data, uint32_t offset, uint32_t dataType, float* out, bool bigEndian = false);

@@ -93,12 +93,35 @@ public:
     static uint32_t primitiveTypeSize(uint16_t typeId);
 
     uint32_t dataOffset() const { return m_header.dataOffset; }
+    bool isBigEndian() const { return m_bigEndian; }
+
+    template<typename T>
+    static T bswap(T val) {
+        if constexpr (sizeof(T) == 1) return val;
+        else if constexpr (sizeof(T) == 2) {
+            uint16_t u; std::memcpy(&u, &val, 2);
+            u = static_cast<uint16_t>((u >> 8) | (u << 8));
+            std::memcpy(&val, &u, 2); return val;
+        } else if constexpr (sizeof(T) == 4) {
+            uint32_t u; std::memcpy(&u, &val, 4);
+            u = ((u >> 24) & 0xFFu) | ((u >> 8) & 0xFF00u) |
+                ((u << 8) & 0xFF0000u) | ((u << 24) & 0xFF000000u);
+            std::memcpy(&val, &u, 4); return val;
+        } else if constexpr (sizeof(T) == 8) {
+            uint8_t tmp[8]; std::memcpy(tmp, &val, 8);
+            std::swap(tmp[0], tmp[7]); std::swap(tmp[1], tmp[6]);
+            std::swap(tmp[2], tmp[5]); std::swap(tmp[3], tmp[4]);
+            std::memcpy(&val, tmp, 8); return val;
+        }
+        return val;
+    }
 
     template<typename T>
     T readAt(uint32_t pos) const {
         if (pos + sizeof(T) > m_data.size()) return T{};
         T val;
         std::memcpy(&val, &m_data[pos], sizeof(T));
+        if (m_bigEndian && sizeof(T) > 1) val = bswap(val);
         return val;
     }
 
@@ -135,6 +158,7 @@ private:
     std::vector<uint8_t> m_data;
     std::vector<std::string> m_stringCache;
     bool m_loaded;
+    bool m_bigEndian = false;
 };
 
 namespace GFFFieldID {

@@ -1,6 +1,8 @@
 #include "dds_loader.h"
 #include <iostream>
 #include <cstring>
+#include <cmath>
+#include <algorithm>
 
 #pragma pack(push, 1)
 struct DDSPixelFormat {
@@ -124,6 +126,219 @@ static void decompressDXT5Block(const uint8_t* block, uint8_t* out, int stride) 
         }
     }
 }
+
+// ── Xbox 360 XDS texture support ──────────────────────────────────────────────
+// XDS = raw GPU-tiled texture data + 52-byte footer with Xbox 360 fetch constant
+
+static constexpr uint8_t XDS_GPU_DXT1 = 0x52;
+static constexpr uint8_t XDS_GPU_DXT3 = 0x53;
+static constexpr uint8_t XDS_GPU_DXT5 = 0x54;
+static constexpr uint8_t XDS_GPU_DXN  = 0x71;  // BC5 / ATI2
+static constexpr int      XDS_FOOTER  = 52;
+static constexpr int      XDS_TILE_BLOCKS = 8;  // 32x32 pixels = 8x8 blocks
+
+struct XDSInfo {
+    int      width;
+    int      height;
+    uint8_t  gpuFormat;
+    int      blockSize;    // bytes per 4x4 block
+    bool     tiled;
+    uint32_t texDataSize;  // bytes before footer
+};
+
+static bool parseXDSFooter(const std::vector<uint8_t>& data, XDSInfo& info) {
+    if (data.size() < (size_t)XDS_FOOTER + 64) return false;   // too small
+
+    // Quick rejection: real DDS/TGA/known formats start with known magic
+    uint32_t magic = 0;
+    std::memcpy(&magic, data.data(), 4);
+    if (magic == 0x20534444) return false; // "DDS "
+
+    size_t footerOff = data.size() - XDS_FOOTER;
+    auto r32 = [&](size_t off) -> uint32_t {
+        uint32_t v; std::memcpy(&v, &data[footerOff + off], 4);
+        // footer is big-endian
+        return ((v >> 24) & 0xFF) | ((v >> 8) & 0xFF00) |
+               ((v << 8) & 0xFF0000) | ((v << 24) & 0xFF000000u);
+    };
+
+    // Validate: DWORD[0] should be 3, DWORD[1] should be 1
+    if (r32(0) != 3 || r32(4) != 1) return false;
+    // DWORD[2..4] should be 0
+    if (r32(8) != 0 || r32(12) != 0 || r32(16) != 0) return false;
+    // DWORD[5..6] should be 0xFFFF0000
+    if (r32(20) != 0xFFFF0000u || r32(24) != 0xFFFF0000u) return false;
+
+    uint32_t dw7 = r32(28);
+    uint32_t dw8 = r32(32);
+    uint32_t dw9 = r32(36);
+
+    info.gpuFormat   = dw8 & 0xFF;
+    info.width       = (dw9 & 0x1FFF) + 1;
+    info.height      = ((dw9 >> 13) & 0x1FFF) + 1;
+    info.tiled       = (dw7 >> 31) & 1;
+    info.texDataSize = (uint32_t)(data.size() - XDS_FOOTER);
+
+    switch (info.gpuFormat) {
+        case XDS_GPU_DXT1: info.blockSize = 8;  break;
+        case XDS_GPU_DXT3: info.blockSize = 16; break;
+        case XDS_GPU_DXT5: info.blockSize = 16; break;
+        case XDS_GPU_DXN:  info.blockSize = 16; break;
+        default: return false;
+    }
+
+    // Sanity: dimensions must be power-of-2-ish and > 0
+    if (info.width <= 0 || info.height <= 0 || info.width > 4096 || info.height > 4096)
+        return false;
+
+    return true;
+}
+
+bool isXDS(const std::vector<uint8_t>& data) {
+    XDSInfo info;
+    return parseXDSFooter(data, info);
+}
+
+static void endianSwap16(std::vector<uint8_t>& buf) {
+    for (size_t i = 0; i + 1 < buf.size(); i += 2)
+        std::swap(buf[i], buf[i + 1]);
+}
+
+static int mortonIndex(int x, int y) {
+    int m = 0;
+    for (int b = 0; b < 3; b++) {
+        m |= ((x >> b) & 1) << (2 * b);
+        m |= ((y >> b) & 1) << (2 * b + 1);
+    }
+    return m;
+}
+
+static std::vector<uint8_t> untileBC(const uint8_t* src, size_t srcLen,
+                                      int width, int height, int blockSize)
+{
+    int blocksW = std::max(1, width / 4);
+    int blocksH = std::max(1, height / 4);
+    int alignedW = ((blocksW + XDS_TILE_BLOCKS - 1) / XDS_TILE_BLOCKS) * XDS_TILE_BLOCKS;
+    int alignedH = ((blocksH + XDS_TILE_BLOCKS - 1) / XDS_TILE_BLOCKS) * XDS_TILE_BLOCKS;
+    int tileBytes = XDS_TILE_BLOCKS * XDS_TILE_BLOCKS * blockSize;
+    int tilesPerRow = alignedW / XDS_TILE_BLOCKS;
+
+    std::vector<uint8_t> out(blocksW * blocksH * blockSize, 0);
+
+    for (int by = 0; by < blocksH; by++) {
+        for (int bx = 0; bx < blocksW; bx++) {
+            int tileX = bx / XDS_TILE_BLOCKS;
+            int tileY = by / XDS_TILE_BLOCKS;
+            int tileIdx = tileY * tilesPerRow + tileX;
+            size_t tileStart = (size_t)tileIdx * tileBytes;
+
+            int innerX = bx % XDS_TILE_BLOCKS;
+            int innerY = by % XDS_TILE_BLOCKS;
+            int morton = mortonIndex(innerX, innerY);
+
+            size_t srcOff = tileStart + (size_t)morton * blockSize;
+            size_t dstOff = ((size_t)by * blocksW + bx) * blockSize;
+
+            if (srcOff + blockSize <= srcLen)
+                std::memcpy(&out[dstOff], &src[srcOff], blockSize);
+        }
+    }
+    return out;
+}
+
+static void decompressDXNBlock(const uint8_t* block, uint8_t* out, int stride) {
+    // DXN / ATI2 / BC5: two independent BC4 channels (R, G for normal XY)
+    for (int ch = 0; ch < 2; ch++) {
+        const uint8_t* chBlock = block + ch * 8;
+        uint8_t a0 = chBlock[0], a1 = chBlock[1];
+        uint8_t alphas[8];
+        alphas[0] = a0; alphas[1] = a1;
+        if (a0 > a1) {
+            for (int i = 2; i < 8; i++)
+                alphas[i] = (uint8_t)(((8 - i) * a0 + (i - 1) * a1) / 7);
+        } else {
+            for (int i = 2; i < 6; i++)
+                alphas[i] = (uint8_t)(((6 - i) * a0 + (i - 1) * a1) / 5);
+            alphas[6] = 0; alphas[7] = 255;
+        }
+        uint64_t bits = 0;
+        for (int i = 0; i < 6; i++)
+            bits |= (uint64_t)chBlock[2 + i] << (8 * i);
+
+        for (int y = 0; y < 4; y++) {
+            for (int x = 0; x < 4; x++) {
+                int idx = (bits >> ((y * 4 + x) * 3)) & 7;
+                out[y * stride + x * 4 + ch] = alphas[idx];
+            }
+        }
+    }
+    // Reconstruct Z from XY, set alpha to 255
+    for (int y = 0; y < 4; y++) {
+        for (int x = 0; x < 4; x++) {
+            uint8_t* p = out + y * stride + x * 4;
+            float nx = (p[0] / 255.0f) * 2.0f - 1.0f;
+            float ny = (p[1] / 255.0f) * 2.0f - 1.0f;
+            float nz2 = 1.0f - nx * nx - ny * ny;
+            float nz = nz2 > 0.0f ? sqrtf(nz2) : 0.0f;
+            p[2] = (uint8_t)((nz * 0.5f + 0.5f) * 255.0f);
+            p[3] = 255;
+        }
+    }
+}
+
+bool decodeXDSToRGBA(const std::vector<uint8_t>& data, std::vector<uint8_t>& rgba,
+                      int& width, int& height)
+{
+    XDSInfo info;
+    if (!parseXDSFooter(data, info)) return false;
+
+    width = info.width;
+    height = info.height;
+
+    // Copy texture data (everything before the 52-byte footer)
+    std::vector<uint8_t> tex(data.begin(), data.begin() + info.texDataSize);
+
+    // Step 1: 16-bit endian swap (Xbox 360 BE → little-endian)
+    endianSwap16(tex);
+
+    // Step 2: untile (base mip only)
+    if (info.tiled)
+        tex = untileBC(tex.data(), tex.size(), width, height, info.blockSize);
+
+    // Step 3: decompress to RGBA
+    rgba.resize(width * height * 4);
+    const uint8_t* src = tex.data();
+
+    for (int by = 0; by < height; by += 4) {
+        for (int bx = 0; bx < width; bx += 4) {
+            uint8_t block[4 * 4 * 4] = {};
+
+            if (info.gpuFormat == XDS_GPU_DXT1) {
+                decompressDXT1Block(src, block, 16);
+                src += 8;
+            } else if (info.gpuFormat == XDS_GPU_DXT5 || info.gpuFormat == XDS_GPU_DXT3) {
+                decompressDXT5Block(src, block, 16);
+                src += 16;
+            } else if (info.gpuFormat == XDS_GPU_DXN) {
+                decompressDXNBlock(src, block, 16);
+                src += 16;
+            }
+
+            for (int y = 0; y < 4 && by + y < height; y++) {
+                for (int x = 0; x < 4 && bx + x < width; x++) {
+                    int di = ((by + y) * width + (bx + x)) * 4;
+                    rgba[di + 0] = block[y * 16 + x * 4 + 0];
+                    rgba[di + 1] = block[y * 16 + x * 4 + 1];
+                    rgba[di + 2] = block[y * 16 + x * 4 + 2];
+                    rgba[di + 3] = block[y * 16 + x * 4 + 3];
+                }
+            }
+        }
+    }
+    return true;
+}
+
+// ── end XDS support ──────────────────────────────────────────────────────────
 
 bool decodeDDSToRGBA(const std::vector<uint8_t>& data, std::vector<uint8_t>& rgba, int& width, int& height) {
     if (data.size() < sizeof(DDSHeader)) return false;

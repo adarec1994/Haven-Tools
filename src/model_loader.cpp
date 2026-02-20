@@ -40,11 +40,12 @@ float halfToFloat(uint16_t h) {
     return f;
 }
 
-void readDeclType(const std::vector<uint8_t>& data, uint32_t offset, uint32_t dataType, float* out) {
+void readDeclType(const std::vector<uint8_t>& data, uint32_t offset, uint32_t dataType, float* out, bool bigEndian) {
     auto readFloat = [&](uint32_t pos) -> float {
         if (pos + 4 > data.size()) return 0.0f;
         float val;
         std::memcpy(&val, &data[pos], 4);
+        if (bigEndian) val = GFFFile::bswap(val);
         return val;
     };
 
@@ -52,6 +53,7 @@ void readDeclType(const std::vector<uint8_t>& data, uint32_t offset, uint32_t da
         if (pos + 2 > data.size()) return 0;
         int16_t val;
         std::memcpy(&val, &data[pos], 2);
+        if (bigEndian) val = GFFFile::bswap(val);
         return val;
     };
 
@@ -59,6 +61,7 @@ void readDeclType(const std::vector<uint8_t>& data, uint32_t offset, uint32_t da
         if (pos + 2 > data.size()) return 0;
         uint16_t val;
         std::memcpy(&val, &data[pos], 2);
+        if (bigEndian) val = GFFFile::bswap(val);
         return val;
     };
 
@@ -147,7 +150,7 @@ void readDeclType(const std::vector<uint8_t>& data, uint32_t offset, uint32_t da
     }
 }
 
-void readBlendIndices(const std::vector<uint8_t>& data, uint32_t offset, uint32_t dataType, int* out) {
+void readBlendIndices(const std::vector<uint8_t>& data, uint32_t offset, uint32_t dataType, int* out, bool bigEndian = false) {
     auto readByte = [&](uint32_t pos) -> uint8_t {
         if (pos >= data.size()) return 0;
         return data[pos];
@@ -167,7 +170,7 @@ void readBlendIndices(const std::vector<uint8_t>& data, uint32_t offset, uint32_
         default:
 
             float vals[4];
-            readDeclType(data, offset, dataType, vals);
+            readDeclType(data, offset, dataType, vals, bigEndian);
             out[0] = static_cast<int>(std::round(vals[0]));
             out[1] = static_cast<int>(std::round(vals[1]));
             out[2] = static_cast<int>(std::round(vals[2]));
@@ -181,6 +184,8 @@ bool loadMSH(const std::vector<uint8_t>& data, Model& outModel) {
     if (!gff.load(data)) {
         return false;
     }
+
+    bool bigEndian = gff.isBigEndian();
 
     outModel.meshes.clear();
     outModel.name = "Model";
@@ -278,13 +283,13 @@ bool loadMSH(const std::vector<uint8_t>& data, Model& outModel) {
             uint32_t baseOff = vertexDataBase + i * vertexSize;
             float vals[4];
 
-            readDeclType(gff.rawData(), baseOff + posStream.offset, posStream.dataType, vals);
+            readDeclType(gff.rawData(), baseOff + posStream.offset, posStream.dataType, vals, bigEndian);
             mesh.vertices[i].x = vals[0];
             mesh.vertices[i].y = vals[1];
             mesh.vertices[i].z = vals[2];
 
             if (hasNormal) {
-                readDeclType(gff.rawData(), baseOff + normalStream.offset, normalStream.dataType, vals);
+                readDeclType(gff.rawData(), baseOff + normalStream.offset, normalStream.dataType, vals, bigEndian);
                 mesh.vertices[i].nx = vals[0];
                 mesh.vertices[i].ny = vals[1];
                 mesh.vertices[i].nz = vals[2];
@@ -295,7 +300,7 @@ bool loadMSH(const std::vector<uint8_t>& data, Model& outModel) {
             }
 
             if (hasTexcoord) {
-                readDeclType(gff.rawData(), baseOff + texcoordStream.offset, texcoordStream.dataType, vals);
+                readDeclType(gff.rawData(), baseOff + texcoordStream.offset, texcoordStream.dataType, vals, bigEndian);
                 mesh.vertices[i].u = vals[0];
                 mesh.vertices[i].v = 1.0f - vals[1];
             } else {
@@ -304,7 +309,7 @@ bool loadMSH(const std::vector<uint8_t>& data, Model& outModel) {
             }
 
             if (hasBlendWeight) {
-                readDeclType(gff.rawData(), baseOff + blendWeightStream.offset, blendWeightStream.dataType, vals);
+                readDeclType(gff.rawData(), baseOff + blendWeightStream.offset, blendWeightStream.dataType, vals, bigEndian);
 
                 mesh.vertices[i].boneWeights[0] = vals[0];
                 mesh.vertices[i].boneWeights[1] = vals[1];
@@ -314,7 +319,7 @@ bool loadMSH(const std::vector<uint8_t>& data, Model& outModel) {
 
             if (hasBlendIndex) {
                 int indices[4];
-                readBlendIndices(gff.rawData(), baseOff + blendIndexStream.offset, blendIndexStream.dataType, indices);
+                readBlendIndices(gff.rawData(), baseOff + blendIndexStream.offset, blendIndexStream.dataType, indices, bigEndian);
                 mesh.vertices[i].boneIndices[0] = indices[0];
                 mesh.vertices[i].boneIndices[1] = indices[1];
                 mesh.vertices[i].boneIndices[2] = indices[2];
@@ -329,11 +334,13 @@ bool loadMSH(const std::vector<uint8_t>& data, Model& outModel) {
 
                 uint16_t idx;
                 std::memcpy(&idx, &gff.rawData()[indexDataBase + i * 2], 2);
+                if (bigEndian) idx = GFFFile::bswap(idx);
                 mesh.indices[i] = idx;
             } else {
 
                 uint32_t idx;
                 std::memcpy(&idx, &gff.rawData()[indexDataBase + i * 4], 4);
+                if (bigEndian) idx = GFFFile::bswap(idx);
                 mesh.indices[i] = idx;
             }
         }

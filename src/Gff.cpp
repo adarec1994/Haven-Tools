@@ -131,7 +131,7 @@ std::string GFFFile::getLabel(uint32_t hash) {
     return ss.str();
 }
 
-GFFFile::GFFFile() : m_loaded(false) {
+GFFFile::GFFFile() : m_loaded(false), m_bigEndian(false) {
     std::memset(&m_header, 0, sizeof(m_header));
 }
 
@@ -189,17 +189,29 @@ void GFFFile::close() {
     m_data.clear();
     m_structs.clear();
     m_loaded = false;
+    m_bigEndian = false;
     std::memset(&m_header, 0, sizeof(m_header));
 }
 
 bool GFFFile::parseHeader() {
     if (m_data.size() < 28) return false;
 
-    m_header.magic = readAt<uint32_t>(0);
-    m_header.version = readAt<uint32_t>(4);
-    m_header.platform = readAt<uint32_t>(8);
-    m_header.fileType = readAt<uint32_t>(12);
-    m_header.fileVersion = readAt<uint32_t>(16);
+    // Detect endianness from platform string at offset 8 (raw ASCII, no swap needed)
+    if (m_data.size() >= 12) {
+        char plat[5] = {};
+        std::memcpy(plat, &m_data[8], 4);
+        if (std::string(plat) == "X360" || std::string(plat) == "PS3 ") {
+            m_bigEndian = true;
+        }
+    }
+
+    // Tag fields are 4-byte ASCII — read raw, NOT byte-swapped
+    std::memcpy(&m_header.magic, &m_data[0], 4);
+    std::memcpy(&m_header.version, &m_data[4], 4);
+    std::memcpy(&m_header.platform, &m_data[8], 4);
+    std::memcpy(&m_header.fileType, &m_data[12], 4);
+    std::memcpy(&m_header.fileVersion, &m_data[16], 4);
+    // Numeric field — needs byte-swap on big-endian
     m_header.structCount = readAt<uint32_t>(20);
 
     if (m_header.magic != 0x20464647) {
@@ -263,8 +275,14 @@ bool GFFFile::parseStructs() {
         for (uint32_t j = 0; j < m_structs[i].fieldCount; j++) {
             if (fieldPos + 12 > m_data.size()) break;
             m_structs[i].fields[j].label = readAt<uint32_t>(fieldPos);
-            m_structs[i].fields[j].typeId = readAt<uint16_t>(fieldPos + 4);
-            m_structs[i].fields[j].flags = readAt<uint16_t>(fieldPos + 6);
+            if (m_bigEndian) {
+                // On X360/PS3: the 4 bytes at fieldPos+4 are flags(BE16) then typeId(BE16)
+                m_structs[i].fields[j].flags = readAt<uint16_t>(fieldPos + 4);
+                m_structs[i].fields[j].typeId = readAt<uint16_t>(fieldPos + 6);
+            } else {
+                m_structs[i].fields[j].typeId = readAt<uint16_t>(fieldPos + 4);
+                m_structs[i].fields[j].flags = readAt<uint16_t>(fieldPos + 6);
+            }
             m_structs[i].fields[j].dataOffset = readAt<uint32_t>(fieldPos + 8);
             fieldPos += 12;
         }
