@@ -7,6 +7,7 @@
 #include <sstream>
 #include <vector>
 #include <filesystem>
+#include <iostream>
 
 static std::map<uint32_t, std::string> s_knownLabels;
 static bool s_labelsLoaded = false;
@@ -167,6 +168,11 @@ bool GFFFile::load(const std::string& path) {
 }
 
 bool GFFFile::load(const std::vector<uint8_t>& data) {
+    static bool printedVersion = false;
+    if (!printedVersion) {
+        std::cout << "[GFF4] Gff.cpp version: PACKED_UINT32_FIX_v2 (2026-02-21)" << std::endl;
+        printedVersion = true;
+    }
     close();
 
     m_data = data;
@@ -401,7 +407,9 @@ GFFStructRef GFFFile::readStructRef(uint32_t structIndex, uint32_t label, uint32
 
     if (isRef && !isList) {
         uint32_t dataPos = m_header.dataOffset + field->dataOffset + baseOffset;
-        uint16_t refStructIdx = readAt<uint16_t>(dataPos);
+        // Struct ref is a packed uint32: high 16 bits = flags, low 16 bits = struct index
+        uint32_t packed = readAt<uint32_t>(dataPos);
+        uint32_t refStructIdx = packed & 0xFFFF;
         uint32_t refOffset = readAt<uint32_t>(dataPos + 4);
         result.structIndex = refStructIdx;
         result.offset = refOffset;
@@ -414,23 +422,58 @@ std::vector<GFFStructRef> GFFFile::readStructList(uint32_t structIndex, uint32_t
     if (structIndex >= m_structs.size()) return result;
 
     const GFFField* field = findField(structIndex, label);
-    if (!field) return result;
+    if (!field) {
+        if (m_bigEndian && label == 6999) {
+            std::cout << "[GFF4-DEBUG] readStructList: field 6999 NOT FOUND in struct " << structIndex
+                      << " (has " << m_structs[structIndex].fields.size() << " fields)" << std::endl;
+            for (size_t fi = 0; fi < m_structs[structIndex].fields.size(); fi++) {
+                std::cout << "[GFF4-DEBUG]   field[" << fi << "] label=" << m_structs[structIndex].fields[fi].label << std::endl;
+            }
+        }
+        return result;
+    }
 
     bool isList = (field->flags & FLAG_LIST) != 0;
     bool isStruct = (field->flags & FLAG_STRUCT) != 0;
     bool isRef = (field->flags & FLAG_REFERENCE) != 0;
 
+    if (m_bigEndian && label == 6999) {
+        std::cout << "[GFF4-DEBUG] readStructList struct=" << structIndex
+                  << " label=" << label << " baseOff=0x" << std::hex << baseOffset
+                  << " flags=0x" << field->flags << std::dec
+                  << " isList=" << isList << " isStruct=" << isStruct << " isRef=" << isRef << std::endl;
+    }
+
     uint32_t dataPos = m_header.dataOffset + field->dataOffset + baseOffset;
     int32_t ref = readAt<int32_t>(dataPos);
-    if (ref < 0) return result;
+    if (ref < 0) {
+        if (m_bigEndian && label == 6999)
+            std::cout << "[GFF4-DEBUG]   ref=" << ref << " (NEGATIVE, returning empty)" << std::endl;
+        return result;
+    }
 
     uint32_t listPos = m_header.dataOffset + ref;
-    if (listPos + 4 > m_data.size()) return result;
+    if (listPos + 4 > m_data.size()) {
+        if (m_bigEndian && label == 6999)
+            std::cout << "[GFF4-DEBUG]   listPos=0x" << std::hex << listPos << " > data size, returning empty" << std::dec << std::endl;
+        return result;
+    }
     uint32_t listCount = readAt<uint32_t>(listPos);
-    if (listCount > 100000) return result;
+    if (listCount > 100000) {
+        if (m_bigEndian && label == 6999)
+            std::cout << "[GFF4-DEBUG]   listCount=" << listCount << " (>100000, returning empty)" << std::endl;
+        return result;
+    }
     listPos += 4;
 
+    if (m_bigEndian && label == 6999) {
+        std::cout << "[GFF4-DEBUG]   ref=0x" << std::hex << ref << " listPos=0x" << listPos
+                  << std::dec << " listCount=" << listCount << std::endl;
+    }
+
     if (isList && isStruct && !isRef) {
+        if (m_bigEndian && label == 6999)
+            std::cout << "[GFF4-DEBUG]   -> branch: isList && isStruct && !isRef" << std::endl;
         if (field->typeId >= m_structs.size()) return result;
         uint32_t structSize = m_structs[field->typeId].structSize;
         uint32_t itemOffset = ref + 4;
@@ -443,6 +486,8 @@ std::vector<GFFStructRef> GFFFile::readStructList(uint32_t structIndex, uint32_t
         }
     }
     else if (isList && isStruct && isRef) {
+        if (m_bigEndian && label == 6999)
+            std::cout << "[GFF4-DEBUG]   -> branch: isList && isStruct && isRef" << std::endl;
         for (uint32_t i = 0; i < listCount; i++) {
             if (listPos + 4 > m_data.size()) break;
             uint32_t itemOffset = readAt<uint32_t>(listPos);
@@ -454,17 +499,34 @@ std::vector<GFFStructRef> GFFFile::readStructList(uint32_t structIndex, uint32_t
         }
     }
     else if (isList && isRef && !isStruct) {
+        if (m_bigEndian && label == 6999)
+            std::cout << "[GFF4-DEBUG]   -> branch: isList && isRef && !isStruct (PACKED UINT32)" << std::endl;
         for (uint32_t i = 0; i < listCount; i++) {
             if (listPos + 8 > m_data.size()) break;
-            uint16_t structRef = readAt<uint16_t>(listPos);
+            // Each entry is a packed uint32: high 16 bits = flags, low 16 bits = struct index
+            uint32_t packed = readAt<uint32_t>(listPos);
+            uint16_t structRef = static_cast<uint16_t>(packed & 0xFFFF);
             listPos += 4;
             uint32_t fieldOffset = readAt<uint32_t>(listPos);
             listPos += 4;
+            if (m_bigEndian && label == 6999) {
+                std::cout << "[GFF4-DEBUG]     entry[" << i << "] packed=0x" << std::hex << packed
+                          << " structRef=" << std::dec << structRef
+                          << " offset=0x" << std::hex << fieldOffset << std::dec << std::endl;
+            }
             GFFStructRef sr;
             sr.structIndex = structRef;
             sr.offset = fieldOffset;
             result.push_back(sr);
         }
+    }
+    else {
+        if (m_bigEndian && label == 6999)
+            std::cout << "[GFF4-DEBUG]   -> NO BRANCH MATCHED! flags=0x" << std::hex << field->flags << std::dec << std::endl;
+    }
+
+    if (m_bigEndian && label == 6999) {
+        std::cout << "[GFF4-DEBUG]   returning " << result.size() << " entries" << std::endl;
     }
     return result;
 }

@@ -354,15 +354,25 @@ static std::vector<uint8_t> readFromModelErfs(AppState& state, const std::string
     // Fallback: search the source ERF the model was loaded from
     if (state.currentErf) {
         std::string noExtLower = nameLower;
+        std::string nameExt;
         size_t dp = noExtLower.rfind('.');
-        if (dp != std::string::npos) noExtLower = noExtLower.substr(0, dp);
+        if (dp != std::string::npos) {
+            nameExt = noExtLower.substr(dp); // e.g. ".mmh"
+            noExtLower = noExtLower.substr(0, dp);
+        }
         for (const auto& entry : state.currentErf->entries()) {
             std::string entryLower = entry.name;
             std::transform(entryLower.begin(), entryLower.end(), entryLower.begin(), ::tolower);
+            if (entryLower == nameLower) return state.currentErf->readEntry(entry);
+            // No-ext fallback: only match if extensions also match
             std::string entryNoExt = entryLower;
+            std::string entryExt;
             size_t edp = entryNoExt.rfind('.');
-            if (edp != std::string::npos) entryNoExt = entryNoExt.substr(0, edp);
-            if (entryLower == nameLower || entryNoExt == noExtLower) return state.currentErf->readEntry(entry);
+            if (edp != std::string::npos) {
+                entryExt = entryNoExt.substr(edp);
+                entryNoExt = entryNoExt.substr(0, edp);
+            }
+            if (entryNoExt == noExtLower && entryExt == nameExt) return state.currentErf->readEntry(entry);
         }
     }
     return {};
@@ -377,8 +387,12 @@ static std::vector<uint8_t> readFromMaterialErfs(AppState& state, const std::str
     std::string nameLower = name;
     std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), ::tolower);
     std::string noExtLower = nameLower;
+    std::string nameExt;
     size_t dp = noExtLower.rfind('.');
-    if (dp != std::string::npos) noExtLower = noExtLower.substr(0, dp);
+    if (dp != std::string::npos) {
+        nameExt = noExtLower.substr(dp);
+        noExtLower = noExtLower.substr(0, dp);
+    }
 
     const std::vector<std::unique_ptr<ERFFile>>* erfSets[] = {
         &state.materialErfs, &state.modelErfs, &state.textureErfs
@@ -388,10 +402,16 @@ static std::vector<uint8_t> readFromMaterialErfs(AppState& state, const std::str
             for (const auto& entry : erf->entries()) {
                 std::string entryLower = entry.name;
                 std::transform(entryLower.begin(), entryLower.end(), entryLower.begin(), ::tolower);
+                if (entryLower == nameLower) return erf->readEntry(entry);
+                // No-ext fallback: only match if extensions also match
                 std::string entryNoExt = entryLower;
+                std::string entryExt;
                 size_t edp = entryNoExt.rfind('.');
-                if (edp != std::string::npos) entryNoExt = entryNoExt.substr(0, edp);
-                if (entryLower == nameLower || entryNoExt == noExtLower) return erf->readEntry(entry);
+                if (edp != std::string::npos) {
+                    entryExt = entryNoExt.substr(edp);
+                    entryNoExt = entryNoExt.substr(0, edp);
+                }
+                if (entryNoExt == noExtLower && entryExt == nameExt) return erf->readEntry(entry);
             }
         }
     }
@@ -400,10 +420,15 @@ static std::vector<uint8_t> readFromMaterialErfs(AppState& state, const std::str
         for (const auto& entry : state.currentErf->entries()) {
             std::string entryLower = entry.name;
             std::transform(entryLower.begin(), entryLower.end(), entryLower.begin(), ::tolower);
+            if (entryLower == nameLower) return state.currentErf->readEntry(entry);
             std::string entryNoExt = entryLower;
+            std::string entryExt;
             size_t edp = entryNoExt.rfind('.');
-            if (edp != std::string::npos) entryNoExt = entryNoExt.substr(0, edp);
-            if (entryLower == nameLower || entryNoExt == noExtLower) return state.currentErf->readEntry(entry);
+            if (edp != std::string::npos) {
+                entryExt = entryNoExt.substr(edp);
+                entryNoExt = entryNoExt.substr(0, edp);
+            }
+            if (entryNoExt == noExtLower && entryExt == nameExt) return state.currentErf->readEntry(entry);
         }
     }
 
@@ -658,14 +683,28 @@ bool loadModelFromEntry(AppState& state, const ERFEntry& entry) {
     }
     bool mmhFound = false;
     for (const auto& candidate : mmhCandidates) {
+        std::cout << "[LOAD-DEBUG] Looking for MMH: '" << candidate << "'" << std::endl;
         std::vector<uint8_t> mmhData = readFromModelErfs(state, candidate);
         if (!mmhData.empty()) {
+            std::cout << "[LOAD-DEBUG] Found MMH: '" << candidate << "' (" << mmhData.size() << " bytes)" << std::endl;
+            if (mmhData.size() >= 12) {
+                std::string hdr(mmhData.begin(), mmhData.begin() + std::min((size_t)12, mmhData.size()));
+                std::cout << "[LOAD-DEBUG] MMH header: '" << hdr << "'" << std::endl;
+            }
             loadMMH(mmhData, state.currentModel);
             mmhFound = true;
+            std::cout << "[LOAD-DEBUG] After loadMMH: meshes=" << state.currentModel.meshes.size()
+                      << " bones=" << state.currentModel.boneIndexArray.size() << std::endl;
+            for (size_t mi = 0; mi < state.currentModel.meshes.size(); mi++) {
+                std::cout << "[LOAD-DEBUG]   mesh[" << mi << "] name='" << state.currentModel.meshes[mi].name
+                          << "' materialName='" << state.currentModel.meshes[mi].materialName
+                          << "' hasSkinning=" << state.currentModel.meshes[mi].hasSkinning << std::endl;
+            }
             break;
         }
     }
     if (!mmhFound) {
+        std::cout << "[LOAD-DEBUG] MMH NOT FOUND for baseName='" << baseName << "'" << std::endl;
     }
 
     applyMeshLocalTransforms(state.currentModel);
@@ -678,14 +717,21 @@ bool loadModelFromEntry(AppState& state, const ERFEntry& entry) {
     }
     for (const auto& candidate : phyCandidates) {
         std::vector<uint8_t> phyData = readFromModelErfs(state, candidate);
-        if (!phyData.empty()) { loadPHY(phyData, state.currentModel); break; }
+        if (!phyData.empty()) {
+            std::cout << "[LOAD-DEBUG] Found PHY: '" << candidate << "' (" << phyData.size() << " bytes)" << std::endl;
+            loadPHY(phyData, state.currentModel);
+            std::cout << "[LOAD-DEBUG] After loadPHY: collisionShapes=" << state.currentModel.collisionShapes.size() << std::endl;
+            break;
+        }
     }
 
     std::set<std::string> materialNames;
     for (const auto& mesh : state.currentModel.meshes) {
         if (!mesh.materialName.empty()) materialNames.insert(mesh.materialName);
     }
+    std::cout << "[LOAD-DEBUG] Material names to look up: " << materialNames.size() << std::endl;
     for (const std::string& matName : materialNames) {
+        std::cout << "[LOAD-DEBUG]   material: '" << matName << "'" << std::endl;
 
         std::string maoLookup = matName;
         {
@@ -696,11 +742,14 @@ bool loadModelFromEntry(AppState& state, const ERFEntry& entry) {
         }
         std::vector<uint8_t> maoData = readFromMaterialErfs(state, maoLookup);
         if (!maoData.empty()) {
+            std::cout << "[LOAD-DEBUG]   MAO found: '" << maoLookup << "' (" << maoData.size() << " bytes)" << std::endl;
             std::string maoContent(maoData.begin(), maoData.end());
             Material mat = parseMAO(maoContent, matName);
             mat.maoContent = maoContent;
+            std::cout << "[LOAD-DEBUG]   MAO result: diffuse='" << mat.diffuseMap << "' normal='" << mat.normalMap << "'" << std::endl;
             state.currentModel.materials.push_back(mat);
         } else {
+            std::cout << "[LOAD-DEBUG]   MAO NOT FOUND: '" << maoLookup << "'" << std::endl;
             Material mat;
             mat.name = matName;
             state.currentModel.materials.push_back(mat);
@@ -1172,14 +1221,35 @@ static std::vector<uint8_t> readFromErfIndex(const std::string& name, std::strin
         return {};
     };
 
+    // Exact match (including extension) - always preferred
     auto it = s_erfIndex.find(key);
     if (it != s_erfIndex.end()) return tryRead(it->second);
 
+    // No-ext fallback: only use if the indexed entry has the same extension
     std::string noext = key;
+    std::string nameExt;
     size_t dp = noext.rfind('.');
-    if (dp != std::string::npos) noext = noext.substr(0, dp);
+    if (dp != std::string::npos) {
+        nameExt = noext.substr(dp);
+        noext = noext.substr(0, dp);
+    }
     auto it2 = s_erfIndexNoExt.find(noext);
-    if (it2 != s_erfIndexNoExt.end()) return tryRead(it2->second);
+    if (it2 != s_erfIndexNoExt.end()) {
+        // Verify extension matches before returning
+        const auto& entries = it2->second.erf->entries();
+        if (it2->second.entryIdx < entries.size()) {
+            std::string entryName = entries[it2->second.entryIdx].name;
+            std::transform(entryName.begin(), entryName.end(), entryName.begin(), ::tolower);
+            std::string entryExt;
+            size_t edp = entryName.rfind('.');
+            if (edp != std::string::npos) entryExt = entryName.substr(edp);
+            // If we requested a specific extension, only match if extensions agree
+            // If no extension was requested (nameExt empty), allow any match
+            if (nameExt.empty() || entryExt == nameExt) {
+                return tryRead(it2->second);
+            }
+        }
+    }
 
     return {};
 }

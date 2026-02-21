@@ -1,8 +1,8 @@
 #include "dds_loader.h"
+#include <algorithm>
+#include <cmath>
 #include <iostream>
 #include <cstring>
-#include <cmath>
-#include <algorithm>
 
 #pragma pack(push, 1)
 struct DDSPixelFormat {
@@ -135,7 +135,6 @@ static constexpr uint8_t XDS_GPU_DXT3 = 0x53;
 static constexpr uint8_t XDS_GPU_DXT5 = 0x54;
 static constexpr uint8_t XDS_GPU_DXN  = 0x71;  // BC5 / ATI2
 static constexpr int      XDS_FOOTER  = 52;
-static constexpr int      XDS_TILE_BLOCKS = 8;  // 32x32 pixels = 8x8 blocks
 
 struct XDSInfo {
     int      width;
@@ -147,9 +146,8 @@ struct XDSInfo {
 };
 
 static bool parseXDSFooter(const std::vector<uint8_t>& data, XDSInfo& info) {
-    if (data.size() < (size_t)XDS_FOOTER + 64) return false;   // too small
+    if (data.size() < (size_t)XDS_FOOTER + 64) return false;
 
-    // Quick rejection: real DDS/TGA/known formats start with known magic
     uint32_t magic = 0;
     std::memcpy(&magic, data.data(), 4);
     if (magic == 0x20534444) return false; // "DDS "
@@ -157,16 +155,12 @@ static bool parseXDSFooter(const std::vector<uint8_t>& data, XDSInfo& info) {
     size_t footerOff = data.size() - XDS_FOOTER;
     auto r32 = [&](size_t off) -> uint32_t {
         uint32_t v; std::memcpy(&v, &data[footerOff + off], 4);
-        // footer is big-endian
         return ((v >> 24) & 0xFF) | ((v >> 8) & 0xFF00) |
                ((v << 8) & 0xFF0000) | ((v << 24) & 0xFF000000u);
     };
 
-    // Validate: DWORD[0] should be 3, DWORD[1] should be 1
     if (r32(0) != 3 || r32(4) != 1) return false;
-    // DWORD[2..4] should be 0
     if (r32(8) != 0 || r32(12) != 0 || r32(16) != 0) return false;
-    // DWORD[5..6] should be 0xFFFF0000
     if (r32(20) != 0xFFFF0000u || r32(24) != 0xFFFF0000u) return false;
 
     uint32_t dw7 = r32(28);
@@ -187,7 +181,6 @@ static bool parseXDSFooter(const std::vector<uint8_t>& data, XDSInfo& info) {
         default: return false;
     }
 
-    // Sanity: dimensions must be power-of-2-ish and > 0
     if (info.width <= 0 || info.height <= 0 || info.width > 4096 || info.height > 4096)
         return false;
 
@@ -204,13 +197,37 @@ static void endianSwap16(std::vector<uint8_t>& buf) {
         std::swap(buf[i], buf[i + 1]);
 }
 
-static int mortonIndex(int x, int y) {
-    int m = 0;
-    for (int b = 0; b < 3; b++) {
-        m |= ((x >> b) & 1) << (2 * b);
-        m |= ((y >> b) & 1) << (2 * b + 1);
-    }
-    return m;
+// Xbox 360 Xenos GPU tiled texture addressing
+// Adapted from NCDyson/RareView (https://github.com/NCDyson/RareView)
+// Originally from GTA IV Xbox 360 Texture Editor
+static int XGAddress2DTiledX(uint32_t blockOffset, uint32_t widthInBlocks, uint32_t texelBytePitch) {
+    uint32_t alignedWidth = (widthInBlocks + 31) & ~31;
+    uint32_t logBpp = (texelBytePitch >> 2) + ((texelBytePitch >> 1) >> (texelBytePitch >> 2));
+    uint32_t offsetByte = blockOffset << logBpp;
+    uint32_t offsetTile = ((offsetByte & ~0xFFFu) >> 3) + ((offsetByte & 0x700) >> 2) + (offsetByte & 0x3F);
+    uint32_t offsetMacro = offsetTile >> (7 + logBpp);
+
+    uint32_t macroX = ((offsetMacro % (alignedWidth >> 5)) << 2);
+    uint32_t tile = ((((offsetTile >> (5 + logBpp)) & 2) + (offsetByte >> 6)) & 3);
+    uint32_t macro = (macroX + tile) << 3;
+    uint32_t micro = (((((offsetTile >> 1) & ~0xFu) + (offsetTile & 0xF)) & ((texelBytePitch << 3) - 1))) >> logBpp;
+
+    return (int)(macro + micro);
+}
+
+static int XGAddress2DTiledY(uint32_t blockOffset, uint32_t widthInBlocks, uint32_t texelBytePitch) {
+    uint32_t alignedWidth = (widthInBlocks + 31) & ~31;
+    uint32_t logBpp = (texelBytePitch >> 2) + ((texelBytePitch >> 1) >> (texelBytePitch >> 2));
+    uint32_t offsetByte = blockOffset << logBpp;
+    uint32_t offsetTile = ((offsetByte & ~0xFFFu) >> 3) + ((offsetByte & 0x700) >> 2) + (offsetByte & 0x3F);
+    uint32_t offsetMacro = offsetTile >> (7 + logBpp);
+
+    uint32_t macroY = ((offsetMacro / (alignedWidth >> 5)) << 2);
+    uint32_t tile = ((offsetTile >> (6 + logBpp)) & 1) + (((offsetByte & 0x800) >> 10));
+    uint32_t macro = (macroY + tile) << 3;
+    uint32_t micro = ((((offsetTile & (((texelBytePitch << 6) - 1) & ~0x1Fu)) + ((offsetTile & 0xF) << 1)) >> (3 + logBpp)) & ~1u);
+
+    return (int)(macro + micro + ((offsetTile & 0x10) >> 4));
 }
 
 static std::vector<uint8_t> untileBC(const uint8_t* src, size_t srcLen,
@@ -218,36 +235,46 @@ static std::vector<uint8_t> untileBC(const uint8_t* src, size_t srcLen,
 {
     int blocksW = std::max(1, width / 4);
     int blocksH = std::max(1, height / 4);
-    int alignedW = ((blocksW + XDS_TILE_BLOCKS - 1) / XDS_TILE_BLOCKS) * XDS_TILE_BLOCKS;
-    int alignedH = ((blocksH + XDS_TILE_BLOCKS - 1) / XDS_TILE_BLOCKS) * XDS_TILE_BLOCKS;
-    int tileBytes = XDS_TILE_BLOCKS * XDS_TILE_BLOCKS * blockSize;
-    int tilesPerRow = alignedW / XDS_TILE_BLOCKS;
 
-    std::vector<uint8_t> out(blocksW * blocksH * blockSize, 0);
+    // The tiling requires minimum 32-block alignment; for small textures
+    // we need to untile at the aligned size and then extract the real region
+    int alignedW = (int)((blocksW + 31) & ~31);
+    int alignedH = (int)((blocksH + 31) & ~31);
 
-    for (int by = 0; by < blocksH; by++) {
-        for (int bx = 0; bx < blocksW; bx++) {
-            int tileX = bx / XDS_TILE_BLOCKS;
-            int tileY = by / XDS_TILE_BLOCKS;
-            int tileIdx = tileY * tilesPerRow + tileX;
-            size_t tileStart = (size_t)tileIdx * tileBytes;
+    // Untile into padded buffer using aligned dimensions
+    size_t paddedSize = (size_t)alignedW * alignedH * blockSize;
+    std::vector<uint8_t> padded(paddedSize, 0);
 
-            int innerX = bx % XDS_TILE_BLOCKS;
-            int innerY = by % XDS_TILE_BLOCKS;
-            int morton = mortonIndex(innerX, innerY);
+    for (int j = 0; j < alignedH; j++) {
+        for (int i = 0; i < alignedW; i++) {
+            uint32_t blockOffset = (uint32_t)(j * alignedW + i);
+            int x = XGAddress2DTiledX(blockOffset, (uint32_t)alignedW, (uint32_t)blockSize);
+            int y = XGAddress2DTiledY(blockOffset, (uint32_t)alignedW, (uint32_t)blockSize);
 
-            size_t srcOff = tileStart + (size_t)morton * blockSize;
-            size_t dstOff = ((size_t)by * blocksW + bx) * blockSize;
+            size_t srcOff = (size_t)blockOffset * blockSize;
+            size_t dstOff = ((size_t)y * alignedW + x) * blockSize;
 
-            if (srcOff + blockSize <= srcLen)
-                std::memcpy(&out[dstOff], &src[srcOff], blockSize);
+            if (srcOff + blockSize <= srcLen && dstOff + blockSize <= paddedSize)
+                std::memcpy(&padded[dstOff], &src[srcOff], blockSize);
         }
+    }
+
+    // Extract the real region from the padded buffer
+    if (alignedW == blocksW && alignedH == blocksH) {
+        padded.resize((size_t)blocksW * blocksH * blockSize);
+        return padded;
+    }
+
+    std::vector<uint8_t> out((size_t)blocksW * blocksH * blockSize, 0);
+    for (int by = 0; by < blocksH; by++) {
+        std::memcpy(&out[(size_t)by * blocksW * blockSize],
+                     &padded[(size_t)by * alignedW * blockSize],
+                     (size_t)blocksW * blockSize);
     }
     return out;
 }
 
 static void decompressDXNBlock(const uint8_t* block, uint8_t* out, int stride) {
-    // DXN / ATI2 / BC5: two independent BC4 channels (R, G for normal XY)
     for (int ch = 0; ch < 2; ch++) {
         const uint8_t* chBlock = block + ch * 8;
         uint8_t a0 = chBlock[0], a1 = chBlock[1];
@@ -267,7 +294,7 @@ static void decompressDXNBlock(const uint8_t* block, uint8_t* out, int stride) {
 
         for (int y = 0; y < 4; y++) {
             for (int x = 0; x < 4; x++) {
-                int idx = (bits >> ((y * 4 + x) * 3)) & 7;
+                int idx = (int)((bits >> ((y * 4 + x) * 3)) & 7);
                 out[y * stride + x * 4 + ch] = alphas[idx];
             }
         }
@@ -295,7 +322,6 @@ bool decodeXDSToRGBA(const std::vector<uint8_t>& data, std::vector<uint8_t>& rgb
     width = info.width;
     height = info.height;
 
-    // Copy texture data (everything before the 52-byte footer)
     std::vector<uint8_t> tex(data.begin(), data.begin() + info.texDataSize);
 
     // Step 1: 16-bit endian swap (Xbox 360 BE → little-endian)
@@ -306,7 +332,7 @@ bool decodeXDSToRGBA(const std::vector<uint8_t>& data, std::vector<uint8_t>& rgb
         tex = untileBC(tex.data(), tex.size(), width, height, info.blockSize);
 
     // Step 3: decompress to RGBA
-    rgba.resize(width * height * 4);
+    rgba.resize((size_t)width * height * 4);
     const uint8_t* src = tex.data();
 
     for (int by = 0; by < height; by += 4) {

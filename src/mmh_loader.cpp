@@ -223,6 +223,127 @@ Material parseMAO(const std::string& maoContent, const std::string& materialName
         return mat;
     }
 
+    GFFFile gff4;
+    if (gff4.load(rawBytes) && !gff4.structs().empty()) {
+        const auto& rootStruct = gff4.structs()[0];
+
+        for (const auto& field : rootStruct.fields) {
+            if (field.typeId != 14) continue;
+            std::string val = gff4.readStringByLabel(0, field.label, 0);
+            if (val.empty()) continue;
+            std::string valLower = val;
+            std::transform(valLower.begin(), valLower.end(), valLower.begin(), ::tolower);
+            if (valLower.find("terrain.mat") != std::string::npos ||
+                valLower.find("terrain_low.mat") != std::string::npos) {
+                mat.isTerrain = true;
+                break;
+            }
+            if (valLower == "water.mat" || valLower.find("flowingwater") != std::string::npos) {
+                mat.isWater = true;
+                break;
+            }
+        }
+
+        for (const auto& field : rootStruct.fields) {
+            if (field.typeId != 14) continue;
+            std::string val = gff4.readStringByLabel(0, field.label, 0);
+            if (val.empty()) continue;
+
+            std::string label = GFFFile::getLabel(field.label);
+            std::string labelLower = label;
+            std::transform(labelLower.begin(), labelLower.end(), labelLower.begin(), ::tolower);
+            std::string valLower = val;
+            std::transform(valLower.begin(), valLower.end(), valLower.begin(), ::tolower);
+
+            if (mat.isTerrain) {
+                if (labelLower == "palette") {
+                    mat.paletteMap = val; mat.diffuseMap = val;
+                } else if (labelLower == "normal" || labelLower == "normalmap") {
+                    mat.palNormalMap = val; mat.normalMap = val;
+                } else if (labelLower == "maskv") {
+                    mat.maskVMap = val;
+                } else if (labelLower == "maska") {
+                    mat.maskAMap = val;
+                } else if (labelLower == "maska2") {
+                    mat.maskA2Map = val;
+                } else if (labelLower == "mml_treliefmappalette") {
+                    mat.reliefMap = val;
+                }
+            } else if (mat.isWater) {
+                if (labelLower == "mat_tnormalmap" ||
+                    labelLower.find("normalmap") != std::string::npos ||
+                    labelLower == "normal") {
+                    mat.normalMap = val;
+                    mat.waterNormalMap = val;
+                } else if (labelLower == "mml_tdecal") {
+                    mat.waterDecalMap = val;
+                } else if (labelLower == "mml_twatermask") {
+                    mat.waterMaskMap = val;
+                } else if (labelLower.find("diffuse") != std::string::npos ||
+                           labelLower.find("texture") != std::string::npos) {
+                    if (mat.diffuseMap.empty()) mat.diffuseMap = val;
+                }
+            } else {
+                if (labelLower.find("diffuse") != std::string::npos ||
+                    labelLower.find("packedtexture") != std::string::npos ||
+                    labelLower == "palette") {
+                    if (mat.diffuseMap.empty()) mat.diffuseMap = val;
+                } else if (labelLower.find("normalmap") != std::string::npos ||
+                           labelLower.find("normal") != std::string::npos) {
+                    if (mat.normalMap.empty()) mat.normalMap = val;
+                } else if (labelLower.find("specular") != std::string::npos) {
+                    if (mat.specularMap.empty()) mat.specularMap = val;
+                } else if (labelLower.find("tint") != std::string::npos) {
+                    if (mat.tintMap.empty()) mat.tintMap = val;
+                } else if (labelLower.find("lowlod") != std::string::npos) {
+                    mat.diffuseMap = val;
+                    mat.normalMap.clear();
+                } else if (labelLower.find("texture") != std::string::npos) {
+                    if (valLower.find("_n.") != std::string::npos ||
+                        valLower.find("_nrm") != std::string::npos ||
+                        valLower.find("_n_") != std::string::npos) {
+                        if (mat.normalMap.empty()) mat.normalMap = val;
+                    } else if (valLower.find("_s.") != std::string::npos ||
+                               valLower.find("_spec") != std::string::npos) {
+                        if (mat.specularMap.empty()) mat.specularMap = val;
+                    } else {
+                        if (mat.diffuseMap.empty()) mat.diffuseMap = val;
+                    }
+                } else {
+                    if (valLower.find(".mat") == std::string::npos &&
+                        valLower.find(".fx") == std::string::npos &&
+                        valLower.find(".mfx") == std::string::npos) {
+                        if (valLower.find("_n.") != std::string::npos ||
+                            valLower.find("_nrm") != std::string::npos ||
+                            valLower.find("_n_") != std::string::npos ||
+                            valLower.rfind("_n") == valLower.size() - 2) {
+                            if (mat.normalMap.empty()) mat.normalMap = val;
+                        } else if (valLower.find("_s.") != std::string::npos ||
+                                   valLower.find("_spec") != std::string::npos ||
+                                   valLower.rfind("_s") == valLower.size() - 2) {
+                            if (mat.specularMap.empty()) mat.specularMap = val;
+                        } else if (valLower.find("_t.") != std::string::npos ||
+                                   valLower.find("_tint") != std::string::npos) {
+                            if (mat.tintMap.empty()) mat.tintMap = val;
+                        } else {
+                            if (mat.diffuseMap.empty()) mat.diffuseMap = val;
+                        }
+                    }
+                }
+            }
+        }
+
+        if (mat.diffuseMap.empty()) {
+            for (const auto& field : rootStruct.fields) {
+                if (field.typeId != 14) continue;
+                std::string val = gff4.readStringByLabel(0, field.label, 0);
+                if (!val.empty()) { mat.diffuseMap = val; break; }
+            }
+        }
+
+        return mat;
+    }
+
     std::string maoLower = maoContent;
     std::transform(maoLower.begin(), maoLower.end(), maoLower.begin(), ::tolower);
     if (maoLower.find("\"terrain.mat\"") != std::string::npos ||
@@ -439,7 +560,28 @@ static void quatRotateWorld(float qx, float qy, float qz, float qw,
 
 void loadMMH(const std::vector<uint8_t>& data, Model& model) {
     GFFFile gff;
-    if (!gff.load(data)) return;
+    if (!gff.load(data)) {
+        std::cout << "[MMH-DEBUG] gff.load() FAILED for MMH data (" << data.size() << " bytes)" << std::endl;
+        if (data.size() >= 12) {
+            std::cout << "[MMH-DEBUG]   raw header bytes: ";
+            for (int i = 0; i < 12; i++) std::cout << std::hex << (int)data[i] << " ";
+            std::cout << std::dec << std::endl;
+        }
+        return;
+    }
+    std::cout << "[MMH-DEBUG] gff.load() OK: bigEndian=" << gff.isBigEndian()
+              << " structs=" << gff.structs().size()
+              << " dataOffset=0x" << std::hex << gff.dataOffset() << std::dec << std::endl;
+    if (!gff.structs().empty()) {
+        const auto& s0 = gff.structs()[0];
+        std::cout << "[MMH-DEBUG] struct[0] type='" << s0.structType << "' fields=" << s0.fieldCount << std::endl;
+        for (size_t fi = 0; fi < s0.fields.size(); fi++) {
+            const auto& f = s0.fields[fi];
+            std::cout << "[MMH-DEBUG]   field[" << fi << "] label=" << f.label
+                      << " typeId=" << f.typeId << " flags=0x" << std::hex << f.flags << std::dec
+                      << " dataOff=0x" << std::hex << f.dataOffset << std::dec << std::endl;
+        }
+    }
 
     auto normalizeQuat = [](float& x, float& y, float& z, float& w) {
         float len = std::sqrt(x*x + y*y + z*z + w*w);
@@ -487,9 +629,15 @@ void loadMMH(const std::vector<uint8_t>& data, Model& model) {
         const auto& s = gff.structs()[structIdx];
         std::string structType(s.structType);
 
+        if (gff.isBigEndian()) {
+            std::cout << "[MMH-DEBUG] findNodes structIdx=" << structIdx
+                      << " type='" << structType << "' offset=0x" << std::hex << offset << std::dec << std::endl;
+        }
+
         if (structType == "mshh") {
             std::string meshName = gff.readStringByLabel(structIdx, 6006, offset);
             std::string materialName = gff.readStringByLabel(structIdx, 6001, offset);
+            std::cout << "[MMH-DEBUG] MSHH: mesh='" << meshName << "' mat='" << materialName << "'" << std::endl;
             if (!meshName.empty() && !materialName.empty()) meshMaterials[meshName] = materialName;
             if (!meshName.empty() && !parentName.empty()) meshParentBone[meshName] = parentName;
 
@@ -562,8 +710,22 @@ void loadMMH(const std::vector<uint8_t>& data, Model& model) {
         }
 
         std::vector<GFFStructRef> children = gff.readStructList(structIdx, 6999, offset);
+        if (gff.isBigEndian()) {
+            std::cout << "[MMH-DEBUG] readStructList(structIdx=" << structIdx << ", label=6999, offset=0x"
+                      << std::hex << offset << std::dec << ") returned " << children.size() << " children" << std::endl;
+            // Also check if the field exists
+            const GFFField* f6999 = gff.findField(structIdx, 6999);
+            if (f6999) {
+                std::cout << "[MMH-DEBUG]   field 6999: typeId=" << f6999->typeId
+                          << " flags=0x" << std::hex << f6999->flags << std::dec
+                          << " dataOff=0x" << std::hex << f6999->dataOffset << std::dec << std::endl;
+            } else {
+                std::cout << "[MMH-DEBUG]   field 6999 NOT FOUND in struct " << structIdx << std::endl;
+            }
+        }
         for (const auto& child : children) findNodes(child.structIndex, child.offset, parentName);
     };
+    std::cout << "[MMH-DEBUG] Calling findNodes(0, 0, '')" << std::endl;
     findNodes(0, 0, "");
 
     if (!boneIndexMap.empty()) {
