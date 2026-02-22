@@ -592,6 +592,7 @@ void drawAnimWindow(AppState& state, ImGuiIO& io) {
                                 auto aniData = erf.readEntry(entry);
                                 if (!aniData.empty()) {
                                     state.currentAnim = loadANI(aniData, entry.name);
+                                    resolveX360AnimHashes(state.currentAnim, state.currentModel.skeleton);
                                     auto normalize = [](const std::string& s) {
                                         std::string result;
                                         for (char c : s) {

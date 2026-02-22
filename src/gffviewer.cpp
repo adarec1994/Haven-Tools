@@ -189,7 +189,6 @@ static std::string gff4ReadFieldValueStr(const GFFFile& gff, const GFFField& fie
             if (text.empty() && GFF4TLK::isLoaded())
                 text = GFF4TLK::lookup(tlkId);
             if (!text.empty()) {
-                if (text.size() > 80) text = text.substr(0, 80) + "...";
                 return label + ", " + text;
             }
             return label;

@@ -288,6 +288,7 @@ static const char* s_changelogLatest = R"(
 
 - Talktable Loading
 -- Removed TLK loading from startup — No longer scans the entire game directory for .tlk files during the splash screen loading phase. TLK strings still load on-demand when opening GFF4 files in the viewer.
+-- TLKString now lists the entire string, and doesn't truncate.
 
 - Model Loading Fallback
 -- Same-ERF asset resolution — readFromModelErfs, readFromMaterialErfs, and loadTextureByName now fall back to searching state.currentErf (the source ERF) when dedicated model/material/texture ERFs don't contain the needed MMH, MAO, PHY, or DDS files. Enables loading models from non-standard game versions where assets are bundled together.
@@ -303,4 +304,5 @@ static const char* s_changelogLatest = R"(
 -- XDS Texture Decoding — Added full Xbox 360 .xds texture support (GPU-tiled textures with 52-byte footer). Handles 16-bit endian swap, Morton/Z-order untiling (8×8 block tiles), and decompression for DXT1, DXT3, DXT5, and DXN/BC5 (normal maps with Z reconstruction). Integrated into dds_loader alongside existing DDS/TGA paths without modifying them.
 -- XDS-to-DDS Converter — Standalone Python tool (xds_to_dds.py) for batch converting .xds files to standard .dds. Supports directory input and all X360 GPU texture formats.
 -- Same-ERF Texture Fallback — X360 bundles MSH, MMH, PHY, and XDS together in one ERF with MAOs in a separate materialobjects.erf. Existing same-ERF fallback from 2.2 covers this layout automatically.
+-- No animations.
 )";

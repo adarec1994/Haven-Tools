@@ -1528,6 +1528,7 @@ void loadCharacterModel(AppState& state) {
                             std::vector<uint8_t> animData = animErf.readEntry(entry);
                             if (!animData.empty()) {
                                 state.currentAnim = loadANI(animData, entry.name);
+                                resolveX360AnimHashes(state.currentAnim, state.currentModel.skeleton);
                                 auto normalize = [](const std::string& s) {
                                     std::string result;
                                     for (char c : s) {

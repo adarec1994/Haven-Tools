@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <array>
 #include <cmath>
+#include <unordered_map>
 constexpr int MAX_BONES_PER_VERTEX = 4;
 struct Vertex {
     float x, y, z;
@@ -106,8 +107,16 @@ struct Bone {
     float invBindPosX = 0, invBindPosY = 0, invBindPosZ = 0;
     float invBindRotX = 0, invBindRotY = 0, invBindRotZ = 0, invBindRotW = 1;
 };
+struct BoneExport {
+    std::string boneName;      // original bone name (mixed case)
+    std::string exportName;    // full export name (lowercase, e.g. "root_rotation")
+    bool isRotation = false;
+    uint32_t controllerIndex = 0;
+};
 struct Skeleton {
     std::vector<Bone> bones;
+    std::vector<BoneExport> exports; // from MMH xprt entries
+    std::unordered_map<uint32_t, std::string> exportHashMap; // X360: hash -> boneName
     int findBone(const std::string& name) const {
         for (size_t i = 0; i < bones.size(); i++) {
             if (bones[i].name == name) return (int)i;
@@ -181,6 +190,7 @@ struct AnimKeyframe {
 };
 struct AnimTrack {
     std::string boneName;
+    uint32_t nameHash = 0;
     int boneIndex = -1;
     bool isRotation = false;
     bool isTranslation = false;

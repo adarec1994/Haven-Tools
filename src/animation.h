@@ -8,6 +8,8 @@ Animation loadANI(const std::vector<uint8_t>& data, const std::string& filename)
 
 void findAnimationsForModel(AppState& state, const std::string& baseName);
 
+void resolveX360AnimHashes(Animation& anim, const Skeleton& skeleton);
+
 void applyAnimation(Model& model, const Animation& anim, float time, const std::vector<Bone>& basePose);
 
 void computeBoneWorldTransforms(Model& model);

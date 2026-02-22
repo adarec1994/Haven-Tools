@@ -440,6 +440,7 @@ void runExportTask(AppState* statePtr) {
                     auto aniData = animErf.readEntry(animEntry);
                     if (!aniData.empty()) {
                         Animation anim = loadANI(aniData, animEntry.name);
+                        resolveX360AnimHashes(anim, state.currentModel.skeleton);
                         auto normalize = [](const std::string& s) {
                             std::string result;
                             for (char c : s) {
@@ -1249,6 +1250,7 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
                                         auto aniData = animErf.readEntry(animEntry);
                                         if (!aniData.empty()) {
                                             Animation anim = loadANI(aniData, animEntry.name);
+                        resolveX360AnimHashes(anim, state.currentModel.skeleton);
                                             auto normalize = [](const std::string& s) {
                                                 std::string result;
                                                 for (char c : s) {
@@ -1471,6 +1473,7 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
                                                 auto aniData = animErf.readEntry(animEntry);
                                                 if (!aniData.empty()) {
                                                     Animation anim = loadANI(aniData, animEntry.name);
+                        resolveX360AnimHashes(anim, state.currentModel.skeleton);
                                                     auto normalize = [](const std::string& s) {
                                                         std::string result;
                                                         for (char c : s) {

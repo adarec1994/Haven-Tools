@@ -404,10 +404,26 @@ GFFStructRef GFFFile::readStructRef(uint32_t structIndex, uint32_t label, uint32
 
     bool isRef = (field->flags & FLAG_REFERENCE) != 0;
     bool isList = (field->flags & FLAG_LIST) != 0;
+    bool isStruct = (field->flags & FLAG_STRUCT) != 0;
 
-    if (isRef && !isList) {
+    if (isList) return result; // Not a single ref
+
+    if (isStruct && !isRef) {
+        // Inline struct: data is embedded at the field's data offset
+        result.structIndex = field->typeId;
+        result.offset = field->dataOffset + baseOffset;
+    }
+    else if (isStruct && isRef) {
+        // Struct ref with known type: struct index from typeId, offset from data
         uint32_t dataPos = m_header.dataOffset + field->dataOffset + baseOffset;
-        // Struct ref is a packed uint32: high 16 bits = flags, low 16 bits = struct index
+        int32_t ref = readAt<int32_t>(dataPos);
+        if (ref < 0) return {0, 0};
+        result.structIndex = field->typeId;
+        result.offset = ref;
+    }
+    else if (isRef && !isStruct) {
+        // Generic ref: packed uint32 (high 16 = flags, low 16 = struct index) + offset
+        uint32_t dataPos = m_header.dataOffset + field->dataOffset + baseOffset;
         uint32_t packed = readAt<uint32_t>(dataPos);
         uint32_t refStructIdx = packed & 0xFFFF;
         uint32_t refOffset = readAt<uint32_t>(dataPos + 4);
