@@ -316,17 +316,30 @@ bool initD3D(GLFWwindow* window, D3DContext& ctx) {
     scd.Windowed          = TRUE;
     scd.SwapEffect        = DXGI_SWAP_EFFECT_DISCARD;
 
-    UINT flags = 0;
-#ifdef _DEBUG
-    flags |= D3D11_CREATE_DEVICE_DEBUG;
-#endif
-
     D3D_FEATURE_LEVEL featureLevel;
-    HRESULT hr = D3D11CreateDeviceAndSwapChain(
-        nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, flags,
+    HRESULT hr = E_FAIL;
+
+    hr = D3D11CreateDeviceAndSwapChain(
+        nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, D3D11_CREATE_DEVICE_DEBUG,
         nullptr, 0, D3D11_SDK_VERSION,
         &scd, &ctx.swapChain, &ctx.device, &featureLevel, &ctx.context
     );
+
+    if (FAILED(hr)) {
+        hr = D3D11CreateDeviceAndSwapChain(
+            nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, 0,
+            nullptr, 0, D3D11_SDK_VERSION,
+            &scd, &ctx.swapChain, &ctx.device, &featureLevel, &ctx.context
+        );
+    }
+
+    if (FAILED(hr)) {
+        hr = D3D11CreateDeviceAndSwapChain(
+            nullptr, D3D_DRIVER_TYPE_WARP, nullptr, 0,
+            nullptr, 0, D3D11_SDK_VERSION,
+            &scd, &ctx.swapChain, &ctx.device, &featureLevel, &ctx.context
+        );
+    }
 
     if (FAILED(hr)) {
         return false;

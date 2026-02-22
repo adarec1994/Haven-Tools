@@ -22,31 +22,38 @@ void saveSettings(const AppState& state) {
     }
 }
 
+static int safeStoi(const std::string& val, int fallback = 0) {
+    if (val.empty()) return fallback;
+    try { return std::stoi(val); }
+    catch (...) { return fallback; }
+}
+
 void loadSettings(AppState& state) {
     std::ifstream f(SETTINGS_FILE);
-    if (f.is_open()) {
+    if (!f.is_open()) return;
+    try {
         std::string line;
         while (std::getline(f, line)) {
             size_t eq = line.find('=');
-            if (eq != std::string::npos) {
-                std::string key = line.substr(0, eq);
-                std::string val = line.substr(eq + 1);
+            if (eq == std::string::npos) continue;
+            std::string key = line.substr(0, eq);
+            std::string val = line.substr(eq + 1);
 
-                if (key == "lastDialogPath") state.lastDialogPath = val;
-                else if (key == "selectedFolder") { state.selectedFolder = val; state.gffViewer.gamePath = val; }
-                else if (key == "overrideFolder") { state.overrideFolder = val; state.gffViewer.overridePath = val; }
-                else if (key == "lastRunVersion") state.lastRunVersion = val;
-                else if (key == "kb_moveForward") state.keybinds.moveForward = (ImGuiKey)std::stoi(val);
-                else if (key == "kb_moveBackward") state.keybinds.moveBackward = (ImGuiKey)std::stoi(val);
-                else if (key == "kb_moveLeft") state.keybinds.moveLeft = (ImGuiKey)std::stoi(val);
-                else if (key == "kb_moveRight") state.keybinds.moveRight = (ImGuiKey)std::stoi(val);
-                else if (key == "kb_panUp") state.keybinds.panUp = (ImGuiKey)std::stoi(val);
-                else if (key == "kb_panDown") state.keybinds.panDown = (ImGuiKey)std::stoi(val);
-                else if (key == "kb_deselectBone") state.keybinds.deselectBone = (ImGuiKey)std::stoi(val);
-                else if (key == "kb_deleteObject") state.keybinds.deleteObject = (ImGuiKey)std::stoi(val);
-                else if (key == "kb_boneRotate") state.keybinds.boneRotate = (ImGuiKey)std::stoi(val);
-                else if (key == "kb_boneGrab") state.keybinds.boneGrab = (ImGuiKey)std::stoi(val);
-            }
+            if (key == "lastDialogPath") state.lastDialogPath = val;
+            else if (key == "selectedFolder") { state.selectedFolder = val; state.gffViewer.gamePath = val; }
+            else if (key == "overrideFolder") { state.overrideFolder = val; state.gffViewer.overridePath = val; }
+            else if (key == "lastRunVersion") state.lastRunVersion = val;
+            else if (key == "kb_moveForward") state.keybinds.moveForward = (ImGuiKey)safeStoi(val);
+            else if (key == "kb_moveBackward") state.keybinds.moveBackward = (ImGuiKey)safeStoi(val);
+            else if (key == "kb_moveLeft") state.keybinds.moveLeft = (ImGuiKey)safeStoi(val);
+            else if (key == "kb_moveRight") state.keybinds.moveRight = (ImGuiKey)safeStoi(val);
+            else if (key == "kb_panUp") state.keybinds.panUp = (ImGuiKey)safeStoi(val);
+            else if (key == "kb_panDown") state.keybinds.panDown = (ImGuiKey)safeStoi(val);
+            else if (key == "kb_deselectBone") state.keybinds.deselectBone = (ImGuiKey)safeStoi(val);
+            else if (key == "kb_deleteObject") state.keybinds.deleteObject = (ImGuiKey)safeStoi(val);
+            else if (key == "kb_boneRotate") state.keybinds.boneRotate = (ImGuiKey)safeStoi(val);
+            else if (key == "kb_boneGrab") state.keybinds.boneGrab = (ImGuiKey)safeStoi(val);
         }
+    } catch (...) {
     }
 }
