@@ -89,6 +89,13 @@ cbuffer CBPerMaterial : register(b1) {
     float4 uTintZone1;
     float4 uTintZone2;
     float4 uTintZone3;
+    float4 uTintZone4;
+    float4 uSpecZone1;
+    float4 uSpecZone2;
+    float4 uSpecZone3;
+    float4 uSpecZone4;
+    float4 uDiffOpacity;
+    float4 uSpecOpacity;
     float  uAgeAmount;
     float4 uStubbleAmount;
     float4 uTattooAmount;
@@ -107,6 +114,7 @@ cbuffer CBPerMaterial : register(b1) {
     int    uUseTattoo;
     float2 pad1;
     float4 uHighlightColor;
+    float4 uTintReplaceVec;
 };
 
 Texture2D    texDiffuse        : register(t0);
@@ -375,6 +383,9 @@ float4 main(PSInput input) : SV_TARGET {
                 diffuseColor.rgb = lerp(diffuseColor.rgb, uTattooColor3.rgb, tattooMask.b * uTattooAmount.b);
         }
     }
+    // Per-pixel specular tint from armor zones. Defaults to white (no change).
+    // Set inside the zone tint block below.
+    float3 specTint = float3(1.0, 1.0, 1.0);
     if (uIsTerrain == 0) {
         if (uIsEyeMesh != 0 && uUseTint != 0) {
             float4 tintMask = texTint.Sample(sampLinear, input.texcoord);
@@ -386,9 +397,39 @@ float4 main(PSInput input) : SV_TARGET {
             if (uUseTint != 0) {
                 float4 tintMask = texTint.Sample(sampLinear, input.texcoord);
                 float3 zoneColor = diffuseColor.rgb;
-                zoneColor = lerp(zoneColor, zoneColor * uTintZone1.rgb, tintMask.r);
-                zoneColor = lerp(zoneColor, zoneColor * uTintZone2.rgb, tintMask.g);
-                zoneColor = lerp(zoneColor, zoneColor * uTintZone3.rgb, tintMask.b);
+                if (uTintReplaceVec.x > 0.5) {
+                    // Game-correct armor tint (reverse-engineered from ch1armtnt_psh.fxo):
+                    //   - Per-zone weight = mask channel * opacity
+                    //   - Zones 1-3: weighted sum of zone colors, lerped against base
+                    //     by total weight  (REPLACEMENT-style)
+                    //   - Zone 4 (mask.a): MULTIPLICATIVE on the texture
+                    float w1 = tintMask.r * uDiffOpacity.x;
+                    float w2 = tintMask.g * uDiffOpacity.y;
+                    float w3 = tintMask.b * uDiffOpacity.z;
+                    float w4 = tintMask.a * uDiffOpacity.w;
+                    float wSum = saturate(w1 + w2 + w3);
+                    float3 zonesSum = uTintZone1.rgb * w1 + uTintZone2.rgb * w2 + uTintZone3.rgb * w3;
+                    float3 zone4Mult = lerp(float3(1, 1, 1), uTintZone4.rgb, w4);
+                    zoneColor = (zoneColor * zone4Mult) * (1.0 - wSum) + zonesSum;
+
+                    // Specular tint mirrors the diffuse pipeline.
+                    float sw1 = tintMask.r * uSpecOpacity.x;
+                    float sw2 = tintMask.g * uSpecOpacity.y;
+                    float sw3 = tintMask.b * uSpecOpacity.z;
+                    float sw4 = tintMask.a * uSpecOpacity.w;
+                    float swSum = saturate(sw1 + sw2 + sw3);
+                    float3 specZonesSum = uSpecZone1.rgb * sw1 + uSpecZone2.rgb * sw2 + uSpecZone3.rgb * sw3;
+                    float3 specZone4Mult = lerp(float3(1, 1, 1), uSpecZone4.rgb, sw4);
+                    specTint = specZone4Mult * (1.0 - swSum) + specZonesSum;
+                } else {
+                    // Legacy multiplicative chain (head/clothes/etc., manual sliders).
+                    // White tint is a no-op so unset zones don't affect anything.
+                    zoneColor = lerp(zoneColor, zoneColor * uTintZone1.rgb, tintMask.r * uDiffOpacity.x);
+                    zoneColor = lerp(zoneColor, zoneColor * uTintZone2.rgb, tintMask.g * uDiffOpacity.y);
+                    zoneColor = lerp(zoneColor, zoneColor * uTintZone3.rgb, tintMask.b * uDiffOpacity.z);
+                    zoneColor = lerp(zoneColor, zoneColor * uTintZone4.rgb, tintMask.a * uDiffOpacity.w);
+                    // Spec tint stays at white (no change to specular).
+                }
                 diffuseColor.rgb = zoneColor;
             }
         }
@@ -414,7 +455,7 @@ float4 main(PSInput input) : SV_TARGET {
         float NdotH = max(dot(N, H), 0.0);
         float spec = pow(NdotH, uSpecularPower);
         float4 specMap = texSpecular.Sample(sampLinear, input.texcoord);
-        specular = spec * specMap.rgb * 0.5 * sunCol;
+        specular = spec * specMap.rgb * specTint * 0.5 * sunCol;
     }
     float3 finalColor = ambient + diffuse + specular;
     float fogIntensity = uFogColor.a;

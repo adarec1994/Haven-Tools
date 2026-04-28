@@ -1,0 +1,16 @@
+#pragma once
+#include <vector>
+#include <cstdint>
+
+bool decodeDDSToRGBA(const std::vector<uint8_t>& data, std::vector<uint8_t>& rgba, int& width, int& height);
+bool decodeTGAToRGBA(const std::vector<uint8_t>& data, std::vector<uint8_t>& rgba, int& width, int& height);
+bool decodeXDSToRGBA(const std::vector<uint8_t>& data, std::vector<uint8_t>& rgba, int& width, int& height);
+bool isXDS(const std::vector<uint8_t>& data);
+void encodePNG(const std::vector<uint8_t>& rgba, int width, int height, std::vector<uint8_t>& png);
+bool isDDSCubemap(const std::vector<uint8_t>& data);
+bool decodeDDSCubemapFaces(const std::vector<uint8_t>& data, std::vector<uint8_t> faces[6], int& faceSize);
+
+// 4x4 DXT block decompressors. Exposed (rather than file-static) so the
+// X360 XDS decoder can reuse them — same compressed block layout as DDS.
+void decompressDXT1Block(const uint8_t* block, uint8_t* out, int stride);
+void decompressDXT5Block(const uint8_t* block, uint8_t* out, int stride);

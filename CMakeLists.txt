@@ -115,7 +115,9 @@ embed_directory(ani)
 embed_directory(excel)
 embed_directory(hashes)
 
-file(GLOB FA_SOLID_FILES "${CMAKE_SOURCE_DIR}/src/Assets/otfs/*Solid*" "${CMAKE_SOURCE_DIR}/src/Assets/otfs/*solid*")
+# FontAwesome (now under dependencies/Assets/otfs)
+file(GLOB FA_SOLID_FILES "${CMAKE_SOURCE_DIR}/src/dependencies/Assets/otfs/*Solid*"
+                        "${CMAKE_SOURCE_DIR}/src/dependencies/Assets/otfs/*solid*")
 list(LENGTH FA_SOLID_FILES FA_COUNT)
 if(FA_COUNT GREATER 0)
     list(GET FA_SOLID_FILES 0 FA_SOLID_FILE)
@@ -138,10 +140,35 @@ else()
 static unsigned char fa_solid_otf[] = {0};
 static unsigned int fa_solid_otf_len = 0;
 ")
-    message(WARNING "FontAwesome Solid font not found in src/Assets/otfs/")
+    message(WARNING "FontAwesome Solid font not found in src/dependencies/Assets/otfs/")
 endif()
 
-set(SPT_DLL_PATH "${CMAKE_SOURCE_DIR}/src/dependencies/SpeedTreeRT.dll")
+# Roboto-Regular (global UI font)
+set(ROBOTO_FILE "${CMAKE_SOURCE_DIR}/src/dependencies/Fonts/Roboto-Regular.ttf")
+if(EXISTS "${ROBOTO_FILE}")
+    file(READ "${ROBOTO_FILE}" ROBOTO_DATA HEX)
+    string(LENGTH "${ROBOTO_DATA}" ROBOTO_HEX_LEN)
+    math(EXPR ROBOTO_LEN "${ROBOTO_HEX_LEN} / 2")
+    string(REGEX REPLACE "([0-9a-f][0-9a-f])" "0x\\1," ROBOTO_ARRAY "${ROBOTO_DATA}")
+    string(REGEX REPLACE ",$" "" ROBOTO_ARRAY "${ROBOTO_ARRAY}")
+    file(WRITE "${CMAKE_BINARY_DIR}/roboto_embedded.h"
+            "#pragma once
+static unsigned char roboto_ttf[] = {
+${ROBOTO_ARRAY}
+};
+static unsigned int roboto_ttf_len = ${ROBOTO_LEN};
+")
+    message(STATUS "Embedded Roboto-Regular: ${ROBOTO_FILE} (${ROBOTO_LEN} bytes)")
+else()
+    file(WRITE "${CMAKE_BINARY_DIR}/roboto_embedded.h"
+            "#pragma once
+static unsigned char roboto_ttf[] = {0};
+static unsigned int roboto_ttf_len = 0;
+")
+    message(WARNING "Roboto-Regular.ttf not found at ${ROBOTO_FILE}")
+endif()
+
+set(SPT_DLL_PATH "${CMAKE_SOURCE_DIR}/src/dependencies/speedtree/SpeedTreeRT.dll")
 if(EXISTS "${SPT_DLL_PATH}")
     file(READ "${SPT_DLL_PATH}" SPT_DATA HEX)
     string(LENGTH "${SPT_DATA}" SPT_HEX_LEN)
@@ -191,98 +218,154 @@ endif()
 
 add_executable(HavenTools
         src/main.cpp
-        src/types.cpp
-        src/types.h
-        src/erf.cpp
-        src/erf.h
-        src/fnv.cpp
-        src/fnv.h
-        src/Gff.cpp
-        src/Gff.h
-        src/Mesh.h
-        src/model_loader.cpp
-        src/model_loader.h
-        src/dds_loader.cpp
-        src/dds_loader.h
-        src/animation.cpp
-        src/animation.h
-        src/mmh_loader.cpp
-        src/mmh_loader.h
-        src/phy_loader.cpp
-        src/renderer.cpp
-        src/renderer.h
-        src/ui.h
-        src/ui_internal.h
-        src/ui_settings.cpp
-        src/ui_audio.cpp
-        src/ui_helpers.cpp
-        src/ui_browser.cpp
-        src/ui_windows.cpp
-        src/ui_character.cpp
-        src/ui_main.cpp
-        src/export.cpp
-        src/export.h
-        src/mor_loader.cpp
-        src/mor_loader.h
-        src/tnt_loader.cpp
-        src/tnt_loader.h
+        src/version.h
+
+        # core
+        src/core/types.cpp
+        src/core/types.h
+        src/core/Mesh.h
+        src/core/fnv.cpp
+        src/core/fnv.h
+        src/core/Blowfish.cpp
+        src/core/Blowfish.h
+
+        # formats
+        src/formats/erf.cpp
+        src/formats/erf.h
+        src/formats/Gff.cpp
+        src/formats/Gff.h
+        src/formats/gff32.cpp
+        src/formats/gff32.h
+        src/formats/Gff4FieldNames.h
+        src/formats/gda.cpp
+        src/formats/gda.h
+
+        # loaders
+        src/loaders/model_loader.cpp
+        src/loaders/model_loader.h
+        src/loaders/mmh_loader.cpp
+        src/loaders/mmh_loader.h
+        src/loaders/phy_loader.cpp
+        src/loaders/dds_loader.cpp
+        src/loaders/dds_loader.h
+        src/loaders/tnt_loader.cpp
+        src/loaders/tnt_loader.h
+        src/loaders/level_loader.cpp
+        src/loaders/level_loader.h
+        src/loaders/terrain_loader.cpp
+        src/loaders/terrain_loader.h
+        src/loaders/Rml_Loader.cpp
+        src/loaders/Rml_Loader.h
+        src/loaders/spt.cpp
+        src/loaders/spt.h
+        src/loaders/LevelDatabase.h
+
+        # render
+        src/render/renderer.cpp
+        src/render/renderer.h
+        src/render/animation.cpp
+        src/render/animation.h
+
+        # shaders / d3d
         src/Shaders/shader.cpp
         src/Shaders/shader.h
-        src/version.h
+        src/Shaders/D3d_Context.cpp
+        src/Shaders/D3d_Context.h
+
+        # X360 / PS3 platform support (big-endian Aurora variants)
+        src/X360/X360_Platform.h
+        src/X360/X360_GffQuirks.h
+        src/X360/X360_Texture.h
+        src/X360/X360_Texture.cpp
+        src/X360/X360_Animation.cpp
+        src/X360/X360_Iso.h
+        src/X360/X360_Iso.cpp
+
+        # ui
+        src/ui/ui.h
+        src/ui/ui_internal.h
+        src/ui/ui_main.cpp
+        src/ui/ui_audio.cpp
+        src/ui/ui_browser.cpp
+        src/ui/ui_browser_mesh.cpp
+        # CharacterDesigner module (replaces ui_character.cpp + mor_loader)
+        src/CharacterDesigner/CharacterDesigner.h
+        src/CharacterDesigner/CharacterDesigner_Internal.h
+        src/CharacterDesigner/CharacterDesigner.cpp
+        src/CharacterDesigner/MorphLoader.h
+        src/CharacterDesigner/MorphLoader.cpp
+        src/CharacterDesigner/UI/CharacterDesigner_UI.cpp
+        src/CharacterDesigner/UI/HeadTab.cpp
+        src/CharacterDesigner/UI/FaceTab.cpp
+        src/CharacterDesigner/UI/ArmorTab.cpp
+        src/CharacterDesigner/UI/ClothesTab.cpp
+        src/CharacterDesigner/UI/BootsTab.cpp
+        src/CharacterDesigner/UI/GlovesTab.cpp
+        src/CharacterDesigner/UI/HelmetTab.cpp
+        src/CharacterDesigner/UI/WeaponsTab.cpp
+        src/ui/ui_gda.cpp
+        src/ui/ui_helpers.cpp
+        src/ui/ui_settings.cpp
+        src/ui/ui_speedtree.cpp
+        src/ui/ui_windows.cpp
+        src/ui/gffviewer.cpp
+        src/ui/gffviewer.h
+
+        # io (import/export)
+        src/io/import.cpp
+        src/io/import.h
+        src/io/export.cpp
+        src/io/export.h
+        src/io/terrain_export.cpp
+        src/io/terrain_export.h
+
+        # update / installer
         src/update/app.rc
         src/update/update.cpp
         src/update/update.h
         src/update/about_text.h
         src/update/changelog_text.h
-        src/import.cpp
-        src/import.h
-        src/gda.cpp
-        src/gda.h
-        src/ui_gda.cpp
-        src/level_loader.cpp
-        src/level_loader.h
-        src/terrain_loader.cpp
-        src/terrain_loader.h
-        src/gff32.cpp
-        src/gff32.h
-        src/gffviewer.cpp
-        src/gffviewer.h
-        src/Shaders/D3d_Context.cpp
-        src/Shaders/D3d_Context.h
-        src/Fonts/IconsFontAwesome6.h
-        src/Gff4FieldNames.h
-        src/Rml_Loader.cpp
-        src/Rml_Loader.h
-        src/LevelDatabase.h
-        src/ui_browser_mesh.cpp
-        src/spt.cpp
-        src/spt.h
+
+        # dependencies (header-only stuff referenced directly)
+        src/dependencies/Fonts/IconsFontAwesome6.h
         src/dependencies/speedtree/spt_convert.h
         src/dependencies/speedtree/speedtree_dll.h
-        src/ui_speedtree.cpp
-        src/terrain_export.cpp
-        src/terrain_export.h
 )
 
 target_include_directories(HavenTools PRIVATE
         ${CMAKE_SOURCE_DIR}/src
+        ${CMAKE_SOURCE_DIR}/src/core
+        ${CMAKE_SOURCE_DIR}/src/formats
+        ${CMAKE_SOURCE_DIR}/src/loaders
+        ${CMAKE_SOURCE_DIR}/src/render
+        ${CMAKE_SOURCE_DIR}/src/ui
+        ${CMAKE_SOURCE_DIR}/src/io
+        ${CMAKE_SOURCE_DIR}/src/X360
+        ${CMAKE_SOURCE_DIR}/src/CharacterDesigner
         ${CMAKE_SOURCE_DIR}/src/dependencies
         ${CMAKE_BINARY_DIR}
 )
 
 target_link_libraries(HavenTools PRIVATE imgui_lib imguifiledialog_lib tinygltf zlibstatic)
 
-if(EXISTS "${CMAKE_SOURCE_DIR}/src/dependencies/SpeedTreeRT.lib")
+if(MSVC AND EXISTS "${CMAKE_SOURCE_DIR}/src/dependencies/speedtree/SpeedTreeRT.lib")
     target_link_libraries(HavenTools PRIVATE
-            "${CMAKE_SOURCE_DIR}/src/dependencies/SpeedTreeRT.lib"
+            "${CMAKE_SOURCE_DIR}/src/dependencies/speedtree/SpeedTreeRT.lib"
             delayimp.lib
     )
     target_link_options(HavenTools PRIVATE /DELAYLOAD:SpeedTreeRT.dll)
 endif()
 
 if(WIN32)
-    target_compile_definitions(HavenTools PRIVATE _CRT_SECURE_NO_WARNINGS)
-    target_link_libraries(HavenTools PRIVATE winmm winhttp version)
+    target_compile_definitions(HavenTools PRIVATE
+            $<$<COMPILE_LANGUAGE:C,CXX>:_CRT_SECURE_NO_WARNINGS>
+            $<$<COMPILE_LANGUAGE:C,CXX>:NOMINMAX>
+            $<$<COMPILE_LANGUAGE:C,CXX>:WIN32_LEAN_AND_MEAN>
+    )
+    target_link_libraries(HavenTools PRIVATE
+            winmm winhttp version
+            mfplat mfreadwrite mfuuid ole32
+    )
 endif()
 
 if(UNIX AND NOT APPLE)

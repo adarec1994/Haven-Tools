@@ -1,5 +1,4 @@
 #pragma once
-#define NOMINMAX
 #include <windows.h>
 #include <d3d11.h>
 #include <d3dcompiler.h>
@@ -38,6 +37,13 @@ struct alignas(16) CBPerMaterial {
     float tintZone1[4];
     float tintZone2[4];
     float tintZone3[4];
+    float tintZone4[4];      // diffuse, sampled from tintMask.a
+    float tintSpecZone1[4];  // specular RGB per zone (xyz used)
+    float tintSpecZone2[4];
+    float tintSpecZone3[4];
+    float tintSpecZone4[4];
+    float tintDiffOpacity[4]; // per-zone diffuse opacity: x=z1 y=z2 z=z3 w=z4
+    float tintSpecOpacity[4]; // per-zone specular opacity
     float ageAmount;
     float _pad_age[3];
     float stubbleAmount[4];
@@ -58,6 +64,9 @@ struct alignas(16) CBPerMaterial {
     int useTattoo;
     float padding1[2];
     float highlightColor[4];
+    // Tint blend mode: [0]=1.0 → game-correct additive math (armor with TNT preset),
+    // [0]=0.0 (default) → multiplicative chain (head/clothes/etc., manual sliders).
+    float tintReplaceFlag[4];
 };
 
 struct alignas(16) CBSimple {
