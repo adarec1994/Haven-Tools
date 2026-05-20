@@ -272,7 +272,7 @@ float4 main(PSInput input) : SV_TARGET {
             int domCell = clamp((int)(mv0.r * 7.5 + 0.5), 0, 7);
             diffuseColor = float4(dbgColors[domCell], 1.0);
         }
-    } else if (uIsWater != 0) {
+)" R"(    } else if (uIsWater != 0) {
         float2 uv = input.worldPos.xy;
         float t = uTime;
 
