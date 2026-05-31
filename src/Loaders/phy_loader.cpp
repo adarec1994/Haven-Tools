@@ -1472,6 +1472,10 @@ bool mergeModelByName(AppState& state, const std::string& modelName,
     transformModelVertices(instance, px, py, pz, qx, qy, qz, qw, scale);
 
     for (auto& mesh : instance.meshes) {
+        // Tag with the model name so every instance of this prop shares an identity
+        // (for instance-merging) and different props never collide on a generic
+        // submesh name.
+        mesh.name = modelName + "::" + mesh.name;
         state.currentModel.meshes.push_back(std::move(mesh));
     }
 

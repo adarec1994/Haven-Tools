@@ -10,6 +10,7 @@
 #include <cstring>
 #include <fstream>
 #include <set>
+#include <unordered_map>
 
 static bool exportBlenderAddon(const unsigned char* data, unsigned int size, const std::string& destDir) {
     namespace fs = std::filesystem;
@@ -23,6 +24,34 @@ static bool exportBlenderAddon(const unsigned char* data, unsigned int size, con
 static const std::vector<LevelGame>& getLevelDB() {
     static std::vector<LevelGame> db = buildLevelDatabase();
     return db;
+}
+
+// Merge every placed instance of the same object into one combined mesh: meshes
+// that share an object identity (mesh name) and material are concatenated, so e.g.
+// 150 instances of a tree become a single mesh / draw call per submesh+material
+// instead of 150. Applies to all level objects (props and trees). Vertices are
+// already baked to world space at placement, so this is a straight concatenation.
+static void mergeLevelInstances(Model& model) {
+    std::vector<Mesh> out;
+    out.reserve(model.meshes.size());
+    std::unordered_map<std::string, int> keyToOut;
+    for (auto& mesh : model.meshes) {
+        if (mesh.vertices.empty() || mesh.indices.empty()) continue;
+        std::string key = mesh.name + "##" + std::to_string(mesh.materialIndex);
+        auto it = keyToOut.find(key);
+        if (it == keyToOut.end()) {
+            keyToOut[key] = (int)out.size();
+            out.push_back(std::move(mesh));
+        } else {
+            Mesh& dst = out[(size_t)it->second];
+            uint32_t base = (uint32_t)dst.vertices.size();
+            dst.vertices.insert(dst.vertices.end(), mesh.vertices.begin(), mesh.vertices.end());
+            dst.indices.reserve(dst.indices.size() + mesh.indices.size());
+            for (uint32_t idx : mesh.indices) dst.indices.push_back(base + idx);
+        }
+    }
+    for (auto& m : out) m.calculateBounds();
+    model.meshes = std::move(out);
 }
 
 static void startLevelLoad(AppState& state, const std::string& rimPath, const std::string& displayName) {
@@ -1036,6 +1065,7 @@ void drawBrowserWindow(AppState& state) {
         }
         else if (ll.stage == 6) {
             finalizeLevelMaterials(state);
+            mergeLevelInstances(state.currentModel);  // combine identical-object instances into one mesh each
             bakeLevelBuffers(state.currentModel);
 
             if (!state.currentModel.meshes.empty()) {
