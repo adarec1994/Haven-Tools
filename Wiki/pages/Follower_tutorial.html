@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" class="client-nojs">
+<head>
+<meta charset="UTF-8" />
+<title>Follower tutorial - Dragon Age Toolset Wiki</title>
+<meta name="generator" content="MediaWiki 1.25.6" />
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="search" type="application/opensearchdescription+xml" href="/mw/opensearch_desc.php" title="Dragon Age Toolset Wiki (en)" />
+<link rel="EditURI" type="application/rsd+xml" href="https://www.datoolset.net/mw/api.php?action=rsd" />
+<link rel="alternate" hreflang="x-default" href="Follower_tutorial.html" />
+<link rel="alternate" type="application/atom+xml" title="Dragon Age Toolset Wiki Atom feed" href="/mw/index.php?title=Special:RecentChanges&amp;feed=atom" />
+<meta name="ResourceLoaderDynamicStyles" content="" />
+<style>a:lang(ar),a:lang(kk-arab),a:lang(mzn),a:lang(ps),a:lang(ur){text-decoration:none}
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-css:7:270a0dcd3ae587df0f041aebfc42e61b */</style>
+<script>if(window.mw){
+mw.config.set({"wgCanonicalNamespace":"","wgCanonicalSpecialPageName":false,"wgNamespaceNumber":0,"wgPageName":"Follower_tutorial","wgTitle":"Follower tutorial","wgCurRevisionId":19341,"wgRevisionId":19341,"wgArticleId":3991,"wgIsArticle":true,"wgIsRedirect":false,"wgAction":"view","wgUserName":null,"wgUserGroups":["*"],"wgCategories":["Follower tutorials"],"wgBreakFrames":false,"wgPageContentLanguage":"en","wgPageContentModel":"wikitext","wgSeparatorTransformTable":["",""],"wgDigitTransformTable":["",""],"wgDefaultDateFormat":"dmy","wgMonthNames":["","January","February","March","April","May","June","July","August","September","October","November","December"],"wgMonthNamesShort":["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],"wgRelevantPageName":"Follower_tutorial","wgRelevantArticleId":3991,"wgIsProbablyEditable":false,"wgRestrictionEdit":[],"wgRestrictionMove":[]});
+}</script><script>if(window.mw){
+mw.loader.implement("user.options",function($,jQuery){mw.user.options.set({"variant":"en"});});mw.loader.implement("user.tokens",function($,jQuery){mw.user.tokens.set({"editToken":"+\\","patrolToken":"+\\","watchToken":"+\\"});});
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-js:7:a5c52c063dc436c1ca7c9f456936a5e9 */
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.page.startup","mediawiki.legacy.wikibits","mediawiki.legacy.ajax","skins.vector.js"]);
+}</script>
+<!--[if lt IE 7]><style type="text/css">body{behavior:url("/mw/skins/Vector/csshover.min.htc")}</style><![endif]-->
+<link rel="stylesheet" href="../assets/local/wiki-static.css" />
+</head>
+<body class="mediawiki ltr sitedir-ltr ns-0 ns-subject page-Follower_tutorial skin-vector action-view">
+		<div id="mw-page-base" class="noprint"></div>
+		<div id="mw-head-base" class="noprint"></div>
+		<div id="content" class="mw-body" role="main">
+			<a id="top"></a>
+
+						<div class="mw-indicators">
+</div>
+			<h1 id="firstHeading" class="firstHeading" lang="en">Follower tutorial</h1>
+						<div id="bodyContent" class="mw-body-content">
+									<div id="siteSub">From Dragon Age Toolset Wiki</div>
+								<div id="contentSub"></div>
+												<div id="jump-to-nav" class="mw-jump">
+					Jump to:					<a href="#mw-head">navigation</a>, 					<a href="#p-search">search</a>
+				</div>
+				<div id="mw-content-text" lang="en" dir="ltr" class="mw-content-ltr"><p>Follow these steps to have full control over the creation of your follower, with options such as:
+</p>
+<ul><li> Unique level-up template</li>
+<li> Class and specialisation chosen via script</li>
+<li> Any starting state</li>
+<li> Level higher than the PC</li>
+<li> Starts with a specialisation point rather than a specific specialisation</li>
+<li> Set plot flags in the call to the hire script</li></ul>
+<div id="toc" class="toc"><div id="toctitle"><h2>Contents</h2></div>
+<ul>
+<li class="toclevel-1 tocsection-1"><a href="#Prepare_Creature.2C_char_stage_and_Party_Picker_m2DAs"><span class="tocnumber">1</span> <span class="toctext">Prepare Creature, char_stage and Party Picker m2DAs</span></a></li>
+<li class="toclevel-1 tocsection-2"><a href="#Create_Party_Plot"><span class="tocnumber">2</span> <span class="toctext">Create Party Plot</span></a></li>
+<li class="toclevel-1 tocsection-3"><a href="#Add_Plot_Flags_to_Party_Picker_Event_Intercept"><span class="tocnumber">3</span> <span class="toctext">Add Plot Flags to Party Picker Event Intercept</span></a></li>
+<li class="toclevel-1 tocsection-4"><a href="#Create_a_Level_Up_Template"><span class="tocnumber">4</span> <span class="toctext">Create a Level Up Template</span></a>
+<ul>
+<li class="toclevel-2 tocsection-5"><a href="#Setting_Stat_Weights"><span class="tocnumber">4.1</span> <span class="toctext">Setting Stat Weights</span></a></li>
+<li class="toclevel-2 tocsection-6"><a href="#Setting_Talent_and_Skill_Priorities"><span class="tocnumber">4.2</span> <span class="toctext">Setting Talent and Skill Priorities</span></a></li>
+<li class="toclevel-2 tocsection-7"><a href="#Create_a_M2DA_base_m2DA"><span class="tocnumber">4.3</span> <span class="toctext">Create a M2DA_base_ m2DA</span></a></li>
+</ul>
+</li>
+<li class="toclevel-1 tocsection-8"><a href="#Create_a_New_Hire_Function_Include"><span class="tocnumber">5</span> <span class="toctext">Create a New Hire Function Include</span></a>
+<ul>
+<li class="toclevel-2 tocsection-9"><a href="#Add_Your_Custom_Autolevel_Template_to_GetCustomFollowerALTable.28.29"><span class="tocnumber">5.1</span> <span class="toctext">Add Your Custom Autolevel Template to GetCustomFollowerALTable()</span></a></li>
+</ul>
+</li>
+<li class="toclevel-1 tocsection-10"><a href="#Include_Function_In_Your_Hire_Script_and_Call_It"><span class="tocnumber">6</span> <span class="toctext">Include Function In Your Hire Script and Call It</span></a></li>
+<li class="toclevel-1 tocsection-11"><a href="#Common_Follower_Problems_.26_FAQ"><span class="tocnumber">7</span> <span class="toctext">Common Follower Problems &amp; FAQ</span></a>
+<ul>
+<li class="toclevel-2 tocsection-12"><a href="#Why_don.27t_my_followers_gain_XP.3F"><span class="tocnumber">7.1</span> <span class="toctext">Why don't my followers gain XP?</span></a></li>
+<li class="toclevel-2 tocsection-13"><a href="#When_I_choose_followers_from_the_Party_Picker.2C_they_spawn_into_the_area_but_do_not_join"><span class="tocnumber">7.2</span> <span class="toctext">When I choose followers from the Party Picker, they spawn into the area but do not join</span></a></li>
+<li class="toclevel-2 tocsection-14"><a href="#My_followers_don.27t_have_skill_trees.21"><span class="tocnumber">7.3</span> <span class="toctext">My followers don't have skill trees!</span></a></li>
+<li class="toclevel-2 tocsection-15"><a href="#My_followers_don.27t_have_a_class"><span class="tocnumber">7.4</span> <span class="toctext">My followers don't have a class</span></a></li>
+<li class="toclevel-2 tocsection-16"><a href="#Dog_talents_and_equipment_slots_don.27t_work"><span class="tocnumber">7.5</span> <span class="toctext">Dog talents and equipment slots don't work</span></a></li>
+<li class="toclevel-2 tocsection-17"><a href="#Isn.27t_there_an_easier_way_to_do_this.3F"><span class="tocnumber">7.6</span> <span class="toctext">Isn't there an easier way to do this?</span></a></li>
+<li class="toclevel-2 tocsection-18"><a href="#What_if_there_are_more_than_three_potential_followers.3F"><span class="tocnumber">7.7</span> <span class="toctext">What if there are more than three potential followers?</span></a></li>
+<li class="toclevel-2 tocsection-19"><a href="#How_do_I_turn_off_sustained_abilities_when_a_follower_is_dismissed.3F"><span class="tocnumber">7.8</span> <span class="toctext">How do I turn off sustained abilities when a follower is dismissed?</span></a></li>
+</ul>
+</li>
+</ul>
+</div>
+
+<h2><span class="mw-headline" id="Prepare_Creature.2C_char_stage_and_Party_Picker_m2DAs">Prepare Creature, char_stage and Party Picker m2DAs</span></h2>
+<p>Follow the same steps to create your follower creature, char_stage and Party Picker m2DAs as you did in the <a href="Basic_follower_tutorial.html" title="Basic follower tutorial">basic follower tutorial</a>.
+</p>
+<h2><span class="mw-headline" id="Create_Party_Plot">Create Party Plot</span></h2>
+<p>While   not necessary, it's very helpful to have plot flags set when a  follower  is hired or joins/leaves the active party.  This makes  conversation  interjections and the like very easy.
+</p><p>Create a plot with appropriate flags.  There's no real need to associate journal text with them:
+</p><p><a href="File%3AFollower_plot.jpg.html" class="image"><img alt="Follower plot.jpg" src="../assets/mw/images/2/21/Follower_plot.jpg" width="300" height="43" srcset="../assets/mw/images/2/21/Follower_plot.jpg 1.5x, ../assets/mw/images/2/21/Follower_plot.jpg 2x" /></a>
+</p><p>See FAQ for an alternative approach to plots when there are more than three potential party members.
+</p>
+<h2><span class="mw-headline" id="Add_Plot_Flags_to_Party_Picker_Event_Intercept">Add Plot Flags to Party Picker Event Intercept</span></h2>
+<p>We then update our module script to make use of that plot, like so:
+</p>
+<div dir="ltr" class="mw-geshi mw-code mw-content-ltr"><div class="dascript source-dascript"><pre class="de1"><span class="co2">#include &quot;utility_h&quot;</span>
+<span class="co2">#include &quot;wrappers_h&quot;</span>
+<span class="co2">#include &quot;plt_bc_create_party&quot;   //make sure you include your own plot, not mine</span>
+&#160;
+<a href="http://www.datoolset.net/wiki/index.php?title=void keyword"><span class="kw2">void</span></a> main<span class="br0">&#40;</span><span class="br0">&#41;</span>
+<span class="br0">&#123;</span>
+    <a href="http://www.datoolset.net/wiki/index.php?title=event keyword"><span class="kw2">event</span></a> ev <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetCurrentEvent"><span class="kw4">GetCurrentEvent</span></a><span class="br0">&#40;</span><span class="br0">&#41;</span>;
+    <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nEventType <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetEventType"><span class="kw4">GetEventType</span></a><span class="br0">&#40;</span>ev<span class="br0">&#41;</span>;
+    <a href="http://www.datoolset.net/wiki/index.php?title=switch keyword"><span class="kw1">switch</span></a><span class="br0">&#40;</span>nEventType<span class="br0">&#41;</span>
+    <span class="br0">&#123;</span>
+        <a href="http://www.datoolset.net/wiki/index.php?title=case keyword"><span class="kw1">case</span></a> <span class="kw3">EVENT_TYPE_PARTYMEMBER_ADDED</span><span class="sy0">:</span>
+        <span class="br0">&#123;</span>
+            <a href="http://www.datoolset.net/wiki/index.php?title=object keyword"><span class="kw2">object</span></a> oFollower <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetEventObject"><span class="kw4">GetEventObject</span></a><span class="br0">&#40;</span>ev, <span class="nu0">0</span><span class="br0">&#41;</span>;
+            <a href="http://www.datoolset.net/wiki/index.php?title=SetLocalInt"><span class="kw4">SetLocalInt</span></a><span class="br0">&#40;</span>oFollower, CREATURE_REWARD_FLAGS, <span class="nu0">0</span><span class="br0">&#41;</span>;
+            WR_SetFollowerState<span class="br0">&#40;</span>oFollower, <span class="kw3">FOLLOWER_STATE_ACTIVE</span><span class="br0">&#41;</span>;
+&#160;
+            <a href="http://www.datoolset.net/wiki/index.php?title=AddCommand"><span class="kw4">AddCommand</span></a><span class="br0">&#40;</span>oFollower, <a href="http://www.datoolset.net/wiki/index.php?title=CommandJumpToLocation"><span class="kw4">CommandJumpToLocation</span></a><span class="br0">&#40;</span><a href="http://www.datoolset.net/wiki/index.php?title=GetLocation"><span class="kw4">GetLocation</span></a><span class="br0">&#40;</span><a href="http://www.datoolset.net/wiki/index.php?title=GetHero"><span class="kw4">GetHero</span></a><span class="br0">&#40;</span><span class="br0">&#41;</span><span class="br0">&#41;</span><span class="br0">&#41;</span><span class="br0">&#41;</span>;   <span class="co1">//Ensures follower appears at PC's location.</span>
+&#160;
+            <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a> <span class="br0">&#40;</span><a href="http://www.datoolset.net/wiki/index.php?title=GetTag"><span class="kw4">GetTag</span></a><span class="br0">&#40;</span>oFollower<span class="br0">&#41;</span> <span class="sy0">==</span> <span class="st0">&quot;bc_party_miera&quot;</span><span class="br0">&#41;</span> <span class="br0">&#123;</span>               <span class="co1">//You must explicitly test for your follower's tag.</span>
+                WR_SetPlotFlag<span class="br0">&#40;</span>PLT_BC_CREATE_PARTY, PARTY_MIERA_IN_PARTY, TRUE<span class="br0">&#41;</span>;     <span class="co1">//Make sure you use your own flags!</span>
+            <span class="br0">&#125;</span>
+&#160;
+            <a href="http://www.datoolset.net/wiki/index.php?title=break keyword"><span class="kw1">break</span></a>;
+        <span class="br0">&#125;</span>  
+&#160;
+        <a href="http://www.datoolset.net/wiki/index.php?title=case keyword"><span class="kw1">case</span></a> <span class="kw3">EVENT_TYPE_PARTYMEMBER_DROPPED</span><span class="sy0">:</span>                    
+        <span class="br0">&#123;</span>
+              <a href="http://www.datoolset.net/wiki/index.php?title=object keyword"><span class="kw2">object</span></a> oFollower <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetEventObject"><span class="kw4">GetEventObject</span></a><span class="br0">&#40;</span>ev, <span class="nu0">0</span><span class="br0">&#41;</span>; 
+&#160;
+              <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a> <span class="br0">&#40;</span><a href="http://www.datoolset.net/wiki/index.php?title=GetTag"><span class="kw4">GetTag</span></a><span class="br0">&#40;</span>oFollower<span class="br0">&#41;</span> <span class="sy0">==</span> <span class="st0">&quot;bc_party_miera&quot;</span><span class="br0">&#41;</span> <span class="br0">&#123;</span> 
+                WR_SetPlotFlag<span class="br0">&#40;</span>PLT_BC_CREATE_PARTY, PARTY_MIERA_IN_PARTY, FALSE<span class="br0">&#41;</span>;     <span class="co1">//As above, but set false.</span>
+              <span class="br0">&#125;</span>
+&#160;
+        <span class="br0">&#125;</span>
+&#160;
+    <span class="br0">&#125;</span>
+<span class="br0">&#125;</span></pre></div></div>
+<h2><span class="mw-headline" id="Create_a_Level_Up_Template">Create a Level Up Template</span></h2>
+<p>You   can skip this step if you're content to use one of the generic Rogue,   Wizard or Warrior templates, but I don't recommend it.  Making a   template that suits your character is easy and will almost always be   better for the player than a generic one that spends points poorly.
+</p><p>Go to \Program Files\Dragon Age\tools\Source\2DA (or wherever you installed Dragon Age).
+</p><p>You should see a number of excel sheets of the form <b>ALCharacter.xls</b>   (such as ALAlistair.xls, ALLeliana.xls, ALRogue_Default.xls etc).   Open  the one closest to your character (ie Morrigan or Wynne for a  wizard,  Leliana or Zevran for a rogue).  Save a copy as <b>ALYourcharacter.xls</b> in whatever directory you're using to create your 2DAs, remembering to rename the worksheet <b>ALYourcharacter</b> (in this example, ALMiera.xls with ALMiera as its worksheet).
+</p><p>It should look something like this:
+</p><p><a href="File%3AALtable.jpg.html" class="image"><img alt="ALtable.jpg" src="../assets/mw/images/4/48/ALtable.jpg" width="300" height="156" srcset="../assets/mw/images/4/48/ALtable.jpg 1.5x, ../assets/mw/images/4/48/ALtable.jpg 2x" /></a>
+</p><p><b>Columns B</b> and <b>C</b> are the talents/spells available to this character.  Do not change them.
+</p><p><b>Columns F</b> and <b>G</b> are the skills available to this character.  Do not change them.
+</p><p>We will edit the remaining columns like so:
+</p>
+<h3><span class="mw-headline" id="Setting_Stat_Weights">Setting Stat Weights</span></h3>
+<p>The stat weights in <b>column J</b>   determine how the follower will spend their attribute points, in a   rough ratio.  So if Dexterity is set to 1.5 and Intelligence to 1, you   should expect to see 3 points of Dex for every 2 points of Cunning in-game (note Intelligence is the label used in the toolset for Cunning).
+</p><p>Simply   change the values in J to reflect how you'd like the character to  spend  their points.  In this example we're creating a wizard, so we're  not  going to mess around:
+</p><p><a href="File%3AMiera_stat_weights.jpg.html" class="image"><img alt="Miera stat weights.jpg" src="../assets/mw/images/3/3a/Miera_stat_weights.jpg" width="207" height="171" /></a>
+</p><p>This   character will only raise magic.  I set the value to 5 rather than   something like 1 to provide room underneath for the other stats while   still overwhelmingly favouring magic, but in practice I only really  ever  want that one stat. 
+</p><p>In a note left on this column in the   existing templates, Bioware's Georg Zoeller writes, "This is the weight   of each attribute (row id links into properties.xls.id). 1.0 means  'try  to keep this attribute level' (spend 1 point per level). 0.5 means  'try  to spend 1 point every two levels' and so on."
+</p><p>The default Mage, Rogue and Warrior templates include <b>column L</b> labeled "AttInit." Editing these values seems to have no effect on followers set to use these templates.
+</p>
+<h3><span class="mw-headline" id="Setting_Talent_and_Skill_Priorities">Setting Talent and Skill Priorities</span></h3>
+<p><b>Columns D</b> and <b>E</b> are the talents/spells that the character will buy, in preference order from top to bottom.
+</p><p><b>Columns H</b> and <b>I</b> are the skills that the character will buy, in preference order from top to bottom.
+</p><p>To change these, just copy the appropriate two cells from columns B&amp;C or F&amp;G over the ones you want to replace.
+</p><p>For example, here we're copying Morrigan's template.  Morrigan has Spider Shape high in her preferences, which we do not want.
+</p><p><a href="File%3AAlMori_talent_pref.jpg.html" class="image"><img alt="AlMori talent pref.jpg" src="../assets/mw/images/e/e8/AlMori_talent_pref.jpg" width="233" height="192" /></a>
+</p><p>We decide we'd prefer Flame Blast, so we find it in columns B&amp;C and copy both cells:
+</p><p><a href="File%3AALMori_copy.jpg.html" class="image"><img alt="ALMori copy.jpg" src="../assets/mw/images/d/d4/ALMori_copy.jpg" width="300" height="222" srcset="../assets/mw/images/d/d4/ALMori_copy.jpg 1.5x, ../assets/mw/images/d/d4/ALMori_copy.jpg 2x" /></a>
+</p><p>Then we select the cells we want to replace in columns D&amp;E and paste over them:
+</p><p><a href="File%3AALMori_paste.jpg.html" class="image"><img alt="ALMori paste.jpg" src="../assets/mw/images/thumb/0/05/ALMori_paste.jpg/300px-ALMori_paste.jpg" width="300" height="222" srcset="../assets/mw/images/0/05/ALMori_paste.jpg 1.5x, ../assets/mw/images/0/05/ALMori_paste.jpg 2x" /></a>
+</p><p>Continue   this process until your priorities list for both skills and   talents/spells is exactly as you want it.  Make sure you have at least   as many priorities as the core follower you're copying - points that cannot be spent according to these priorities have a habit of vanishing.
+</p><p>If   you used any abilities from a specialisation, make sure you remember  to  set that specialisation with the function we'll introduce later.   The  autolevel scripts will add specialisation abilities to a character   regardless of whether they have that spec or not.
+</p>
+<h3><span class="mw-headline" id="Create_a_M2DA_base_m2DA">Create a M2DA_base_ m2DA</span></h3>
+<p>Dragon Age will need to know where to find your autolevel template.  We tell it by extending M2DA_base.gda
+</p><p>Create a spreadsheet with the name and worksheet name in the form <b>M2DA_base_</b> with your unique suffix (in this example, M2DA_base_fofbc.xls with M2DA_base_fofbc as a worksheet).
+</p><p>Set up its columns and data like so (note I used GDApp because Open Office wasn't cooperating for this one!):
+</p><p><a href="File%3AM2da_base_fofbc.jpg.html" class="image"><img alt="M2da base fofbc.jpg" src="../assets/mw/images/5/55/M2da_base_fofbc.jpg" width="300" height="203" srcset="../assets/mw/images/5/55/M2da_base_fofbc.jpg 1.5x, ../assets/mw/images/5/55/M2da_base_fofbc.jpg 2x" /></a>
+</p><p>The <b>ID</b>   should be very high to avoid conflicts.  I've arbitrarily chosen   50,000+ here.  Carefully note the ID you've chosen for your character,   you will need it later.
+</p><p>Set the <b>Label</b> and <b>Worksheet</b> to be the name of your autolevel template worksheet (ALCharactername if you've been following this).
+</p><p>Set the <b>PackageIDForAI</b> to be 0, it shouldn't be needed for followers.
+</p><p>When you're done, use ExcelProcessor to make GDAs of both spreadsheets and copy them to your module's export folder.
+</p><p>FOR AUTOLEVEL TO WORK AFTER RECRUITING:
+</p><p>Look in packages.xls. 
+</p><p>There   is a column called LevelupTable. That links to a corresponding AL*   table. For instance,  row 81 is for Leliana. Her LevelupTable value is   258. If you look that up in 2DA_base, you'll see it links to ALLeliana.
+</p><p>(alternatively, you could try packages_base.gda)
+</p>
+<h2><span class="mw-headline" id="Create_a_New_Hire_Function_Include">Create a New Hire Function Include</span></h2>
+<p>This section is probably only relevent if you have a specific need to override the functionality of player_core.
+</p><p>Many   vital steps of follower addition happen inside an event in   player_core.  Followers tend to be extremely buggy (no skill tree, for   example) if this event does not fire.
+</p><p>However, that event is not   very flexible.  In order to control it to our requirements, we need to   replicate its functionality inside our own script.  This is probably   much safer than messing with player_core directly!
+</p><p>Create a new script file, naming it something like <b>hireCustomFollower_h</b>.  We will be including this wherever we want to hire a follower.
+</p><p>Paste in the following script:
+</p>
+<div dir="ltr" class="mw-geshi mw-code mw-content-ltr"><div class="dascript source-dascript"><pre class="de1"><span class="co2">#include &quot;sys_chargen_h&quot;</span>
+<span class="co2">#include &quot;wrappers_h&quot;</span>
+<span class="co2">#include &quot;utility_h&quot;</span>
+<span class="co2">#include &quot;sys_rewards_h&quot;</span>
+<span class="co2">#include &quot;approval_h&quot;</span>
+<span class="co2">#include &quot;sys_autolevelup_h&quot;</span>
+&#160;
+<span class="coMULTI">/*  Jye Nicolson 5-Jan-2010
+This function set duplicates the full functionality chain of UT_HireFollower, with the following exceptions:
+&#160;
+-  Followers can gain XP
+-  Autolevel status can be set (default off)
+-    Followers can be set to any starting state (default Available) and  will  still be properly initalised and added to the party pool
+-  Autolevel tables for non-core followers can be explicitly set.
+-  Class and Specialisation can be chosen via script
+-  Followers without specialisations are granted a spec point by default.
+&#160;
+It should only ever be called once each for characters you intend to be full followers.
+Much of the protective code handling summoned creatures etc. in player_core is not present here.
+&#160;
+Calling the function:
+&#160;
+Simple:
+&#160;
+hireCustomFollower(oFollower, CLASS_WARRIOR);
+&#160;
+Change the class to CLASS_WIZARD or CLASS_ROGUE as appropriate.  
+This will hire your follower and make them available.  
+They will auto level up with a default package, and receive a free spec point.
+&#160;
+Best Practice:
+&#160;
+hireCustomFollower(oFollower, CLASS_WARRIOR, PLT_YOUR_PARTY_PLOT, YOUR_FOLLOWER_JOINED_FLAG, ABILITY_TALENT_HIDDEN_CHAMPION);
+&#160;
+Where   the plot and flag are those for your module (remember to create the   plot and include it on the calling script), and ABILITY_TALENT_HIDDEN   etc is the desired spec.
+&#160;
+You should also have a custom ALTable set up.  
+&#160;
+See   wiki for details, and remember to edit it in to   GetCustomFollowerALTable below or pass it directly as an argument to   hireCustomFollower.
+&#160;
+Full argument list:
+&#160;
+void hireCustomFollower (
+        object oFollower,   //Pass your follower object, mandatory
+&#160;
+        int nForceClass,    //Pass a Class constant here, usually CLASS_ROGUE, CLASS_WARRIOR, CLASS_WIZARD.  Mandatory due to a bug.
+&#160;
+        string   sPlot = &quot;&quot;,   //It's recommended you have a plot flag to be set when   the follower joins.  Pass the plot constant here.  Remember to #include   in calling script
+&#160;
+        int nPlotFlag = &quot;&quot;,  //And then pass the flag constant.  Will be set to TRUE if available.
+&#160;
+        int   nForceSpec = 0,  //This is the ID of the Specialisation you want.   Note  they are NOT classes, but abilities.  The full list is:
+                             //ABILITY_SPELL_HIDDEN_ARCANE_WARRIOR,   ABILITY_SPELL_HIDDEN_BLOODMAGE, ABILITY_SPELL_HIDDEN_SHAPESHIFTER,   ABILITY_SPELL_HIDDEN_SPIRIT_HEALER
+                             //ABILITY_SPELL_HIDDEN_BARD, ABILITY_TALENT_HIDDEN_ASSASSIN, ABILITY_TALENT_HIDDEN_DUELIST, ABILITY_TALENT_HIDDEN_RANGER
+                             //ABILITY_TALENT_HIDDEN_BERSERKER, ABILITY_TALENT_HIDDEN_CHAMPION, ABILITY_TALENT_HIDDEN_REAVER, ABILITY_TALENT_HIDDEN_TEMPLAR
+                             //I recommended forcing a spec, particularly if your ALTable includes abilities from one.
+&#160;
+        int   nALTable = 0,    //This is the ID of an ALTable from 2DA_base.GDA or   your module's m2DA_base_*.GDA  I recommended the latter, but you can   edit that into GetCustomFollowerALTable below rather than passing it.
+&#160;
+        int   bInvokePicker = FALSE,  //Sets whether the party picker should be   opened on hiring.  I think it's cleaner to call the picker outside this   script, particularly if you have multiple hires at once.
+&#160;
+        int nInitialState = FOLLOWER_STATE_AVAILABLE,  //This sets whether the follower joins the active party or not.  Options are:
+                                                       //FOLLOWER_STATE_ACTIVE (put them in the active party)
+                                                       //FOLLOWER_STATE_LOCKEDACTIVE (force them into the active party and keep them there, remember to change this later.
+                                                       //FOLLOWER_STATE_AVAILABLE (make them available on the party picker (if you've set it up for them), but not in the active party)
+                                                       //Plus some others you're unlikely to need at this time.  Defaults to AVAILABLE because having 4+ active followers is screwy.
+&#160;
+        string   sCurrPlot = &quot;&quot;,  //If you set FOLLOWER_STATE_ACTIVE or   FOLLOWER_STATE_LOCKEDACTIVE, the script will check to see if you passed   this.
+                                //It   is recommended that you have a plot flag set for a given follower  being  in the active party, this makes conversation interjection etc.  much  easier.
+&#160;
+        int nCurrPlotFlag = 0,  //This flag will be set if FOLLOWER_STATE_ACTIVE or FOLLOWER_STATE_LOCKEDACTIVE are true
+                                //AND sCurrPlot has a value AND nCurrPlotFlag is &gt; 0.  
+                                //ie if you added someone to the active party and have a plot flag to cope with it.
+&#160;
+        int   nAutolevel = 0,     //Sets the Autolevel flag on the character sheet.   0  is off, 1 is on, 2 forces it on and removes it so the player can't  turn  it off.
+&#160;
+&#160;
+        bFreeSpecPoint = TRUE,  //This grants a specialisation point to the follower if they do not have a specialisation.  
+                                //It's important to set this false for classes that do not have specs, such as CLASS_DOG.
+&#160;
+        int   nTargetLevel = 0,   //If you want a specific level, set this.    Generally not worthwhile unless you set it higher than the player,  since  they'll just get XP from the party picker anyway.
+&#160;
+        int   nMinLevel = 0       //Set this if there's a specific level you don't   want the follower to go below.  Probably only useful if the PC might be   very low level but not necessarily so. 
+&#160;
+        )
+*/</span>       
+<span class="coMULTI">/* GetCustomFollowerALTable()  
+This function is where you put your custom table assignments.
+&#160;
+You   should explicitly test for the tag of your follower (not mine!) and   assign a value to nTable from your m2DA extension to M2DA_base 
+&#160;
+See wiki for details on how to do this, or ignore it to get the default Warrior/Rogue/Wizard AL tables.
+&#160;
+NOTE: you MUST explicitly set a table for non-Warrior/Rogue/Wizards, eg dogs.  Use TABLE_AL_DOG for a default Mabari.
+*/</span>
+&#160;
+<a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> GetCustomFollowerALTable<span class="br0">&#40;</span><a href="http://www.datoolset.net/wiki/index.php?title=object keyword"><span class="kw2">object</span></a> oFollower<span class="br0">&#41;</span>
+<span class="br0">&#123;</span>
+    <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nTable <span class="sy0">=</span> _GetTableToUseForAL<span class="br0">&#40;</span>oFollower<span class="br0">&#41;</span>;
+    <a href="http://www.datoolset.net/wiki/index.php?title=string keyword"><span class="kw2">string</span></a> sTag <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetTag"><span class="kw4">GetTag</span></a><span class="br0">&#40;</span>oFollower<span class="br0">&#41;</span>;
+&#160;
+    <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a><span class="br0">&#40;</span>sTag  <span class="sy0">==</span> <span class="st0">&quot;bc_party_miera&quot;</span><span class="br0">&#41;</span> 
+    <span class="br0">&#123;</span>               
+        nTable <span class="sy0">=</span> <span class="nu0">50143</span>;   
+    <span class="br0">&#125;</span>   
+    <a href="http://www.datoolset.net/wiki/index.php?title=else keyword"><span class="kw1">else</span></a> <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a><span class="br0">&#40;</span>sTag <span class="sy0">==</span> <span class="st0">&quot;bc_party_jysavin&quot;</span><span class="br0">&#41;</span> 
+    <span class="br0">&#123;</span>
+        nTable <span class="sy0">=</span> <span class="nu0">50144</span>;   
+    <span class="br0">&#125;</span>
+    <a href="http://www.datoolset.net/wiki/index.php?title=else keyword"><span class="kw1">else</span></a> <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a><span class="br0">&#40;</span>sTag <span class="sy0">==</span> <span class="st0">&quot;bc_party_geldual&quot;</span><span class="br0">&#41;</span> 
+    <span class="br0">&#123;</span>
+        nTable <span class="sy0">=</span> <span class="nu0">50145</span>;   
+    <span class="br0">&#125;</span>
+    <a href="http://www.datoolset.net/wiki/index.php?title=else keyword"><span class="kw1">else</span></a>  <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a><span class="br0">&#40;</span>sTag <span class="sy0">==</span> <span class="st0">&quot;bc_party_braghon&quot;</span><span class="br0">&#41;</span> 
+    <span class="br0">&#123;</span>
+        nTable <span class="sy0">=</span> <span class="nu0">50146</span>;   
+    <span class="br0">&#125;</span>
+&#160;
+    <a href="http://www.datoolset.net/wiki/index.php?title=return keyword"><span class="kw1">return</span></a> nTable;    
+<span class="br0">&#125;</span>   
+&#160;
+<span class="co1">// This just cleans up the main function a little</span>
+<a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> GetCustomFollowerTargetLevel<span class="br0">&#40;</span><a href="http://www.datoolset.net/wiki/index.php?title=object keyword"><span class="kw2">object</span></a> oFollower, <a href="http://www.datoolset.net/wiki/index.php?title=object keyword"><span class="kw2">object</span></a> oHero, <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nPackage, <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nMinLevel <span class="sy0">=</span> <span class="nu0">0</span><span class="br0">&#41;</span> 
+<span class="br0">&#123;</span>
+    <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nPlayerLevel <span class="sy0">=</span> GetLevel<span class="br0">&#40;</span>oHero<span class="br0">&#41;</span>;
+    <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nTargetLevel <span class="sy0">=</span> <span class="nu0">0</span>;
+&#160;
+    <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a><span class="br0">&#40;</span>nPlayerLevel <span class="sy0">&gt;=</span> <span class="nu0">13</span> <span class="sy0">||</span> nPlayerLevel <span class="sy0">==</span> <span class="nu0">1</span> <span class="sy0">||</span> <span class="sy0">!</span>_UT_GetIsPlotFollower<span class="br0">&#40;</span>oFollower<span class="br0">&#41;</span><span class="br0">&#41;</span> 
+    <span class="br0">&#123;</span>
+        nTargetLevel <span class="sy0">=</span> nPlayerLevel;
+    <span class="br0">&#125;</span>
+    <a href="http://www.datoolset.net/wiki/index.php?title=else keyword"><span class="kw1">else</span></a> 
+    <span class="br0">&#123;</span>
+        nTargetLevel <span class="sy0">=</span> nPlayerLevel <span class="sy0">+</span> <span class="nu0">1</span>;
+    <span class="br0">&#125;</span>
+&#160;
+    <span class="co1">// If nMinLevel is not specified, checks package 2DA for a value</span>
+    <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a><span class="br0">&#40;</span>nMinLevel <span class="sy0">==</span> <span class="nu0">0</span><span class="br0">&#41;</span> 
+    <span class="br0">&#123;</span>
+        nMinLevel <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetM2DAInt"><span class="kw4">GetM2DAInt</span></a><span class="br0">&#40;</span>TABLE_PACKAGES, <span class="st0">&quot;MinLevel&quot;</span>, nPackage<span class="br0">&#41;</span>;
+    <span class="br0">&#125;</span>
+&#160;
+    <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a><span class="br0">&#40;</span>nMinLevel <span class="sy0">&gt;</span> <span class="nu0">0</span> <span class="sy0">&amp;&amp;</span> nMinLevel <span class="sy0">&gt;</span> nTargetLevel<span class="br0">&#41;</span> 
+    <span class="br0">&#123;</span>
+        nTargetLevel <span class="sy0">=</span> nMinLevel;
+    <span class="br0">&#125;</span>
+&#160;
+    <a href="http://www.datoolset.net/wiki/index.php?title=return keyword"><span class="kw1">return</span></a> nTargetLevel;
+<span class="br0">&#125;</span>   
+&#160;
+<span class="co1">// Moving this black box out&#160;:)  I don't really understand it, but it should function if you have tactics set up in a package.</span>
+&#160;
+<a href="http://www.datoolset.net/wiki/index.php?title=void keyword"><span class="kw2">void</span></a> InitCustomFollowerTactics<span class="br0">&#40;</span><a href="http://www.datoolset.net/wiki/index.php?title=object keyword"><span class="kw2">object</span></a> oFollower, <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nPackage<span class="br0">&#41;</span> 
+<span class="br0">&#123;</span>
+         <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nTableID <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetM2DAInt"><span class="kw4">GetM2DAInt</span></a><span class="br0">&#40;</span>TABLE_PACKAGES, <span class="st0">&quot;FollowerTacticsTable&quot;</span>, nPackage<span class="br0">&#41;</span>;
+         <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a> <span class="br0">&#40;</span>nTableID <span class="sy0">!=</span> <span class="sy0">-</span><span class="nu0">1</span><span class="br0">&#41;</span>
+            <span class="br0">&#123;</span>
+             <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nRows <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetM2DARows"><span class="kw4">GetM2DARows</span></a><span class="br0">&#40;</span>nTableID<span class="br0">&#41;</span>;
+             <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nMaxTactics <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetNumTactics"><span class="kw4">GetNumTactics</span></a><span class="br0">&#40;</span>oFollower<span class="br0">&#41;</span>;
+&#160;
+             <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nTacticsEntry <span class="sy0">=</span> <span class="nu0">1</span>;
+             <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> i;
+             <a href="http://www.datoolset.net/wiki/index.php?title=for keyword"><span class="kw1">for</span></a> <span class="br0">&#40;</span>i <span class="sy0">=</span> <span class="nu0">1</span>; i <span class="sy0">&lt;=</span> nRows <span class="sy0">&amp;&amp;</span> nTacticsEntry <span class="sy0">&lt;=</span> nMaxTactics; <span class="sy0">++</span>i<span class="br0">&#41;</span>
+                <span class="br0">&#123;</span>
+                        <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> bAddEntry <span class="sy0">=</span> FALSE;
+                        <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nTargetType <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetM2DAInt"><span class="kw4">GetM2DAInt</span></a><span class="br0">&#40;</span>nTableID, <span class="st0">&quot;TargetType&quot;</span>, i<span class="br0">&#41;</span>;
+                        <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nCondition <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetM2DAInt"><span class="kw4">GetM2DAInt</span></a><span class="br0">&#40;</span>nTableID, <span class="st0">&quot;Condition&quot;</span>, i<span class="br0">&#41;</span>;
+                        <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nCommandType <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetM2DAInt"><span class="kw4">GetM2DAInt</span></a><span class="br0">&#40;</span>nTableID, <span class="st0">&quot;Command&quot;</span>, i<span class="br0">&#41;</span>;
+                        <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nCommandParam <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetM2DAInt"><span class="kw4">GetM2DAInt</span></a><span class="br0">&#40;</span>nTableID, <span class="st0">&quot;SubCommand&quot;</span>, i<span class="br0">&#41;</span>;
+&#160;
+                        <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nUseType <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetM2DAInt"><span class="kw4">GetM2DAInt</span></a><span class="br0">&#40;</span>TABLE_COMMAND_TYPES, <span class="st0">&quot;UseType&quot;</span>, nCommandType<span class="br0">&#41;</span>;
+                        <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a> <span class="br0">&#40;</span>nUseType <span class="sy0">==</span> <span class="nu0">0</span><span class="br0">&#41;</span>
+                        <span class="br0">&#123;</span>
+                            bAddEntry <span class="sy0">=</span> TRUE;
+                        <span class="br0">&#125;</span>
+                        <a href="http://www.datoolset.net/wiki/index.php?title=else keyword"><span class="kw1">else</span></a>
+                        <span class="br0">&#123;</span>
+                            bAddEntry <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=HasAbility"><span class="kw4">HasAbility</span></a><span class="br0">&#40;</span>oFollower, nCommandParam<span class="br0">&#41;</span>;
+                        <span class="br0">&#125;</span>
+&#160;
+                        <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a> <span class="br0">&#40;</span>bAddEntry<span class="br0">&#41;</span>
+                        <span class="br0">&#123;</span>
+                            <a href="http://www.datoolset.net/wiki/index.php?title=SetTacticEntry"><span class="kw4">SetTacticEntry</span></a><span class="br0">&#40;</span>oFollower, nTacticsEntry, TRUE, nTargetType, nCondition, nCommandType, nCommandParam<span class="br0">&#41;</span>;
+                            <span class="sy0">++</span>nTacticsEntry;
+                        <span class="br0">&#125;</span>
+                    <span class="br0">&#125;</span>
+                <span class="br0">&#125;</span>
+<span class="br0">&#125;</span>  
+&#160;
+<span class="coMULTI">/* InitCustomFollowerSpec:
+&#160;
+This function tries to set the forced Specialisation.  If there is none, it checks the package for one.  
+&#160;
+If there isn't either of those, it grants a free spec point if bFreeSpecPoint is true.
+&#160;
+*/</span>
+&#160;
+<a href="http://www.datoolset.net/wiki/index.php?title=void keyword"><span class="kw2">void</span></a> InitCustomFollowerSpec<span class="br0">&#40;</span><a href="http://www.datoolset.net/wiki/index.php?title=object keyword"><span class="kw2">object</span></a> oFollower, <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nPackage, <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nForceSpec, <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> bFreeSpecPoint<span class="br0">&#41;</span> <span class="br0">&#123;</span>
+    <span class="co1">// Find specialization, and optionally add a spec point if none is found.</span>
+&#160;
+        <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a> <span class="br0">&#40;</span>nForceSpec <span class="sy0">==</span> <span class="nu0">0</span><span class="br0">&#41;</span> <span class="br0">&#123;</span>
+&#160;
+        <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nSpecAbility <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetM2DAInt"><span class="kw4">GetM2DAInt</span></a><span class="br0">&#40;</span>TABLE_PACKAGES, <span class="st0">&quot;switch1_class&quot;</span>, nPackage<span class="br0">&#41;</span>; <span class="co1">// followers can have only 1 advanced class</span>
+         <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a><span class="br0">&#40;</span>nSpecAbility <span class="sy0">&gt;</span> <span class="nu0">0</span><span class="br0">&#41;</span>
+         <span class="br0">&#123;</span>
+          <a href="http://www.datoolset.net/wiki/index.php?title=AddAbility"><span class="kw4">AddAbility</span></a><span class="br0">&#40;</span>oFollower, nSpecAbility<span class="br0">&#41;</span>;
+         <span class="br0">&#125;</span> <a href="http://www.datoolset.net/wiki/index.php?title=else keyword"><span class="kw1">else</span></a> <span class="br0">&#123;</span>
+             <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a> <span class="br0">&#40;</span>bFreeSpecPoint<span class="br0">&#41;</span> <span class="br0">&#123;</span>
+                 <a href="http://www.datoolset.net/wiki/index.php?title=SetCreatureProperty"><span class="kw4">SetCreatureProperty</span></a><span class="br0">&#40;</span>oFollower, <span class="nu0">38</span>, <span class="nu0">1.00</span><span class="br0">&#41;</span>;
+             <span class="br0">&#125;</span>
+         <span class="br0">&#125;</span>                    
+&#160;
+        <span class="br0">&#125;</span> <a href="http://www.datoolset.net/wiki/index.php?title=else keyword"><span class="kw1">else</span></a> <span class="br0">&#123;</span>
+&#160;
+             <a href="http://www.datoolset.net/wiki/index.php?title=AddAbility"><span class="kw4">AddAbility</span></a><span class="br0">&#40;</span>oFollower, nForceSpec<span class="br0">&#41;</span>;
+&#160;
+        <span class="br0">&#125;</span>
+<span class="br0">&#125;</span>
+&#160;
+<span class="coMULTI">/* hireCustomFollower()  (See doco at top of page)
+&#160;
+I strongly suggest you reorder the parameters if you're adding many followers with advanced options.
+&#160;
+Feel free to leave them alone if you only want to set class, plot, spec or don't mind long declarations.
+&#160;
+Note nForceClass is currently compulsory due to flakiness with GetCreatureCoreClass()
+*/</span>
+&#160;
+<a href="http://www.datoolset.net/wiki/index.php?title=void keyword"><span class="kw2">void</span></a> hireCustomFollower<span class="br0">&#40;</span><a href="http://www.datoolset.net/wiki/index.php?title=object keyword"><span class="kw2">object</span></a> oFollower, <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nForceClass, <a href="http://www.datoolset.net/wiki/index.php?title=string keyword"><span class="kw2">string</span></a> sPlot <span class="sy0">=</span> <span class="st0">&quot;&quot;</span>, <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nPlotFlag <span class="sy0">=</span> <span class="nu0">0</span>, <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nForceSpec <span class="sy0">=</span> <span class="nu0">0</span>, 
+<a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nALTable <span class="sy0">=</span> <span class="nu0">0</span>, <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> bInvokePicker <span class="sy0">=</span> FALSE, <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nInitialState <span class="sy0">=</span> <span class="kw3">FOLLOWER_STATE_AVAILABLE</span>, <a href="http://www.datoolset.net/wiki/index.php?title=string keyword"><span class="kw2">string</span></a> sCurrPlot <span class="sy0">=</span> <span class="st0">&quot;&quot;</span>, 
+<a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nCurrPlotFlag <span class="sy0">=</span> <span class="nu0">0</span>, <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nAutolevel <span class="sy0">=</span> <span class="nu0">0</span>, <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> bFreeSpecPoint <span class="sy0">=</span> TRUE, <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nTargetLevel <span class="sy0">=</span> <span class="nu0">0</span>, <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nMinLevel <span class="sy0">=</span> <span class="nu0">0</span><span class="br0">&#41;</span> 
+<span class="br0">&#123;</span>
+&#160;
+        <a href="http://www.datoolset.net/wiki/index.php?title=object keyword"><span class="kw2">object</span></a> oHero <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetHero"><span class="kw4">GetHero</span></a><span class="br0">&#40;</span><span class="br0">&#41;</span>;
+&#160;
+        <span class="coMULTI">/* #################  BEGIN BASIC FOLLOWER JOIN BLOCK   ###################
+&#160;
+        This loosely replicates WR_SetFollowerState.
+&#160;
+&#160;
+        */</span>    
+&#160;
+        <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a> <span class="br0">&#40;</span>nForceClass <span class="sy0">==</span> <span class="nu0">0</span><span class="br0">&#41;</span> <span class="br0">&#123;</span>
+            nForceClass <span class="sy0">=</span> GetCreatureCoreClass<span class="br0">&#40;</span>oFollower<span class="br0">&#41;</span>;           <span class="co1">//This is not working.  Hence nForceClass mandatory.</span>
+        <span class="br0">&#125;</span>
+&#160;
+&#160;
+        <a href="http://www.datoolset.net/wiki/index.php?title=SetGroupId"><span class="kw4">SetGroupId</span></a><span class="br0">&#40;</span>oFollower, <a href="http://www.datoolset.net/wiki/index.php?title=GetGroupId"><span class="kw4">GetGroupId</span></a><span class="br0">&#40;</span>oHero<span class="br0">&#41;</span><span class="br0">&#41;</span>;      <span class="co1">//Puts the follower in the pc's Group.</span>
+        <a href="http://www.datoolset.net/wiki/index.php?title=SetEventScript"><span class="kw4">SetEventScript</span></a><span class="br0">&#40;</span>oFollower, RESOURCE_SCRIPT_PLAYER_CORE<span class="br0">&#41;</span>;  <span class="co1">//This makes them act like a player.</span>
+        <a href="http://www.datoolset.net/wiki/index.php?title=SetFollowerState"><span class="kw4">SetFollowerState</span></a><span class="br0">&#40;</span>oFollower, nInitialState<span class="br0">&#41;</span>;  <span class="co1">//This sets whether they are available, in the active party etc.</span>
+&#160;
+        <span class="coMULTI">/* #################  END BASIC FOLLOWER JOIN BLOCK ##################### */</span>
+&#160;
+&#160;
+&#160;
+        <span class="coMULTI">/* #################  BEGIN PLAYER_CORE EVENT_TYPE_PARTY_MEMBER_HIRED EMULATION #################
+         This   replicates the EVENT_TYPE_PARTY_MEMBER_HIRED handler from player_core,   stripped down for simplicity and allowing our custom options.
+&#160;
+&#160;
+        */</span>
+&#160;
+        Chargen_EnableTacticsPresets<span class="br0">&#40;</span>oFollower<span class="br0">&#41;</span>;    <span class="co1">//I assume this is important.</span>
+&#160;
+        <a href="http://www.datoolset.net/wiki/index.php?title=SetLocalInt"><span class="kw4">SetLocalInt</span></a><span class="br0">&#40;</span>oFollower, FOLLOWER_SCALED, <span class="nu0">1</span><span class="br0">&#41;</span>;  <span class="co1">//This should prevent the follower being rescaled by player_core or what have you</span>
+&#160;
+        <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nPackage <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetPackage"><span class="kw4">GetPackage</span></a><span class="br0">&#40;</span>oFollower<span class="br0">&#41;</span>;  <span class="co1">//Gets the package, which will be used to find a number of 2DA IDs.</span>
+        <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nPackageClass <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetM2DAInt"><span class="kw4">GetM2DAInt</span></a><span class="br0">&#40;</span>TABLE_PACKAGES, <span class="st0">&quot;StartingClass&quot;</span>, nPackage<span class="br0">&#41;</span>;  <span class="co1">//I don't think this is used, even by player_core</span>
+&#160;
+&#160;
+        <span class="co1">// set behavior according to package</span>
+        <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nBehavior <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetM2DAInt"><span class="kw4">GetM2DAInt</span></a><span class="br0">&#40;</span>TABLE_PACKAGES, <span class="st0">&quot;FollowerBehavior&quot;</span>, nPackage<span class="br0">&#41;</span>;
+&#160;
+        <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a><span class="br0">&#40;</span>nBehavior <span class="sy0">&gt;=</span> <span class="nu0">0</span><span class="br0">&#41;</span> <span class="br0">&#123;</span>
+            SetAIBehavior<span class="br0">&#40;</span>oFollower, nBehavior<span class="br0">&#41;</span>;
+        <span class="br0">&#125;</span>
+&#160;
+        Chargen_InitializeCharacter<span class="br0">&#40;</span>oFollower<span class="br0">&#41;</span>;      <span class="co1">//We initialise the follower and choose race/class.</span>
+&#160;
+        Chargen_SelectRace<span class="br0">&#40;</span>oFollower,<a href="http://www.datoolset.net/wiki/index.php?title=GetCreatureRacialType"><span class="kw4">GetCreatureRacialType</span></a><span class="br0">&#40;</span>oFollower<span class="br0">&#41;</span><span class="br0">&#41;</span>;
+        Chargen_SelectCoreClass<span class="br0">&#40;</span>oFollower,nForceClass<span class="br0">&#41;</span>;        
+&#160;
+&#160;
+         <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a> <span class="br0">&#40;</span>nTargetLevel <span class="sy0">==</span> <span class="nu0">0</span><span class="br0">&#41;</span> <span class="br0">&#123;</span>   <span class="co1">//This block picks a target level if not specified</span>
+&#160;
+              nTargetLevel <span class="sy0">=</span> GetCustomFollowerTargetLevel<span class="br0">&#40;</span>oFollower, oHero, nPackage, nMinLevel<span class="br0">&#41;</span>;
+         <span class="br0">&#125;</span>
+&#160;
+         <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nXp <span class="sy0">=</span> RW_GetXPNeededForLevel<span class="br0">&#40;</span>Max<span class="br0">&#40;</span>nTargetLevel, <span class="nu0">1</span><span class="br0">&#41;</span><span class="br0">&#41;</span>;      <span class="co1">//Here is where the XP is calculated and rewarded</span>
+         RewardXP<span class="br0">&#40;</span>oFollower, nXp, FALSE, FALSE<span class="br0">&#41;</span>;
+&#160;
+         <span class="co1">// -------------------------------------------------------------</span>
+         <span class="co1">// add hidden approval talents - (JN: I don't know how to set these yet, but when I figure it out this should make it work)</span>
+         <span class="co1">// -------------------------------------------------------------</span>
+         <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nIndex <span class="sy0">=</span> Approval_GetFollowerIndex<span class="br0">&#40;</span>oFollower<span class="br0">&#41;</span>;
+         Approval_AddFollowerBonusAbility<span class="br0">&#40;</span>nIndex, <span class="nu0">0</span><span class="br0">&#41;</span>;
+&#160;
+          <span class="co1">//Handle Specialisation</span>
+          InitCustomFollowerSpec<span class="br0">&#40;</span>oFollower, nPackage, nForceSpec, bFreeSpecPoint<span class="br0">&#41;</span>;
+&#160;
+         <span class="co1">// -------------------------------------------------------------</span>
+         <span class="co1">// This spends all available attribute and stat points on the</span>
+         <span class="co1">// creature according to the levelup table.  (JN:  this replicates AL_DoAutoLevelUp but with our choice of table)</span>
+         <span class="co1">// -------------------------------------------------------------</span>
+&#160;
+         <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a> <span class="br0">&#40;</span>nALTable <span class="sy0">==</span> <span class="nu0">0</span><span class="br0">&#41;</span> <span class="br0">&#123;</span>
+            nALTable <span class="sy0">=</span> GetCustomFollowerALTable<span class="br0">&#40;</span>oFollower<span class="br0">&#41;</span>;
+         <span class="br0">&#125;</span>
+&#160;
+         AL_SpendAttributePoints<span class="br0">&#40;</span>oFollower, nALTable, FALSE<span class="br0">&#41;</span>;
+         AL_SpendSkillPoints<span class="br0">&#40;</span>oFollower, nALTable, TRUE<span class="br0">&#41;</span>;
+         AL_SpendSpecializationPoints<span class="br0">&#40;</span>oFollower, nALTable<span class="br0">&#41;</span>;
+         AL_SpendTalentSpellPoints<span class="br0">&#40;</span>oFollower, nALTable, TRUE<span class="br0">&#41;</span>;
+&#160;
+        <span class="co1">// -------------------------------------------------------------------------</span>
+        <span class="co1">// Update various UIs</span>
+        <span class="co1">// -------------------------------------------------------------------------</span>
+        Chargen_SetNumTactics<span class="br0">&#40;</span>oFollower<span class="br0">&#41;</span>;
+        <a href="http://www.datoolset.net/wiki/index.php?title=SetCanLevelUp"><span class="kw4">SetCanLevelUp</span></a><span class="br0">&#40;</span>oFollower,Chargen_HasPointsToSpend<span class="br0">&#40;</span>oFollower<span class="br0">&#41;</span><span class="br0">&#41;</span>;
+&#160;
+        <span class="co1">// load tactics</span>
+         InitCustomFollowerTactics<span class="br0">&#40;</span>oFollower, nPackage<span class="br0">&#41;</span>;
+&#160;
+         <span class="coMULTI">/* #################  END PLAYER_CORE EVENT_TYPE_PARTY_MEMBER_HIRED EMULATION ################# */</span>     
+&#160;
+&#160;
+         <a href="http://www.datoolset.net/wiki/index.php?title=SetAutoLevelUp"><span class="kw4">SetAutoLevelUp</span></a><span class="br0">&#40;</span>oFollower, nAutolevel<span class="br0">&#41;</span>;         <span class="co1">//This is the autolevel flag on the character sheet.</span>
+&#160;
+         <span class="co1">//Set plot flags</span>
+&#160;
+         <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a> <span class="br0">&#40;</span><span class="sy0">!</span><span class="br0">&#40;</span><span class="br0">&#40;</span>sPlot <span class="sy0">==</span> <span class="st0">&quot;&quot;</span><span class="br0">&#41;</span> <span class="sy0">||</span> <span class="br0">&#40;</span>nPlotFlag <span class="sy0">==</span> <span class="nu0">0</span><span class="br0">&#41;</span><span class="br0">&#41;</span><span class="br0">&#41;</span> <span class="br0">&#123;</span>           <span class="co1">//Joined Party</span>
+            WR_SetPlotFlag<span class="br0">&#40;</span>sPlot, nPlotFlag, TRUE<span class="br0">&#41;</span>;   
+         <span class="br0">&#125;</span>
+&#160;
+         <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a> <span class="br0">&#40;</span><span class="br0">&#40;</span>nInitialState <span class="sy0">==</span> <span class="kw3">FOLLOWER_STATE_ACTIVE</span><span class="br0">&#41;</span> <span class="sy0">||</span> <span class="br0">&#40;</span>nInitialState <span class="sy0">==</span> <span class="kw3">FOLLOWER_STATE_LOCKEDACTIVE</span><span class="br0">&#41;</span><span class="br0">&#41;</span> <span class="br0">&#123;</span>
+            <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a> <span class="br0">&#40;</span><span class="sy0">!</span><span class="br0">&#40;</span><span class="br0">&#40;</span>sCurrPlot <span class="sy0">==</span> <span class="st0">&quot;&quot;</span><span class="br0">&#41;</span> <span class="sy0">||</span> <span class="br0">&#40;</span>nCurrPlotFlag <span class="sy0">==</span> <span class="nu0">0</span><span class="br0">&#41;</span><span class="br0">&#41;</span><span class="br0">&#41;</span> <span class="br0">&#123;</span>
+                WR_SetPlotFlag<span class="br0">&#40;</span>sCurrPlot, nCurrPlotFlag, TRUE<span class="br0">&#41;</span>;   <span class="co1">//Currently in Party</span>
+            <span class="br0">&#125;</span>
+         <span class="br0">&#125;</span>
+&#160;
+        <span class="co1">// Invoke picker if requested.</span>
+&#160;
+        <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a> <span class="br0">&#40;</span>bInvokePicker<span class="br0">&#41;</span> <span class="br0">&#123;</span>
+             <a href="http://www.datoolset.net/wiki/index.php?title=SetPartyPickerGUIStatus"><span class="kw4">SetPartyPickerGUIStatus</span></a><span class="br0">&#40;</span><span class="nu0">2</span><span class="br0">&#41;</span>;
+             <a href="http://www.datoolset.net/wiki/index.php?title=ShowPartyPickerGUI"><span class="kw4">ShowPartyPickerGUI</span></a><span class="br0">&#40;</span><span class="br0">&#41;</span>;
+        <span class="br0">&#125;</span>
+<span class="br0">&#125;</span></pre></div></div>
+<p>Yeah, I know.  It can't really be any smaller.  Feel free to modify it if you're confident with scripting.
+</p>
+<h4><span class="mw-headline" id="Add_Your_Custom_Autolevel_Template_to_GetCustomFollowerALTable.28.29">Add Your Custom Autolevel Template to GetCustomFollowerALTable()</span></h4>
+<p>While   you can pass the ID you made for your autolevel template to that   monster function as an argument, it's better to have them all in one   place if you have multiple followers.
+</p><p>GetCustomFollowerALTable()   is the first function in our include, and you can add an explicit if   test for your follower there to assign the correct table id (the one   from your M2DA_base_ m2DA).  There is a function very much like it in   sys_autolevel_h.nss for the core followers, so we'll copy Bioware's   practice.
+</p><p>Let's take a look at the function by itself:
+</p>
+<div dir="ltr" class="mw-geshi mw-code mw-content-ltr"><div class="dascript source-dascript"><pre class="de1"><a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> GetCustomFollowerALTable<span class="br0">&#40;</span><a href="http://www.datoolset.net/wiki/index.php?title=object keyword"><span class="kw2">object</span></a> oFollower<span class="br0">&#41;</span> <span class="br0">&#123;</span>
+    <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nTable <span class="sy0">=</span> _GetTableToUseForAL<span class="br0">&#40;</span>oFollower<span class="br0">&#41;</span>;
+&#160;
+    <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a> <span class="br0">&#40;</span><a href="http://www.datoolset.net/wiki/index.php?title=GetTag"><span class="kw4">GetTag</span></a><span class="br0">&#40;</span>oFollower<span class="br0">&#41;</span> <span class="sy0">==</span> <span class="st0">&quot;bc_party_miera&quot;</span><span class="br0">&#41;</span> <span class="br0">&#123;</span>               
+        nTable <span class="sy0">=</span> <span class="nu0">50143</span>;   
+    <span class="br0">&#125;</span>   
+&#160;
+    <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a> <span class="br0">&#40;</span><a href="http://www.datoolset.net/wiki/index.php?title=GetTag"><span class="kw4">GetTag</span></a><span class="br0">&#40;</span>oFollower<span class="br0">&#41;</span> <span class="sy0">==</span> <span class="st0">&quot;bc_party_jysavin&quot;</span><span class="br0">&#41;</span> <span class="br0">&#123;</span>
+        nTable <span class="sy0">=</span> <span class="nu0">50144</span>;   
+    <span class="br0">&#125;</span>
+&#160;
+    <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a> <span class="br0">&#40;</span><a href="http://www.datoolset.net/wiki/index.php?title=GetTag"><span class="kw4">GetTag</span></a><span class="br0">&#40;</span>oFollower<span class="br0">&#41;</span> <span class="sy0">==</span> <span class="st0">&quot;bc_party_geldual&quot;</span><span class="br0">&#41;</span> <span class="br0">&#123;</span>
+        nTable <span class="sy0">=</span> <span class="nu0">50145</span>;   
+    <span class="br0">&#125;</span>
+&#160;
+    <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a> <span class="br0">&#40;</span><a href="http://www.datoolset.net/wiki/index.php?title=GetTag"><span class="kw4">GetTag</span></a><span class="br0">&#40;</span>oFollower<span class="br0">&#41;</span> <span class="sy0">==</span> <span class="st0">&quot;bc_party_braghon&quot;</span><span class="br0">&#41;</span> <span class="br0">&#123;</span>
+        nTable <span class="sy0">=</span> <span class="nu0">50146</span>;   
+    <span class="br0">&#125;</span>
+&#160;
+    <a href="http://www.datoolset.net/wiki/index.php?title=return keyword"><span class="kw1">return</span></a> nTable;    
+&#160;
+<span class="br0">&#125;</span></pre></div></div>
+<p>So   we have a test for each follower tag from my module, matching up to an   ID which is assigned to nTable.  All you need to do is change a tag  from  my follower to yours, and my ID to the correct one from your   M2DA_base_* m2DA.  Then you should delete the rest of the example if   statements&#160;:)
+</p><p>Save and export the script.  Ignore the compiler error about lack of main();
+</p>
+<h2><span class="mw-headline" id="Include_Function_In_Your_Hire_Script_and_Call_It">Include Function In Your Hire Script and Call It</span></h2>
+<p>So instead of a hire script that calls UT_HireFollower(), we want one that includes our shiny new function and calls it.
+</p><p>Take a look at the following example:
+</p>
+<div dir="ltr" class="mw-geshi mw-code mw-content-ltr"><div class="dascript source-dascript"><pre class="de1"><span class="co2">#include &quot;plt_bc_create_party&quot;   //Make sure you include your party handling plot</span>
+<span class="co2">#include &quot;hireCustomFollower_h&quot;  // And include the function script - which will in turn include a bunch of stuff</span>
+&#160;
+<a href="http://www.datoolset.net/wiki/index.php?title=void keyword"><span class="kw2">void</span></a> main<span class="br0">&#40;</span><span class="br0">&#41;</span> <span class="br0">&#123;</span>
+&#160;
+                    <span class="co1">//Initialising my objects, not super-relevant to the example </span>
+&#160;
+                    <a href="http://www.datoolset.net/wiki/index.php?title=object keyword"><span class="kw2">object</span></a> oHero <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetHero"><span class="kw4">GetHero</span></a><span class="br0">&#40;</span><span class="br0">&#41;</span>;
+                    <a href="http://www.datoolset.net/wiki/index.php?title=object keyword"><span class="kw2">object</span></a> oMiera <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=CreateObject"><span class="kw4">CreateObject</span></a><span class="br0">&#40;</span><span class="kw3">OBJECT_TYPE_CREATURE</span>, R<span class="st0">&quot;bc_party_miera.utc&quot;</span>, <a href="http://www.datoolset.net/wiki/index.php?title=GetLocation"><span class="kw4">GetLocation</span></a><span class="br0">&#40;</span>oHero<span class="br0">&#41;</span><span class="br0">&#41;</span>;
+                    <a href="http://www.datoolset.net/wiki/index.php?title=object keyword"><span class="kw2">object</span></a> oJysavin <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=CreateObject"><span class="kw4">CreateObject</span></a><span class="br0">&#40;</span><span class="kw3">OBJECT_TYPE_CREATURE</span>, R<span class="st0">&quot;bc_party_jysavin.utc&quot;</span>, <a href="http://www.datoolset.net/wiki/index.php?title=GetLocation"><span class="kw4">GetLocation</span></a><span class="br0">&#40;</span>oHero<span class="br0">&#41;</span><span class="br0">&#41;</span>;
+                    <a href="http://www.datoolset.net/wiki/index.php?title=object keyword"><span class="kw2">object</span></a> oBraghon <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=CreateObject"><span class="kw4">CreateObject</span></a><span class="br0">&#40;</span><span class="kw3">OBJECT_TYPE_CREATURE</span>, R<span class="st0">&quot;bc_party_braghon.utc&quot;</span>, <a href="http://www.datoolset.net/wiki/index.php?title=GetLocation"><span class="kw4">GetLocation</span></a><span class="br0">&#40;</span>oHero<span class="br0">&#41;</span><span class="br0">&#41;</span>;
+                    <a href="http://www.datoolset.net/wiki/index.php?title=object keyword"><span class="kw2">object</span></a> oSpider <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=CreateObject"><span class="kw4">CreateObject</span></a><span class="br0">&#40;</span><span class="kw3">OBJECT_TYPE_CREATURE</span>, R<span class="st0">&quot;bc_party_geldual.utc&quot;</span>, <a href="http://www.datoolset.net/wiki/index.php?title=GetLocation"><span class="kw4">GetLocation</span></a><span class="br0">&#40;</span>oHero<span class="br0">&#41;</span><span class="br0">&#41;</span>;
+&#160;
+                    <span class="co1">//Simplest hire call - adds to the party as a wizard.  Class is currently compulsory due to a bug.</span>
+                    hireCustomFollower<span class="br0">&#40;</span>oMiera, CLASS_WIZARD<span class="br0">&#41;</span>;
+&#160;
+                    <span class="co1">//Add to the party and set joining plot flags</span>
+                    hireCustomFollower<span class="br0">&#40;</span>oJysavin, CLASS_WARRIOR, PLT_BC_CREATE_PARTY, PARTY_JYSAVIN_JOINED<span class="br0">&#41;</span>;
+&#160;
+                    <span class="co1">//Add to the party, set plot flags, force a specialisation</span>
+                    hireCustomFollower<span class="br0">&#40;</span>oBraghon, CLASS_ROGUE, PLT_BC_CREATE_PARTY, PARTY_BRAGHON_JOINED, ABILITY_TALENT_HIDDEN_ASSASSIN<span class="br0">&#41;</span>;
+&#160;
+                    <span class="co1">//More complex example - Follower added as a unique class (Dog), not granted a specialisation or spec point.  </span>
+                    <span class="co1">//Note unique classes must have an ALTable passed here or specified in GetCustomFollowerALTable() or they won't work</span>
+                    hireCustomFollower<span class="br0">&#40;</span>oSpider,   CLASS_DOG, PLT_BC_CREATE_PARTY, PARTY_GELDUAL_JOINED, <span class="nu0">0</span>, <span class="nu0">0</span>, FALSE,   <span class="kw3">FOLLOWER_STATE_AVAILABLE</span>, <span class="st0">&quot;&quot;</span>, <span class="nu0">0</span>, <span class="nu0">0</span>, FALSE<span class="br0">&#41;</span>;
+&#160;
+                    <span class="co1">//Show the party picker to let the player choose from their new companions!</span>
+                    <a href="http://www.datoolset.net/wiki/index.php?title=SetPartyPickerGUIStatus"><span class="kw4">SetPartyPickerGUIStatus</span></a><span class="br0">&#40;</span><span class="nu0">2</span><span class="br0">&#41;</span>;
+                    <a href="http://www.datoolset.net/wiki/index.php?title=ShowPartyPickerGUI"><span class="kw4">ShowPartyPickerGUI</span></a><span class="br0">&#40;</span><span class="br0">&#41;</span>;                                                                                                                        
+<span class="br0">&#125;</span></pre></div></div>
+<p>The   example shows several of the more simple ways of invoking the   function.  Check the comments at the start of the function for a full   list of arguments.
+</p><p>I would suggest best practice for most followers would be to call as follows:
+</p><p><b>hireCustomFollower(oFollower, CLASS, PLOT, PLOT_FLAG, SPECIALISATION)</b>
+</p><p>This   will safely set the follower up as the desired class and  specialisation  (doubly important if there are spec abilities in their  ALTable) while  setting your plot flag for them being in the party.    hireCustomFollower(oFollower, CLASS, PLOT, PLOT_FLAG, SPECIALISATION,  0,  TRUE) will do the same while invoking the Party Picker  automatically.
+</p><p>Note that the specialisations are abilities and not classes - you'll find them as ABILITY_HIDDEN_ constants.
+</p><p>If it's all worked, you should find you can now add followers with a lot more flexibility!
+</p><p><a href="File%3APicker_advanced.jpg.html" class="image"><img alt="Picker advanced.jpg" src="../assets/mw/images/c/c0/Picker_advanced.jpg" width="300" height="310" srcset="../assets/mw/images/c/c0/Picker_advanced.jpg 1.5x, ../assets/mw/images/c/c0/Picker_advanced.jpg 2x" /></a>
+</p>
+<h2><span class="mw-headline" id="Common_Follower_Problems_.26_FAQ">Common Follower Problems &amp; FAQ</span></h2>
+<h3><span class="mw-headline" id="Why_don.27t_my_followers_gain_XP.3F">Why don't my followers gain XP?</span></h3>
+<p>There is a bug in UT_HireFollower. Make a copy of UT_HireFollower in a function of your own, then make the following change:
+</p>
+<pre>   WR_SetFollowerState(oFollower, FOLLOWER_STATE_ACTIVE, TRUE, 0, TRUE);
+</pre>
+<p>to
+</p>
+<pre>   WR_SetFollowerState(oFollower, FOLLOWER_STATE_ACTIVE, TRUE, 0, bPreventLevelup);
+</pre>
+<h3><span class="mw-headline" id="When_I_choose_followers_from_the_Party_Picker.2C_they_spawn_into_the_area_but_do_not_join">When I choose followers from the Party Picker, they spawn into the area but do not join</span></h3>
+<p>You   need to intercept the EVENT_TYPE_PARTYMEMBER_ADDED event and set the   follower to FOLLOWER_STATE_ACTIVE.  See Simple Follower Creation  earlier  in this document.
+</p>
+<h3><span class="mw-headline" id="My_followers_don.27t_have_skill_trees.21">My followers don't have skill trees!</span></h3>
+<p>If   a follower hasn't been through an initial chargen/autolevel event (via   player_core/sys_autolevel_h) then the skill tree doesn't show.  You're   probably trying to be clever and get around UT_HireFollower without   going all the way (see monster function above ^_^).
+</p>
+<h3><span class="mw-headline" id="My_followers_don.27t_have_a_class">My followers don't have a class</span></h3>
+<p>GetCreatureCoreClass()   seems flaky under some conditions.  It's best to explicitly set the   class yourself; this is why class is currently a mandatory argument to   hireCustomFollower()
+</p>
+<h3><span class="mw-headline" id="Dog_talents_and_equipment_slots_don.27t_work">Dog talents and equipment slots don't work</span></h3>
+<p>Symptoms:   dog talents appear on the talents screen but remain greyed out on  level  up. Warrior talents appear in the quickslots. Equipment slots are  for  humans, not dogs.
+</p><p>Line 78 of packages_base in packages.xls (Dog) should have the LevelUpTable column set to 257 which is the ALDog table.
+</p><p>The EquipmentLayout 2DA needs a new entry for the follower:
+</p>
+<pre>ID=same as partypicker 2DA
+Tag=follower tag
+AvailableEquipmentSlots=794624
+Layout=2
+EnableWeaponSets=0
+</pre>
+<p>If   the creature is not using the appearance "Dog, Party Member", it needs  a  new appearance line in APR_base. Most of the entries can be copied  from  the standard appearance (e.g. Wolf), but 
+</p>
+<pre>MaxScaleLevel=-1
+DefaultArmor=
+AppearanceRestrictionGroup=1
+</pre>
+<p>Otherwise,   it won't be able to progress beyond a specified level. The player will   receive an unwanted set of armour when the it is hired, and it won't  be  able to use Marabi crunch items. You may also need to tweak  PERSPACE  and/or BumpLevel if excessive clipping occurs.
+</p>
+<h3><span class="mw-headline" id="Isn.27t_there_an_easier_way_to_do_this.3F">Isn't there an easier way to do this?</span></h3>
+<p>Possibly.    There is a way of recruiting a follower by setting a plot flag.    However I don't understand it, and I expect it still doesn't allow   custom autolevel templates, full control over specialisations etc.    There's still a fair bit of stuff hardcoded for the core followers, I'm   not sure putting a custom follower through the same process as Al,  Leli  et al will have good results.
+</p><p>The next section answers this question, up to a point.
+</p>
+<h3><span class="mw-headline" id="What_if_there_are_more_than_three_potential_followers.3F">What if there are more than three potential followers?</span></h3>
+<p>This   example handles larger numbers of followers, and doesn't force the   player to use the party picker unless the party is already full.
+</p><p>The prefix zzz, used throughout, can be replaced with whatever <a href="Prefixes_in_use.html" title="Prefixes in use"> prefix</a> you are using for your resources.
+</p><p>If   you're making a new campaign, to keep life simple, allocate a unique   number to each follower. You could either use a creature variable or a   script, e.g.
+</p>
+<div dir="ltr" class="mw-geshi mw-code mw-content-ltr"><div class="dascript source-dascript"><pre class="de1"><span class="co1">// Party member id (e.g. 1=Alicia, 2=Godwin...)</span>
+<a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> zzzPartyMemberID<span class="br0">&#40;</span><a href="http://www.datoolset.net/wiki/index.php?title=object keyword"><span class="kw2">object</span></a> oPartyMember<span class="br0">&#41;</span>
+<span class="br0">&#123;</span>
+  <a href="http://www.datoolset.net/wiki/index.php?title=string keyword"><span class="kw2">string</span></a> sPartyMember <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetTag"><span class="kw4">GetTag</span></a><span class="br0">&#40;</span>oPartyMember<span class="br0">&#41;</span>;
+&#160;
+  <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a> <span class="br0">&#40;</span>sPartyMember <span class="sy0">==</span> <span class="st0">&quot;zzzcr_alicia&quot;</span><span class="br0">&#41;</span> <a href="http://www.datoolset.net/wiki/index.php?title=return keyword"><span class="kw1">return</span></a> <span class="nu0">1</span>;
+  <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a> <span class="br0">&#40;</span>sPartyMember <span class="sy0">==</span> <span class="st0">&quot;zzzcr_godwin&quot;</span><span class="br0">&#41;</span> <a href="http://www.datoolset.net/wiki/index.php?title=return keyword"><span class="kw1">return</span></a> <span class="nu0">2</span>;
+  <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a> <span class="br0">&#40;</span>sPartyMember <span class="sy0">==</span> <span class="st0">&quot;zzzcr_harold&quot;</span><span class="br0">&#41;</span> <a href="http://www.datoolset.net/wiki/index.php?title=return keyword"><span class="kw1">return</span></a> <span class="nu0">3</span>;
+  <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a> <span class="br0">&#40;</span>sPartyMember <span class="sy0">==</span> <span class="st0">&quot;zzzcr_lara&quot;</span>  <span class="br0">&#41;</span> <a href="http://www.datoolset.net/wiki/index.php?title=return keyword"><span class="kw1">return</span></a> <span class="nu0">4</span>;
+  <a href="http://www.datoolset.net/wiki/index.php?title=return keyword"><span class="kw1">return</span></a> <span class="nu0">0</span>;
+<span class="br0">&#125;</span></pre></div></div>
+<p>Make   two separate plots, e.g. zzzpt_hired for when a follower is first   recruited, and zzzpt_party to flag whether they're currently in the   party. Use flag values that correspond to the unique follower id, e.g.   ZZZPT_HIRED_GODWIN will be 2.
+</p><p>If you're modifying the official campaign, you won't be able to make this simplification -   you'll need a set of plot flags for your new party members, similar to   the official ones. The logic of what follows is still correct, it just   means that instead of having one set of common code that works for   everyone, you have to explicitly script each party member individually   using their personal plot flags.
+</p><p>Follower conversation is now very simple. In Godwin's dialogue, the hiring line will be conditional - when ZZZPT_HIRED_GODWIN is clear -   and it will set ZZZPT_HIRED_GODWIN.  No conversation script is   necessary. Instead, in the properties of the plot zzzpt_hired, we add a   plot event script, as follows.
+</p>
+<div dir="ltr" class="mw-geshi mw-code mw-content-ltr"><div class="dascript source-dascript"><pre class="de1"><span class="co1">// PARTY HIRE PLOT SCRIPT</span>
+<span class="co1">//</span>
+<span class="co1">// This is called in conversation when a party member is hired for the first time.</span>
+<span class="co1">// If the party is full, the party picker is displayed, which forces the PARTYMEMBER_ADDED</span>
+<span class="co1">// module event.</span>
+<span class="co1">//</span>
+<span class="co1">// The flag value is never referenced, because the code is common for all party members.</span>
+&#160;
+<span class="co2">#include &quot;events_h&quot;</span>
+<span class="co2">#include &quot;global_objects_h&quot;</span>
+<span class="co2">#include &quot;utility_h&quot;</span>
+<span class="co2">#include &quot;sys_rewards_h&quot;</span>
+<span class="co2">#include &quot;log_h&quot;</span>
+<span class="co2">#include &quot;utility_h&quot;</span>
+<span class="co2">#include &quot;wrappers_h&quot;</span>
+<span class="co2">#include &quot;plot_h&quot;</span>
+&#160;
+<span class="co2">#include &quot;zzz_h&quot;                  // A header containing the zzzPartyMemberID function</span>
+<span class="co2">#include &quot;plt_zzzpt_hired&quot;</span>
+<span class="co2">#include &quot;plt_zzzpt_party&quot;</span>
+&#160;
+<a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> StartingConditional<span class="br0">&#40;</span><span class="br0">&#41;</span>
+<span class="br0">&#123;</span>
+    <a href="http://www.datoolset.net/wiki/index.php?title=event keyword"><span class="kw2">event</span></a>  eParms             <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetCurrentEvent"><span class="kw4">GetCurrentEvent</span></a><span class="br0">&#40;</span><span class="br0">&#41;</span>;
+    <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a>    nType              <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetEventType"><span class="kw4">GetEventType</span></a><span class="br0">&#40;</span>eParms<span class="br0">&#41;</span>;       <span class="co1">// GET or SET</span>
+    <a href="http://www.datoolset.net/wiki/index.php?title=string keyword"><span class="kw2">string</span></a> strPlot            <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetEventString"><span class="kw4">GetEventString</span></a><span class="br0">&#40;</span>eParms, <span class="nu0">0</span><span class="br0">&#41;</span>;  <span class="co1">// Plot GUID</span>
+    <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a>    nFlag              <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetEventInteger"><span class="kw4">GetEventInteger</span></a><span class="br0">&#40;</span>eParms, <span class="nu0">1</span><span class="br0">&#41;</span>; <span class="co1">// Plot flag</span>
+    <a href="http://www.datoolset.net/wiki/index.php?title=object keyword"><span class="kw2">object</span></a> oParty             <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetEventCreator"><span class="kw4">GetEventCreator</span></a><span class="br0">&#40;</span>eParms<span class="br0">&#41;</span>;    <span class="co1">// Plot table owner</span>
+    <a href="http://www.datoolset.net/wiki/index.php?title=object keyword"><span class="kw2">object</span></a> oFollower          <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetEventObject"><span class="kw4">GetEventObject</span></a><span class="br0">&#40;</span>eParms, <span class="nu0">0</span><span class="br0">&#41;</span>;  <span class="co1">// Conversation owner (if any)</span>
+    <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a>    nPlotType          <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetEventInteger"><span class="kw4">GetEventInteger</span></a><span class="br0">&#40;</span>eParms, <span class="nu0">5</span><span class="br0">&#41;</span>; <span class="co1">// Plot type</span>
+&#160;
+    <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a>    bIsTutorial        <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetM2DAInt"><span class="kw4">GetM2DAInt</span></a><span class="br0">&#40;</span>TABLE_PLOT_TYPES, <span class="st0">&quot;IsTutorial&quot;</span>, nPlotType<span class="br0">&#41;</span>;
+    <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a>    bIsCodex           <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetM2DAInt"><span class="kw4">GetM2DAInt</span></a><span class="br0">&#40;</span>TABLE_PLOT_TYPES, <span class="st0">&quot;IsCodex&quot;</span>, nPlotType<span class="br0">&#41;</span>;
+&#160;
+    <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a>    nResult            <span class="sy0">=</span> FALSE;                      <span class="co1">// return value for DEFINED GET</span>
+    <a href="http://www.datoolset.net/wiki/index.php?title=object keyword"><span class="kw2">object</span></a> oPC                <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetPartyLeader"><span class="kw4">GetPartyLeader</span></a><span class="br0">&#40;</span><span class="br0">&#41;</span>;
+&#160;
+    plot_GlobalPlotHandler<span class="br0">&#40;</span>eParms<span class="br0">&#41;</span>; <span class="co1">// any global plot operations, including debug info</span>
+&#160;
+    <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a> <span class="br0">&#40;</span>nType <span class="sy0">==</span> <span class="kw3">EVENT_TYPE_SET_PLOT</span><span class="br0">&#41;</span> <span class="co1">// actions -&gt; normal flags only</span>
+    <span class="br0">&#123;</span>
+        <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nValue    <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetEventInteger"><span class="kw4">GetEventInteger</span></a><span class="br0">&#40;</span>eParms, <span class="nu0">2</span><span class="br0">&#41;</span>; <span class="co1">// 0=Clear 1=Set</span>
+        <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nOldValue <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetEventInteger"><span class="kw4">GetEventInteger</span></a><span class="br0">&#40;</span>eParms, <span class="nu0">3</span><span class="br0">&#41;</span>; <span class="co1">// Current flag value</span>
+&#160;
+        <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a> <span class="br0">&#40;</span>nValue<span class="br0">&#41;</span>
+          <span class="br0">&#123;</span>
+            <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a> <span class="br0">&#40;</span><a href="http://www.datoolset.net/wiki/index.php?title=GetArraySize"><span class="kw4">GetArraySize</span></a><span class="br0">&#40;</span><a href="http://www.datoolset.net/wiki/index.php?title=GetPartyList"><span class="kw4">GetPartyList</span></a><span class="br0">&#40;</span>oPC<span class="br0">&#41;</span><span class="br0">&#41;</span> <span class="sy0">&lt;</span> <span class="nu0">4</span><span class="br0">&#41;</span>
+              <span class="br0">&#123;</span>
+                <span class="co1">// Code from UT_HireFollower with level up bug fixed</span>
+                <a href="http://www.datoolset.net/wiki/index.php?title=SetAutoLevelUp"><span class="kw4">SetAutoLevelUp</span></a><span class="br0">&#40;</span>oFollower, <span class="nu0">2</span><span class="br0">&#41;</span>;
+                <a href="http://www.datoolset.net/wiki/index.php?title=SetGroupId"><span class="kw4">SetGroupId</span></a><span class="br0">&#40;</span>oFollower, <a href="http://www.datoolset.net/wiki/index.php?title=GetGroupId"><span class="kw4">GetGroupId</span></a><span class="br0">&#40;</span><a href="http://www.datoolset.net/wiki/index.php?title=GetHero"><span class="kw4">GetHero</span></a><span class="br0">&#40;</span><span class="br0">&#41;</span><span class="br0">&#41;</span><span class="br0">&#41;</span>;
+                WR_SetFollowerState<span class="br0">&#40;</span>oFollower, <span class="kw3">FOLLOWER_STATE_ACTIVE</span>, TRUE, <span class="nu0">0</span>, FALSE<span class="br0">&#41;</span>;  
+                <span class="co1">// End of code from UT_HireFollower</span>
+                <a href="http://www.datoolset.net/wiki/index.php?title=AddCommand"><span class="kw4">AddCommand</span></a><span class="br0">&#40;</span>oFollower, <a href="http://www.datoolset.net/wiki/index.php?title=CommandJumpToLocation"><span class="kw4">CommandJumpToLocation</span></a><span class="br0">&#40;</span><a href="http://www.datoolset.net/wiki/index.php?title=GetLocation"><span class="kw4">GetLocation</span></a><span class="br0">&#40;</span><a href="http://www.datoolset.net/wiki/index.php?title=GetHero"><span class="kw4">GetHero</span></a><span class="br0">&#40;</span><span class="br0">&#41;</span><span class="br0">&#41;</span><span class="br0">&#41;</span><span class="br0">&#41;</span>;
+                WR_SetPlotFlag<span class="br0">&#40;</span>PLT_ZZZPT_PARTY, zzzPartyMemberID<span class="br0">&#40;</span>oFollower<span class="br0">&#41;</span>, TRUE<span class="br0">&#41;</span>;
+              <span class="br0">&#125;</span>
+            <a href="http://www.datoolset.net/wiki/index.php?title=else keyword"><span class="kw1">else</span></a>
+              <span class="br0">&#123;</span>
+                WR_SetFollowerState<span class="br0">&#40;</span>oFollower, <span class="kw3">FOLLOWER_STATE_AVAILABLE</span>, FALSE<span class="br0">&#41;</span>;
+                <a href="http://www.datoolset.net/wiki/index.php?title=SetEventScript"><span class="kw4">SetEventScript</span></a><span class="br0">&#40;</span>oFollower, RESOURCE_SCRIPT_PLAYER_CORE<span class="br0">&#41;</span>;
+                SendPartyMemberHiredEvent<span class="br0">&#40;</span>oFollower, TRUE<span class="br0">&#41;</span>;
+<span class="co1">//                SetPartyPickerGUIStatus(PP_GUI_STATUS_USE);</span>
+<span class="co1">//                ShowPartyPickerGUI();</span>
+              <span class="br0">&#125;</span>
+          <span class="br0">&#125;</span>
+     <span class="br0">&#125;</span>
+     <a href="http://www.datoolset.net/wiki/index.php?title=else keyword"><span class="kw1">else</span></a> <span class="co1">// EVENT_TYPE_GET_PLOT -&gt; defined conditions only</span>
+     <span class="br0">&#123;</span>
+        <a href="http://www.datoolset.net/wiki/index.php?title=switch keyword"><span class="kw1">switch</span></a><span class="br0">&#40;</span>nFlag<span class="br0">&#41;</span>
+        <span class="br0">&#123;</span>
+&#160;
+        <span class="br0">&#125;</span>
+    <span class="br0">&#125;</span>
+&#160;
+    plot_OutputDefinedFlag<span class="br0">&#40;</span>eParms, nResult<span class="br0">&#41;</span>;
+    <a href="http://www.datoolset.net/wiki/index.php?title=return keyword"><span class="kw1">return</span></a> nResult;
+<span class="br0">&#125;</span></pre></div></div>
+<p>We still need to handle the party picker events in our module event script:
+</p>
+<div dir="ltr" class="mw-geshi mw-code mw-content-ltr"><div class="dascript source-dascript"><pre class="de1">         <span class="co1">// PARTY MEMBER ADDED - Allow XP gain. Come here, follow me, flag as party member.</span>
+         <a href="http://www.datoolset.net/wiki/index.php?title=case keyword"><span class="kw1">case</span></a> <span class="kw3">EVENT_TYPE_PARTYMEMBER_ADDED</span><span class="sy0">:</span>
+         <span class="br0">&#123;</span>
+            <a href="http://www.datoolset.net/wiki/index.php?title=object keyword"><span class="kw2">object</span></a> oFollower <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetEventObject"><span class="kw4">GetEventObject</span></a><span class="br0">&#40;</span>ev, <span class="nu0">0</span><span class="br0">&#41;</span>;
+            <a href="http://www.datoolset.net/wiki/index.php?title=SetLocalInt"><span class="kw4">SetLocalInt</span></a><span class="br0">&#40;</span>oFollower, CREATURE_REWARD_FLAGS, <span class="nu0">0</span><span class="br0">&#41;</span>;
+            <a href="http://www.datoolset.net/wiki/index.php?title=AddCommand"><span class="kw4">AddCommand</span></a><span class="br0">&#40;</span>oFollower, <a href="http://www.datoolset.net/wiki/index.php?title=CommandJumpToLocation"><span class="kw4">CommandJumpToLocation</span></a><span class="br0">&#40;</span><a href="http://www.datoolset.net/wiki/index.php?title=GetLocation"><span class="kw4">GetLocation</span></a><span class="br0">&#40;</span><a href="http://www.datoolset.net/wiki/index.php?title=GetHero"><span class="kw4">GetHero</span></a><span class="br0">&#40;</span><span class="br0">&#41;</span><span class="br0">&#41;</span><span class="br0">&#41;</span><span class="br0">&#41;</span>;
+            WR_SetFollowerState<span class="br0">&#40;</span>oFollower, <span class="kw3">FOLLOWER_STATE_ACTIVE</span><span class="br0">&#41;</span>;
+            WR_SetPlotFlag<span class="br0">&#40;</span>PLT_ZZZPT_PARTY, zzzPartyMemberID<span class="br0">&#40;</span>oFollower<span class="br0">&#41;</span>, TRUE<span class="br0">&#41;</span>;
+            <a href="http://www.datoolset.net/wiki/index.php?title=break keyword"><span class="kw1">break</span></a>;
+         <span class="br0">&#125;</span>
+         <span class="co1">// PARTY MEMBER DROPPED - flag as not party member.</span>
+         <a href="http://www.datoolset.net/wiki/index.php?title=case keyword"><span class="kw1">case</span></a> <span class="kw3">EVENT_TYPE_PARTYMEMBER_DROPPED</span><span class="sy0">:</span>
+        <span class="br0">&#123;</span>
+            <a href="http://www.datoolset.net/wiki/index.php?title=object keyword"><span class="kw2">object</span></a> oFollower <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetEventObject"><span class="kw4">GetEventObject</span></a><span class="br0">&#40;</span>ev, <span class="nu0">0</span><span class="br0">&#41;</span>;
+            WR_SetPlotFlag<span class="br0">&#40;</span>PLT_ZZZPT_PARTY, zzzPartyMemberID<span class="br0">&#40;</span>oFollower<span class="br0">&#41;</span>, FALSE<span class="br0">&#41;</span>;
+        <span class="br0">&#125;</span></pre></div></div>
+<p>When we need to refer to a particular follower explicitly, we can still do so - for example, the flag ZZZPT_PARTY_GODWIN will tell use whether Godwin is currently in the party or not.
+</p>
+<h3><span class="mw-headline" id="How_do_I_turn_off_sustained_abilities_when_a_follower_is_dismissed.3F">How do I turn off sustained abilities when a follower is dismissed?</span></h3>
+<p><b>Please note:</b> The 1.04 DA:O patch is bugged and removed/broke several features of the toolkit, if you are using it please follow <a rel="nofollow" class="external text" href="http://social.bioware.com/forum/1/topic/71/index/3172230/1#3172537">these steps</a> to re-enable them as one is required for the script below to compile.
+</p><p><br />
+There   is a potential exploit in what we've done so far. If a follower casts  a  sustained spell like Flaming Weapons, it affects all party members.   When the follower is dismissed, the remaining party members continue to   benefit from the spell.
+</p><p>We can prevent this by deactivating  modal  abilities before opening the party picker. Add these snippets to  the  module event script:
+</p>
+<div dir="ltr" class="mw-geshi mw-code mw-content-ltr"><div class="dascript source-dascript"><pre class="de1"><span class="co2">#include &quot;ability_h&quot;</span>
+<a href="http://www.datoolset.net/wiki/index.php?title=void keyword"><span class="kw2">void</span></a> zDeactivateModalAbilities<span class="br0">&#40;</span><span class="br0">&#41;</span>;</pre></div></div>
+<p>and
+</p>
+<div dir="ltr" class="mw-geshi mw-code mw-content-ltr"><div class="dascript source-dascript"><pre class="de1">         <a href="http://www.datoolset.net/wiki/index.php?title=case keyword"><span class="kw1">case</span></a> <span class="kw3">EVENT_TYPE_PARTYPICKER_INIT</span><span class="sy0">:</span>
+           <span class="br0">&#123;</span>
+             <span class="co1">// Deactivate party modal abilities. This ensures that the party no longer benefits</span>
+             <span class="co1">// from spells like Flaming Weapons if the caster is dismissed from the party.</span>
+             zDeactivateModalAbilities<span class="br0">&#40;</span><span class="br0">&#41;</span>;
+             <a href="http://www.datoolset.net/wiki/index.php?title=break keyword"><span class="kw1">break</span></a>;
+           <span class="br0">&#125;</span></pre></div></div>
+<p>The function looks like this:
+</p>
+<div dir="ltr" class="mw-geshi mw-code mw-content-ltr"><div class="dascript source-dascript"><pre class="de1"><span class="co1">// Deactivate party's modal abilities</span>
+&#160;
+<a href="http://www.datoolset.net/wiki/index.php?title=void keyword"><span class="kw2">void</span></a> zDeactivateModalAbilities<span class="br0">&#40;</span><span class="br0">&#41;</span>
+<span class="br0">&#123;</span>
+  <a href="http://www.datoolset.net/wiki/index.php?title=object keyword"><span class="kw2">object</span></a>   oPC            <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetHero"><span class="kw4">GetHero</span></a><span class="br0">&#40;</span><span class="br0">&#41;</span>;
+  <a href="http://www.datoolset.net/wiki/index.php?title=object keyword"><span class="kw2">object</span></a><span class="br0">&#91;</span><span class="br0">&#93;</span>  oFollowerTable <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetPartyList"><span class="kw4">GetPartyList</span></a><span class="br0">&#40;</span>oPC<span class="br0">&#41;</span>;
+  <a href="http://www.datoolset.net/wiki/index.php?title=object keyword"><span class="kw2">object</span></a>   oFollower;
+  <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a>      nPartySize     <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetArraySize"><span class="kw4">GetArraySize</span></a><span class="br0">&#40;</span>oFollowerTable<span class="br0">&#41;</span>;
+  <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a><span class="br0">&#91;</span><span class="br0">&#93;</span>    nAbilityTable;
+  <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a>      nAbilityCount;
+  <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a>      nAbility;
+  <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a>      i              <span class="sy0">=</span> <span class="sy0">-</span><span class="nu0">1</span>;
+  <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a>      j;
+&#160;
+  <a href="http://www.datoolset.net/wiki/index.php?title=while keyword"><span class="kw1">while</span></a> <span class="br0">&#40;</span><span class="sy0">++</span>i <span class="sy0">&lt;</span> nPartySize<span class="br0">&#41;</span>
+  <span class="br0">&#123;</span>
+      oFollower      <span class="sy0">=</span> oFollowerTable<span class="br0">&#91;</span>i<span class="br0">&#93;</span>;
+      nAbilityTable  <span class="sy0">=</span> GetAbilityList<span class="br0">&#40;</span>oFollower<span class="br0">&#41;</span>;
+      nAbilityCount  <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetArraySize"><span class="kw4">GetArraySize</span></a><span class="br0">&#40;</span>nAbilityTable<span class="br0">&#41;</span>;
+      j              <span class="sy0">=</span> <span class="sy0">-</span><span class="nu0">1</span>;
+&#160;
+      <a href="http://www.datoolset.net/wiki/index.php?title=while keyword"><span class="kw1">while</span></a> <span class="br0">&#40;</span><span class="sy0">++</span>j <span class="sy0">&lt;</span> nAbilityCount<span class="br0">&#41;</span>
+      <span class="br0">&#123;</span>
+          nAbility <span class="sy0">=</span> nAbilityTable<span class="br0">&#91;</span>j<span class="br0">&#93;</span>;
+&#160;
+          <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a> <span class="br0">&#40;</span>Ability_IsAbilityActive<span class="br0">&#40;</span>oFollower, nAbility<span class="br0">&#41;</span><span class="br0">&#41;</span>
+            <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a> <span class="br0">&#40;</span>Ability_IsModalAbility<span class="br0">&#40;</span>nAbility<span class="br0">&#41;</span><span class="br0">&#41;</span>
+              Ability_DeactivateModalAbility<span class="br0">&#40;</span>oFollower, nAbility<span class="br0">&#41;</span>;
+        <span class="br0">&#125;</span>
+    <span class="br0">&#125;</span>
+<span class="br0">&#125;</span></pre></div></div>
+<p>If other ways of dismissing party members are permitted, the same function can be used.
+</p>
+<!-- 
+NewPP limit report
+CPU time usage: 0.152 seconds
+Real time usage: 0.195 seconds
+Preprocessor visited node count: 187/1000000
+Preprocessor generated node count: 520/1000000
+Post‐expand include size: 0/2097152 bytes
+Template argument size: 0/2097152 bytes
+Highest expansion depth: 3/40
+Expensive parser function count: 0/100
+-->
+
+<!-- 
+Transclusion expansion time report (%,ms,calls,template)
+100.00%    0.000      1 - -total
+-->
+
+<!-- Saved in parser cache with key db714099484-datoolwiki_:pcache:idhash:3991-0!*!0!!en!5!* and timestamp 20260531055559 and revision id 19341
+ -->
+</div>									<div class="printfooter">
+						Retrieved from "<a dir="ltr" href="Follower_tutorial.html">https://www.datoolset.net/mw/index.php?title=Follower_tutorial&amp;oldid=19341</a>"					</div>
+													<div id='catlinks' class='catlinks'><div id="mw-normal-catlinks" class="mw-normal-catlinks"><a href="/wiki/Special:Categories" title="Special:Categories">Category</a>: <ul><li><a href="Category%3AFollower_tutorials.html" title="Category:Follower tutorials">Follower tutorials</a></li></ul></div></div>												<div class="visualClear"></div>
+							</div>
+		</div>
+		<div id="mw-navigation">
+			<h2>Navigation menu</h2>
+
+			<div id="mw-head">
+									<div id="p-personal" role="navigation" class="" aria-labelledby="p-personal-label">
+						<h3 id="p-personal-label">Personal tools</h3>
+						<ul>
+							<li id="pt-login"><a href="/mw/index.php?title=Special:UserLogin&amp;returnto=Follower+tutorial" title="You are encouraged to log in; however, it is not mandatory [o]" accesskey="o">Log in</a></li>						</ul>
+					</div>
+									<div id="left-navigation">
+										<div id="p-namespaces" role="navigation" class="vectorTabs" aria-labelledby="p-namespaces-label">
+						<h3 id="p-namespaces-label">Namespaces</h3>
+						<ul>
+															<li  id="ca-nstab-main" class="selected"><span><a href="Follower_tutorial.html"  title="View the content page [c]" accesskey="c">Page</a></span></li>
+															<li  id="ca-talk"><span><a href="Talk%3AFollower_tutorial.html"  title="Discussion about the content page [t]" accesskey="t">Discussion</a></span></li>
+													</ul>
+					</div>
+										<div id="p-variants" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-variants-label">
+												<h3 id="p-variants-label"><span>Variants</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+									</div>
+				<div id="right-navigation">
+										<div id="p-views" role="navigation" class="vectorTabs" aria-labelledby="p-views-label">
+						<h3 id="p-views-label">Views</h3>
+						<ul>
+															<li id="ca-view" class="selected"><span><a href="Follower_tutorial.html" >Read</a></span></li>
+															<li id="ca-viewsource"><span><a href="Follower_tutorial.html"  title="This page is protected.&#10;You can view its source [e]" accesskey="e">View source</a></span></li>
+															<li id="ca-history" class="collapsible"><span><a href="Follower_tutorial.html"  title="Past revisions of this page [h]" accesskey="h">View history</a></span></li>
+													</ul>
+					</div>
+										<div id="p-cactions" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-cactions-label">
+						<h3 id="p-cactions-label"><span>More</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+										<div id="p-search" role="search">
+						<h3>
+							<label for="searchInput">Search</label>
+						</h3>
+
+						<form action="/mw/index.php" id="searchform">
+														<div id="simpleSearch">
+															<input type="search" name="search" placeholder="Search" title="Search Dragon Age Toolset Wiki [f]" accesskey="f" id="searchInput" /><input type="hidden" value="Special:Search" name="title" /><input type="submit" name="fulltext" value="Search" title="Search the pages for this text" id="mw-searchButton" class="searchButton mw-fallbackSearchButton" /><input type="submit" name="go" value="Go" title="Go to a page with this exact name if exists" id="searchButton" class="searchButton" />								</div>
+						</form>
+					</div>
+									</div>
+			</div>
+			<div id="mw-panel">
+				<div id="p-logo" role="banner"><a class="mw-wiki-logo" href="Main_Page.html"  title="Visit the main page"></a></div>
+						<div class="portal" role="navigation" id='p-navigation' aria-labelledby='p-navigation-label'>
+			<h3 id='p-navigation-label'>Navigation</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-mainpage-description"><a href="Main_Page.html" title="Visit the main page [z]" accesskey="z">Main page</a></li>
+													<li id="n-recentchanges"><a href="/wiki/Special:RecentChanges" title="A list of recent changes in the wiki [r]" accesskey="r">Recent changes</a></li>
+													<li id="n-randompage"><a href="/wiki/Special:Random" title="Load a random page [x]" accesskey="x">Random page</a></li>
+													<li id="n-help"><a href="https://www.mediawiki.org/wiki/Special:MyLanguage/Help:Contents" title="The place to find out">Help</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-Links' aria-labelledby='p-Links-label'>
+			<h3 id='p-Links-label'>Links</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-Toolset-forums"><a href="http://forum.bioware.com/forum/30-dragon-age-toolset" rel="nofollow">Toolset forums</a></li>
+													<li id="n-Legacy-forums"><a href="http://social.bioware.com/forum/1/subindex/70" rel="nofollow">Legacy forums</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-tb' aria-labelledby='p-tb-label'>
+			<h3 id='p-tb-label'>Tools</h3>
+
+			<div class="body">
+									<ul>
+													<li id="t-whatlinkshere"><a href="/wiki/Special:WhatLinksHere/Follower_tutorial" title="A list of all wiki pages that link here [j]" accesskey="j">What links here</a></li>
+													<li id="t-recentchangeslinked"><a href="/wiki/Special:RecentChangesLinked/Follower_tutorial" title="Recent changes in pages linked from this page [k]" accesskey="k">Related changes</a></li>
+													<li id="t-specialpages"><a href="/wiki/Special:SpecialPages" title="A list of all special pages [q]" accesskey="q">Special pages</a></li>
+													<li id="t-print"><a href="Follower_tutorial.html" rel="alternate" title="Printable version of this page [p]" accesskey="p">Printable version</a></li>
+													<li id="t-permalink"><a href="Follower_tutorial.html" title="Permanent link to this revision of the page">Permanent link</a></li>
+													<li id="t-info"><a href="Follower_tutorial.html" title="More information about this page">Page information</a></li>
+											</ul>
+							</div>
+		</div>
+				</div>
+		</div>
+		<div id="footer" role="contentinfo">
+							<ul id="footer-info">
+											<li id="footer-info-lastmod"> This page was last modified on 26 October 2014, at 20:54.</li>
+									</ul>
+							<ul id="footer-places">
+											<li id="footer-places-privacy"><a href="/wiki/Dragon_Age_Toolset_Wiki:Privacy_policy" title="Dragon Age Toolset Wiki:Privacy policy">Privacy policy</a></li>
+											<li id="footer-places-about"><a href="/wiki/Dragon_Age_Toolset_Wiki:About" title="Dragon Age Toolset Wiki:About">About Dragon Age Toolset Wiki</a></li>
+											<li id="footer-places-disclaimer"><a href="/wiki/Dragon_Age_Toolset_Wiki:General_disclaimer" title="Dragon Age Toolset Wiki:General disclaimer">Disclaimers</a></li>
+									</ul>
+										<ul id="footer-icons" class="noprint">
+											<li id="footer-poweredbyico">
+															<a href="//www.mediawiki.org/"><img src="../assets/mw/resources/assets/poweredby_mediawiki_88x31.png" alt="Powered by MediaWiki" srcset="../assets/mw/resources/assets/poweredby_mediawiki_132x47.png 1.5x, ../assets/mw/resources/assets/poweredby_mediawiki_176x62.png 2x" width="88" height="31" /></a>
+													</li>
+									</ul>
+						<div style="clear:both"></div>
+		</div>
+		<script>if(window.jQuery)jQuery.ready();</script><script>if(window.mw){
+mw.loader.state({"site":"loading","user":"ready","user.groups":"ready"});
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.toc","mediawiki.action.view.postEdit","mediawiki.user","mediawiki.hidpi","mediawiki.page.ready","mediawiki.searchSuggest"],null,true);
+}</script>
+<script>if(window.mw){
+document.write("\u003Cscript src=\"https://www.datoolset.net/mw/load.php?debug=false\u0026amp;lang=en\u0026amp;modules=site\u0026amp;only=scripts\u0026amp;skin=vector\u0026amp;*\"\u003E\u003C/script\u003E");
+}</script>
+<script>if(window.mw){
+mw.config.set({"wgBackendResponseTime":238});
+}</script>
+	</body>
+</html>

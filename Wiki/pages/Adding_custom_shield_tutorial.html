@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" class="client-nojs">
+<head>
+<meta charset="UTF-8" />
+<title>Adding custom shield tutorial - Dragon Age Toolset Wiki</title>
+<meta name="generator" content="MediaWiki 1.25.6" />
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="search" type="application/opensearchdescription+xml" href="/mw/opensearch_desc.php" title="Dragon Age Toolset Wiki (en)" />
+<link rel="EditURI" type="application/rsd+xml" href="https://www.datoolset.net/mw/api.php?action=rsd" />
+<link rel="alternate" hreflang="x-default" href="Adding_custom_shield_tutorial.html" />
+<link rel="alternate" type="application/atom+xml" title="Dragon Age Toolset Wiki Atom feed" href="/mw/index.php?title=Special:RecentChanges&amp;feed=atom" />
+<meta name="ResourceLoaderDynamicStyles" content="" />
+<style>a:lang(ar),a:lang(kk-arab),a:lang(mzn),a:lang(ps),a:lang(ur){text-decoration:none}
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-css:7:270a0dcd3ae587df0f041aebfc42e61b */</style>
+<script>if(window.mw){
+mw.config.set({"wgCanonicalNamespace":"","wgCanonicalSpecialPageName":false,"wgNamespaceNumber":0,"wgPageName":"Adding_custom_shield_tutorial","wgTitle":"Adding custom shield tutorial","wgCurRevisionId":19689,"wgRevisionId":19689,"wgArticleId":5810,"wgIsArticle":true,"wgIsRedirect":false,"wgAction":"view","wgUserName":null,"wgUserGroups":["*"],"wgCategories":[],"wgBreakFrames":false,"wgPageContentLanguage":"en","wgPageContentModel":"wikitext","wgSeparatorTransformTable":["",""],"wgDigitTransformTable":["",""],"wgDefaultDateFormat":"dmy","wgMonthNames":["","January","February","March","April","May","June","July","August","September","October","November","December"],"wgMonthNamesShort":["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],"wgRelevantPageName":"Adding_custom_shield_tutorial","wgRelevantArticleId":5810,"wgIsProbablyEditable":false,"wgRestrictionEdit":[],"wgRestrictionMove":[]});
+}</script><script>if(window.mw){
+mw.loader.implement("user.options",function($,jQuery){mw.user.options.set({"variant":"en"});});mw.loader.implement("user.tokens",function($,jQuery){mw.user.tokens.set({"editToken":"+\\","patrolToken":"+\\","watchToken":"+\\"});});
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-js:7:a5c52c063dc436c1ca7c9f456936a5e9 */
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.page.startup","mediawiki.legacy.wikibits","mediawiki.legacy.ajax","skins.vector.js"]);
+}</script>
+<!--[if lt IE 7]><style type="text/css">body{behavior:url("/mw/skins/Vector/csshover.min.htc")}</style><![endif]-->
+<link rel="stylesheet" href="../assets/local/wiki-static.css" />
+</head>
+<body class="mediawiki ltr sitedir-ltr ns-0 ns-subject page-Adding_custom_shield_tutorial skin-vector action-view">
+		<div id="mw-page-base" class="noprint"></div>
+		<div id="mw-head-base" class="noprint"></div>
+		<div id="content" class="mw-body" role="main">
+			<a id="top"></a>
+
+						<div class="mw-indicators">
+</div>
+			<h1 id="firstHeading" class="firstHeading" lang="en">Adding custom shield tutorial</h1>
+						<div id="bodyContent" class="mw-body-content">
+									<div id="siteSub">From Dragon Age Toolset Wiki</div>
+								<div id="contentSub"></div>
+												<div id="jump-to-nav" class="mw-jump">
+					Jump to:					<a href="#mw-head">navigation</a>, 					<a href="#p-search">search</a>
+				</div>
+				<div id="mw-content-text" lang="en" dir="ltr" class="mw-content-ltr"><p>Author: amycus
+</p><p>Tools:
+</p>
+<ul><li>3ds max (gmax) no older than 2011 year - Eshme Import/Export DAO Tools doesn't work with new versions.</li>
+<li><a rel="nofollow" class="external text" href="http://www.nexusmods.com/dragonage/mods/895/?">Eshme Import/Export DAO Tools</a> - Script for 3s max</li>
+<li>Dragon Age Origins and Dragon Age Toolset - install it in the same folder as the game.</li>
+<li>Adobe Photoshop and Nvidia DDS Plugin for textures.</li>
+<li>Create <a href="GDA.html" title="GDA">GDA</a> file. See also <a href="Compiling_2DAs.html" title="Compiling 2DAs">Compiling 2DAs</a>. You can use this program <a rel="nofollow" class="external text" href="http://www.nexusmods.com/dragonage/mods/214/?">GDA Editor</a> to work with <a href="GDA.html" title="GDA">GDA</a> type. </li>
+<li>Engine won't work with models bigger than 45 000 polygons and 30 000 vertexes.</li></ul>
+<p><b>Before we begin extract DAO resources and keep it somewhere. You will need them.</b>
+</p><p>You can use also the toolset to extract the models and textures, but fisrt you need to know the name of what you are looking for, in the tooset go File-&gt;Open file-&gt; /packages/core/data/modelmeshdata.erf there you have some strings to help you find the models: shield:w_shd.
+</p><p>Extract from:
+</p>
+<ul><li>the modelmeshdata.erf the .msh files, the _0 files - high level of detail (LOD) and the _2 and _3 files - low level of detail when other NPCs are using them and they are far away from you.</li>
+<li><b>in the .../core/data/modelmeshhierarchy.erf you need extract the .mmh and .phy files.</b></li>
+<li><b>in the .../core/data/materialobjects.erf you need to extract the .mao file.</b></li>
+<li><b>the textures.erf (.../core/textures/high/)  the .dds files.</b></li>
+<li><b>in the files .../core/data/textures.erf (props, placeables) and/or .../core/textures/high/textures.erf (characters and armours) you need to extract the .dds files</b>.</li></ul>
+<h2><span class="mw-headline" id="Script_Settings">Script Settings</span></h2>
+<p>Watch where you install Eshme script - program files(x86) for 32 programs at 64 bit computers. Eshme script and the game have to be in one folder of program files.
+</p><p>Take Eshme Import/Export: Startup, YAGG and  DAOTools -&gt; put into C(your disc):/Program Files/Autodesk/3dsmax/Scripts -&gt; scripts 
+</p><p>If your installation is correct them when you first open 3d man you will see window with the settings
+</p><p>The path setting depends on the installation path. It should look similiar to this setting:
+The export path&#160;: C:\Program Files (x86)\Dragon Age
+The game path&#160;: C:\Program Files (x86)\Dragon Age\packages\core\override
+</p>
+<h2><span class="mw-headline" id="3d_Max">3d Max</span></h2>
+<p>1) Import any base shield of the vanilla game. Unlike for armor, you dont need to think how close the vanilla item is to the new one, ANY vanilla shield will do.
+</p><p>2) Import the new shield you want to import to the game. Take the extra time needed to get the size and angle right compared to the vanilla shield.
+</p><p>3) Collapse any active modifiers on the "new" item. Then add a new "unwrap UVW" modiefier to it, and double click it to open the UVW window. then drag and select everything you see there, and DRAG IT ANYWHERE OUTSIDE THE OUTLINED BOX IN THE CENTER. This will make life easier for you in step 6.
+</p><p>4) Then select the vanilla mesh, and select all modifiers BESIDES this one's "unwrap UVW" modifier. Then  right-click and choose "cut" here (these modifiers we will want to use again soon). Make this vanilla mesh an "editable mesh" (right click the mesh and select "make editable mesh"). 
+</p><p>5) Now attach the vanilla shield with the "new" shield. 
+</p><p>6) Add a new "unwrap uvw" modifier to the combined mesh. Make sure that it is listed above the other modifiers, and press the "+" sign to it's left. Select "face", and select everything that is inside the outlined box in the middle. Right click the "unwrap UVW" modifier and choose "collapse to".
+</p><p>7) Next press the "+" sign that is to the left of the words "editable mesh". Then choose "element" and press delete. Paste the old modifiers I asked you to cut in step 4. 
+</p><p>9) Add all textures and export it with Eshmes tools.
+</p>
+<h2><span class="mw-headline" id="See_also">See also</span></h2>
+<ul><li> <a href="Adding_custom_armor_tutorial.html" title="Adding custom armor tutorial">Adding custom armor tutorial</a></li>
+<li> <a href="Adding_custom_level_tutorial.html" title="Adding custom level tutorial">Adding custom level tutorial</a></li>
+<li><a rel="nofollow" class="external text" href="http://www.greentoken.de/onlineconv/">3D converter</a></li></ul>
+
+<!-- 
+NewPP limit report
+CPU time usage: 0.008 seconds
+Real time usage: 0.016 seconds
+Preprocessor visited node count: 11/1000000
+Preprocessor generated node count: 16/1000000
+Post‐expand include size: 0/2097152 bytes
+Template argument size: 0/2097152 bytes
+Highest expansion depth: 2/40
+Expensive parser function count: 0/100
+-->
+
+<!-- 
+Transclusion expansion time report (%,ms,calls,template)
+100.00%    0.000      1 - -total
+-->
+
+<!-- Saved in parser cache with key db714099484-datoolwiki_:pcache:idhash:5810-0!*!0!!*!*!* and timestamp 20260531013812 and revision id 19689
+ -->
+</div>									<div class="printfooter">
+						Retrieved from "<a dir="ltr" href="Adding_custom_shield_tutorial.html">https://www.datoolset.net/mw/index.php?title=Adding_custom_shield_tutorial&amp;oldid=19689</a>"					</div>
+													<div id='catlinks' class='catlinks catlinks-allhidden'></div>												<div class="visualClear"></div>
+							</div>
+		</div>
+		<div id="mw-navigation">
+			<h2>Navigation menu</h2>
+
+			<div id="mw-head">
+									<div id="p-personal" role="navigation" class="" aria-labelledby="p-personal-label">
+						<h3 id="p-personal-label">Personal tools</h3>
+						<ul>
+							<li id="pt-login"><a href="/mw/index.php?title=Special:UserLogin&amp;returnto=Adding+custom+shield+tutorial" title="You are encouraged to log in; however, it is not mandatory [o]" accesskey="o">Log in</a></li>						</ul>
+					</div>
+									<div id="left-navigation">
+										<div id="p-namespaces" role="navigation" class="vectorTabs" aria-labelledby="p-namespaces-label">
+						<h3 id="p-namespaces-label">Namespaces</h3>
+						<ul>
+															<li  id="ca-nstab-main" class="selected"><span><a href="Adding_custom_shield_tutorial.html"  title="View the content page [c]" accesskey="c">Page</a></span></li>
+															<li  id="ca-talk" class="new"><span><a href="/mw/index.php?title=Talk:Adding_custom_shield_tutorial&amp;action=edit&amp;redlink=1"  title="Discussion about the content page [t]" accesskey="t">Discussion</a></span></li>
+													</ul>
+					</div>
+										<div id="p-variants" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-variants-label">
+												<h3 id="p-variants-label"><span>Variants</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+									</div>
+				<div id="right-navigation">
+										<div id="p-views" role="navigation" class="vectorTabs" aria-labelledby="p-views-label">
+						<h3 id="p-views-label">Views</h3>
+						<ul>
+															<li id="ca-view" class="selected"><span><a href="Adding_custom_shield_tutorial.html" >Read</a></span></li>
+															<li id="ca-viewsource"><span><a href="Adding_custom_shield_tutorial.html"  title="This page is protected.&#10;You can view its source [e]" accesskey="e">View source</a></span></li>
+															<li id="ca-history" class="collapsible"><span><a href="Adding_custom_shield_tutorial.html"  title="Past revisions of this page [h]" accesskey="h">View history</a></span></li>
+													</ul>
+					</div>
+										<div id="p-cactions" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-cactions-label">
+						<h3 id="p-cactions-label"><span>More</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+										<div id="p-search" role="search">
+						<h3>
+							<label for="searchInput">Search</label>
+						</h3>
+
+						<form action="/mw/index.php" id="searchform">
+														<div id="simpleSearch">
+															<input type="search" name="search" placeholder="Search" title="Search Dragon Age Toolset Wiki [f]" accesskey="f" id="searchInput" /><input type="hidden" value="Special:Search" name="title" /><input type="submit" name="fulltext" value="Search" title="Search the pages for this text" id="mw-searchButton" class="searchButton mw-fallbackSearchButton" /><input type="submit" name="go" value="Go" title="Go to a page with this exact name if exists" id="searchButton" class="searchButton" />								</div>
+						</form>
+					</div>
+									</div>
+			</div>
+			<div id="mw-panel">
+				<div id="p-logo" role="banner"><a class="mw-wiki-logo" href="Main_Page.html"  title="Visit the main page"></a></div>
+						<div class="portal" role="navigation" id='p-navigation' aria-labelledby='p-navigation-label'>
+			<h3 id='p-navigation-label'>Navigation</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-mainpage-description"><a href="Main_Page.html" title="Visit the main page [z]" accesskey="z">Main page</a></li>
+													<li id="n-recentchanges"><a href="/wiki/Special:RecentChanges" title="A list of recent changes in the wiki [r]" accesskey="r">Recent changes</a></li>
+													<li id="n-randompage"><a href="/wiki/Special:Random" title="Load a random page [x]" accesskey="x">Random page</a></li>
+													<li id="n-help"><a href="https://www.mediawiki.org/wiki/Special:MyLanguage/Help:Contents" title="The place to find out">Help</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-Links' aria-labelledby='p-Links-label'>
+			<h3 id='p-Links-label'>Links</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-Toolset-forums"><a href="http://forum.bioware.com/forum/30-dragon-age-toolset" rel="nofollow">Toolset forums</a></li>
+													<li id="n-Legacy-forums"><a href="http://social.bioware.com/forum/1/subindex/70" rel="nofollow">Legacy forums</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-tb' aria-labelledby='p-tb-label'>
+			<h3 id='p-tb-label'>Tools</h3>
+
+			<div class="body">
+									<ul>
+													<li id="t-whatlinkshere"><a href="/wiki/Special:WhatLinksHere/Adding_custom_shield_tutorial" title="A list of all wiki pages that link here [j]" accesskey="j">What links here</a></li>
+													<li id="t-recentchangeslinked"><a href="/wiki/Special:RecentChangesLinked/Adding_custom_shield_tutorial" title="Recent changes in pages linked from this page [k]" accesskey="k">Related changes</a></li>
+													<li id="t-specialpages"><a href="/wiki/Special:SpecialPages" title="A list of all special pages [q]" accesskey="q">Special pages</a></li>
+													<li id="t-print"><a href="Adding_custom_shield_tutorial.html" rel="alternate" title="Printable version of this page [p]" accesskey="p">Printable version</a></li>
+													<li id="t-permalink"><a href="Adding_custom_shield_tutorial.html" title="Permanent link to this revision of the page">Permanent link</a></li>
+													<li id="t-info"><a href="Adding_custom_shield_tutorial.html" title="More information about this page">Page information</a></li>
+											</ul>
+							</div>
+		</div>
+				</div>
+		</div>
+		<div id="footer" role="contentinfo">
+							<ul id="footer-info">
+											<li id="footer-info-lastmod"> This page was last modified on 16 February 2016, at 07:13.</li>
+									</ul>
+							<ul id="footer-places">
+											<li id="footer-places-privacy"><a href="/wiki/Dragon_Age_Toolset_Wiki:Privacy_policy" title="Dragon Age Toolset Wiki:Privacy policy">Privacy policy</a></li>
+											<li id="footer-places-about"><a href="/wiki/Dragon_Age_Toolset_Wiki:About" title="Dragon Age Toolset Wiki:About">About Dragon Age Toolset Wiki</a></li>
+											<li id="footer-places-disclaimer"><a href="/wiki/Dragon_Age_Toolset_Wiki:General_disclaimer" title="Dragon Age Toolset Wiki:General disclaimer">Disclaimers</a></li>
+									</ul>
+										<ul id="footer-icons" class="noprint">
+											<li id="footer-poweredbyico">
+															<a href="//www.mediawiki.org/"><img src="../assets/mw/resources/assets/poweredby_mediawiki_88x31.png" alt="Powered by MediaWiki" srcset="../assets/mw/resources/assets/poweredby_mediawiki_132x47.png 1.5x, ../assets/mw/resources/assets/poweredby_mediawiki_176x62.png 2x" width="88" height="31" /></a>
+													</li>
+									</ul>
+						<div style="clear:both"></div>
+		</div>
+		<script>if(window.jQuery)jQuery.ready();</script><script>if(window.mw){
+mw.loader.state({"site":"loading","user":"ready","user.groups":"ready"});
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.action.view.postEdit","mediawiki.user","mediawiki.hidpi","mediawiki.page.ready","mediawiki.searchSuggest"],null,true);
+}</script>
+<script>if(window.mw){
+document.write("\u003Cscript src=\"https://www.datoolset.net/mw/load.php?debug=false\u0026amp;lang=en\u0026amp;modules=site\u0026amp;only=scripts\u0026amp;skin=vector\u0026amp;*\"\u003E\u003C/script\u003E");
+}</script>
+<script>if(window.mw){
+mw.config.set({"wgBackendResponseTime":275});
+}</script>
+	</body>
+</html>

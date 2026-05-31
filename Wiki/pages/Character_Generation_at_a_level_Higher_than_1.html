@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" class="client-nojs">
+<head>
+<meta charset="UTF-8" />
+<title>High-Level Character Generation - Dragon Age Toolset Wiki</title>
+<meta name="generator" content="MediaWiki 1.25.6" />
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="search" type="application/opensearchdescription+xml" href="/mw/opensearch_desc.php" title="Dragon Age Toolset Wiki (en)" />
+<link rel="EditURI" type="application/rsd+xml" href="https://www.datoolset.net/mw/api.php?action=rsd" />
+<link rel="alternate" hreflang="x-default" href="High-Level_Character_Generation.html" />
+<link rel="alternate" type="application/atom+xml" title="Dragon Age Toolset Wiki Atom feed" href="/mw/index.php?title=Special:RecentChanges&amp;feed=atom" />
+<link rel="canonical" href="High-Level_Character_Generation.html" />
+<meta name="ResourceLoaderDynamicStyles" content="" />
+<style>a:lang(ar),a:lang(kk-arab),a:lang(mzn),a:lang(ps),a:lang(ur){text-decoration:none}
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-css:7:270a0dcd3ae587df0f041aebfc42e61b */</style>
+<script>if(window.mw){
+mw.config.set({"wgCanonicalNamespace":"","wgCanonicalSpecialPageName":false,"wgNamespaceNumber":0,"wgPageName":"High-Level_Character_Generation","wgTitle":"High-Level Character Generation","wgCurRevisionId":17014,"wgRevisionId":17014,"wgArticleId":4861,"wgIsArticle":true,"wgIsRedirect":false,"wgAction":"view","wgUserName":null,"wgUserGroups":["*"],"wgCategories":[],"wgBreakFrames":false,"wgPageContentLanguage":"en","wgPageContentModel":"wikitext","wgSeparatorTransformTable":["",""],"wgDigitTransformTable":["",""],"wgDefaultDateFormat":"dmy","wgMonthNames":["","January","February","March","April","May","June","July","August","September","October","November","December"],"wgMonthNamesShort":["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],"wgRelevantPageName":"High-Level_Character_Generation","wgRelevantArticleId":4861,"wgIsProbablyEditable":false,"wgRestrictionEdit":[],"wgRestrictionMove":[],"wgRedirectedFrom":"Character_Generation_at_a_level_Higher_than_1","wgInternalRedirectTargetUrl":"/wiki/High-Level_Character_Generation"});
+}</script><script>if(window.mw){
+mw.loader.implement("user.options",function($,jQuery){mw.user.options.set({"variant":"en"});});mw.loader.implement("user.tokens",function($,jQuery){mw.user.tokens.set({"editToken":"+\\","patrolToken":"+\\","watchToken":"+\\"});});
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-js:7:a5c52c063dc436c1ca7c9f456936a5e9 */
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.action.view.redirect","mediawiki.page.startup","mediawiki.legacy.wikibits","mediawiki.legacy.ajax","skins.vector.js"]);
+}</script>
+<!--[if lt IE 7]><style type="text/css">body{behavior:url("/mw/skins/Vector/csshover.min.htc")}</style><![endif]-->
+<link rel="stylesheet" href="../assets/local/wiki-static.css" />
+</head>
+<body class="mediawiki ltr sitedir-ltr ns-0 ns-subject page-High-Level_Character_Generation skin-vector action-view">
+		<div id="mw-page-base" class="noprint"></div>
+		<div id="mw-head-base" class="noprint"></div>
+		<div id="content" class="mw-body" role="main">
+			<a id="top"></a>
+
+						<div class="mw-indicators">
+</div>
+			<h1 id="firstHeading" class="firstHeading" lang="en">High-Level Character Generation</h1>
+						<div id="bodyContent" class="mw-body-content">
+									<div id="siteSub">From Dragon Age Toolset Wiki</div>
+								<div id="contentSub"><span class="mw-redirectedfrom">(Redirected from <a href="Character_Generation_at_a_level_Higher_than_1.html" title="Character Generation at a level Higher than 1">Character Generation at a level Higher than 1</a>)</span></div>
+												<div id="jump-to-nav" class="mw-jump">
+					Jump to:					<a href="#mw-head">navigation</a>, 					<a href="#p-search">search</a>
+				</div>
+				<div id="mw-content-text" lang="en" dir="ltr" class="mw-content-ltr"><p>The Awakening and post-Awakening DLC allows players to create new characters that start at a higher level, i.e. the character generation screen does not start at level 1. This <strong class="selflink">High-Level Character Generation</strong> tutorial demonstrates how to add similar functionality to stand-alone modules.
+</p>
+<div id="toc" class="toc"><div id="toctitle"><h2>Contents</h2></div>
+<ul>
+<li class="toclevel-1 tocsection-1"><a href="#Creating_the_scripts"><span class="tocnumber">1</span> <span class="toctext">Creating the scripts</span></a></li>
+<li class="toclevel-1 tocsection-2"><a href="#Editing_the_sys_chargen_h_file"><span class="tocnumber">2</span> <span class="toctext">Editing the sys_chargen_h file</span></a></li>
+<li class="toclevel-1 tocsection-3"><a href="#Editing_the_sys_chargen_file"><span class="tocnumber">3</span> <span class="toctext">Editing the sys_chargen file</span></a></li>
+<li class="toclevel-1 tocsection-4"><a href="#Editing_the_module_core"><span class="tocnumber">4</span> <span class="toctext">Editing the module_core</span></a>
+<ul>
+<li class="toclevel-2 tocsection-5"><a href="#An_alternative_view"><span class="tocnumber">4.1</span> <span class="toctext">An alternative view</span></a></li>
+</ul>
+</li>
+<li class="toclevel-1 tocsection-6"><a href="#Calling_the_custom_module_script"><span class="tocnumber">5</span> <span class="toctext">Calling the custom module script</span></a></li>
+<li class="toclevel-1 tocsection-7"><a href="#Final_steps"><span class="tocnumber">6</span> <span class="toctext">Final steps</span></a></li>
+<li class="toclevel-1 tocsection-8"><a href="#Export_and_Test"><span class="tocnumber">7</span> <span class="toctext">Export and Test</span></a></li>
+<li class="toclevel-1 tocsection-9"><a href="#See_Also"><span class="tocnumber">8</span> <span class="toctext">See Also</span></a></li>
+</ul>
+</div>
+
+<h2><span class="mw-headline" id="Creating_the_scripts">Creating the scripts</span></h2>
+<p>First, it is very important that you DUPLICATE the important core scripts. By creating your own scripts, you won't have to worry about screwing the official campaign or other modules.
+</p><p>The scripts that must be duplicated for this tutorial:
+</p>
+<ul><li> <a href="/mw/index.php?title=Module_core&amp;action=edit&amp;redlink=1" class="new" title="Module core (page does not exist)">module_core</a></li>
+<li> <a href="Sys_chargen_h.html" title="Sys chargen h">sys_chargen_h</a></li>
+<li> <a href="/mw/index.php?title=Sys_chargen&amp;action=edit&amp;redlink=1" class="new" title="Sys chargen (page does not exist)">sys_chargen</a></li></ul>
+<p>If you already have duplicates of these for other systems/tutorials (such as the background tutorial), make your edits in those files.
+</p><p>When you duplicate the files, make sure that the names are unique while still naming their purpose for easy editing. For example, you might add a module-specific prefix:
+</p>
+<ul><li> scar_module_core</li>
+<li> scar_sys_chargen_h</li>
+<li> scar_sys_chargen</li></ul>
+<h2><span class="mw-headline" id="Editing_the_sys_chargen_h_file">Editing the sys_chargen_h file</span></h2>
+<p>The first thing you want to do is avoid duplicate functions, as this confuses the compiler. You won't need or want to edit every function, so at the top of the file place another include:
+</p>
+<div dir="ltr" class="mw-geshi mw-code mw-content-ltr"><div class="dascript source-dascript"><pre class="de1"><span class="co2">#include &quot;sys_chargen_h&quot;</span></pre></div></div>
+<p>For this tutorial, you can delete everything except the <a href="/mw/index.php?title=Chargen_InitializeCharacter&amp;action=edit&amp;redlink=1" class="new" title="Chargen InitializeCharacter (page does not exist)">Chargen_InitializeCharacter</a> function. (Leave any functions that you may have edited, but don't forget to integrate them when necessary.)
+</p><p>Next you need to create a new name for this function. I suggest the prefix you used for the script files:
+</p><p><code>scar_Chargen_InitializeCharacter</code>
+</p><p>Near the top of the function you should see a group of lines that look like this:
+</p>
+<div dir="ltr" class="mw-geshi mw-code mw-content-ltr"><div class="dascript source-dascript"><pre class="de1">    <span class="co1">// -------------------------------------------------------------------------</span>
+    <span class="co1">// 2. Set Creature to Level and Experience 0</span>
+    <span class="co1">// -------------------------------------------------------------------------</span>
+    <a href="http://www.datoolset.net/wiki/index.php?title=SetCreatureProperty"><span class="kw4">SetCreatureProperty</span></a><span class="br0">&#40;</span>oChar, <span class="kw3">PROPERTY_SIMPLE_LEVEL</span>, <span class="nu0">1.0</span>, <span class="kw3">PROPERTY_VALUE_BASE</span><span class="br0">&#41;</span>;
+    <a href="http://www.datoolset.net/wiki/index.php?title=SetCreatureProperty"><span class="kw4">SetCreatureProperty</span></a><span class="br0">&#40;</span>oChar, <span class="kw3">PROPERTY_SIMPLE_EXPERIENCE</span>, <span class="nu0">0.0</span>, <span class="kw3">PROPERTY_VALUE_BASE</span><span class="br0">&#41;</span>;</pre></div></div>
+<p>Set the level and XP to the appropriate values for your starting level. (You can give less XP, forcing a character to gain that extra XP before leveling. This does not affect companions.)
+</p><p>You also need to find this group:
+</p>
+<div dir="ltr" class="mw-geshi mw-code mw-content-ltr"><div class="dascript source-dascript"><pre class="de1">    <span class="co1">// -------------------------------------------------------------------------</span>
+    <span class="co1">// 6. Set up points available to distribute (skills only on humanoids)</span>
+    <span class="co1">// -------------------------------------------------------------------------</span>
+    <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a><span class="br0">&#40;</span><a href="http://www.datoolset.net/wiki/index.php?title=IsHumanoid"><span class="kw4">IsHumanoid</span></a><span class="br0">&#40;</span>oChar<span class="br0">&#41;</span><span class="br0">&#41;</span>
+    <span class="br0">&#123;</span>
+        <a href="http://www.datoolset.net/wiki/index.php?title=SetCreatureProperty"><span class="kw4">SetCreatureProperty</span></a><span class="br0">&#40;</span>oChar,PROPERTY_SIMPLE_SKILL_POINTS, <span class="nu0">1.0</span>, <span class="kw3">PROPERTY_VALUE_BASE</span><span class="br0">&#41;</span>;
+    <span class="br0">&#125;</span>
+    <a href="http://www.datoolset.net/wiki/index.php?title=SetCreatureProperty"><span class="kw4">SetCreatureProperty</span></a><span class="br0">&#40;</span>oChar,PROPERTY_SIMPLE_ATTRIBUTE_POINTS, <span class="nu0">5.0</span>, <span class="kw3">PROPERTY_VALUE_BASE</span><span class="br0">&#41;</span>;
+    <a href="http://www.datoolset.net/wiki/index.php?title=SetCreatureProperty"><span class="kw4">SetCreatureProperty</span></a><span class="br0">&#40;</span>oChar,PROPERTY_SIMPLE_TALENT_POINTS, <span class="nu0">2.0</span>, <span class="kw3">PROPERTY_VALUE_BASE</span><span class="br0">&#41;</span>;</pre></div></div>
+<p>And set the values to the appropriate level (or give more/less that usual for certain modules.)
+</p>
+<h2><span class="mw-headline" id="Editing_the_sys_chargen_file">Editing the sys_chargen file</span></h2>
+<p>Now that the include file is created, open the sys_chargen file. Make sure that you have both chargen includes. For example:
+</p>
+<div dir="ltr" class="mw-geshi mw-code mw-content-ltr"><div class="dascript source-dascript"><pre class="de1"><span class="co2">#include &quot;sys_chargen_h&quot;</span>
+<span class="co2">#include &quot;scar_sys_chargen_h&quot;</span></pre></div></div>
+<p>This will keep normal functions from breaking.
+</p><p>Find and replace all <a href="/mw/index.php?title=Chargen_InitializeCharacter&amp;action=edit&amp;redlink=1" class="new" title="Chargen InitializeCharacter (page does not exist)">Chargen_InitializeCharacter</a> functions with your custom function. This will start your character at the appropriate level.
+</p><p>There is a bug that occurs during "Quick-Start" unless another step is taken. Find all instances of <a href="/mw/index.php?title=AL_DoAutoLevelUp&amp;action=edit&amp;redlink=1" class="new" title="AL DoAutoLevelUp (page does not exist)">AL_DoAutoLevelUp</a>. (There should be two in an unedited file.)
+</p><p>The function that causes the problem looks like this:
+</p><p><code>AL_DoAutoLevelUp(oChar, TRUE, TRUE);</code>
+</p><p>Either set both trues to falses or copy/paste the other function to this space.
+</p>
+<h2><span class="mw-headline" id="Editing_the_module_core">Editing the module_core</span></h2>
+<p>The home stretch. Now we have to associate the module chargen script with our custom script.
+</p><p>Near the bottom of an unedited script, you should find:
+</p>
+<div dir="ltr" class="mw-geshi mw-code mw-content-ltr"><div class="dascript source-dascript"><pre class="de1">            <span class="co1">// -----------------------------------------------------------------</span>
+            <span class="co1">// Handle character generation events sent by the engine.</span>
+            <span class="co1">// -----------------------------------------------------------------</span>
+            <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a><span class="br0">&#40;</span> <span class="br0">&#40;</span>nEvent <span class="sy0">&gt;=</span> <span class="kw3">EVENT_TYPE_CHARGEN_START</span> <span class="sy0">&amp;&amp;</span> nEvent <span class="sy0">&lt;=</span> <span class="kw3">EVENT_TYPE_CHARGEN_END</span><span class="br0">&#41;</span> <span class="sy0">||</span> nEvent <span class="sy0">==</span> <span class="kw3">EVENT_TYPE_PLAYERLEVELUP</span> <span class="br0">&#41;</span>
+            <span class="br0">&#123;</span>
+                <a href="http://www.datoolset.net/wiki/index.php?title=HandleEvent"><span class="kw4">HandleEvent</span></a><span class="br0">&#40;</span>ev, R<span class="st0">&quot;sys_chargen.ncs&quot;</span><span class="br0">&#41;</span>;
+            <span class="br0">&#125;</span></pre></div></div>
+<p>Switch the script handling the event to your custom script.
+</p><p>Edit: To avoid confusion, the file that should be edited here is your CUSTOM module_core (thanks for pointing that out below, Gaxkang55.) NEVER edit the core scripts, almost anything that you may need to do can be done with custom duplicates.
+</p>
+<h3><span class="mw-headline" id="An_alternative_view">An alternative view</span></h3>
+<p>Editing the module_core script is almost certainly a bad idea, and is probably not even what was intended. But to be crystal clear, this code should be placed in your own module script (see next section), with appropriate modification (depending on how you have defined your event variables in that script). For example, if your module script initialisations are:
+</p>
+<div dir="ltr" class="mw-geshi mw-code mw-content-ltr"><div class="dascript source-dascript"><pre class="de1">    <a href="http://www.datoolset.net/wiki/index.php?title=event keyword"><span class="kw2">event</span></a> ev <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetCurrentEvent"><span class="kw4">GetCurrentEvent</span></a><span class="br0">&#40;</span><span class="br0">&#41;</span>;
+    <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nEventType <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetEventType"><span class="kw4">GetEventType</span></a><span class="br0">&#40;</span>ev<span class="br0">&#41;</span>;
+    <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> bEventHandled <span class="sy0">=</span> FALSE;</pre></div></div>
+<p>then you will need:
+</p>
+<div dir="ltr" class="mw-geshi mw-code mw-content-ltr"><div class="dascript source-dascript"><pre class="de1">   <a href="http://www.datoolset.net/wiki/index.php?title=default keyword"><span class="kw1">default</span></a><span class="sy0">:</span>
+   <span class="br0">&#123;</span>
+            <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a><span class="br0">&#40;</span> <span class="br0">&#40;</span>nEventType <span class="sy0">&gt;=</span> <span class="kw3">EVENT_TYPE_CHARGEN_START</span> <span class="sy0">&amp;&amp;</span> nEventType <span class="sy0">&lt;=</span> <span class="kw3">EVENT_TYPE_CHARGEN_END</span><span class="br0">&#41;</span> <span class="sy0">||</span> nEventType <span class="sy0">==</span> <span class="kw3">EVENT_TYPE_PLAYERLEVELUP</span> <span class="br0">&#41;</span>
+            <span class="br0">&#123;</span>
+                <a href="http://www.datoolset.net/wiki/index.php?title=HandleEvent"><span class="kw4">HandleEvent</span></a><span class="br0">&#40;</span>ev, R<span class="st0">&quot;scar_sys_chargen.ncs&quot;</span><span class="br0">&#41;</span>;
+                bEventHandled <span class="sy0">=</span> TRUE;
+            <span class="br0">&#125;</span>
+            <a href="http://www.datoolset.net/wiki/index.php?title=break keyword"><span class="kw1">break</span></a>;
+   <span class="br0">&#125;</span></pre></div></div>
+<h2><span class="mw-headline" id="Calling_the_custom_module_script">Calling the custom module script</span></h2>
+<p>For those who don't know, a module script now must be associated with the module itself. This is done through [File-&gt;Manage Modules-&gt;Poperties]. Make sure you have your module selected before you hit properties.
+</p><p>Underneath the module name, there should be a parameter named "Script". Enter the browser and select your custom module_core script. Once you're finished eidting the module, click OK.
+</p>
+<h2><span class="mw-headline" id="Final_steps">Final steps</span></h2>
+<p>Unless you already have the function in your module_core, you need to actually run character generation.
+</p><p>Under <code>EVENT_TYPE_MODULE_START</code>, add these lines:
+</p>
+<div dir="ltr" class="mw-geshi mw-code mw-content-ltr"><div class="dascript source-dascript"><pre class="de1">            <a href="http://www.datoolset.net/wiki/index.php?title=PreloadCharGen"><span class="kw4">PreloadCharGen</span></a><span class="br0">&#40;</span><span class="br0">&#41;</span>;
+            <a href="http://www.datoolset.net/wiki/index.php?title=StartCharGen"><span class="kw4">StartCharGen</span></a><span class="br0">&#40;</span><a href="http://www.datoolset.net/wiki/index.php?title=GetHero"><span class="kw4">GetHero</span></a><span class="br0">&#40;</span><span class="br0">&#41;</span><span class="br0">&#41;</span>;</pre></div></div>
+<h2><span class="mw-headline" id="Export_and_Test">Export and Test</span></h2>
+<p>Make sure you save each file along the way, and compile all scripts once finished. Export the scripts and play your module. You should begin character generation at the appropriate level.
+</p>
+<h2><span class="mw-headline" id="See_Also">See Also</span></h2>
+<ul><li> <a rel="nofollow" class="external text" href="http://social.bioware.com/forum/1/topic/71/index/5020925">Original BSN thread</a></li></ul>
+
+<!-- 
+NewPP limit report
+CPU time usage: 0.052 seconds
+Real time usage: 0.059 seconds
+Preprocessor visited node count: 142/1000000
+Preprocessor generated node count: 400/1000000
+Post‐expand include size: 31/2097152 bytes
+Template argument size: 0/2097152 bytes
+Highest expansion depth: 3/40
+Expensive parser function count: 0/100
+-->
+
+<!-- 
+Transclusion expansion time report (%,ms,calls,template)
+100.00%    0.000      1 - -total
+-->
+
+<!-- Saved in parser cache with key db714099484-datoolwiki_:pcache:idhash:4861-0!*!0!!en!*!* and timestamp 20260531032625 and revision id 17014
+ -->
+</div>									<div class="printfooter">
+						Retrieved from "<a dir="ltr" href="High-Level_Character_Generation.html">https://www.datoolset.net/mw/index.php?title=High-Level_Character_Generation&amp;oldid=17014</a>"					</div>
+													<div id='catlinks' class='catlinks catlinks-allhidden'></div>												<div class="visualClear"></div>
+							</div>
+		</div>
+		<div id="mw-navigation">
+			<h2>Navigation menu</h2>
+
+			<div id="mw-head">
+									<div id="p-personal" role="navigation" class="" aria-labelledby="p-personal-label">
+						<h3 id="p-personal-label">Personal tools</h3>
+						<ul>
+							<li id="pt-login"><a href="/mw/index.php?title=Special:UserLogin&amp;returnto=High-Level+Character+Generation" title="You are encouraged to log in; however, it is not mandatory [o]" accesskey="o">Log in</a></li>						</ul>
+					</div>
+									<div id="left-navigation">
+										<div id="p-namespaces" role="navigation" class="vectorTabs" aria-labelledby="p-namespaces-label">
+						<h3 id="p-namespaces-label">Namespaces</h3>
+						<ul>
+															<li  id="ca-nstab-main" class="selected"><span><a href="High-Level_Character_Generation.html"  title="View the content page [c]" accesskey="c">Page</a></span></li>
+															<li  id="ca-talk" class="new"><span><a href="/mw/index.php?title=Talk:High-Level_Character_Generation&amp;action=edit&amp;redlink=1"  title="Discussion about the content page [t]" accesskey="t">Discussion</a></span></li>
+													</ul>
+					</div>
+										<div id="p-variants" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-variants-label">
+												<h3 id="p-variants-label"><span>Variants</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+									</div>
+				<div id="right-navigation">
+										<div id="p-views" role="navigation" class="vectorTabs" aria-labelledby="p-views-label">
+						<h3 id="p-views-label">Views</h3>
+						<ul>
+															<li id="ca-view" class="selected"><span><a href="High-Level_Character_Generation.html" >Read</a></span></li>
+															<li id="ca-viewsource"><span><a href="High-Level_Character_Generation.html"  title="This page is protected.&#10;You can view its source [e]" accesskey="e">View source</a></span></li>
+															<li id="ca-history" class="collapsible"><span><a href="High-Level_Character_Generation.html"  title="Past revisions of this page [h]" accesskey="h">View history</a></span></li>
+													</ul>
+					</div>
+										<div id="p-cactions" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-cactions-label">
+						<h3 id="p-cactions-label"><span>More</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+										<div id="p-search" role="search">
+						<h3>
+							<label for="searchInput">Search</label>
+						</h3>
+
+						<form action="/mw/index.php" id="searchform">
+														<div id="simpleSearch">
+															<input type="search" name="search" placeholder="Search" title="Search Dragon Age Toolset Wiki [f]" accesskey="f" id="searchInput" /><input type="hidden" value="Special:Search" name="title" /><input type="submit" name="fulltext" value="Search" title="Search the pages for this text" id="mw-searchButton" class="searchButton mw-fallbackSearchButton" /><input type="submit" name="go" value="Go" title="Go to a page with this exact name if exists" id="searchButton" class="searchButton" />								</div>
+						</form>
+					</div>
+									</div>
+			</div>
+			<div id="mw-panel">
+				<div id="p-logo" role="banner"><a class="mw-wiki-logo" href="Main_Page.html"  title="Visit the main page"></a></div>
+						<div class="portal" role="navigation" id='p-navigation' aria-labelledby='p-navigation-label'>
+			<h3 id='p-navigation-label'>Navigation</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-mainpage-description"><a href="Main_Page.html" title="Visit the main page [z]" accesskey="z">Main page</a></li>
+													<li id="n-recentchanges"><a href="/wiki/Special:RecentChanges" title="A list of recent changes in the wiki [r]" accesskey="r">Recent changes</a></li>
+													<li id="n-randompage"><a href="/wiki/Special:Random" title="Load a random page [x]" accesskey="x">Random page</a></li>
+													<li id="n-help"><a href="https://www.mediawiki.org/wiki/Special:MyLanguage/Help:Contents" title="The place to find out">Help</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-Links' aria-labelledby='p-Links-label'>
+			<h3 id='p-Links-label'>Links</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-Toolset-forums"><a href="http://forum.bioware.com/forum/30-dragon-age-toolset" rel="nofollow">Toolset forums</a></li>
+													<li id="n-Legacy-forums"><a href="http://social.bioware.com/forum/1/subindex/70" rel="nofollow">Legacy forums</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-tb' aria-labelledby='p-tb-label'>
+			<h3 id='p-tb-label'>Tools</h3>
+
+			<div class="body">
+									<ul>
+													<li id="t-whatlinkshere"><a href="/wiki/Special:WhatLinksHere/High-Level_Character_Generation" title="A list of all wiki pages that link here [j]" accesskey="j">What links here</a></li>
+													<li id="t-recentchangeslinked"><a href="/wiki/Special:RecentChangesLinked/High-Level_Character_Generation" title="Recent changes in pages linked from this page [k]" accesskey="k">Related changes</a></li>
+													<li id="t-specialpages"><a href="/wiki/Special:SpecialPages" title="A list of all special pages [q]" accesskey="q">Special pages</a></li>
+													<li id="t-print"><a href="High-Level_Character_Generation.html" rel="alternate" title="Printable version of this page [p]" accesskey="p">Printable version</a></li>
+													<li id="t-permalink"><a href="High-Level_Character_Generation.html" title="Permanent link to this revision of the page">Permanent link</a></li>
+													<li id="t-info"><a href="High-Level_Character_Generation.html" title="More information about this page">Page information</a></li>
+											</ul>
+							</div>
+		</div>
+				</div>
+		</div>
+		<div id="footer" role="contentinfo">
+							<ul id="footer-info">
+											<li id="footer-info-lastmod"> This page was last modified on 20 August 2011, at 09:39.</li>
+									</ul>
+							<ul id="footer-places">
+											<li id="footer-places-privacy"><a href="/wiki/Dragon_Age_Toolset_Wiki:Privacy_policy" title="Dragon Age Toolset Wiki:Privacy policy">Privacy policy</a></li>
+											<li id="footer-places-about"><a href="/wiki/Dragon_Age_Toolset_Wiki:About" title="Dragon Age Toolset Wiki:About">About Dragon Age Toolset Wiki</a></li>
+											<li id="footer-places-disclaimer"><a href="/wiki/Dragon_Age_Toolset_Wiki:General_disclaimer" title="Dragon Age Toolset Wiki:General disclaimer">Disclaimers</a></li>
+									</ul>
+										<ul id="footer-icons" class="noprint">
+											<li id="footer-poweredbyico">
+															<a href="//www.mediawiki.org/"><img src="../assets/mw/resources/assets/poweredby_mediawiki_88x31.png" alt="Powered by MediaWiki" srcset="../assets/mw/resources/assets/poweredby_mediawiki_132x47.png 1.5x, ../assets/mw/resources/assets/poweredby_mediawiki_176x62.png 2x" width="88" height="31" /></a>
+													</li>
+									</ul>
+						<div style="clear:both"></div>
+		</div>
+		<script>if(window.jQuery)jQuery.ready();</script><script>if(window.mw){
+mw.loader.state({"site":"loading","user":"ready","user.groups":"ready"});
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.toc","mediawiki.action.view.postEdit","mediawiki.user","mediawiki.hidpi","mediawiki.page.ready","mediawiki.searchSuggest"],null,true);
+}</script>
+<script>if(window.mw){
+document.write("\u003Cscript src=\"https://www.datoolset.net/mw/load.php?debug=false\u0026amp;lang=en\u0026amp;modules=site\u0026amp;only=scripts\u0026amp;skin=vector\u0026amp;*\"\u003E\u003C/script\u003E");
+}</script>
+<script>if(window.mw){
+mw.config.set({"wgBackendResponseTime":284});
+}</script>
+	</body>
+</html>

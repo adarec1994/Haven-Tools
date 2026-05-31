@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" class="client-nojs">
+<head>
+<meta charset="UTF-8" />
+<title>Creating custom classes with minimal impact on the game - Dragon Age Toolset Wiki</title>
+<meta name="generator" content="MediaWiki 1.25.6" />
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="search" type="application/opensearchdescription+xml" href="/mw/opensearch_desc.php" title="Dragon Age Toolset Wiki (en)" />
+<link rel="EditURI" type="application/rsd+xml" href="https://www.datoolset.net/mw/api.php?action=rsd" />
+<link rel="alternate" hreflang="x-default" href="Creating_custom_classes_with_minimal_impact_on_the_game.html" />
+<link rel="alternate" type="application/atom+xml" title="Dragon Age Toolset Wiki Atom feed" href="/mw/index.php?title=Special:RecentChanges&amp;feed=atom" />
+<meta name="ResourceLoaderDynamicStyles" content="" />
+<style>a:lang(ar),a:lang(kk-arab),a:lang(mzn),a:lang(ps),a:lang(ur){text-decoration:none}
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-css:7:270a0dcd3ae587df0f041aebfc42e61b */</style>
+<script>if(window.mw){
+mw.config.set({"wgCanonicalNamespace":"","wgCanonicalSpecialPageName":false,"wgNamespaceNumber":0,"wgPageName":"Creating_custom_classes_with_minimal_impact_on_the_game","wgTitle":"Creating custom classes with minimal impact on the game","wgCurRevisionId":19163,"wgRevisionId":19163,"wgArticleId":5040,"wgIsArticle":true,"wgIsRedirect":false,"wgAction":"view","wgUserName":null,"wgUserGroups":["*"],"wgCategories":["Tutorials"],"wgBreakFrames":false,"wgPageContentLanguage":"en","wgPageContentModel":"wikitext","wgSeparatorTransformTable":["",""],"wgDigitTransformTable":["",""],"wgDefaultDateFormat":"dmy","wgMonthNames":["","January","February","March","April","May","June","July","August","September","October","November","December"],"wgMonthNamesShort":["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],"wgRelevantPageName":"Creating_custom_classes_with_minimal_impact_on_the_game","wgRelevantArticleId":5040,"wgIsProbablyEditable":false,"wgRestrictionEdit":[],"wgRestrictionMove":[]});
+}</script><script>if(window.mw){
+mw.loader.implement("user.options",function($,jQuery){mw.user.options.set({"variant":"en"});});mw.loader.implement("user.tokens",function($,jQuery){mw.user.tokens.set({"editToken":"+\\","patrolToken":"+\\","watchToken":"+\\"});});
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-js:7:a5c52c063dc436c1ca7c9f456936a5e9 */
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.page.startup","mediawiki.legacy.wikibits","mediawiki.legacy.ajax","skins.vector.js"]);
+}</script>
+<!--[if lt IE 7]><style type="text/css">body{behavior:url("/mw/skins/Vector/csshover.min.htc")}</style><![endif]-->
+<link rel="stylesheet" href="../assets/local/wiki-static.css" />
+</head>
+<body class="mediawiki ltr sitedir-ltr ns-0 ns-subject page-Creating_custom_classes_with_minimal_impact_on_the_game skin-vector action-view">
+		<div id="mw-page-base" class="noprint"></div>
+		<div id="mw-head-base" class="noprint"></div>
+		<div id="content" class="mw-body" role="main">
+			<a id="top"></a>
+
+						<div class="mw-indicators">
+</div>
+			<h1 id="firstHeading" class="firstHeading" lang="en">Creating custom classes with minimal impact on the game</h1>
+						<div id="bodyContent" class="mw-body-content">
+									<div id="siteSub">From Dragon Age Toolset Wiki</div>
+								<div id="contentSub"></div>
+												<div id="jump-to-nav" class="mw-jump">
+					Jump to:					<a href="#mw-head">navigation</a>, 					<a href="#p-search">search</a>
+				</div>
+				<div id="mw-content-text" lang="en" dir="ltr" class="mw-content-ltr"><p>This tutorial will be useful to anyone that wants to create a new class for Dragon Age: Origins or a stand-aone module using the Dragon Age game engine; I will assume that you have installed the toolset successfully and have read through the tutorial Creating modules for Dragon Age. This will contain much of the existing custom class tutorial, but expanded on to include details on creating new abilities and skills, as well as making sure these function properly in Bioware's official Expansion and stand-alone DLC. It may include guidance for creating content specific to the class that will transfer from the base game to official expansion\DLC content as well.
+</p>
+<div id="toc" class="toc"><div id="toctitle"><h2>Contents</h2></div>
+<ul>
+<li class="toclevel-1 tocsection-1"><a href="#Designing_the_new_class"><span class="tocnumber">1</span> <span class="toctext">Designing the new class</span></a>
+<ul>
+<li class="toclevel-2 tocsection-2"><a href="#Lore_considerations"><span class="tocnumber">1.1</span> <span class="toctext">Lore considerations</span></a></li>
+<li class="toclevel-2 tocsection-3"><a href="#Class_Abilities"><span class="tocnumber">1.2</span> <span class="toctext">Class Abilities</span></a></li>
+<li class="toclevel-2 tocsection-4"><a href="#Race_and_Origin_Restrictions"><span class="tocnumber">1.3</span> <span class="toctext">Race and Origin Restrictions</span></a></li>
+<li class="toclevel-2 tocsection-5"><a href="#Other_Ability_decisions"><span class="tocnumber">1.4</span> <span class="toctext">Other Ability decisions</span></a></li>
+<li class="toclevel-2 tocsection-6"><a href="#What_Bioware_Modules_to_support"><span class="tocnumber">1.5</span> <span class="toctext">What Bioware Modules to support</span></a></li>
+<li class="toclevel-2 tocsection-7"><a href="#Should_you_support_Community_modules"><span class="tocnumber">1.6</span> <span class="toctext">Should you support Community modules</span></a></li>
+</ul>
+</li>
+<li class="toclevel-1 tocsection-8"><a href="#Equipment"><span class="tocnumber">2</span> <span class="toctext">Equipment</span></a>
+<ul>
+<li class="toclevel-2 tocsection-9"><a href="#Armor"><span class="tocnumber">2.1</span> <span class="toctext">Armor</span></a></li>
+<li class="toclevel-2 tocsection-10"><a href="#Weapons"><span class="tocnumber">2.2</span> <span class="toctext">Weapons</span></a></li>
+</ul>
+</li>
+<li class="toclevel-1 tocsection-11"><a href="#Class_foundation_data"><span class="tocnumber">3</span> <span class="toctext">Class foundation data</span></a>
+<ul>
+<li class="toclevel-2 tocsection-12"><a href="#M2DA_files"><span class="tocnumber">3.1</span> <span class="toctext">M2DA files</span></a></li>
+<li class="toclevel-2 tocsection-13"><a href="#Scripts_needed"><span class="tocnumber">3.2</span> <span class="toctext">Scripts needed</span></a>
+<ul>
+<li class="toclevel-3 tocsection-14"><a href="#The_module_script"><span class="tocnumber">3.2.1</span> <span class="toctext">The module script</span></a>
+<ul>
+<li class="toclevel-4 tocsection-15"><a href="#Event_handling"><span class="tocnumber">3.2.1.1</span> <span class="toctext">Event handling</span></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toclevel-2 tocsection-16"><a href="#Creature_templates"><span class="tocnumber">3.3</span> <span class="toctext">Creature templates</span></a></li>
+</ul>
+</li>
+<li class="toclevel-1 tocsection-17"><a href="#Putting_it_all_together"><span class="tocnumber">4</span> <span class="toctext">Putting it all together</span></a>
+<ul>
+<li class="toclevel-2 tocsection-18"><a href="#Creating_the_work_modules"><span class="tocnumber">4.1</span> <span class="toctext">Creating the work modules</span></a>
+<ul>
+<li class="toclevel-3 tocsection-19"><a href="#Dummy_module_names"><span class="tocnumber">4.1.1</span> <span class="toctext">Dummy module names</span></a></li>
+</ul>
+</li>
+<li class="toclevel-2 tocsection-20"><a href="#Creating_the_GDA_files"><span class="tocnumber">4.2</span> <span class="toctext">Creating the GDA files</span></a></li>
+<li class="toclevel-2 tocsection-21"><a href="#Editing_the_scripts"><span class="tocnumber">4.3</span> <span class="toctext">Editing the scripts</span></a></li>
+<li class="toclevel-2 tocsection-22"><a href="#Creating_the_items"><span class="tocnumber">4.4</span> <span class="toctext">Creating the items</span></a></li>
+<li class="toclevel-2 tocsection-23"><a href="#Editing_the_creature_template"><span class="tocnumber">4.5</span> <span class="toctext">Editing the creature template</span></a></li>
+<li class="toclevel-2 tocsection-24"><a href="#Exporting_the_files"><span class="tocnumber">4.6</span> <span class="toctext">Exporting the files</span></a></li>
+<li class="toclevel-2 tocsection-25"><a href="#Testing_your_work"><span class="tocnumber">4.7</span> <span class="toctext">Testing your work</span></a></li>
+</ul>
+</li>
+<li class="toclevel-1 tocsection-26"><a href="#Specializations"><span class="tocnumber">5</span> <span class="toctext">Specializations</span></a>
+<ul>
+<li class="toclevel-2 tocsection-27"><a href="#MD2A_files"><span class="tocnumber">5.1</span> <span class="toctext">MD2A files</span></a>
+<ul>
+<li class="toclevel-3 tocsection-28"><a href="#Specializations_M2DA_files"><span class="tocnumber">5.1.1</span> <span class="toctext">Specializations M2DA files</span></a></li>
+</ul>
+</li>
+<li class="toclevel-2 tocsection-29"><a href="#Scripts_needed_2"><span class="tocnumber">5.2</span> <span class="toctext">Scripts needed</span></a></li>
+<li class="toclevel-2 tocsection-30"><a href="#Items"><span class="tocnumber">5.3</span> <span class="toctext">Items</span></a></li>
+</ul>
+</li>
+<li class="toclevel-1 tocsection-31"><a href="#See_Also"><span class="tocnumber">6</span> <span class="toctext">See Also</span></a></li>
+</ul>
+</div>
+
+<h2><span class="mw-headline" id="Designing_the_new_class">Designing the new class</span></h2>
+<p>There are a number of things that need to be considered when creating a new class for Dragon Age; how does it fit into the existing game lore, what abilities will it have, what races and origins will be able to use it, and are those abilities Stamina-based or Mana-based. New Specializations, which are created in the same manner as classes have to take these factors into consideration as well.
+</p>
+<h3><span class="mw-headline" id="Lore_considerations">Lore considerations</span></h3>
+<p>When designing a class that will be used in Origins, Awakening, Golems of Amgarrak and Witch Hunt, you need to consider how the class fits into the lore of Thedas; when I created the Tevinter Warden Class (using a previous class creation tutorial) I initially intended for the Warden class (the original name) to be a fusion of the Ranger and Druid from Dungeons and Dragons. After careful consideration, i felt that since the game lore did not provide a way to justify "earth spirits" granting spell-like abilities, I would make them into a group of highly trained Warriors with arcane spellcasting abilities. I also felt that the origins of the class should tie into the setting in such a way as to give it the feel of something that Bioware would have created if they had desired to.
+</p><p>Designing classes for stand-alone modules may or may not be similar, depending on the setting used; an module set in Thedas obviously should follow the above guidelines, but modules set in other places (like the BAldur's Gate 2 Redux mod) should be made more loosely tied to lore.
+</p>
+<h3><span class="mw-headline" id="Class_Abilities">Class Abilities</span></h3>
+<h3><span class="mw-headline" id="Race_and_Origin_Restrictions">Race and Origin Restrictions</span></h3>
+<p>This is an interesting thing; while there may be no lore-based reason to deny a given custom class to any race or origin, there may well br other reasons to do so. For example, there may be certain things that you want to give to your new class that don't fit well with your vision of certain of the races in the game; this is where restricting by race or origin comes in. The easiest way to implement these restrictions in the Origins Campaign is to limit the class to specific origins. There is one caveat I need to mention though; due to how Bioware implemented the Noble Origins, you cannot easily restrict a class to either the Human Noble or Dwarf Noble, nor can you properly implement restricting a Magic-using class in the Origins Campaign. That is one current bug in my Tevinter Warden class that I do plan on fixing eventually.
+</p>
+<h3><span class="mw-headline" id="Other_Ability_decisions">Other Ability decisions</span></h3>
+<p>One of the most important decisions you have to make is whether your class will be Stamina-based or Mana-based; this impacts several things and creates some interesting dilemas if you are adding this class to the Origins and/or Awakening Campaigns. Most notable is that if you create it as a Mana-based class, you gain access to all Mage spell schools and if Stamina-based, you gain Dual-wield and Archery for free. If you don't want those abilties there is some extra work involved in separating them out, which I will explain how to do when the time comes.
+</p>
+<h3><span class="mw-headline" id="What_Bioware_Modules_to_support">What Bioware Modules to support</span></h3>
+<p>This decision is up to you, but I have designed my class to support Origins, Awakening, Golems of Amgarrak and Witch Hunt. I will explain how to do it so that the individual modules can be safely installed at the same time and not interfere with each other. It is possible to create a single installation for all related modules; I will attempt to explain this as well.  Also, if you are adding a class that you would like to be considered for inclusion in the Extended Community Canon Project, send me a PM on BSN (username ladydesire) and I will assist you with the lore tie-ins and compatibility with my class; you may also wish to contact Questorion or daywalker03 to have them add information about your class project to the Extended Community Canon project page on Wikipedia.
+</p>
+<h3><span class="mw-headline" id="Should_you_support_Community_modules">Should you support Community modules</span></h3>
+<p>This is a difficult question to answer; if you're doing this for a custom campaign you are making, and the class doesn't make much sense outside of it, then you don't need to. On the other hand, if you're going to support the official Bioware modules like I did, it might be a good idea to contact module authors to see if you can work with them to make your class work in their stand-alone module; I have contacted one and have attempted to make a mod for his module and I may contact others to do the same thing.
+</p>
+<h2><span class="mw-headline" id="Equipment">Equipment</span></h2>
+<p>Your new class (and specializations as well) will need items that they can use; you can just equip them with basic armor and weapons, but they should also have specific items that are only usable by that class. As an example, in my Tevinter Warden class mod, I added starter versions of custom armor and weapons that had specific properties that would benefit the class. One thing you need to do, especially if you intend for your class to be usable in Origins, Awakening, Golems of Amgarrak and Witch Hunt, is make sure those items are set as Core Game Resources owned by your Origins class module; this will enable them to transfer into the expansion and DLCs without your character ending up naked. This is what Bioware did with the items from the Return to Ostagar DLC, but was not used for Stone Prisoner or Warden's Keep.
+</p>
+<h3><span class="mw-headline" id="Armor">Armor</span></h3>
+<p>Your new class needs to provide something to protect it, be it armor or robes (no naked berserkers allowed). What they will look like depends on your ability to create new models yourself or acquire them from someone who can do the work for you; you can also use the models provided by Bioware if you wish.
+</p>
+<h3><span class="mw-headline" id="Weapons">Weapons</span></h3>
+<p>As with Armor, your new class needs weapons (unarmed combat is strongly discouraged by the in-game load screens). As with Armor, you can make or acquire models, or use the ones Bioware provided.
+</p>
+<h2><span class="mw-headline" id="Class_foundation_data">Class foundation data</span></h2>
+<p>Now that you have a vision for your class and some idea of the equipment they will need, we can move on to actually creating the class; this part can be very frustrating, but I've pulled my hair out figuring these things out so hopefully you won't have to.
+</p><p>Please note that there are some steps that may seem senseless in the following sections, and they may not all be needed, depending on what kind of module you are using the class in; I will point out the things that are likely not going to be needed for stand-alone modules when I go through the actual assembly process for the module.
+</p>
+<h3><span class="mw-headline" id="M2DA_files">M2DA files</span></h3>
+<p>The following table lists the M2DA files that required to create a new base classes for Dragon Age Origins, Awakening, Golems of Amgarrak, and Witch Hunt:
+</p>
+<table class="wikitable">
+<tr>
+<th> M2DA </th>
+<th> Single Player </th>
+<th> Awakenings </th>
+<th> Description
+</th></tr>
+<tr>
+<td> <a href="ABI_2da.html" title="ABI 2da">ABI 2da</a> </td>
+<td> ABI_Base.xls\ABI_base </td>
+<td>  </td>
+<td>
+</td></tr>
+<tr>
+<td> <a href="CLA_2da.html" title="CLA 2da">CLA 2da</a> </td>
+<td> CLA_base.xls\CLA_data </td>
+<td> CLA_base.xls\CLA_data_gxa </td>
+<td> CLA_base is where the classes are defined for the game engine to find. You will need to make two copies of the CLA_base worksheet; I will explain why later on.
+</td></tr>
+<tr>
+<td> <a href="M2DA_base_2da.html" title="M2DA base 2da">M2DA 2da</a> </td>
+<td> 2da_base.xls\M2DA_base </td>
+<td> 2da_base.xls\M2DA_base_gxa </td>
+<td> M2DA-base is where you will add references to any new 2DA files you create; this will allow the game engine to know what to do with them.
+</td></tr>
+<tr>
+<td> <a href="Background.xls.html" title="Background.xls">Backgrounds 2da</a> </td>
+<td> background.xls\Backgrounds </td>
+<td> background.xls\Backgrounds_gxa </td>
+<td rowspan="3">Backgrounds, background_default, and chargen_preload are where you define the specifics of your new class so that you can create new characters in the character generation screen.
+</td></tr>
+<tr>
+<td> <a href="Background.xls.html" title="Background.xls">background_defaults 2da</a> </td>
+<td> background.xls\background_defaults </td>
+<td> background.xls\background_defaults_gxa
+</td></tr>
+<tr>
+<td> <a href="Background.xls.html" title="Background.xls">chargen_preload 2da</a> </td>
+<td> background.xls\chargen_preload </td>
+<td> background.xls\chargen_preload_gxa
+</td></tr>
+<tr>
+<td> <a href="/mw/index.php?title=Alwizard_default_2da&amp;action=edit&amp;redlink=1" class="new" title="Alwizard default 2da (page does not exist)">alwizard_default 2da</a> </td>
+<td> ALWizard_Default.xls\ALWizard_Default </td>
+<td> ALWizard_Default.xls\ALWizard_Default_gxa </td>
+<td> ALWizard is the wizard class's AutoLevel package (this is mainly useful if you plan to create companions with the class in your module; it is not strictly necessary otherwise)
+</td></tr>
+<tr>
+<td> <a href="Achievements_2da.html" title="Achievements 2da">Achievements 2da</a> </td>
+<td> Achievements.xls\Achievements </td>
+<td> Achievements.xls\Achievements_gxa </td>
+<td> Achievements is used in two ways; one is to add new class-specific achievement messages (like when unlocking specializations) and the other is related to the reason you need two copies of the CLA_base worksheet.
+</td></tr>
+<tr>
+<td> <a href="Guitypes.xls.html" title="Guitypes.xls">guitypes 2da</a> </td>
+<td>guitypes.xls\guitypes </td>
+<td>  </td>
+<td>
+</td></tr>
+<tr>
+<td> <a href="/mw/index.php?title=Classes_filter_2da&amp;action=edit&amp;redlink=1" class="new" title="Classes filter 2da (page does not exist)">classes_filter 2da</a> </td>
+<td> n/a </td>
+<td> classes_filter_gxa </td>
+<td> the classes_filter_gxa file is new for Awakening and the stand-alone DLCs Golems of Amgarrak and Witch Hunt. It handles restricting classes by race, since there is only one Origin that is used for new character creation in these modules, if you have Awakening installed; I believe (I have not yet tested it, though) that if you do not have Awakening installed, or it is installed but not enabled, Golems of Amgarrak and Which Hunt will allow you to use the Origins gda files to create characters.
+</td></tr></table>
+<h3><span class="mw-headline" id="Scripts_needed">Scripts needed</span></h3>
+<p>You will need copies of many of the default scripts; I will include a builder to builder file with these premade, so you won't need to do it yourself.
+</p><p>You will need a module script; I will include a basic one in the builder to builder file.
+</p><p>One thing that is critical to note; you do not need to put any files in the users packages/core/override folder for your class mod to work.
+</p>
+<h4><span class="mw-headline" id="The_module_script">The module script</span></h4>
+<p>The module script for a custom class mod needs to do several things; it needs to do event handling and it needs to hand certain events to a customized sys_chargen script for further handling.
+</p>
+<h5><span class="mw-headline" id="Event_handling">Event handling</span></h5>
+<p>Your custom class abilities may need to work in a manner that is consistent with how similar abilities included in the game work; for this to happen, you need to listen for certain events to occur and provide a way for the abilities to respond to them. For example, a modal ability that is supposed to end at the end of combat needs to do that; the way to do this is to capture the end of combat event and turn off the modal ability in your module script, then allow the game to continue processing the event to disable other modal abilities that also need to be handled. Another example is an ability that immobilizes a foe; When the foe enters the field of effect, the on_enter event needs to be handled to apply the immobilization effect, if the foe would be captured, and apply some other effect (like slowing movement rate) if they are not immobilized completely.
+</p>
+<h3><span class="mw-headline" id="Creature_templates">Creature templates</span></h3>
+<p>You will need to make duplicates of the default_player character template in the toolset; one each for the races/origins you wish the class to be available to. I may include these in the builder to builder file for you to rename as needed. While you can use one template for all Races and Origins, having multiple templates allows you to provide different equipment sets for each, to help blend the class into the existing Origins; I have done this with the Tevinter Warden class so each starting character has weapons that fit the introductory cutscene as seamlessly as possible. This is not needed if you are building a custom class for a stand alone module that doesn't have a fancy Origin story to set the stage for later events.
+</p>
+<h2><span class="mw-headline" id="Putting_it_all_together">Putting it all together</span></h2>
+<p>Now we need to put all these things together to make a working class.
+</p>
+<h3><span class="mw-headline" id="Creating_the_work_modules">Creating the work modules</span></h3>
+<p>If you have not already done so, you need to create at least one module to work in; I explain how to do this in the Creating a Module tutorial, so I won't repeat it here. Once you have done so, you will want to import the scripts into your working module and check them in; this simply allows you to make a backup of the entire database so you can recover from a serious problem without losing what you have built. You should make weekly backups at minimum; daily would be better, but it all depends on how much work you do on the mod each day. You will need one module for each Bioware module you choose to support; you will also need one dummy module for the modules that are not currently included in the database (a total of 7 modules if you choose to support all 4 modules like I do).
+</p>
+<h4><span class="mw-headline" id="Dummy_module_names">Dummy module names</span></h4>
+<p>To support Awakening, Golems of Amgarrak and Witch Hunt, you will need to create the following dummy modules; be sure to enter the information exactly as shown:
+</p>
+<ul><li> Awakening: dao_prc_ep1</li>
+<li> Golems of Amgarrak: dao_prc_gib </li>
+<li> Witch Hunt: dao_prc_str</li></ul>
+<h3><span class="mw-headline" id="Creating_the_GDA_files">Creating the GDA files</span></h3>
+<p>There are two ways to proceed at this point; you can simply make copies of the original Excel Spreadsheets included with the toolset (these are found in the game installation directory under tools/source/2da/) and duplicate pages (which is how I do it) or you can create a new spreadsheet and copy the above named pages into it. Either way will work, though the second method simplifies the process quite a bit. In either case, I recommend creating a directory elsewhere on your hard drive to store the files you will be editing.
+</p><p>Now, remember when I said you would need two copies of the CLA_base worksheet? I'm going to explain why this is needed; due to how the game interpretes a formula in the default sys_chargen script, you have to renumber the rows for the Bioware default specializations to have a working row id for your new base class. I have moved them up to start at row id 30 in mine and will provide a set of files set up that way as a starter kit to make things easy for you. The first cla_base file will replace the original one; this is also why you need to include the Achievements.gda, as you will need to edit the rows related to the specializations to match the cla_base file. The second cla_base will hold information related to your custom class and any specializations you decide to make for it.
+</p><p>Your new ABI_base file will tell the game how to handle the new spells/talents your class will have; I will go into more detail in the section on scripts.
+</p>
+<h3><span class="mw-headline" id="Editing_the_scripts">Editing the scripts</span></h3>
+<h3><span class="mw-headline" id="Creating_the_items">Creating the items</span></h3>
+<h3><span class="mw-headline" id="Editing_the_creature_template">Editing the creature template</span></h3>
+<p>The default_player templates provided for the three officially supported classes have several things that need changed to enable a custom class to used; the following method is one way to create new creature templates for your class:
+</p>
+<ul><li> Duplicate one of the existing creature templates for your chosen race and give it a name similar to what the game shows for them.</li>
+<li> Change the class of the new template to your custom class; if the GDA files are properly installed, it will show up in the drop down menu.</li>
+<li> Open the creature inventory and change the equipment as needed.</li>
+<li> Save the template, check it into the database, then export without dependent resources.</li></ul>
+<h3><span class="mw-headline" id="Exporting_the_files">Exporting the files</span></h3>
+<h3><span class="mw-headline" id="Testing_your_work">Testing your work</span></h3>
+<h2><span class="mw-headline" id="Specializations">Specializations</span></h2>
+<h3><span class="mw-headline" id="MD2A_files">MD2A files</span></h3>
+<p>Specializations do not require as many M2DA files as the full class. The table below lists the M2DA files used for Origins and for Awakening. 
+</p><p>A class has 8 Specializations. Additional specialisations will only be displayed on the Specialization Selection GUI if the total number is a multiple of 4. For example if there are 8 or 12 they will all appear; but if there are 9 specializations the ninth one would not be displayed. 
+</p><p>The icon for specialisation has the same size as the default pictures, i.e. 56x56 pixels. The column you should be looking at though (while in the cla_data.gda file) is the 7th one over, the one labeled "icon". The Champion's icon, for example, is listed as "classico_champion".
+</p><p>abi_base.gda used for a Specialization's unlocking ability with the row for the Specialization itself (which is located in the cla_data file). All of the default Specializations and classes have full icon names present in that file. "Hidden" is just a placeholder for abilities without icons.
+</p>
+<h4><span class="mw-headline" id="Specializations_M2DA_files">Specializations M2DA files</span></h4>
+<p>All three _gxa files (Awakening) can be found and extracted from 2da_gxa.erf. You can do it use this program <a rel="nofollow" class="external text" href="http://www.nexusmods.com/dragonage/mods/214/?">GDA Editor</a>
+</p>
+<table class="wikitable">
+<tr>
+<th> M2DA </th>
+<th> Single Player </th>
+<th> Awakenings </th>
+<th> Description
+</th></tr>
+<tr>
+<td> <a href="ABI_2da.html" title="ABI 2da">ABI 2da</a> </td>
+<td> ABI_Base.xls\ABI_base </td>
+<td> ABI_Base.xls\ABI_base_gxa </td>
+<td> The specialization's abilities have to be added here. These can be either unique abilities or copy/pasted defaults. The ability lines will reference the new specialization's guitypes row.
+</td></tr>
+<tr>
+<td> <a href="CLA_2da.html" title="CLA 2da">CLA 2da</a> </td>
+<td> CLA_Base.xls\CLA_data </td>
+<td> CLA_Base.xls\CLA_data_gxa </td>
+<td> The main Specialization entry. It will reference the specialization's Hidden and starting ABI_Base abilities.
+</td></tr>
+<tr>
+<td> <a href="Guitypes.xls.html" title="Guitypes.xls">guitypes 2da</a> </td>
+<td> guitypes.xls\guitypes </td>
+<td> guitypes.xls\guitypes_gxa </td>
+<td> The box/heading/section the specialization's abilities will appear in on the character sheet in-game.
+</td></tr></table>
+<h3><span class="mw-headline" id="Scripts_needed_2">Scripts needed</span></h3>
+<h3><span class="mw-headline" id="Items">Items</span></h3>
+<h2><span class="mw-headline" id="See_Also">See Also</span></h2>
+<ul><li> <a href="Adding_a_new_spell_tutorial.html" title="Adding a new spell tutorial">Adding a new spell tutorial</a></li></ul>
+
+<!-- 
+NewPP limit report
+CPU time usage: 0.012 seconds
+Real time usage: 0.017 seconds
+Preprocessor visited node count: 123/1000000
+Preprocessor generated node count: 128/1000000
+Post‐expand include size: 0/2097152 bytes
+Template argument size: 0/2097152 bytes
+Highest expansion depth: 2/40
+Expensive parser function count: 0/100
+-->
+
+<!-- 
+Transclusion expansion time report (%,ms,calls,template)
+100.00%    0.000      1 - -total
+-->
+
+<!-- Saved in parser cache with key db714099484-datoolwiki_:pcache:idhash:5040-0!*!0!!en!*!* and timestamp 20260531154255 and revision id 19163
+ -->
+</div>									<div class="printfooter">
+						Retrieved from "<a dir="ltr" href="Creating_custom_classes_with_minimal_impact_on_the_game.html">https://www.datoolset.net/mw/index.php?title=Creating_custom_classes_with_minimal_impact_on_the_game&amp;oldid=19163</a>"					</div>
+													<div id='catlinks' class='catlinks'><div id="mw-normal-catlinks" class="mw-normal-catlinks"><a href="/wiki/Special:Categories" title="Special:Categories">Category</a>: <ul><li><a href="Category%3ATutorials.html" title="Category:Tutorials">Tutorials</a></li></ul></div></div>												<div class="visualClear"></div>
+							</div>
+		</div>
+		<div id="mw-navigation">
+			<h2>Navigation menu</h2>
+
+			<div id="mw-head">
+									<div id="p-personal" role="navigation" class="" aria-labelledby="p-personal-label">
+						<h3 id="p-personal-label">Personal tools</h3>
+						<ul>
+							<li id="pt-login"><a href="/mw/index.php?title=Special:UserLogin&amp;returnto=Creating+custom+classes+with+minimal+impact+on+the+game" title="You are encouraged to log in; however, it is not mandatory [o]" accesskey="o">Log in</a></li>						</ul>
+					</div>
+									<div id="left-navigation">
+										<div id="p-namespaces" role="navigation" class="vectorTabs" aria-labelledby="p-namespaces-label">
+						<h3 id="p-namespaces-label">Namespaces</h3>
+						<ul>
+															<li  id="ca-nstab-main" class="selected"><span><a href="Creating_custom_classes_with_minimal_impact_on_the_game.html"  title="View the content page [c]" accesskey="c">Page</a></span></li>
+															<li  id="ca-talk"><span><a href="Talk%3ACreating_custom_classes_with_minimal_impact_on_the_game.html"  title="Discussion about the content page [t]" accesskey="t">Discussion</a></span></li>
+													</ul>
+					</div>
+										<div id="p-variants" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-variants-label">
+												<h3 id="p-variants-label"><span>Variants</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+									</div>
+				<div id="right-navigation">
+										<div id="p-views" role="navigation" class="vectorTabs" aria-labelledby="p-views-label">
+						<h3 id="p-views-label">Views</h3>
+						<ul>
+															<li id="ca-view" class="selected"><span><a href="Creating_custom_classes_with_minimal_impact_on_the_game.html" >Read</a></span></li>
+															<li id="ca-viewsource"><span><a href="Creating_custom_classes_with_minimal_impact_on_the_game.html"  title="This page is protected.&#10;You can view its source [e]" accesskey="e">View source</a></span></li>
+															<li id="ca-history" class="collapsible"><span><a href="Creating_custom_classes_with_minimal_impact_on_the_game.html"  title="Past revisions of this page [h]" accesskey="h">View history</a></span></li>
+													</ul>
+					</div>
+										<div id="p-cactions" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-cactions-label">
+						<h3 id="p-cactions-label"><span>More</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+										<div id="p-search" role="search">
+						<h3>
+							<label for="searchInput">Search</label>
+						</h3>
+
+						<form action="/mw/index.php" id="searchform">
+														<div id="simpleSearch">
+															<input type="search" name="search" placeholder="Search" title="Search Dragon Age Toolset Wiki [f]" accesskey="f" id="searchInput" /><input type="hidden" value="Special:Search" name="title" /><input type="submit" name="fulltext" value="Search" title="Search the pages for this text" id="mw-searchButton" class="searchButton mw-fallbackSearchButton" /><input type="submit" name="go" value="Go" title="Go to a page with this exact name if exists" id="searchButton" class="searchButton" />								</div>
+						</form>
+					</div>
+									</div>
+			</div>
+			<div id="mw-panel">
+				<div id="p-logo" role="banner"><a class="mw-wiki-logo" href="Main_Page.html"  title="Visit the main page"></a></div>
+						<div class="portal" role="navigation" id='p-navigation' aria-labelledby='p-navigation-label'>
+			<h3 id='p-navigation-label'>Navigation</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-mainpage-description"><a href="Main_Page.html" title="Visit the main page [z]" accesskey="z">Main page</a></li>
+													<li id="n-recentchanges"><a href="/wiki/Special:RecentChanges" title="A list of recent changes in the wiki [r]" accesskey="r">Recent changes</a></li>
+													<li id="n-randompage"><a href="/wiki/Special:Random" title="Load a random page [x]" accesskey="x">Random page</a></li>
+													<li id="n-help"><a href="https://www.mediawiki.org/wiki/Special:MyLanguage/Help:Contents" title="The place to find out">Help</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-Links' aria-labelledby='p-Links-label'>
+			<h3 id='p-Links-label'>Links</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-Toolset-forums"><a href="http://forum.bioware.com/forum/30-dragon-age-toolset" rel="nofollow">Toolset forums</a></li>
+													<li id="n-Legacy-forums"><a href="http://social.bioware.com/forum/1/subindex/70" rel="nofollow">Legacy forums</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-tb' aria-labelledby='p-tb-label'>
+			<h3 id='p-tb-label'>Tools</h3>
+
+			<div class="body">
+									<ul>
+													<li id="t-whatlinkshere"><a href="/wiki/Special:WhatLinksHere/Creating_custom_classes_with_minimal_impact_on_the_game" title="A list of all wiki pages that link here [j]" accesskey="j">What links here</a></li>
+													<li id="t-recentchangeslinked"><a href="/wiki/Special:RecentChangesLinked/Creating_custom_classes_with_minimal_impact_on_the_game" title="Recent changes in pages linked from this page [k]" accesskey="k">Related changes</a></li>
+													<li id="t-specialpages"><a href="/wiki/Special:SpecialPages" title="A list of all special pages [q]" accesskey="q">Special pages</a></li>
+													<li id="t-print"><a href="Creating_custom_classes_with_minimal_impact_on_the_game.html" rel="alternate" title="Printable version of this page [p]" accesskey="p">Printable version</a></li>
+													<li id="t-permalink"><a href="Creating_custom_classes_with_minimal_impact_on_the_game.html" title="Permanent link to this revision of the page">Permanent link</a></li>
+													<li id="t-info"><a href="Creating_custom_classes_with_minimal_impact_on_the_game.html" title="More information about this page">Page information</a></li>
+											</ul>
+							</div>
+		</div>
+				</div>
+		</div>
+		<div id="footer" role="contentinfo">
+							<ul id="footer-info">
+											<li id="footer-info-lastmod"> This page was last modified on 28 December 2013, at 14:08.</li>
+									</ul>
+							<ul id="footer-places">
+											<li id="footer-places-privacy"><a href="/wiki/Dragon_Age_Toolset_Wiki:Privacy_policy" title="Dragon Age Toolset Wiki:Privacy policy">Privacy policy</a></li>
+											<li id="footer-places-about"><a href="/wiki/Dragon_Age_Toolset_Wiki:About" title="Dragon Age Toolset Wiki:About">About Dragon Age Toolset Wiki</a></li>
+											<li id="footer-places-disclaimer"><a href="/wiki/Dragon_Age_Toolset_Wiki:General_disclaimer" title="Dragon Age Toolset Wiki:General disclaimer">Disclaimers</a></li>
+									</ul>
+										<ul id="footer-icons" class="noprint">
+											<li id="footer-poweredbyico">
+															<a href="//www.mediawiki.org/"><img src="../assets/mw/resources/assets/poweredby_mediawiki_88x31.png" alt="Powered by MediaWiki" srcset="../assets/mw/resources/assets/poweredby_mediawiki_132x47.png 1.5x, ../assets/mw/resources/assets/poweredby_mediawiki_176x62.png 2x" width="88" height="31" /></a>
+													</li>
+									</ul>
+						<div style="clear:both"></div>
+		</div>
+		<script>if(window.jQuery)jQuery.ready();</script><script>if(window.mw){
+mw.loader.state({"site":"loading","user":"ready","user.groups":"ready"});
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.toc","mediawiki.action.view.postEdit","mediawiki.user","mediawiki.hidpi","mediawiki.page.ready","mediawiki.searchSuggest"],null,true);
+}</script>
+<script>if(window.mw){
+document.write("\u003Cscript src=\"https://www.datoolset.net/mw/load.php?debug=false\u0026amp;lang=en\u0026amp;modules=site\u0026amp;only=scripts\u0026amp;skin=vector\u0026amp;*\"\u003E\u003C/script\u003E");
+}</script>
+<script>if(window.mw){
+mw.config.set({"wgBackendResponseTime":272});
+}</script>
+	</body>
+</html>

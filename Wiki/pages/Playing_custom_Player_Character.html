@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" class="client-nojs">
+<head>
+<meta charset="UTF-8" />
+<title>Playing custom Player Character - Dragon Age Toolset Wiki</title>
+<meta name="generator" content="MediaWiki 1.25.6" />
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="search" type="application/opensearchdescription+xml" href="/mw/opensearch_desc.php" title="Dragon Age Toolset Wiki (en)" />
+<link rel="EditURI" type="application/rsd+xml" href="https://www.datoolset.net/mw/api.php?action=rsd" />
+<link rel="alternate" hreflang="x-default" href="Playing_custom_Player_Character.html" />
+<link rel="alternate" type="application/atom+xml" title="Dragon Age Toolset Wiki Atom feed" href="/mw/index.php?title=Special:RecentChanges&amp;feed=atom" />
+<meta name="ResourceLoaderDynamicStyles" content="" />
+<style>a:lang(ar),a:lang(kk-arab),a:lang(mzn),a:lang(ps),a:lang(ur){text-decoration:none}
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-css:7:270a0dcd3ae587df0f041aebfc42e61b */</style>
+<script>if(window.mw){
+mw.config.set({"wgCanonicalNamespace":"","wgCanonicalSpecialPageName":false,"wgNamespaceNumber":0,"wgPageName":"Playing_custom_Player_Character","wgTitle":"Playing custom Player Character","wgCurRevisionId":19824,"wgRevisionId":19824,"wgArticleId":5755,"wgIsArticle":true,"wgIsRedirect":false,"wgAction":"view","wgUserName":null,"wgUserGroups":["*"],"wgCategories":["Scripts","Tutorials"],"wgBreakFrames":false,"wgPageContentLanguage":"en","wgPageContentModel":"wikitext","wgSeparatorTransformTable":["",""],"wgDigitTransformTable":["",""],"wgDefaultDateFormat":"dmy","wgMonthNames":["","January","February","March","April","May","June","July","August","September","October","November","December"],"wgMonthNamesShort":["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],"wgRelevantPageName":"Playing_custom_Player_Character","wgRelevantArticleId":5755,"wgIsProbablyEditable":false,"wgRestrictionEdit":[],"wgRestrictionMove":[]});
+}</script><script>if(window.mw){
+mw.loader.implement("user.options",function($,jQuery){mw.user.options.set({"variant":"en"});});mw.loader.implement("user.tokens",function($,jQuery){mw.user.tokens.set({"editToken":"+\\","patrolToken":"+\\","watchToken":"+\\"});});
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-js:7:a5c52c063dc436c1ca7c9f456936a5e9 */
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.page.startup","mediawiki.legacy.wikibits","mediawiki.legacy.ajax","skins.vector.js"]);
+}</script>
+<!--[if lt IE 7]><style type="text/css">body{behavior:url("/mw/skins/Vector/csshover.min.htc")}</style><![endif]-->
+<link rel="stylesheet" href="../assets/local/wiki-static.css" />
+</head>
+<body class="mediawiki ltr sitedir-ltr ns-0 ns-subject page-Playing_custom_Player_Character skin-vector action-view">
+		<div id="mw-page-base" class="noprint"></div>
+		<div id="mw-head-base" class="noprint"></div>
+		<div id="content" class="mw-body" role="main">
+			<a id="top"></a>
+
+						<div class="mw-indicators">
+</div>
+			<h1 id="firstHeading" class="firstHeading" lang="en">Playing custom Player Character</h1>
+						<div id="bodyContent" class="mw-body-content">
+									<div id="siteSub">From Dragon Age Toolset Wiki</div>
+								<div id="contentSub"></div>
+												<div id="jump-to-nav" class="mw-jump">
+					Jump to:					<a href="#mw-head">navigation</a>, 					<a href="#p-search">search</a>
+				</div>
+				<div id="mw-content-text" lang="en" dir="ltr" class="mw-content-ltr"><p>Author: dr. dummie
+</p><p>Module UID: lpt
+</p><p>Folder of all my resourses: z_lpt
+</p><p>This tutorial:
+</p>
+<ul><li> Allows you to play custom character.</li>
+<li> Start your module with cutscene.</li>
+<li> Allows you to create character 10 lvl and set it's characteristics as you want.</li></ul>
+<p><br />
+</p>
+<div id="toc" class="toc"><div id="toctitle"><h2>Contents</h2></div>
+<ul>
+<li class="toclevel-1 tocsection-1"><a href="#Characters"><span class="tocnumber">1</span> <span class="toctext">Characters</span></a></li>
+<li class="toclevel-1 tocsection-2"><a href="#Plot_file"><span class="tocnumber">2</span> <span class="toctext">Plot file</span></a></li>
+<li class="toclevel-1 tocsection-3"><a href="#Module_script"><span class="tocnumber">3</span> <span class="toctext">Module script</span></a></li>
+<li class="toclevel-1 tocsection-4"><a href="#Area_scipt"><span class="tocnumber">4</span> <span class="toctext">Area scipt</span></a></li>
+<li class="toclevel-1 tocsection-5"><a href="#One_more_script"><span class="tocnumber">5</span> <span class="toctext">One more script</span></a></li>
+</ul>
+</div>
+
+<h2><span class="mw-headline" id="Characters">Characters</span></h2>
+<p>1 - Create 3 creatures
+</p>
+<ul><li> lpt_000c_ariana (tag "lpt_000c_ariana") - This is our main character with features you like. Set her class, gender, VO and morph which starting weapons and armour he/she will have.</li>
+<li> lpt_000c_default_char (tag "default_player") - this character who will mimic Jaden, default hero, so change only it's head morph, VO and gender. The rest must be default.</li></ul>
+<p><b>Note: If you change morph or VO of your PC you always have to change both files.</b>
+</p>
+<ul><li> lpt_000c_roquefort (tag "party_roquefort") - this is the follower. Set up his gender, class, VO, inventory and head.</li></ul>
+<p>2 - Rename a file "lpt_000c_default_char" manually in your module to "default_player". You will find it in \..addins\your_module\module\override\- it will be packed with other resources as well.
+</p><p>3 - Add follower into your starting area.
+</p>
+<h2><span class="mw-headline" id="Plot_file">Plot file</span></h2>
+<p>You need to create plot file of your module. This must be called "lpt_module_plot". Don't forget to create cutscene named "lpt_module_intro".
+</p><p>There is only one Main Flag must be called MODULE_START_CUTSCENE with default settings.
+</p>
+<h2><span class="mw-headline" id="Module_script">Module script</span></h2>
+<p>This is script of your module
+</p>
+<div dir="ltr" class="mw-geshi mw-code mw-content-ltr"><div class="dascript source-dascript"><pre class="de1"><span class="co1">//::///////////////////////////////////////////////</span>
+<span class="co1">//:: Module Template</span>
+<span class="co1">//:: Copyright (c) 2003 Bioware Corp.</span>
+<span class="co1">//:://////////////////////////////////////////////</span>
+<span class="coMULTI">/*
+    Module events
+*/</span>
+<span class="co1">//:://////////////////////////////////////////////</span>
+<span class="co1">//:: Created By:</span>
+<span class="co1">//:: Created On:</span>
+<span class="co1">//:://////////////////////////////////////////////</span>
+&#160;
+<span class="co2">#include &quot;log_h&quot;</span>
+<span class="co2">#include &quot;utility_h&quot;</span>
+<span class="co2">#include &quot;wrappers_h&quot;</span>
+<span class="co2">#include &quot;events_h&quot;</span>
+&#160;
+<span class="co2">#include &quot;sys_chargen_h&quot;</span>
+<span class="co2">#include &quot;sys_rewards_h&quot;</span>
+&#160;
+<a href="http://www.datoolset.net/wiki/index.php?title=const keyword"><span class="kw1">const</span></a> <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> FORCE_AUTOLEVEL <span class="sy0">=</span> <span class="nu0">0</span>;  <span class="co1">//to turn autolevel off</span>
+&#160;
+<a href="http://www.datoolset.net/wiki/index.php?title=void keyword"><span class="kw2">void</span></a> main<span class="br0">&#40;</span><span class="br0">&#41;</span>
+<span class="br0">&#123;</span>
+    <a href="http://www.datoolset.net/wiki/index.php?title=event keyword"><span class="kw2">event</span></a> ev <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetCurrentEvent"><span class="kw4">GetCurrentEvent</span></a><span class="br0">&#40;</span><span class="br0">&#41;</span>;
+    <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nEventType <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetEventType"><span class="kw4">GetEventType</span></a><span class="br0">&#40;</span>ev<span class="br0">&#41;</span>;
+    <a href="http://www.datoolset.net/wiki/index.php?title=string keyword"><span class="kw2">string</span></a> sDebug;
+    <a href="http://www.datoolset.net/wiki/index.php?title=object keyword"><span class="kw2">object</span></a> oPC <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetHero"><span class="kw4">GetHero</span></a><span class="br0">&#40;</span><span class="br0">&#41;</span>;
+    <a href="http://www.datoolset.net/wiki/index.php?title=object keyword"><span class="kw2">object</span></a> oParty <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetParty"><span class="kw4">GetParty</span></a><span class="br0">&#40;</span>oPC<span class="br0">&#41;</span>;
+    <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nEventHandled <span class="sy0">=</span> FALSE;
+&#160;
+    <a href="http://www.datoolset.net/wiki/index.php?title=switch keyword"><span class="kw1">switch</span></a><span class="br0">&#40;</span>nEventType<span class="br0">&#41;</span>
+    <span class="br0">&#123;</span>
+        <span class="co1">////////////////////////////////////////////////////////////////////////</span>
+        <span class="co1">// Sent by: The engine</span>
+        <span class="co1">// When: The module starts. This can happen only once for a single</span>
+        <span class="co1">//       game instance.</span>
+        <span class="co1">////////////////////////////////////////////////////////////////////////</span>
+        <a href="http://www.datoolset.net/wiki/index.php?title=case keyword"><span class="kw1">case</span></a> <span class="kw3">EVENT_TYPE_MODULE_START</span><span class="sy0">:</span>
+        <span class="br0">&#123;</span>
+&#160;
+            <span class="co1">//normally we would go trough chargen</span>
+            <span class="co1">//PreloadCharGen();</span>
+            <span class="co1">//StartCharGen(GetHero());</span>
+&#160;
+            <span class="co1">//but since we have fixed hero</span>
+            <a href="http://www.datoolset.net/wiki/index.php?title=object keyword"><span class="kw2">object</span></a> oHero <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetHero"><span class="kw4">GetHero</span></a><span class="br0">&#40;</span><span class="br0">&#41;</span>;
+&#160;
+            <span class="co1">// skip character generation and set some defaults</span>
+            Chargen_InitializeCharacter<span class="br0">&#40;</span>oHero<span class="br0">&#41;</span>;
+            Chargen_SelectGender<span class="br0">&#40;</span>oHero, <span class="kw3">GENDER_FEMALE</span><span class="br0">&#41;</span>;
+            Chargen_SelectRace<span class="br0">&#40;</span>oHero, RACE_HUMAN<span class="br0">&#41;</span>;
+            Chargen_SelectCoreClass<span class="br0">&#40;</span>oHero,CLASS_ROGUE<span class="br0">&#41;</span>;
+            Chargen_SelectBackground<span class="br0">&#40;</span>oHero, BACKGROUND_NOBLE<span class="br0">&#41;</span>;
+&#160;
+            <span class="co1">//give hero a name</span>
+            <a href="http://www.datoolset.net/wiki/index.php?title=SetName"><span class="kw4">SetName</span></a><span class="br0">&#40;</span>oHero, <span class="st0">&quot;Ariana&quot;</span><span class="br0">&#41;</span>;
+&#160;
+            <span class="co1">//manually give the player some equipment</span>
+            <span class="co1">//EquipItem(oHero, UT_AddItemToInventory(R&quot;gen_im_arm_cht_lgt_new.uti&quot;));</span>
+&#160;
+            <span class="co1">//or create your fixed character as template and then transfer everything on player.</span>
+            <a href="http://www.datoolset.net/wiki/index.php?title=LoadItemsFromTemplate"><span class="kw4">LoadItemsFromTemplate</span></a><span class="br0">&#40;</span>oHero, <span class="st0">&quot;lpt_000c_ariana.utc&quot;</span>, TRUE<span class="br0">&#41;</span>;
+&#160;
+            <span class="co1">//NOTE!</span>
+            <span class="co1">//to get player appereance as you like, you must create blank char with desired facemorph</span>
+            <span class="co1">//then after export copy that char to &quot;default_player.utc&quot; in your module override directory</span>
+            <span class="co1">//so now this will be default char instead JADEN</span>
+&#160;
+            <span class="co1">// lets go level 10 and set autolevel to off</span>
+            RewardXP<span class="br0">&#40;</span>oHero, RW_GetXPNeededForLevel<span class="br0">&#40;</span><span class="nu0">10</span><span class="br0">&#41;</span>, FALSE, FALSE<span class="br0">&#41;</span>;
+            <a href="http://www.datoolset.net/wiki/index.php?title=SetAutoLevelUp"><span class="kw4">SetAutoLevelUp</span></a><span class="br0">&#40;</span>oHero, FORCE_AUTOLEVEL<span class="br0">&#41;</span>;
+&#160;
+            <a href="http://www.datoolset.net/wiki/index.php?title=PrintToLog"><span class="kw4">PrintToLog</span></a><span class="br0">&#40;</span><span class="st0">&quot;------&gt; MODULE START - Ariana created&quot;</span><span class="br0">&#41;</span>;
+&#160;
+            <a href="http://www.datoolset.net/wiki/index.php?title=break keyword"><span class="kw1">break</span></a>;
+        <span class="br0">&#125;</span>
+        <span class="co1">////////////////////////////////////////////////////////////////////////</span>
+        <span class="co1">// Sent by: The engine</span>
+        <span class="co1">// When: The module loads from a save game. This event can fire more than</span>
+        <span class="co1">//       once for a single module or game instance.</span>
+        <span class="co1">////////////////////////////////////////////////////////////////////////</span>
+        <a href="http://www.datoolset.net/wiki/index.php?title=case keyword"><span class="kw1">case</span></a> <span class="kw3">EVENT_TYPE_MODULE_LOAD</span><span class="sy0">:</span>
+        <span class="br0">&#123;</span>
+            <a href="http://www.datoolset.net/wiki/index.php?title=break keyword"><span class="kw1">break</span></a>;
+        <span class="br0">&#125;</span>
+    <span class="co1">////////////////////////////////////////////////////////////////////////</span>
+        <span class="co1">// Sent by: The engine</span>
+        <span class="co1">// When: A player enters the module</span>
+        <span class="co1">////////////////////////////////////////////////////////////////////////</span>
+        <a href="http://www.datoolset.net/wiki/index.php?title=case keyword"><span class="kw1">case</span></a> <span class="kw3">EVENT_TYPE_ENTER</span><span class="sy0">:</span>
+        <span class="br0">&#123;</span>
+            <a href="http://www.datoolset.net/wiki/index.php?title=object keyword"><span class="kw2">object</span></a> oCreature <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetEventCreator"><span class="kw4">GetEventCreator</span></a><span class="br0">&#40;</span>ev<span class="br0">&#41;</span>;
+&#160;
+            <a href="http://www.datoolset.net/wiki/index.php?title=break keyword"><span class="kw1">break</span></a>;
+        <span class="br0">&#125;</span>
+    <span class="co1">////////////////////////////////////////////////////////////////////////</span>
+        <span class="co1">// Sent by: The engine</span>
+        <span class="co1">// When: the player clicks on a destination in the world map</span>
+        <span class="co1">////////////////////////////////////////////////////////////////////////</span>
+        <a href="http://www.datoolset.net/wiki/index.php?title=case keyword"><span class="kw1">case</span></a> EVENT_TYPE_WORLD_MAP_USED<span class="sy0">:</span>
+        <span class="br0">&#123;</span>
+            <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nFrom <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetEventInteger"><span class="kw4">GetEventInteger</span></a><span class="br0">&#40;</span>ev, <span class="nu0">0</span><span class="br0">&#41;</span>; <span class="co1">// travel start location</span>
+            <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nTo <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetEventInteger"><span class="kw4">GetEventInteger</span></a><span class="br0">&#40;</span>ev, <span class="nu0">1</span><span class="br0">&#41;</span>; <span class="co1">// travel target location</span>
+            <a href="http://www.datoolset.net/wiki/index.php?title=break keyword"><span class="kw1">break</span></a>;
+        <span class="br0">&#125;</span>
+    <span class="br0">&#125;</span>
+    <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a> <span class="br0">&#40;</span><span class="sy0">!</span>nEventHandled<span class="br0">&#41;</span>
+    <span class="br0">&#123;</span>
+        <a href="http://www.datoolset.net/wiki/index.php?title=HandleEvent"><span class="kw4">HandleEvent</span></a><span class="br0">&#40;</span>ev, RESOURCE_SCRIPT_MODULE_CORE<span class="br0">&#41;</span>;
+    <span class="br0">&#125;</span>
+<span class="br0">&#125;</span></pre></div></div>
+<h2><span class="mw-headline" id="Area_scipt">Area scipt</span></h2>
+<p>This is script of your starting area
+</p>
+<div dir="ltr" class="mw-geshi mw-code mw-content-ltr"><div class="dascript source-dascript"><pre class="de1"><span class="co1">//::///////////////////////////////////////////////</span>
+<span class="co1">//:: Area Core</span>
+<span class="co1">//:: Copyright (c) 2003 Bioware Corp.</span>
+<span class="co1">//:://////////////////////////////////////////////</span>
+<span class="coMULTI">/*
+    Handles global area events
+*/</span>
+<span class="co1">//:://////////////////////////////////////////////</span>
+<span class="co1">//:: Created By: Yaron</span>
+<span class="co1">//:: Created On: July 17th, 2006</span>
+<span class="co1">//:://////////////////////////////////////////////</span>
+&#160;
+<span class="co2">#include &quot;log_h&quot;</span>
+<span class="co2">#include &quot;utility_h&quot;</span>
+<span class="co2">#include &quot;wrappers_h&quot;</span>
+<span class="co2">#include &quot;events_h&quot;</span>
+<span class="co2">#include &quot;2da_constants_h&quot;</span>
+&#160;
+<span class="co2">#include &quot;lpt_utility_h&quot;</span>
+&#160;
+<span class="co2">#include &quot;plt_lpt_module_plot&quot;</span>
+&#160;
+<a href="http://www.datoolset.net/wiki/index.php?title=void keyword"><span class="kw2">void</span></a> main<span class="br0">&#40;</span><span class="br0">&#41;</span>
+<span class="br0">&#123;</span>
+    <a href="http://www.datoolset.net/wiki/index.php?title=event keyword"><span class="kw2">event</span></a> ev <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetCurrentEvent"><span class="kw4">GetCurrentEvent</span></a><span class="br0">&#40;</span><span class="br0">&#41;</span>;
+    <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nEventType <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetEventType"><span class="kw4">GetEventType</span></a><span class="br0">&#40;</span>ev<span class="br0">&#41;</span>;
+    <a href="http://www.datoolset.net/wiki/index.php?title=string keyword"><span class="kw2">string</span></a> sDebug;
+    <a href="http://www.datoolset.net/wiki/index.php?title=object keyword"><span class="kw2">object</span></a> oPC <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetHero"><span class="kw4">GetHero</span></a><span class="br0">&#40;</span><span class="br0">&#41;</span>;
+    <a href="http://www.datoolset.net/wiki/index.php?title=object keyword"><span class="kw2">object</span></a> oParty <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetParty"><span class="kw4">GetParty</span></a><span class="br0">&#40;</span>oPC<span class="br0">&#41;</span>;
+    <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nEventHandled <span class="sy0">=</span> FALSE;
+&#160;
+    <a href="http://www.datoolset.net/wiki/index.php?title=switch keyword"><span class="kw1">switch</span></a><span class="br0">&#40;</span>nEventType<span class="br0">&#41;</span>
+    <span class="br0">&#123;</span>
+        <span class="co1">///////////////////////////////////////////////////////////////////////</span>
+        <span class="co1">// Sent by: The engine</span>
+        <span class="co1">// When: it is for playing things like cutscenes and movies when</span>
+        <span class="co1">// you enter an area, things that do not involve AI or actual game play</span>
+        <span class="co1">////////////////////////////////////////////////////////////////////////</span>
+        <a href="http://www.datoolset.net/wiki/index.php?title=case keyword"><span class="kw1">case</span></a> <span class="kw3">EVENT_TYPE_AREALOAD_SPECIAL</span><span class="sy0">:</span>
+        <span class="br0">&#123;</span>
+&#160;
+            <a href="http://www.datoolset.net/wiki/index.php?title=PrintToLog"><span class="kw4">PrintToLog</span></a><span class="br0">&#40;</span><span class="st0">&quot;-----&gt; START AREA - AREALOAD SPECIAL.&quot;</span><span class="br0">&#41;</span>;
+&#160;
+            <span class="co1">//moved cutscene and hiring code to postloadexit cause some</span>
+            <span class="co1">//stuff didnt worked here</span>
+&#160;
+            <span class="co1">//EDIT: It seems that works with this approach! left other info for</span>
+            <span class="co1">//      learn and debug purposes.</span>
+&#160;
+            <span class="co1">//we run cutscene in this event cause in areaload special we could not</span>
+            <span class="co1">//hire follower with desired behavior (gain xp and skills can be set)..</span>
+            <span class="co1">//since cutscene and hiring are to be done only once we keep them together.</span>
+            <span class="co1">//here it works.. why? i dont know..</span>
+            <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a> <span class="br0">&#40;</span>WR_GetPlotFlag<span class="br0">&#40;</span>PLT_LPT_MODULE_PLOT, MODULE_START_CUTSCENE<span class="br0">&#41;</span> <span class="sy0">==</span> FALSE<span class="br0">&#41;</span>
+            <span class="br0">&#123;</span>
+                <span class="co1">//roquefort is added to start area and has tag &quot;roquefort&quot;</span>
+                <a href="http://www.datoolset.net/wiki/index.php?title=object keyword"><span class="kw2">object</span></a> oFollower <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetObjectByTag"><span class="kw4">GetObjectByTag</span></a><span class="br0">&#40;</span><span class="st0">&quot;party_roquefort&quot;</span><span class="br0">&#41;</span>;
+&#160;
+                <span class="co1">//this caused follower to not gain xp, it is bug in game script</span>
+                <span class="co1">//UT_HireFollower(oFollower); //we're not using this</span>
+&#160;
+                <span class="co1">//instead hiring follower with UT_hirefollower, set plot flag and</span>
+                <span class="co1">//start script which will hire Roquefort..</span>
+                <span class="co1">//this is used if you want to set plot flag to &quot;know&quot; that roquefort is hired</span>
+                <span class="co1">//like in some dialogues etc where you can check for conditions..</span>
+                <span class="co1">//WR_SetPlotFlag(PLT_LOP_MODULE_PLOT, ROQUEFORT_HIRED, TRUE, TRUE);</span>
+&#160;
+                <span class="co1">//eventually we can try this to avoid plots at all!</span>
+                <span class="co1">//but i guess it would not work as it should without setting</span>
+                <span class="co1">//bResetFollower to true..</span>
+                lop_UT_HireFollower<span class="br0">&#40;</span>oFollower, FALSE, <span class="nu0">0</span>, TRUE, CLASS_WARRIOR<span class="br0">&#41;</span>;
+&#160;
+                <span class="co1">// Start cutscene, also set plot flag that cutscene was played.</span>
+                <a href="http://www.datoolset.net/wiki/index.php?title=PrintToLog"><span class="kw4">PrintToLog</span></a><span class="br0">&#40;</span><span class="st0">&quot;-----&gt; START AREA - Load Cutscene.&quot;</span><span class="br0">&#41;</span>;
+                CS_LoadCutscene<span class="br0">&#40;</span>R<span class="st0">&quot;lpt_module_intro.cut&quot;</span>, PLT_LPT_MODULE_PLOT, MODULE_START_CUTSCENE<span class="br0">&#41;</span>;
+                <a href="http://www.datoolset.net/wiki/index.php?title=PlayCutscene"><span class="kw4">PlayCutscene</span></a><span class="br0">&#40;</span><span class="br0">&#41;</span>;
+             <span class="br0">&#125;</span>
+&#160;
+            <a href="http://www.datoolset.net/wiki/index.php?title=break keyword"><span class="kw1">break</span></a>;
+        <span class="br0">&#125;</span>
+        <span class="co1">///////////////////////////////////////////////////////////////////////</span>
+        <span class="co1">// Sent by: The engine</span>
+        <span class="co1">// When: for things you want to happen while the load screen is still up,</span>
+        <span class="co1">// things like moving creatures around</span>
+        <span class="co1">////////////////////////////////////////////////////////////////////////</span>
+        <a href="http://www.datoolset.net/wiki/index.php?title=case keyword"><span class="kw1">case</span></a> <span class="kw3">EVENT_TYPE_AREALOAD_PRELOADEXIT</span><span class="sy0">:</span>
+        <span class="br0">&#123;</span>
+            <a href="http://www.datoolset.net/wiki/index.php?title=break keyword"><span class="kw1">break</span></a>;
+        <span class="br0">&#125;</span>
+        <span class="co1">////////////////////////////////////////////////////////////////////////</span>
+        <span class="co1">// Sent by: The engine</span>
+        <span class="co1">// When: fires at the same time that the load screen is going away,</span>
+        <span class="co1">// and can be used for things that you want to make sure the player sees.</span>
+        <span class="co1">////////////////////////////////////////////////////////////////////////</span>
+        <a href="http://www.datoolset.net/wiki/index.php?title=case keyword"><span class="kw1">case</span></a> <span class="kw3">EVENT_TYPE_AREALOAD_POSTLOADEXIT</span><span class="sy0">:</span>
+        <span class="br0">&#123;</span>
+            <a href="http://www.datoolset.net/wiki/index.php?title=break keyword"><span class="kw1">break</span></a>;
+        <span class="br0">&#125;</span>
+        <span class="co1">////////////////////////////////////////////////////////////////////////</span>
+        <span class="co1">// Sent by: The engine</span>
+        <span class="co1">// When: A creature enters the area</span>
+        <span class="co1">////////////////////////////////////////////////////////////////////////</span>
+        <a href="http://www.datoolset.net/wiki/index.php?title=case keyword"><span class="kw1">case</span></a> <span class="kw3">EVENT_TYPE_ENTER</span><span class="sy0">:</span>
+        <span class="br0">&#123;</span>
+            <a href="http://www.datoolset.net/wiki/index.php?title=object keyword"><span class="kw2">object</span></a> oCreature <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetEventCreator"><span class="kw4">GetEventCreator</span></a><span class="br0">&#40;</span>ev<span class="br0">&#41;</span>;
+&#160;
+            <a href="http://www.datoolset.net/wiki/index.php?title=break keyword"><span class="kw1">break</span></a>;
+        <span class="br0">&#125;</span>
+        <span class="co1">////////////////////////////////////////////////////////////////////////</span>
+        <span class="co1">// Sent by: The engine</span>
+        <span class="co1">// When: A creature exits the area</span>
+        <span class="co1">////////////////////////////////////////////////////////////////////////</span>
+        <a href="http://www.datoolset.net/wiki/index.php?title=case keyword"><span class="kw1">case</span></a> <span class="kw3">EVENT_TYPE_EXIT</span><span class="sy0">:</span>
+        <span class="br0">&#123;</span>
+            <a href="http://www.datoolset.net/wiki/index.php?title=object keyword"><span class="kw2">object</span></a> oCreature <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetEventCreator"><span class="kw4">GetEventCreator</span></a><span class="br0">&#40;</span>ev<span class="br0">&#41;</span>;
+&#160;
+            <a href="http://www.datoolset.net/wiki/index.php?title=break keyword"><span class="kw1">break</span></a>;
+        <span class="br0">&#125;</span>
+    <span class="br0">&#125;</span>
+    <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a> <span class="br0">&#40;</span><span class="sy0">!</span>nEventHandled<span class="br0">&#41;</span>
+    <span class="br0">&#123;</span>
+        <a href="http://www.datoolset.net/wiki/index.php?title=HandleEvent"><span class="kw4">HandleEvent</span></a><span class="br0">&#40;</span>ev, RESOURCE_SCRIPT_AREA_CORE<span class="br0">&#41;</span>;
+    <span class="br0">&#125;</span>
+<span class="br0">&#125;</span></pre></div></div>
+<h2><span class="mw-headline" id="One_more_script">One more script</span></h2>
+<p>This one must be called lpt_utility_h. Don't worry why this cannot be compiled directly cause it is header script and it contains functions, constants, not main logic flow it is compiled automatically when you include it in some other script and use some function from it.
+</p>
+<div dir="ltr" class="mw-geshi mw-code mw-content-ltr"><div class="dascript source-dascript"><pre class="de1">                      <span class="co1">//:://////////////////////////////////////////////</span>
+<span class="coMULTI">/*
+    &quot;Lady of pain&quot;
+     -&gt; Utility include script
+&#160;
+     This file contains utility functions
+*/</span>
+<span class="co1">//:://////////////////////////////////////////////</span>
+<span class="co1">//:: Created By: Kivito</span>
+<span class="co1">//:: Created On: 19.10.2013</span>
+<span class="co1">//:://////////////////////////////////////////////</span>
+&#160;
+<span class="co2">#include &quot;sys_chargen_h&quot;</span>
+<span class="co2">#include &quot;sys_rewards_h&quot;</span>
+&#160;
+<span class="co2">#include &quot;plt_tut_friendly_aoe&quot;</span>
+&#160;
+<span class="co1">//clears creature stats (from wiki)</span>
+<a href="http://www.datoolset.net/wiki/index.php?title=void keyword"><span class="kw2">void</span></a> lop_ClearCharStats<span class="br0">&#40;</span><a href="http://www.datoolset.net/wiki/index.php?title=object keyword"><span class="kw2">object</span></a> oFollower<span class="br0">&#41;</span>;
+&#160;
+<span class="co1">//resets all creature points to defaults</span>
+<span class="co1">//it should be called ONLY AFTER follower is hired,</span>
+<span class="co1">//also you can change core class for follower</span>
+<a href="http://www.datoolset.net/wiki/index.php?title=void keyword"><span class="kw2">void</span></a> lop_ReHireChar<span class="br0">&#40;</span><a href="http://www.datoolset.net/wiki/index.php?title=object keyword"><span class="kw2">object</span></a> oFollower, <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nCoreClass <span class="sy0">=</span> <span class="nu0">1</span><span class="br0">&#41;</span>;
+&#160;
+<span class="co1">//custom hire follower with parameters, if bResetFollower is true,</span>
+<span class="co1">//then all followers points are reset to defaults, also if nCoreClass is specified</span>
+<span class="co1">//it is possible to change i.e. warrior to mage</span>
+<a href="http://www.datoolset.net/wiki/index.php?title=void keyword"><span class="kw2">void</span></a> lop_UT_HireFollower<span class="br0">&#40;</span><a href="http://www.datoolset.net/wiki/index.php?title=object keyword"><span class="kw2">object</span></a> oFollower, <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> bPreventLevelUp <span class="sy0">=</span> FALSE, <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nForceAutolevel <span class="sy0">=</span> <span class="nu0">0</span>, <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> bResetFollower <span class="sy0">=</span> FALSE, <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nResetTo <span class="sy0">=</span> <span class="nu0">1</span><span class="br0">&#41;</span>;
+&#160;
+<a href="http://www.datoolset.net/wiki/index.php?title=void keyword"><span class="kw2">void</span></a> lop_ClearCharStats<span class="br0">&#40;</span><a href="http://www.datoolset.net/wiki/index.php?title=object keyword"><span class="kw2">object</span></a> oChar<span class="br0">&#41;</span>
+<span class="br0">&#123;</span>
+    <span class="co1">// Initialize all creature properties to default value</span>
+&#160;
+    <a href="http://www.datoolset.net/wiki/index.php?title=SetCreatureProperty"><span class="kw4">SetCreatureProperty</span></a><span class="br0">&#40;</span>oChar,<span class="kw3">PROPERTY_SIMPLE_LEVEL</span>,<span class="nu0">1.0f</span>,<span class="kw3">PROPERTY_VALUE_BASE</span><span class="br0">&#41;</span>;
+    <a href="http://www.datoolset.net/wiki/index.php?title=SetCreatureProperty"><span class="kw4">SetCreatureProperty</span></a><span class="br0">&#40;</span>oChar,<span class="kw3">PROPERTY_SIMPLE_EXPERIENCE</span>,<span class="nu0">0.0f</span>,<span class="kw3">PROPERTY_VALUE_BASE</span><span class="br0">&#41;</span>;
+    <a href="http://www.datoolset.net/wiki/index.php?title=SetCreatureProperty"><span class="kw4">SetCreatureProperty</span></a><span class="br0">&#40;</span>oChar,<span class="kw3">PROPERTY_ATTRIBUTE_STRENGTH</span>,      CHARGEN_BASE_ATTRIBUTE_VALUE, <span class="kw3">PROPERTY_VALUE_BASE</span><span class="br0">&#41;</span>;
+    <a href="http://www.datoolset.net/wiki/index.php?title=SetCreatureProperty"><span class="kw4">SetCreatureProperty</span></a><span class="br0">&#40;</span>oChar,<span class="kw3">PROPERTY_ATTRIBUTE_DEXTERITY</span>,     CHARGEN_BASE_ATTRIBUTE_VALUE, <span class="kw3">PROPERTY_VALUE_BASE</span><span class="br0">&#41;</span>;
+    <a href="http://www.datoolset.net/wiki/index.php?title=SetCreatureProperty"><span class="kw4">SetCreatureProperty</span></a><span class="br0">&#40;</span>oChar,<span class="kw3">PROPERTY_ATTRIBUTE_CONSTITUTION</span>,  CHARGEN_BASE_ATTRIBUTE_VALUE, <span class="kw3">PROPERTY_VALUE_BASE</span><span class="br0">&#41;</span>;
+    <a href="http://www.datoolset.net/wiki/index.php?title=SetCreatureProperty"><span class="kw4">SetCreatureProperty</span></a><span class="br0">&#40;</span>oChar,<span class="kw3">PROPERTY_ATTRIBUTE_WILLPOWER</span>,     CHARGEN_BASE_ATTRIBUTE_VALUE, <span class="kw3">PROPERTY_VALUE_BASE</span><span class="br0">&#41;</span>;
+    <a href="http://www.datoolset.net/wiki/index.php?title=SetCreatureProperty"><span class="kw4">SetCreatureProperty</span></a><span class="br0">&#40;</span>oChar,<span class="kw3">PROPERTY_ATTRIBUTE_INTELLIGENCE</span>,  CHARGEN_BASE_ATTRIBUTE_VALUE, <span class="kw3">PROPERTY_VALUE_BASE</span><span class="br0">&#41;</span>;
+    <a href="http://www.datoolset.net/wiki/index.php?title=SetCreatureProperty"><span class="kw4">SetCreatureProperty</span></a><span class="br0">&#40;</span>oChar,<span class="kw3">PROPERTY_ATTRIBUTE_MAGIC</span>,         CHARGEN_BASE_ATTRIBUTE_VALUE, <span class="kw3">PROPERTY_VALUE_BASE</span><span class="br0">&#41;</span>;
+    <a href="http://www.datoolset.net/wiki/index.php?title=SetCreatureProperty"><span class="kw4">SetCreatureProperty</span></a><span class="br0">&#40;</span>oChar,PROPERTY_ATTRIBUTE_ATTACK_SPEED_MODIFIER,     <span class="nu0">1.0f</span><span class="br0">&#41;</span>;
+    <a href="http://www.datoolset.net/wiki/index.php?title=SetCreatureProperty"><span class="kw4">SetCreatureProperty</span></a><span class="br0">&#40;</span>oChar,PROPERTY_ATTRIBUTE_DAMAGE_SCALE,       <span class="nu0">1.0f</span><span class="br0">&#41;</span>;
+    <a href="http://www.datoolset.net/wiki/index.php?title=SetCreatureProperty"><span class="kw4">SetCreatureProperty</span></a><span class="br0">&#40;</span>oChar,PROPERTY_ATTRIBUTE_RESISTANCE_MENTAL,         <span class="nu0">0.0f</span><span class="br0">&#41;</span>;
+    <a href="http://www.datoolset.net/wiki/index.php?title=SetCreatureProperty"><span class="kw4">SetCreatureProperty</span></a><span class="br0">&#40;</span>oChar,PROPERTY_ATTRIBUTE_RESISTANCE_PHYSICAL,       <span class="nu0">0.0f</span><span class="br0">&#41;</span>;
+    <a href="http://www.datoolset.net/wiki/index.php?title=SetCreatureProperty"><span class="kw4">SetCreatureProperty</span></a><span class="br0">&#40;</span>oChar,<span class="nu0">51</span>,       <span class="nu0">1.0f</span><span class="br0">&#41;</span>;
+    <a href="http://www.datoolset.net/wiki/index.php?title=SetCreatureProperty"><span class="kw4">SetCreatureProperty</span></a><span class="br0">&#40;</span>oChar, PROPERTY_ATTRIBUTE_REGENERATION_HEALTH_COMBAT,  REGENERATION_HEALTH_COMBAT_DEFAULT<span class="br0">&#41;</span>;
+    <a href="http://www.datoolset.net/wiki/index.php?title=SetCreatureProperty"><span class="kw4">SetCreatureProperty</span></a><span class="br0">&#40;</span>oChar, PROPERTY_ATTRIBUTE_REGENERATION_STAMINA_COMBAT, REGENERATION_STAMINA_COMBAT_DEFAULT<span class="br0">&#41;</span>;
+    <a href="http://www.datoolset.net/wiki/index.php?title=SetCreatureProperty"><span class="kw4">SetCreatureProperty</span></a><span class="br0">&#40;</span>oChar, <span class="kw3">PROPERTY_ATTRIBUTE_REGENERATION_HEALTH</span>,REGENERATION_HEALTH_EXPLORE_DEFAULT, <span class="kw3">PROPERTY_VALUE_BASE</span><span class="br0">&#41;</span>;
+    <a href="http://www.datoolset.net/wiki/index.php?title=SetCreatureProperty"><span class="kw4">SetCreatureProperty</span></a><span class="br0">&#40;</span>oChar, PROPERTY_ATTRIBUTE_REGENERATION_STAMINA, REGENERATION_STAMINA_EXPLORE_DEFAULT, <span class="kw3">PROPERTY_VALUE_BASE</span><span class="br0">&#41;</span>;
+    <a href="http://www.datoolset.net/wiki/index.php?title=SetCreatureProperty"><span class="kw4">SetCreatureProperty</span></a><span class="br0">&#40;</span>oChar, PROPERTY_ATTRIBUTE_MISSILE_SHIELD,<span class="nu0">0.0</span><span class="br0">&#41;</span>;
+    <a href="http://www.datoolset.net/wiki/index.php?title=SetCreatureProperty"><span class="kw4">SetCreatureProperty</span></a><span class="br0">&#40;</span>oChar, <span class="nu0">38</span>,<span class="nu0">0.0</span><span class="br0">&#41;</span>;
+    <a href="http://www.datoolset.net/wiki/index.php?title=SetCreatureProperty"><span class="kw4">SetCreatureProperty</span></a><span class="br0">&#40;</span>oChar, <span class="kw3">PROPERTY_DEPLETABLE_HEALTH</span> ,          <span class="nu0">1.0f</span>, <span class="kw3">PROPERTY_VALUE_BASE</span><span class="br0">&#41;</span>;
+    <a href="http://www.datoolset.net/wiki/index.php?title=SetCreatureProperty"><span class="kw4">SetCreatureProperty</span></a><span class="br0">&#40;</span>oChar, <span class="kw3">PROPERTY_DEPLETABLE_MANA_STAMINA</span> ,    <span class="nu0">0.0f</span>, <span class="kw3">PROPERTY_VALUE_BASE</span><span class="br0">&#41;</span>;
+    <a href="http://www.datoolset.net/wiki/index.php?title=SetCreatureProperty"><span class="kw4">SetCreatureProperty</span></a><span class="br0">&#40;</span>oChar, <span class="kw3">PROPERTY_ATTRIBUTE_DEFENSE</span> ,          <span class="nu0">0.0f</span>, <span class="kw3">PROPERTY_VALUE_BASE</span><span class="br0">&#41;</span>;
+    <a href="http://www.datoolset.net/wiki/index.php?title=SetCreatureProperty"><span class="kw4">SetCreatureProperty</span></a><span class="br0">&#40;</span>oChar, <span class="kw3">PROPERTY_ATTRIBUTE_ATTACK</span>,            <span class="nu0">0.0f</span>, <span class="kw3">PROPERTY_VALUE_BASE</span><span class="br0">&#41;</span>;
+    <a href="http://www.datoolset.net/wiki/index.php?title=SetCreatureProperty"><span class="kw4">SetCreatureProperty</span></a><span class="br0">&#40;</span>oChar, PROPERTY_ATTRIBUTE_DAMAGE_BONUS,      <span class="nu0">0.0f</span>, <span class="kw3">PROPERTY_VALUE_BASE</span><span class="br0">&#41;</span>;
+    <a href="http://www.datoolset.net/wiki/index.php?title=SetCreatureProperty"><span class="kw4">SetCreatureProperty</span></a><span class="br0">&#40;</span>oChar, PROPERTY_ATTRIBUTE_FLANKING_ANGLE,  <span class="nu0">60.0f</span>, <span class="kw3">PROPERTY_VALUE_BASE</span><span class="br0">&#41;</span>;
+<span class="br0">&#125;</span>
+&#160;
+&#160;
+&#160;
+<a href="http://www.datoolset.net/wiki/index.php?title=void keyword"><span class="kw2">void</span></a> lop_ReHireChar<span class="br0">&#40;</span><a href="http://www.datoolset.net/wiki/index.php?title=object keyword"><span class="kw2">object</span></a> oFollower, <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nCoreClass <span class="sy0">=</span> <span class="nu0">1</span><span class="br0">&#41;</span>
+<span class="br0">&#123;</span>
+    <a href="http://www.datoolset.net/wiki/index.php?title=object keyword"><span class="kw2">object</span></a> me <span class="sy0">=</span> oFollower;
+    <a href="http://www.datoolset.net/wiki/index.php?title=object keyword"><span class="kw2">object</span></a> oPC <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetHero"><span class="kw4">GetHero</span></a><span class="br0">&#40;</span><span class="br0">&#41;</span>;
+&#160;
+    <span class="co1">//lets get some info from original follower</span>
+&#160;
+    <span class="co1">//this returns invalid class(0)!! probably cause when hiring a follower</span>
+    <span class="co1">//game performes some AI update in &quot;areaload special&quot; event</span>
+    <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nClass <span class="sy0">=</span> GetCreatureCoreClass<span class="br0">&#40;</span>me<span class="br0">&#41;</span>;
+    <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nCurrentClass <span class="sy0">=</span> GetCreatureCurrentClass<span class="br0">&#40;</span>me<span class="br0">&#41;</span>;
+&#160;
+    <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nRace <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetCreatureRacialType"><span class="kw4">GetCreatureRacialType</span></a><span class="br0">&#40;</span>me<span class="br0">&#41;</span>;
+    <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nGender <span class="sy0">=</span> GetCreatureGender<span class="br0">&#40;</span>me<span class="br0">&#41;</span>;
+&#160;
+    <span class="co1">//it seems we dont need this</span>
+    <span class="co1">//lop_ClearCharStats(me);</span>
+&#160;
+    <span class="co1">//cause this went well</span>
+    Chargen_InitializeCharacter<span class="br0">&#40;</span>me<span class="br0">&#41;</span>;
+&#160;
+    <span class="co1">//select race, otherwise skills tree wont show</span>
+    <span class="co1">//Chargen_SelectRace(me,RACE_HUMAN);</span>
+    Chargen_SelectRace<span class="br0">&#40;</span>me, nRace<span class="br0">&#41;</span>; <span class="co1">//we passing race from original char</span>
+&#160;
+    <span class="co1">//no use for this since we passing core class from function</span>
+    <span class="co1">//int nClass_s = CLASS_WARRIOR;</span>
+&#160;
+    Chargen_SelectGender<span class="br0">&#40;</span>me, nGender<span class="br0">&#41;</span>; <span class="co1">//we passing gender from original char</span>
+&#160;
+    <span class="co1">//remove the defaults - leftover(s) from wiki, could be useful for some other approaches</span>
+    <span class="co1">//CharGen_ClearAbilityList(me,1);//remove talents</span>
+    <span class="co1">//CharGen_ClearAbilityList(me,2);//remove spells</span>
+    <span class="co1">//CharGen_ClearAbilityList(me,3);//remove skills</span>
+&#160;
+    <span class="co1">//apply attributes, abilities and stats for the core class</span>
+    <span class="co1">//SetCreatureProperty(me,PROPERTY_SIMPLE_CURRENT_CLASS, n1-3.0,PROPERTY_VALUE_BASE);</span>
+&#160;
+    <span class="co1">//we passed core class for our follower, in theory here we could change it</span>
+    <span class="co1">//to be what we want (i.e. from warrior to mage)</span>
+    Chargen_SelectCoreClass<span class="br0">&#40;</span>me, nCoreClass<span class="br0">&#41;</span>;
+&#160;
+    <span class="co1">//add ability - just to test it</span>
+    <span class="co1">//_AddAbility(me, ABILITY_TALENT_POWERFUL);</span>
+&#160;
+    <a href="http://www.datoolset.net/wiki/index.php?title=PrintToLog"><span class="kw4">PrintToLog</span></a><span class="br0">&#40;</span><span class="st0">&quot;-----&gt; lop_ReHireFollower: Race: &quot;</span> <span class="sy0">+</span> <a href="http://www.datoolset.net/wiki/index.php?title=IntToString"><span class="kw4">IntToString</span></a><span class="br0">&#40;</span>nRace<span class="br0">&#41;</span> <span class="sy0">+</span>
+        <span class="st0">&quot;, Current Core Class: &quot;</span> <span class="sy0">+</span> <a href="http://www.datoolset.net/wiki/index.php?title=IntToString"><span class="kw4">IntToString</span></a><span class="br0">&#40;</span>nClass<span class="br0">&#41;</span> <span class="sy0">+</span> <span class="st0">&quot;, Wanted Core Class: &quot;</span> <span class="sy0">+</span> <a href="http://www.datoolset.net/wiki/index.php?title=IntToString"><span class="kw4">IntToString</span></a><span class="br0">&#40;</span>nCoreClass<span class="br0">&#41;</span> <span class="sy0">+</span>
+        <span class="st0">&quot;, Gender: &quot;</span> <span class="sy0">+</span> <a href="http://www.datoolset.net/wiki/index.php?title=IntToString"><span class="kw4">IntToString</span></a><span class="br0">&#40;</span>nGender<span class="br0">&#41;</span> <span class="sy0">+</span> <span class="st0">&quot;, Current (sub) Class: &quot;</span> <span class="sy0">+</span> <a href="http://www.datoolset.net/wiki/index.php?title=IntToString"><span class="kw4">IntToString</span></a><span class="br0">&#40;</span>nCurrentClass<span class="br0">&#41;</span><span class="br0">&#41;</span>;
+&#160;
+    <span class="co1">//tactics</span>
+    Chargen_SetNumTactics<span class="br0">&#40;</span>me<span class="br0">&#41;</span>;
+    Chargen_EnableTacticsPresets<span class="br0">&#40;</span>me<span class="br0">&#41;</span>;
+&#160;
+    <span class="co1">//level needed for scaling</span>
+    <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nPackage <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetPackage"><span class="kw4">GetPackage</span></a><span class="br0">&#40;</span>me<span class="br0">&#41;</span>;
+    <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nTargetLevel;
+&#160;
+    <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nPlayerLevel <span class="sy0">=</span> GetLevel<span class="br0">&#40;</span>oPC<span class="br0">&#41;</span>;
+    <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a><span class="br0">&#40;</span>nPlayerLevel <span class="sy0">&gt;=</span> <span class="nu0">13</span> <span class="sy0">||</span> nPlayerLevel <span class="sy0">==</span> <span class="nu0">1</span> <span class="br0">&#41;</span>
+       nTargetLevel <span class="sy0">=</span> nPlayerLevel;
+    <a href="http://www.datoolset.net/wiki/index.php?title=else keyword"><span class="kw1">else</span></a>
+       nTargetLevel <span class="sy0">=</span> nPlayerLevel <span class="sy0">+</span> <span class="nu0">1</span>;
+&#160;
+    <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nMinLevel <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetM2DAInt"><span class="kw4">GetM2DAInt</span></a><span class="br0">&#40;</span>TABLE_PACKAGES, <span class="st0">&quot;MinLevel&quot;</span>, nPackage<span class="br0">&#41;</span>;
+&#160;
+    <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a><span class="br0">&#40;</span>nMinLevel <span class="sy0">&gt;</span> <span class="nu0">0</span> <span class="sy0">&amp;&amp;</span> nMinLevel <span class="sy0">&gt;</span> nTargetLevel<span class="br0">&#41;</span>
+       nTargetLevel <span class="sy0">=</span> nMinLevel;
+&#160;
+    <span class="co1">//xp until hero level</span>
+    <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nXp <span class="sy0">=</span> RW_GetXPNeededForLevel<span class="br0">&#40;</span>Max<span class="br0">&#40;</span>nTargetLevel, <span class="nu0">1</span><span class="br0">&#41;</span><span class="br0">&#41;</span>;
+    RewardXP<span class="br0">&#40;</span>me, nXp, FALSE, FALSE<span class="br0">&#41;</span>;
+&#160;
+    <span class="co1">//add specialization</span>
+    <a href="http://www.datoolset.net/wiki/index.php?title=float keyword"><span class="kw2">float</span></a> count<span class="sy0">=</span><span class="nu0">1.0</span>;
+    <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a><span class="br0">&#40;</span>GetLevel<span class="br0">&#40;</span>oPC<span class="br0">&#41;</span><span class="sy0">&gt;=</span><span class="nu0">7</span><span class="br0">&#41;</span>
+    <span class="br0">&#123;</span>
+        <a href="http://www.datoolset.net/wiki/index.php?title=SetCreatureProperty"><span class="kw4">SetCreatureProperty</span></a><span class="br0">&#40;</span>me, <span class="nu0">38</span>, count<span class="br0">&#41;</span>;  <span class="co1">// 38 is the spec point ID</span>
+        count<span class="sy0">=</span>count<span class="sy0">+</span><span class="nu0">1.0</span>;
+    <span class="br0">&#125;</span>
+    <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a><span class="br0">&#40;</span>GetLevel<span class="br0">&#40;</span>oPC<span class="br0">&#41;</span><span class="sy0">&gt;=</span><span class="nu0">14</span><span class="br0">&#41;</span>
+        <a href="http://www.datoolset.net/wiki/index.php?title=SetCreatureProperty"><span class="kw4">SetCreatureProperty</span></a><span class="br0">&#40;</span>me, <span class="nu0">38</span>, count<span class="br0">&#41;</span>;  <span class="co1">// 38 is the spec point ID</span>
+&#160;
+    <span class="co1">//make available in party picker - don't know if its needed here for this case usage</span>
+    <span class="co1">//SetFollowerState(me, FOLLOWER_STATE_ACTIVE);</span>
+    <span class="co1">//SetFollowerState(me, FOLLOWER_STATE_AVAILABLE);</span>
+&#160;
+    <span class="co1">//dont fire player_core scaling</span>
+    <a href="http://www.datoolset.net/wiki/index.php?title=SetLocalInt"><span class="kw4">SetLocalInt</span></a><span class="br0">&#40;</span>me, FOLLOWER_SCALED, <span class="nu0">1</span><span class="br0">&#41;</span>;
+    <a href="http://www.datoolset.net/wiki/index.php?title=SetLocalInt"><span class="kw4">SetLocalInt</span></a><span class="br0">&#40;</span>me, AI_FLAG_STATIONARY, <span class="nu0">0</span><span class="br0">&#41;</span>;
+    <a href="http://www.datoolset.net/wiki/index.php?title=SetLocalInt"><span class="kw4">SetLocalInt</span></a><span class="br0">&#40;</span>me, AMBIENT_SYSTEM_STATE, <span class="nu0">0</span><span class="br0">&#41;</span>;
+    <a href="http://www.datoolset.net/wiki/index.php?title=SetLocalInt"><span class="kw4">SetLocalInt</span></a><span class="br0">&#40;</span>me, CREATURE_REWARD_FLAGS, <span class="nu0">0</span><span class="br0">&#41;</span>;
+&#160;
+    <span class="co1">//change script to player and send hire event</span>
+    <a href="http://www.datoolset.net/wiki/index.php?title=SetEventScript"><span class="kw4">SetEventScript</span></a><span class="br0">&#40;</span>me, RESOURCE_SCRIPT_PLAYER_CORE<span class="br0">&#41;</span>;
+    <a href="http://www.datoolset.net/wiki/index.php?title=InitHeartbeat"><span class="kw4">InitHeartbeat</span></a><span class="br0">&#40;</span>me, CONFIG_CONSTANT_HEARTBEAT_RATE<span class="br0">&#41;</span>;
+    SendPartyMemberHiredEvent<span class="br0">&#40;</span>me, FALSE<span class="br0">&#41;</span>;
+    <a href="http://www.datoolset.net/wiki/index.php?title=SetFollowerApprovalEnabled"><span class="kw4">SetFollowerApprovalEnabled</span></a><span class="br0">&#40;</span>me,TRUE<span class="br0">&#41;</span>;
+&#160;
+    <span class="co1">//open up party picker to allow npc to join in the active party - not needed in this usage</span>
+    <span class="co1">//SetPartyPickerGUIStatus(2);</span>
+    <span class="co1">//ShowPartyPickerGUI();</span>
+&#160;
+    <a href="http://www.datoolset.net/wiki/index.php?title=SetFollowerState"><span class="kw4">SetFollowerState</span></a><span class="br0">&#40;</span>me, <span class="kw3">FOLLOWER_STATE_ACTIVE</span><span class="br0">&#41;</span>;  <span class="co1">//put him in party</span>
+&#160;
+    <a href="http://www.datoolset.net/wiki/index.php?title=PrintToLog"><span class="kw4">PrintToLog</span></a><span class="br0">&#40;</span><span class="st0">&quot;-----&gt; Custom Hire follower: &quot;</span> <span class="sy0">+</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetTag"><span class="kw4">GetTag</span></a><span class="br0">&#40;</span>me<span class="br0">&#41;</span> <span class="sy0">+</span>
+        <span class="st0">&quot;, Hero lvl: &quot;</span> <span class="sy0">+</span> <a href="http://www.datoolset.net/wiki/index.php?title=IntToString"><span class="kw4">IntToString</span></a><span class="br0">&#40;</span>nPlayerLevel<span class="br0">&#41;</span> <span class="sy0">+</span> <span class="st0">&quot;, Follower level: &quot;</span> <span class="sy0">+</span> <a href="http://www.datoolset.net/wiki/index.php?title=IntToString"><span class="kw4">IntToString</span></a><span class="br0">&#40;</span>nTargetLevel<span class="br0">&#41;</span><span class="br0">&#41;</span>;
+<span class="br0">&#125;</span>
+&#160;
+&#160;
+&#160;
+<a href="http://www.datoolset.net/wiki/index.php?title=void keyword"><span class="kw2">void</span></a> lop_UT_HireFollower<span class="br0">&#40;</span><a href="http://www.datoolset.net/wiki/index.php?title=object keyword"><span class="kw2">object</span></a> oFollower, <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> bPreventLevelUp <span class="sy0">=</span> FALSE, <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nForceAutolevel <span class="sy0">=</span> <span class="nu0">0</span>, <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> bResetFollower <span class="sy0">=</span> FALSE, <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nResetTo <span class="sy0">=</span> <span class="nu0">1</span><span class="br0">&#41;</span>
+<span class="br0">&#123;</span>
+    <a href="http://www.datoolset.net/wiki/index.php?title=object keyword"><span class="kw2">object</span></a> oPC <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetPartyLeader"><span class="kw4">GetPartyLeader</span></a><span class="br0">&#40;</span><span class="br0">&#41;</span>;
+&#160;
+    <a href="http://www.datoolset.net/wiki/index.php?title=PrintToLog"><span class="kw4">PrintToLog</span></a><span class="br0">&#40;</span><span class="st0">&quot;-----&gt; lop_UT_HireFollower: Hiring: &quot;</span> <span class="sy0">+</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetTag"><span class="kw4">GetTag</span></a><span class="br0">&#40;</span>oFollower<span class="br0">&#41;</span> <span class="sy0">+</span>
+        <span class="st0">&quot;, Party leader: &quot;</span> <span class="sy0">+</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetTag"><span class="kw4">GetTag</span></a><span class="br0">&#40;</span>oPC<span class="br0">&#41;</span> <span class="sy0">+</span> <span class="st0">&quot;, Autolevel: &quot;</span> <span class="sy0">+</span> <a href="http://www.datoolset.net/wiki/index.php?title=IntToString"><span class="kw4">IntToString</span></a><span class="br0">&#40;</span>nForceAutolevel<span class="br0">&#41;</span> <span class="sy0">+</span>
+        <span class="st0">&quot;, Reset follower: &quot;</span> <span class="sy0">+</span> <a href="http://www.datoolset.net/wiki/index.php?title=IntToString"><span class="kw4">IntToString</span></a><span class="br0">&#40;</span>bResetFollower<span class="br0">&#41;</span><span class="br0">&#41;</span>;
+&#160;
+    <span class="co1">//cannot be used for plot followers</span>
+    <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a><span class="br0">&#40;</span>_UT_GetIsPlotFollower<span class="br0">&#40;</span>oFollower<span class="br0">&#41;</span><span class="br0">&#41;</span>
+    <span class="br0">&#123;</span>
+        <a href="http://www.datoolset.net/wiki/index.php?title=PrintToLog"><span class="kw4">PrintToLog</span></a><span class="br0">&#40;</span><span class="st0">&quot;-----&gt; lop_UT_HireFollower: Follower IS plot follower, exiting.&quot;</span><span class="br0">&#41;</span>;
+        <a href="http://www.datoolset.net/wiki/index.php?title=return keyword"><span class="kw1">return</span></a>;
+    <span class="br0">&#125;</span>
+&#160;
+    <span class="co1">//calling this code caused follower to be hired and to gain xp</span>
+    <a href="http://www.datoolset.net/wiki/index.php?title=SetAutoLevelUp"><span class="kw4">SetAutoLevelUp</span></a><span class="br0">&#40;</span>oFollower, nForceAutolevel<span class="br0">&#41;</span>;       <span class="co1">//0 - off, 1 - autolevel, 2 - force autolevel</span>
+    <a href="http://www.datoolset.net/wiki/index.php?title=SetGroupId"><span class="kw4">SetGroupId</span></a><span class="br0">&#40;</span>oFollower, <a href="http://www.datoolset.net/wiki/index.php?title=GetGroupId"><span class="kw4">GetGroupId</span></a><span class="br0">&#40;</span>oPC<span class="br0">&#41;</span><span class="br0">&#41;</span>;           <span class="co1">//not sure if needed cause player_core resets it</span>
+    <a href="http://www.datoolset.net/wiki/index.php?title=SetLocalInt"><span class="kw4">SetLocalInt</span></a><span class="br0">&#40;</span>oFollower, CREATURE_REWARD_FLAGS, <span class="nu0">0</span><span class="br0">&#41;</span>; <span class="co1">//to gain xp</span>
+    WR_SetFollowerState<span class="br0">&#40;</span>oFollower, <span class="kw3">FOLLOWER_STATE_ACTIVE</span>, TRUE, <span class="nu0">0</span>, bPreventLevelUp<span class="br0">&#41;</span>;
+&#160;
+    <span class="co1">//Show the AOE flag when the PC is a mage and aquires a follower or the follower hired is a mage</span>
+    <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a><span class="br0">&#40;</span><a href="http://www.datoolset.net/wiki/index.php?title=GetLocalInt"><span class="kw4">GetLocalInt</span></a><span class="br0">&#40;</span><a href="http://www.datoolset.net/wiki/index.php?title=GetModule"><span class="kw4">GetModule</span></a><span class="br0">&#40;</span><span class="br0">&#41;</span>, TUTORIAL_ENABLED<span class="br0">&#41;</span> <span class="sy0">&amp;&amp;</span> <span class="br0">&#40;</span>GetCreatureCoreClass<span class="br0">&#40;</span>oPC<span class="br0">&#41;</span> <span class="sy0">==</span> CLASS_WIZARD <span class="sy0">||</span> GetCreatureCoreClass<span class="br0">&#40;</span>oFollower<span class="br0">&#41;</span> <span class="sy0">==</span> CLASS_WIZARD<span class="br0">&#41;</span><span class="br0">&#41;</span>
+    <span class="br0">&#123;</span>
+        WR_SetPlotFlag<span class="br0">&#40;</span>PLT_TUT_FRIENDLY_AOE, TUT_FRIENDLY_AOE_1, TRUE<span class="br0">&#41;</span>;
+    <span class="br0">&#125;</span>
+&#160;
+    <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a> <span class="br0">&#40;</span>bResetFollower<span class="br0">&#41;</span>
+    <span class="br0">&#123;</span>
+        <a href="http://www.datoolset.net/wiki/index.php?title=PrintToLog"><span class="kw4">PrintToLog</span></a><span class="br0">&#40;</span><span class="st0">&quot;-----&gt; lop_UT_HireFollower: Resetting follower.&quot;</span><span class="br0">&#41;</span>;
+        <span class="co1">//calling this will re-initialize follower</span>
+        lop_ReHireChar<span class="br0">&#40;</span>oFollower, nResetTo<span class="br0">&#41;</span>;
+    <span class="br0">&#125;</span>
+&#160;
+<span class="br0">&#125;</span>
+&#160;
+<span class="co1">//activates group of triggers by tag</span>
+<a href="http://www.datoolset.net/wiki/index.php?title=void keyword"><span class="kw2">void</span></a> yad_ActivateTrigger<span class="br0">&#40;</span><a href="http://www.datoolset.net/wiki/index.php?title=string keyword"><span class="kw2">string</span></a> sTriggerTag, <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> bActivate <span class="sy0">=</span> TRUE<span class="br0">&#41;</span>
+<span class="br0">&#123;</span>
+    <a href="http://www.datoolset.net/wiki/index.php?title=object keyword"><span class="kw2">object</span></a> <span class="br0">&#91;</span><span class="br0">&#93;</span> arActivate <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetNearestObjectByTag"><span class="kw4">GetNearestObjectByTag</span></a><span class="br0">&#40;</span><a href="http://www.datoolset.net/wiki/index.php?title=GetMainControlled"><span class="kw4">GetMainControlled</span></a><span class="br0">&#40;</span><span class="br0">&#41;</span>, sTriggerTag, <span class="kw3">OBJECT_TYPE_TRIGGER</span>, <span class="nu0">15</span><span class="br0">&#41;</span>;
+    <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nSize <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetArraySize"><span class="kw4">GetArraySize</span></a><span class="br0">&#40;</span>arActivate<span class="br0">&#41;</span>;
+&#160;
+    <a href="http://www.datoolset.net/wiki/index.php?title=object keyword"><span class="kw2">object</span></a> oActivate;
+    <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nIndex;
+&#160;
+    <a href="http://www.datoolset.net/wiki/index.php?title=for keyword"><span class="kw1">for</span></a> <span class="br0">&#40;</span>nIndex <span class="sy0">=</span> <span class="nu0">0</span>; nIndex <span class="sy0">&lt;</span> nSize; <span class="sy0">++</span>nIndex<span class="br0">&#41;</span>
+    <span class="br0">&#123;</span>
+        oActivate <span class="sy0">=</span> arActivate<span class="br0">&#91;</span>nIndex<span class="br0">&#93;</span>;
+        WR_SetObjectActive<span class="br0">&#40;</span>oActivate, bActivate<span class="br0">&#41;</span>;
+        <a href="http://www.datoolset.net/wiki/index.php?title=DisplayFloatyMessage"><span class="kw4">DisplayFloatyMessage</span></a><span class="br0">&#40;</span>oActivate, <span class="st0">&quot;Hello trigger!&quot;</span>, <span class="kw3">FLOATY_MESSAGE</span>,<span class="nu0">16777215</span>,<span class="nu0">10.0</span><span class="br0">&#41;</span>;
+    <span class="br0">&#125;</span>
+<span class="br0">&#125;</span></pre></div></div>
+
+<!-- 
+NewPP limit report
+CPU time usage: 0.060 seconds
+Real time usage: 0.061 seconds
+Preprocessor visited node count: 52/1000000
+Preprocessor generated node count: 156/1000000
+Post‐expand include size: 0/2097152 bytes
+Template argument size: 0/2097152 bytes
+Highest expansion depth: 3/40
+Expensive parser function count: 0/100
+-->
+
+<!-- 
+Transclusion expansion time report (%,ms,calls,template)
+100.00%    0.000      1 - -total
+-->
+
+<!-- Saved in parser cache with key db714099484-datoolwiki_:pcache:idhash:5755-0!*!*!!en!*!* and timestamp 20260531102508 and revision id 19824
+ -->
+</div>									<div class="printfooter">
+						Retrieved from "<a dir="ltr" href="Playing_custom_Player_Character.html">https://www.datoolset.net/mw/index.php?title=Playing_custom_Player_Character&amp;oldid=19824</a>"					</div>
+													<div id='catlinks' class='catlinks'><div id="mw-normal-catlinks" class="mw-normal-catlinks"><a href="/wiki/Special:Categories" title="Special:Categories">Categories</a>: <ul><li><a href="Category%3AScripts.html" title="Category:Scripts">Scripts</a></li><li><a href="Category%3ATutorials.html" title="Category:Tutorials">Tutorials</a></li></ul></div></div>												<div class="visualClear"></div>
+							</div>
+		</div>
+		<div id="mw-navigation">
+			<h2>Navigation menu</h2>
+
+			<div id="mw-head">
+									<div id="p-personal" role="navigation" class="" aria-labelledby="p-personal-label">
+						<h3 id="p-personal-label">Personal tools</h3>
+						<ul>
+							<li id="pt-login"><a href="/mw/index.php?title=Special:UserLogin&amp;returnto=Playing+custom+Player+Character" title="You are encouraged to log in; however, it is not mandatory [o]" accesskey="o">Log in</a></li>						</ul>
+					</div>
+									<div id="left-navigation">
+										<div id="p-namespaces" role="navigation" class="vectorTabs" aria-labelledby="p-namespaces-label">
+						<h3 id="p-namespaces-label">Namespaces</h3>
+						<ul>
+															<li  id="ca-nstab-main" class="selected"><span><a href="Playing_custom_Player_Character.html"  title="View the content page [c]" accesskey="c">Page</a></span></li>
+															<li  id="ca-talk" class="new"><span><a href="/mw/index.php?title=Talk:Playing_custom_Player_Character&amp;action=edit&amp;redlink=1"  title="Discussion about the content page [t]" accesskey="t">Discussion</a></span></li>
+													</ul>
+					</div>
+										<div id="p-variants" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-variants-label">
+												<h3 id="p-variants-label"><span>Variants</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+									</div>
+				<div id="right-navigation">
+										<div id="p-views" role="navigation" class="vectorTabs" aria-labelledby="p-views-label">
+						<h3 id="p-views-label">Views</h3>
+						<ul>
+															<li id="ca-view" class="selected"><span><a href="Playing_custom_Player_Character.html" >Read</a></span></li>
+															<li id="ca-viewsource"><span><a href="Playing_custom_Player_Character.html"  title="This page is protected.&#10;You can view its source [e]" accesskey="e">View source</a></span></li>
+															<li id="ca-history" class="collapsible"><span><a href="Playing_custom_Player_Character.html"  title="Past revisions of this page [h]" accesskey="h">View history</a></span></li>
+													</ul>
+					</div>
+										<div id="p-cactions" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-cactions-label">
+						<h3 id="p-cactions-label"><span>More</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+										<div id="p-search" role="search">
+						<h3>
+							<label for="searchInput">Search</label>
+						</h3>
+
+						<form action="/mw/index.php" id="searchform">
+														<div id="simpleSearch">
+															<input type="search" name="search" placeholder="Search" title="Search Dragon Age Toolset Wiki [f]" accesskey="f" id="searchInput" /><input type="hidden" value="Special:Search" name="title" /><input type="submit" name="fulltext" value="Search" title="Search the pages for this text" id="mw-searchButton" class="searchButton mw-fallbackSearchButton" /><input type="submit" name="go" value="Go" title="Go to a page with this exact name if exists" id="searchButton" class="searchButton" />								</div>
+						</form>
+					</div>
+									</div>
+			</div>
+			<div id="mw-panel">
+				<div id="p-logo" role="banner"><a class="mw-wiki-logo" href="Main_Page.html"  title="Visit the main page"></a></div>
+						<div class="portal" role="navigation" id='p-navigation' aria-labelledby='p-navigation-label'>
+			<h3 id='p-navigation-label'>Navigation</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-mainpage-description"><a href="Main_Page.html" title="Visit the main page [z]" accesskey="z">Main page</a></li>
+													<li id="n-recentchanges"><a href="/wiki/Special:RecentChanges" title="A list of recent changes in the wiki [r]" accesskey="r">Recent changes</a></li>
+													<li id="n-randompage"><a href="/wiki/Special:Random" title="Load a random page [x]" accesskey="x">Random page</a></li>
+													<li id="n-help"><a href="https://www.mediawiki.org/wiki/Special:MyLanguage/Help:Contents" title="The place to find out">Help</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-Links' aria-labelledby='p-Links-label'>
+			<h3 id='p-Links-label'>Links</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-Toolset-forums"><a href="http://forum.bioware.com/forum/30-dragon-age-toolset" rel="nofollow">Toolset forums</a></li>
+													<li id="n-Legacy-forums"><a href="http://social.bioware.com/forum/1/subindex/70" rel="nofollow">Legacy forums</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-tb' aria-labelledby='p-tb-label'>
+			<h3 id='p-tb-label'>Tools</h3>
+
+			<div class="body">
+									<ul>
+													<li id="t-whatlinkshere"><a href="/wiki/Special:WhatLinksHere/Playing_custom_Player_Character" title="A list of all wiki pages that link here [j]" accesskey="j">What links here</a></li>
+													<li id="t-recentchangeslinked"><a href="/wiki/Special:RecentChangesLinked/Playing_custom_Player_Character" title="Recent changes in pages linked from this page [k]" accesskey="k">Related changes</a></li>
+													<li id="t-specialpages"><a href="/wiki/Special:SpecialPages" title="A list of all special pages [q]" accesskey="q">Special pages</a></li>
+													<li id="t-print"><a href="Playing_custom_Player_Character.html" rel="alternate" title="Printable version of this page [p]" accesskey="p">Printable version</a></li>
+													<li id="t-permalink"><a href="Playing_custom_Player_Character.html" title="Permanent link to this revision of the page">Permanent link</a></li>
+													<li id="t-info"><a href="Playing_custom_Player_Character.html" title="More information about this page">Page information</a></li>
+											</ul>
+							</div>
+		</div>
+				</div>
+		</div>
+		<div id="footer" role="contentinfo">
+							<ul id="footer-info">
+											<li id="footer-info-lastmod"> This page was last modified on 17 October 2017, at 09:43.</li>
+									</ul>
+							<ul id="footer-places">
+											<li id="footer-places-privacy"><a href="/wiki/Dragon_Age_Toolset_Wiki:Privacy_policy" title="Dragon Age Toolset Wiki:Privacy policy">Privacy policy</a></li>
+											<li id="footer-places-about"><a href="/wiki/Dragon_Age_Toolset_Wiki:About" title="Dragon Age Toolset Wiki:About">About Dragon Age Toolset Wiki</a></li>
+											<li id="footer-places-disclaimer"><a href="/wiki/Dragon_Age_Toolset_Wiki:General_disclaimer" title="Dragon Age Toolset Wiki:General disclaimer">Disclaimers</a></li>
+									</ul>
+										<ul id="footer-icons" class="noprint">
+											<li id="footer-poweredbyico">
+															<a href="//www.mediawiki.org/"><img src="../assets/mw/resources/assets/poweredby_mediawiki_88x31.png" alt="Powered by MediaWiki" srcset="../assets/mw/resources/assets/poweredby_mediawiki_132x47.png 1.5x, ../assets/mw/resources/assets/poweredby_mediawiki_176x62.png 2x" width="88" height="31" /></a>
+													</li>
+									</ul>
+						<div style="clear:both"></div>
+		</div>
+		<script>if(window.jQuery)jQuery.ready();</script><script>if(window.mw){
+mw.loader.state({"site":"loading","user":"ready","user.groups":"ready"});
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.toc","mediawiki.action.view.postEdit","mediawiki.user","mediawiki.hidpi","mediawiki.page.ready","mediawiki.searchSuggest"],null,true);
+}</script>
+<script>if(window.mw){
+document.write("\u003Cscript src=\"https://www.datoolset.net/mw/load.php?debug=false\u0026amp;lang=en\u0026amp;modules=site\u0026amp;only=scripts\u0026amp;skin=vector\u0026amp;*\"\u003E\u003C/script\u003E");
+}</script>
+<script>if(window.mw){
+mw.config.set({"wgBackendResponseTime":214});
+}</script>
+	</body>
+</html>

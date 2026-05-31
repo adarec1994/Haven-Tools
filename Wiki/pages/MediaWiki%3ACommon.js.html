@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" class="client-nojs">
+<head>
+<meta charset="UTF-8" />
+<title>MediaWiki:Common.js - Dragon Age Toolset Wiki</title>
+<meta name="generator" content="MediaWiki 1.25.6" />
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="search" type="application/opensearchdescription+xml" href="/mw/opensearch_desc.php" title="Dragon Age Toolset Wiki (en)" />
+<link rel="EditURI" type="application/rsd+xml" href="https://www.datoolset.net/mw/api.php?action=rsd" />
+<link rel="alternate" hreflang="x-default" href="MediaWiki%3ACommon.js.html" />
+<link rel="alternate" type="application/atom+xml" title="Dragon Age Toolset Wiki Atom feed" href="/mw/index.php?title=Special:RecentChanges&amp;feed=atom" />
+<meta name="ResourceLoaderDynamicStyles" content="" />
+<style>a:lang(ar),a:lang(kk-arab),a:lang(mzn),a:lang(ps),a:lang(ur){text-decoration:none}
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-css:7:270a0dcd3ae587df0f041aebfc42e61b */</style>
+<script>if(window.mw){
+mw.config.set({"wgCanonicalNamespace":"MediaWiki","wgCanonicalSpecialPageName":false,"wgNamespaceNumber":8,"wgPageName":"MediaWiki:Common.js","wgTitle":"Common.js","wgCurRevisionId":10818,"wgRevisionId":10818,"wgArticleId":4183,"wgIsArticle":true,"wgIsRedirect":false,"wgAction":"view","wgUserName":null,"wgUserGroups":["*"],"wgCategories":[],"wgBreakFrames":false,"wgPageContentLanguage":"en","wgPageContentModel":"javascript","wgSeparatorTransformTable":["",""],"wgDigitTransformTable":["",""],"wgDefaultDateFormat":"dmy","wgMonthNames":["","January","February","March","April","May","June","July","August","September","October","November","December"],"wgMonthNamesShort":["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],"wgRelevantPageName":"MediaWiki:Common.js","wgRelevantArticleId":4183,"wgIsProbablyEditable":false,"wgRestrictionEdit":[],"wgRestrictionMove":[]});
+}</script><script>if(window.mw){
+mw.loader.implement("user.options",function($,jQuery){mw.user.options.set({"variant":"en"});});mw.loader.implement("user.tokens",function($,jQuery){mw.user.tokens.set({"editToken":"+\\","patrolToken":"+\\","watchToken":"+\\"});});
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-js:7:a5c52c063dc436c1ca7c9f456936a5e9 */
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.page.startup","mediawiki.legacy.wikibits","mediawiki.legacy.ajax","skins.vector.js"]);
+}</script>
+<!--[if lt IE 7]><style type="text/css">body{behavior:url("/mw/skins/Vector/csshover.min.htc")}</style><![endif]-->
+<link rel="stylesheet" href="../assets/local/wiki-static.css" />
+</head>
+<body class="mediawiki ltr sitedir-ltr ns-8 ns-subject page-MediaWiki_Common_js skin-vector action-view">
+		<div id="mw-page-base" class="noprint"></div>
+		<div id="mw-head-base" class="noprint"></div>
+		<div id="content" class="mw-body" role="main">
+			<a id="top"></a>
+
+						<div class="mw-indicators">
+</div>
+			<h1 id="firstHeading" class="firstHeading" lang="en">MediaWiki:Common.js</h1>
+						<div id="bodyContent" class="mw-body-content">
+									<div id="siteSub">From Dragon Age Toolset Wiki</div>
+								<div id="contentSub"></div>
+												<div id="jump-to-nav" class="mw-jump">
+					Jump to:					<a href="#mw-head">navigation</a>, 					<a href="#p-search">search</a>
+				</div>
+				<div id="mw-content-text" lang="en" dir="ltr" class="mw-content-ltr"><div id="mw-clearyourcache" lang="en" dir="ltr" class="mw-content-ltr">
+<p><strong>Note:</strong> After saving, you may have to bypass your browser's cache to see the changes.
+</p>
+<ul><li> <strong>Firefox / Safari:</strong> Hold <em>Shift</em> while clicking <em>Reload</em>, or press either <em>Ctrl-F5</em> or <em>Ctrl-R</em> (<em>⌘-R</em> on a Mac)</li>
+<li> <strong>Google Chrome:</strong> Press <em>Ctrl-Shift-R</em> (<em>⌘-Shift-R</em> on a Mac)</li>
+<li> <strong>Internet Explorer:</strong> Hold <em>Ctrl</em> while clicking <em>Refresh</em>, or press <em>Ctrl-F5</em></li>
+<li> <strong>Opera:</strong> Clear the cache in <em>Tools → Preferences</em></li></ul>
+</div>
+<div dir="ltr"><pre class="javascript source-javascript"><span class="coMULTI">/* Any JavaScript here will be loaded for all users on every page load. */</span>
+&nbsp;
+<span class="coMULTI">/** Collapsible tables *********************************************************
+ *
+ *  Description: Allows tables to be collapsed, showing only the header. See
+ *               http://www.mediawiki.org/wiki/Manual:Collapsible_tables.
+ *  Maintainers: [[**MAINTAINERS**]]
+ */</span>
+<span class="kw1">var</span> autoCollapse <span class="sy0">=</span> <span class="nu0">2</span><span class="sy0">;</span>
+<span class="kw1">var</span> collapseCaption <span class="sy0">=</span> <span class="st0">'hide'</span><span class="sy0">;</span>
+<span class="kw1">var</span> expandCaption <span class="sy0">=</span> <span class="st0">'show'</span><span class="sy0">;</span>
+&nbsp;
+<span class="kw1">function</span> collapseTable<span class="br0">&#40;</span> tableIndex <span class="br0">&#41;</span> <span class="br0">&#123;</span>
+	<span class="kw1">var</span> Button <span class="sy0">=</span> document.<span class="me1">getElementById</span><span class="br0">&#40;</span> <span class="st0">'collapseButton'</span> <span class="sy0">+</span> tableIndex <span class="br0">&#41;</span><span class="sy0">;</span>
+	<span class="kw1">var</span> Table <span class="sy0">=</span> document.<span class="me1">getElementById</span><span class="br0">&#40;</span> <span class="st0">'collapsibleTable'</span> <span class="sy0">+</span> tableIndex <span class="br0">&#41;</span><span class="sy0">;</span>
+&nbsp;
+	<span class="kw1">if</span> <span class="br0">&#40;</span> <span class="sy0">!</span>Table <span class="sy0">||</span> <span class="sy0">!</span>Button <span class="br0">&#41;</span> <span class="br0">&#123;</span>
+		<span class="kw1">return</span> <span class="kw2">false</span><span class="sy0">;</span>
+	<span class="br0">&#125;</span>
+&nbsp;
+	<span class="kw1">var</span> Rows <span class="sy0">=</span> Table.<span class="me1">rows</span><span class="sy0">;</span>
+&nbsp;
+	<span class="kw1">if</span> <span class="br0">&#40;</span> Button.<span class="me1">firstChild</span>.<span class="me1">data</span> <span class="sy0">==</span> collapseCaption <span class="br0">&#41;</span> <span class="br0">&#123;</span>
+		<span class="kw1">for</span> <span class="br0">&#40;</span> <span class="kw1">var</span> i <span class="sy0">=</span> <span class="nu0">1</span><span class="sy0">;</span> i <span class="sy0">&lt;</span> Rows.<span class="me1">length</span><span class="sy0">;</span> i<span class="sy0">++</span> <span class="br0">&#41;</span> <span class="br0">&#123;</span>
+			Rows<span class="br0">&#91;</span>i<span class="br0">&#93;</span>.<span class="me1">style</span>.<span class="me1">display</span> <span class="sy0">=</span> <span class="st0">'none'</span><span class="sy0">;</span>
+		<span class="br0">&#125;</span>
+		Button.<span class="me1">firstChild</span>.<span class="me1">data</span> <span class="sy0">=</span> expandCaption<span class="sy0">;</span>
+	<span class="br0">&#125;</span> <span class="kw1">else</span> <span class="br0">&#123;</span>
+		<span class="kw1">for</span> <span class="br0">&#40;</span> <span class="kw1">var</span> i <span class="sy0">=</span> <span class="nu0">1</span><span class="sy0">;</span> i <span class="sy0">&lt;</span> Rows.<span class="me1">length</span><span class="sy0">;</span> i<span class="sy0">++</span> <span class="br0">&#41;</span> <span class="br0">&#123;</span>
+			Rows<span class="br0">&#91;</span>i<span class="br0">&#93;</span>.<span class="me1">style</span>.<span class="me1">display</span> <span class="sy0">=</span> Rows<span class="br0">&#91;</span><span class="nu0">0</span><span class="br0">&#93;</span>.<span class="me1">style</span>.<span class="me1">display</span><span class="sy0">;</span>
+		<span class="br0">&#125;</span>
+		Button.<span class="me1">firstChild</span>.<span class="me1">data</span> <span class="sy0">=</span> collapseCaption<span class="sy0">;</span>
+	<span class="br0">&#125;</span>
+<span class="br0">&#125;</span>
+&nbsp;
+<span class="kw1">function</span> createCollapseButtons<span class="br0">&#40;</span><span class="br0">&#41;</span> <span class="br0">&#123;</span>
+	<span class="kw1">var</span> tableIndex <span class="sy0">=</span> <span class="nu0">0</span><span class="sy0">;</span>
+	<span class="kw1">var</span> NavigationBoxes <span class="sy0">=</span> <span class="kw1">new</span> <span class="kw4">Object</span><span class="br0">&#40;</span><span class="br0">&#41;</span><span class="sy0">;</span>
+	<span class="kw1">var</span> Tables <span class="sy0">=</span> document.<span class="me1">getElementsByTagName</span><span class="br0">&#40;</span> <span class="st0">'table'</span> <span class="br0">&#41;</span><span class="sy0">;</span>
+&nbsp;
+	<span class="kw1">for</span> <span class="br0">&#40;</span> <span class="kw1">var</span> i <span class="sy0">=</span> <span class="nu0">0</span><span class="sy0">;</span> i <span class="sy0">&lt;</span> Tables.<span class="me1">length</span><span class="sy0">;</span> i<span class="sy0">++</span> <span class="br0">&#41;</span> <span class="br0">&#123;</span>
+		<span class="kw1">if</span> <span class="br0">&#40;</span> hasClass<span class="br0">&#40;</span> Tables<span class="br0">&#91;</span>i<span class="br0">&#93;</span><span class="sy0">,</span> <span class="st0">'collapsible'</span> <span class="br0">&#41;</span> <span class="br0">&#41;</span> <span class="br0">&#123;</span>
+			<span class="coMULTI">/* only add button and increment count if there is a header row to work with */</span>
+			<span class="kw1">var</span> HeaderRow <span class="sy0">=</span> Tables<span class="br0">&#91;</span>i<span class="br0">&#93;</span>.<span class="me1">getElementsByTagName</span><span class="br0">&#40;</span> <span class="st0">'tr'</span> <span class="br0">&#41;</span><span class="br0">&#91;</span><span class="nu0">0</span><span class="br0">&#93;</span><span class="sy0">;</span>
+			<span class="kw1">if</span><span class="br0">&#40;</span> <span class="sy0">!</span>HeaderRow <span class="br0">&#41;</span> <span class="kw1">continue</span><span class="sy0">;</span>
+			<span class="kw1">var</span> Header <span class="sy0">=</span> HeaderRow.<span class="me1">getElementsByTagName</span><span class="br0">&#40;</span> <span class="st0">'th'</span> <span class="br0">&#41;</span><span class="br0">&#91;</span><span class="nu0">0</span><span class="br0">&#93;</span><span class="sy0">;</span>
+			<span class="kw1">if</span><span class="br0">&#40;</span> <span class="sy0">!</span>Header <span class="br0">&#41;</span> <span class="kw1">continue</span><span class="sy0">;</span>
+&nbsp;
+			NavigationBoxes<span class="br0">&#91;</span>tableIndex<span class="br0">&#93;</span> <span class="sy0">=</span> Tables<span class="br0">&#91;</span>i<span class="br0">&#93;</span><span class="sy0">;</span>
+			Tables<span class="br0">&#91;</span>i<span class="br0">&#93;</span>.<span class="me1">setAttribute</span><span class="br0">&#40;</span> <span class="st0">'id'</span><span class="sy0">,</span> <span class="st0">'collapsibleTable'</span> <span class="sy0">+</span> tableIndex <span class="br0">&#41;</span><span class="sy0">;</span>
+&nbsp;
+			<span class="kw1">var</span> Button     <span class="sy0">=</span> document.<span class="me1">createElement</span><span class="br0">&#40;</span> <span class="st0">'span'</span> <span class="br0">&#41;</span><span class="sy0">;</span>
+			<span class="kw1">var</span> ButtonLink <span class="sy0">=</span> document.<span class="me1">createElement</span><span class="br0">&#40;</span> <span class="st0">'a'</span> <span class="br0">&#41;</span><span class="sy0">;</span>
+			<span class="kw1">var</span> ButtonText <span class="sy0">=</span> document.<span class="me1">createTextNode</span><span class="br0">&#40;</span> collapseCaption <span class="br0">&#41;</span><span class="sy0">;</span>
+&nbsp;
+			Button.<span class="me1">className</span> <span class="sy0">=</span> <span class="st0">'collapseButton'</span><span class="sy0">;</span> <span class="co1">// Styles are declared in MediaWiki:Common.css</span>
+&nbsp;
+			ButtonLink.<span class="me1">style</span>.<span class="me1">color</span> <span class="sy0">=</span> Header.<span class="me1">style</span>.<span class="me1">color</span><span class="sy0">;</span>
+			ButtonLink.<span class="me1">setAttribute</span><span class="br0">&#40;</span> <span class="st0">'id'</span><span class="sy0">,</span> <span class="st0">'collapseButton'</span> <span class="sy0">+</span> tableIndex <span class="br0">&#41;</span><span class="sy0">;</span>
+			ButtonLink.<span class="me1">setAttribute</span><span class="br0">&#40;</span> <span class="st0">'href'</span><span class="sy0">,</span> <span class="st0">&quot;javascript:collapseTable(&quot;</span> <span class="sy0">+</span> tableIndex <span class="sy0">+</span> <span class="st0">&quot;);&quot;</span> <span class="br0">&#41;</span><span class="sy0">;</span>
+			ButtonLink.<span class="me1">appendChild</span><span class="br0">&#40;</span> ButtonText <span class="br0">&#41;</span><span class="sy0">;</span>
+&nbsp;
+			Button.<span class="me1">appendChild</span><span class="br0">&#40;</span> document.<span class="me1">createTextNode</span><span class="br0">&#40;</span> <span class="st0">'['</span> <span class="br0">&#41;</span> <span class="br0">&#41;</span><span class="sy0">;</span>
+			Button.<span class="me1">appendChild</span><span class="br0">&#40;</span> ButtonLink <span class="br0">&#41;</span><span class="sy0">;</span>
+			Button.<span class="me1">appendChild</span><span class="br0">&#40;</span> document.<span class="me1">createTextNode</span><span class="br0">&#40;</span> <span class="st0">']'</span> <span class="br0">&#41;</span> <span class="br0">&#41;</span><span class="sy0">;</span>
+&nbsp;
+			Header.<span class="me1">insertBefore</span><span class="br0">&#40;</span> Button<span class="sy0">,</span> Header.<span class="me1">childNodes</span><span class="br0">&#91;</span><span class="nu0">0</span><span class="br0">&#93;</span> <span class="br0">&#41;</span><span class="sy0">;</span>
+			tableIndex<span class="sy0">++;</span>
+		<span class="br0">&#125;</span>
+	<span class="br0">&#125;</span>
+&nbsp;
+	<span class="kw1">for</span> <span class="br0">&#40;</span> <span class="kw1">var</span> i <span class="sy0">=</span> <span class="nu0">0</span><span class="sy0">;</span>  i <span class="sy0">&lt;</span> tableIndex<span class="sy0">;</span> i<span class="sy0">++</span> <span class="br0">&#41;</span> <span class="br0">&#123;</span>
+		<span class="kw1">if</span> <span class="br0">&#40;</span> hasClass<span class="br0">&#40;</span> NavigationBoxes<span class="br0">&#91;</span>i<span class="br0">&#93;</span><span class="sy0">,</span> <span class="st0">'collapsed'</span> <span class="br0">&#41;</span> <span class="sy0">||</span> <span class="br0">&#40;</span> tableIndex <span class="sy0">&gt;=</span> autoCollapse <span class="sy0">&amp;&amp;</span> hasClass<span class="br0">&#40;</span> NavigationBoxes<span class="br0">&#91;</span>i<span class="br0">&#93;</span><span class="sy0">,</span> <span class="st0">'autocollapse'</span> <span class="br0">&#41;</span> <span class="br0">&#41;</span> <span class="br0">&#41;</span> <span class="br0">&#123;</span>
+			collapseTable<span class="br0">&#40;</span> i <span class="br0">&#41;</span><span class="sy0">;</span>
+		<span class="br0">&#125;</span>
+	<span class="br0">&#125;</span>
+<span class="br0">&#125;</span>
+&nbsp;
+addOnloadHook<span class="br0">&#40;</span> createCollapseButtons <span class="br0">&#41;</span><span class="sy0">;</span>
+&nbsp;
+<span class="coMULTI">/** Test if an element has a certain class **************************************
+ *
+ * Description: Uses regular expressions and caching for better performance.
+ * Maintainers: [[User:Mike Dillon]], [[User:R. Koot]], [[User:SG]]
+ */</span>
+&nbsp;
+<span class="kw1">var</span> hasClass <span class="sy0">=</span> <span class="br0">&#40;</span><span class="kw1">function</span><span class="br0">&#40;</span><span class="br0">&#41;</span> <span class="br0">&#123;</span>
+	<span class="kw1">var</span> reCache <span class="sy0">=</span> <span class="br0">&#123;</span><span class="br0">&#125;</span><span class="sy0">;</span>
+	<span class="kw1">return</span> <span class="kw1">function</span><span class="br0">&#40;</span> element<span class="sy0">,</span> className <span class="br0">&#41;</span> <span class="br0">&#123;</span>
+		<span class="kw1">return</span> <span class="br0">&#40;</span>reCache<span class="br0">&#91;</span>className<span class="br0">&#93;</span> <span class="sy0">?</span> reCache<span class="br0">&#91;</span>className<span class="br0">&#93;</span> <span class="sy0">:</span> <span class="br0">&#40;</span>reCache<span class="br0">&#91;</span>className<span class="br0">&#93;</span> <span class="sy0">=</span> <span class="kw1">new</span> RegExp<span class="br0">&#40;</span><span class="st0">&quot;(?:<span class="es0">\\</span>s|^)&quot;</span> <span class="sy0">+</span> className <span class="sy0">+</span> <span class="st0">&quot;(?:<span class="es0">\\</span>s|$)&quot;</span><span class="br0">&#41;</span><span class="br0">&#41;</span><span class="br0">&#41;</span>.<span class="me1">test</span><span class="br0">&#40;</span>element.<span class="me1">className</span><span class="br0">&#41;</span><span class="sy0">;</span>
+	<span class="br0">&#125;</span><span class="sy0">;</span>
+<span class="br0">&#125;</span><span class="br0">&#41;</span><span class="br0">&#40;</span><span class="br0">&#41;</span><span class="sy0">;</span></pre></div></div>									<div class="printfooter">
+						Retrieved from "<a dir="ltr" href="MediaWiki%3ACommon.js.html">https://www.datoolset.net/mw/index.php?title=MediaWiki:Common.js&amp;oldid=10818</a>"					</div>
+													<div id='catlinks' class='catlinks catlinks-allhidden'></div>												<div class="visualClear"></div>
+							</div>
+		</div>
+		<div id="mw-navigation">
+			<h2>Navigation menu</h2>
+
+			<div id="mw-head">
+									<div id="p-personal" role="navigation" class="" aria-labelledby="p-personal-label">
+						<h3 id="p-personal-label">Personal tools</h3>
+						<ul>
+							<li id="pt-login"><a href="/mw/index.php?title=Special:UserLogin&amp;returnto=MediaWiki%3ACommon.js" title="You are encouraged to log in; however, it is not mandatory [o]" accesskey="o">Log in</a></li>						</ul>
+					</div>
+									<div id="left-navigation">
+										<div id="p-namespaces" role="navigation" class="vectorTabs" aria-labelledby="p-namespaces-label">
+						<h3 id="p-namespaces-label">Namespaces</h3>
+						<ul>
+															<li  id="ca-nstab-mediawiki" class="selected"><span><a href="MediaWiki%3ACommon.js.html"  title="View the system message [c]" accesskey="c">Message</a></span></li>
+															<li  id="ca-talk" class="new"><span><a href="/mw/index.php?title=MediaWiki_talk:Common.js&amp;action=edit&amp;redlink=1"  title="Discussion about the content page [t]" accesskey="t">Discussion</a></span></li>
+													</ul>
+					</div>
+										<div id="p-variants" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-variants-label">
+												<h3 id="p-variants-label"><span>Variants</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+									</div>
+				<div id="right-navigation">
+										<div id="p-views" role="navigation" class="vectorTabs" aria-labelledby="p-views-label">
+						<h3 id="p-views-label">Views</h3>
+						<ul>
+															<li id="ca-view" class="selected"><span><a href="MediaWiki%3ACommon.js.html" >Read</a></span></li>
+															<li id="ca-viewsource"><span><a href="MediaWiki%3ACommon.js.html"  title="This page is protected.&#10;You can view its source [e]" accesskey="e">View source</a></span></li>
+															<li id="ca-history" class="collapsible"><span><a href="MediaWiki%3ACommon.js.html"  title="Past revisions of this page [h]" accesskey="h">View history</a></span></li>
+													</ul>
+					</div>
+										<div id="p-cactions" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-cactions-label">
+						<h3 id="p-cactions-label"><span>More</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+										<div id="p-search" role="search">
+						<h3>
+							<label for="searchInput">Search</label>
+						</h3>
+
+						<form action="/mw/index.php" id="searchform">
+														<div id="simpleSearch">
+															<input type="search" name="search" placeholder="Search" title="Search Dragon Age Toolset Wiki [f]" accesskey="f" id="searchInput" /><input type="hidden" value="Special:Search" name="title" /><input type="submit" name="fulltext" value="Search" title="Search the pages for this text" id="mw-searchButton" class="searchButton mw-fallbackSearchButton" /><input type="submit" name="go" value="Go" title="Go to a page with this exact name if exists" id="searchButton" class="searchButton" />								</div>
+						</form>
+					</div>
+									</div>
+			</div>
+			<div id="mw-panel">
+				<div id="p-logo" role="banner"><a class="mw-wiki-logo" href="Main_Page.html"  title="Visit the main page"></a></div>
+						<div class="portal" role="navigation" id='p-navigation' aria-labelledby='p-navigation-label'>
+			<h3 id='p-navigation-label'>Navigation</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-mainpage-description"><a href="Main_Page.html" title="Visit the main page [z]" accesskey="z">Main page</a></li>
+													<li id="n-recentchanges"><a href="/wiki/Special:RecentChanges" title="A list of recent changes in the wiki [r]" accesskey="r">Recent changes</a></li>
+													<li id="n-randompage"><a href="/wiki/Special:Random" title="Load a random page [x]" accesskey="x">Random page</a></li>
+													<li id="n-help"><a href="https://www.mediawiki.org/wiki/Special:MyLanguage/Help:Contents" title="The place to find out">Help</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-Links' aria-labelledby='p-Links-label'>
+			<h3 id='p-Links-label'>Links</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-Toolset-forums"><a href="http://forum.bioware.com/forum/30-dragon-age-toolset" rel="nofollow">Toolset forums</a></li>
+													<li id="n-Legacy-forums"><a href="http://social.bioware.com/forum/1/subindex/70" rel="nofollow">Legacy forums</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-tb' aria-labelledby='p-tb-label'>
+			<h3 id='p-tb-label'>Tools</h3>
+
+			<div class="body">
+									<ul>
+													<li id="t-whatlinkshere"><a href="/wiki/Special:WhatLinksHere/MediaWiki:Common.js" title="A list of all wiki pages that link here [j]" accesskey="j">What links here</a></li>
+													<li id="t-recentchangeslinked"><a href="/wiki/Special:RecentChangesLinked/MediaWiki:Common.js" title="Recent changes in pages linked from this page [k]" accesskey="k">Related changes</a></li>
+													<li id="t-specialpages"><a href="/wiki/Special:SpecialPages" title="A list of all special pages [q]" accesskey="q">Special pages</a></li>
+													<li id="t-print"><a href="MediaWiki%3ACommon.js.html" rel="alternate" title="Printable version of this page [p]" accesskey="p">Printable version</a></li>
+													<li id="t-permalink"><a href="MediaWiki%3ACommon.js.html" title="Permanent link to this revision of the page">Permanent link</a></li>
+													<li id="t-info"><a href="MediaWiki%3ACommon.js.html" title="More information about this page">Page information</a></li>
+											</ul>
+							</div>
+		</div>
+				</div>
+		</div>
+		<div id="footer" role="contentinfo">
+							<ul id="footer-info">
+											<li id="footer-info-lastmod"> This page was last modified on 2 February 2010, at 19:54.</li>
+									</ul>
+							<ul id="footer-places">
+											<li id="footer-places-privacy"><a href="/wiki/Dragon_Age_Toolset_Wiki:Privacy_policy" title="Dragon Age Toolset Wiki:Privacy policy">Privacy policy</a></li>
+											<li id="footer-places-about"><a href="/wiki/Dragon_Age_Toolset_Wiki:About" title="Dragon Age Toolset Wiki:About">About Dragon Age Toolset Wiki</a></li>
+											<li id="footer-places-disclaimer"><a href="/wiki/Dragon_Age_Toolset_Wiki:General_disclaimer" title="Dragon Age Toolset Wiki:General disclaimer">Disclaimers</a></li>
+									</ul>
+										<ul id="footer-icons" class="noprint">
+											<li id="footer-poweredbyico">
+															<a href="//www.mediawiki.org/"><img src="../assets/mw/resources/assets/poweredby_mediawiki_88x31.png" alt="Powered by MediaWiki" srcset="../assets/mw/resources/assets/poweredby_mediawiki_132x47.png 1.5x, ../assets/mw/resources/assets/poweredby_mediawiki_176x62.png 2x" width="88" height="31" /></a>
+													</li>
+									</ul>
+						<div style="clear:both"></div>
+		</div>
+		<script>if(window.jQuery)jQuery.ready();</script><script>if(window.mw){
+mw.loader.state({"site":"loading","user":"ready","user.groups":"ready"});
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.action.view.postEdit","mediawiki.user","mediawiki.hidpi","mediawiki.page.ready","mediawiki.searchSuggest"],null,true);
+}</script>
+<script>if(window.mw){
+document.write("\u003Cscript src=\"https://www.datoolset.net/mw/load.php?debug=false\u0026amp;lang=en\u0026amp;modules=site\u0026amp;only=scripts\u0026amp;skin=vector\u0026amp;*\"\u003E\u003C/script\u003E");
+}</script>
+<script>if(window.mw){
+mw.config.set({"wgBackendResponseTime":234});
+}</script>
+	</body>
+</html>

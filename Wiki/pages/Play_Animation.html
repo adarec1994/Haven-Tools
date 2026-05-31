@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" class="client-nojs">
+<head>
+<meta charset="UTF-8" />
+<title>Play animation - Dragon Age Toolset Wiki</title>
+<meta name="generator" content="MediaWiki 1.25.6" />
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="search" type="application/opensearchdescription+xml" href="/mw/opensearch_desc.php" title="Dragon Age Toolset Wiki (en)" />
+<link rel="EditURI" type="application/rsd+xml" href="https://www.datoolset.net/mw/api.php?action=rsd" />
+<link rel="alternate" hreflang="x-default" href="Play_animation.html" />
+<link rel="alternate" type="application/atom+xml" title="Dragon Age Toolset Wiki Atom feed" href="/mw/index.php?title=Special:RecentChanges&amp;feed=atom" />
+<meta name="ResourceLoaderDynamicStyles" content="" />
+<style>a:lang(ar),a:lang(kk-arab),a:lang(mzn),a:lang(ps),a:lang(ur){text-decoration:none}
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-css:7:270a0dcd3ae587df0f041aebfc42e61b */</style>
+<script>if(window.mw){
+mw.config.set({"wgCanonicalNamespace":"","wgCanonicalSpecialPageName":false,"wgNamespaceNumber":0,"wgPageName":"Play_animation","wgTitle":"Play animation","wgCurRevisionId":16953,"wgRevisionId":16953,"wgArticleId":92,"wgIsArticle":true,"wgIsRedirect":false,"wgAction":"view","wgUserName":null,"wgUserGroups":["*"],"wgCategories":["Cutscenes","Animations"],"wgBreakFrames":false,"wgPageContentLanguage":"en","wgPageContentModel":"wikitext","wgSeparatorTransformTable":["",""],"wgDigitTransformTable":["",""],"wgDefaultDateFormat":"dmy","wgMonthNames":["","January","February","March","April","May","June","July","August","September","October","November","December"],"wgMonthNamesShort":["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],"wgRelevantPageName":"Play_animation","wgRelevantArticleId":92,"wgIsProbablyEditable":false,"wgRestrictionEdit":[],"wgRestrictionMove":[]});
+}</script><script>if(window.mw){
+mw.loader.implement("user.options",function($,jQuery){mw.user.options.set({"variant":"en"});});mw.loader.implement("user.tokens",function($,jQuery){mw.user.tokens.set({"editToken":"+\\","patrolToken":"+\\","watchToken":"+\\"});});
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-js:7:a5c52c063dc436c1ca7c9f456936a5e9 */
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.page.startup","mediawiki.legacy.wikibits","mediawiki.legacy.ajax","skins.vector.js"]);
+}</script>
+<!--[if lt IE 7]><style type="text/css">body{behavior:url("/mw/skins/Vector/csshover.min.htc")}</style><![endif]-->
+<link rel="stylesheet" href="../assets/local/wiki-static.css" />
+</head>
+<body class="mediawiki ltr sitedir-ltr ns-0 ns-subject page-Play_animation skin-vector action-view">
+		<div id="mw-page-base" class="noprint"></div>
+		<div id="mw-head-base" class="noprint"></div>
+		<div id="content" class="mw-body" role="main">
+			<a id="top"></a>
+
+						<div class="mw-indicators">
+</div>
+			<h1 id="firstHeading" class="firstHeading" lang="en">Play animation</h1>
+						<div id="bodyContent" class="mw-body-content">
+									<div id="siteSub">From Dragon Age Toolset Wiki</div>
+								<div id="contentSub"></div>
+												<div id="jump-to-nav" class="mw-jump">
+					Jump to:					<a href="#mw-head">navigation</a>, 					<a href="#p-search">search</a>
+				</div>
+				<div id="mw-content-text" lang="en" dir="ltr" class="mw-content-ltr"><table style="float:right; background-color:#eeeeee; border:2px #999999 solid; padding:4px; margin:4px; width:220px;">
+
+<tr>
+<th align="center"> Cutscene topics
+</th></tr>
+<tr>
+<td>
+<ul><li><a href="Cutscene.html" title="Cutscene">Cutscene</a></li>
+<li><a href="Cutscene_tutorial.html" title="Cutscene tutorial">Cutscene tutorial</a></li>
+<li><a href="Cutscene_action.html" title="Cutscene action">Cutscene actions</a>
+<ul><li><a href="Headtracking.html" title="Headtracking">Headtracking</a></li>
+<li><strong class="selflink">Play animation</strong>
+<ul><li><a href="Animation_list.html" title="Animation list">Animation list</a></li></ul></li></ul></li>
+<li><a href="Cutscene_effect.html" title="Cutscene effect">Cutscene effects</a></li>
+<li><a href="VFX_list.html" title="VFX list">VFX list</a></li>
+<li><a href="Curve_editor.html" title="Curve editor">Curve editor</a></li>
+<li><a href="Cutscene_object.html" title="Cutscene object">Cutscene objects</a></li>
+<li><a href="Cutscene_capture.html" title="Cutscene capture">Cutscene capture</a></li></ul>
+</td></tr></table>
+<p>The Play Animation <a href="Cutscene_action.html" title="Cutscene action">cutscene action</a> is used to apply animations to actors. Cameras, Creatures, Placeables, VFX objects, and Proxies can have play animation actions applied to them,
+</p><p>Playing single animations on objects is very simple —  all that needs to be done is a Play Animation action is assigned, and an animation is chosen. There are also more complex options that allow the user to blend two or more animations together.
+</p><p>See <a href="Animation_list.html" title="Animation list">animation list</a> for a list of many of the useful animations that come with Dragon Age.
+</p><p>In the case of Creatures, the Creature's "Pose" property can be used to set a default looping animation that plays when no Play Animation actions have been set for it.
+</p>
+<div id="toc" class="toc"><div id="toctitle"><h2>Contents</h2></div>
+<ul>
+<li class="toclevel-1 tocsection-1"><a href="#Setting_the_animation"><span class="tocnumber">1</span> <span class="toctext">Setting the animation</span></a></li>
+<li class="toclevel-1 tocsection-2"><a href="#Looping_animations"><span class="tocnumber">2</span> <span class="toctext">Looping animations</span></a></li>
+<li class="toclevel-1 tocsection-3"><a href="#Animation_speed"><span class="tocnumber">3</span> <span class="toctext">Animation speed</span></a></li>
+<li class="toclevel-1 tocsection-4"><a href="#Using_animation_in_conjunction_with_actor_movement"><span class="tocnumber">4</span> <span class="toctext">Using animation in conjunction with actor movement</span></a>
+<ul>
+<li class="toclevel-2 tocsection-5"><a href="#GAD"><span class="tocnumber">4.1</span> <span class="toctext">GAD</span></a></li>
+<li class="toclevel-2 tocsection-6"><a href="#Movement_Link_Ratio"><span class="tocnumber">4.2</span> <span class="toctext">Movement Link Ratio</span></a></li>
+</ul>
+</li>
+<li class="toclevel-1 tocsection-7"><a href="#Start.2FEnd_Offsets"><span class="tocnumber">5</span> <span class="toctext">Start/End Offsets</span></a></li>
+<li class="toclevel-1 tocsection-8"><a href="#Blending_Animations"><span class="tocnumber">6</span> <span class="toctext">Blending Animations</span></a>
+<ul>
+<li class="toclevel-2 tocsection-9"><a href="#Transitions"><span class="tocnumber">6.1</span> <span class="toctext">Transitions</span></a></li>
+<li class="toclevel-2 tocsection-10"><a href="#Weight_Curves"><span class="tocnumber">6.2</span> <span class="toctext">Weight Curves</span></a></li>
+</ul>
+</li>
+</ul>
+</div>
+
+<h2><span class="mw-headline" id="Setting_the_animation">Setting the animation</span></h2>
+<p>To select which animation to play first click on the Play Animation action to select it. Then look to the Animation field that is displayed in the Object Inspector. Clicking the ellipsis (<img alt="Ellipsis.png" src="../assets/mw/images/1/1c/Ellipsis.png" width="17" height="18" />) button there will open up the Select Animation window. This will list all animations that the object has available. Select the animation and hit OK.
+</p>
+<h2><span class="mw-headline" id="Looping_animations">Looping animations</span></h2>
+<p>By default the animation will play through once. To loop the animation the Looping End Time value must be changed. There are two methods for doing this.
+</p><p>The first way is to type in a new Looping End Time in the Object Inspector.
+</p><p>The second way is to drag the looping icon (<a href="File%3AIconLoopAnimation.png.html" class="image"><img alt="IconLoopAnimation.png" src="../assets/mw/images/5/5f/IconLoopAnimation.png" width="8" height="8" /></a>) on the Play Animation action. Click and drag the Looping Icon to the right. The animation will then loop until it hits the end of the action.
+</p>
+<h2><span class="mw-headline" id="Animation_speed">Animation speed</span></h2>
+<p>To change the speed of the animation, use the Speed field in the Object Inspector. A value of 1.0 is the normal speed of the animation. Smaller values mean the animation plays slower, and larger values will play the animation faster. A value of 0.5 will play it at half-speed; a value of 2.0 will play twice as fast as normal.
+</p><p>Some animations can be sped up or slowed down if you drag the end of the animation out longer (slows down) or pull the end of the animation in shorter (speeds up).
+</p><p>An alternative to GAD animation displacement (see below) is to use the animation's Movement Link Ratio property to make the animation play as the actor moves. The particular optimum value of the animation's Movement Link Ratio will vary from animation to animation and may require some trial and error to find, but once found that value will remain the same any time you use that animation.
+</p>
+<h2><span class="mw-headline" id="Using_animation_in_conjunction_with_actor_movement">Using animation in conjunction with actor movement</span></h2>
+<p>There are two basic methods of matching an actor's animation to an actor's movement through space (eg, as in a walking animation where you want the actor to move forward while his legs take steps).
+</p>
+<h3><span class="mw-headline" id="GAD">GAD</span></h3>
+<p>GAD is a displacement that is automatically added to the actor's current position as the animation plays. Each animation has its own GAD information built into it, custom-designed to make the actor move in a manner appropriate to its actions. If we enable it the actor will be moved forward as the animation plays.
+</p><p>Not all animations have GAD associated with them. For example, having an actor wave his hand wouldn't displace him, so there would be no GAD assocaited with that animation. We only need to worry about GAD in cases where the animation should accompany movement.
+</p><p>To enable GAD select the animation action and set "Play Gad" to true in the object inspector. If no key frames have been defined for the actor the cutscene editor will pop up a warning at this point suggesting that we add position and orientation keys before we add GAD:
+</p><p><a href="File%3ACutscene_gad_warning.png.html" class="image"><img alt="Cutscene gad warning.png" src="../assets/mw/images/5/5a/Cutscene_gad_warning.png" width="1013" height="170" /></a>
+</p><p>It's important to set at least one set of keys for an object using GAD. The animation's GAD may seem to work correctly without it at first, but unexpected and unpredictable errors could occur later that send the actor careening off into the distance.
+</p><p>The other GAD properties are set to the most appropriate defaults automatically when you select an animation.
+</p><p>Note that if you use orientation keys to change an actor's orientation while the actor is playing an animation with GAD, the actor will change direction in an appropriate manner. For example, an actor that is walking north due to a GAD animation and then has its orientation changed 90 degrees to the right will continue walking in an easterly direction after the turn.
+</p>
+<h3><span class="mw-headline" id="Movement_Link_Ratio">Movement Link Ratio</span></h3>
+<p>The Movement Link Ratio property will cause the animation to play at a certain rate depending on the speed with which the actor is moving. For example, if you assign a movement link ratio to a walking animation, then when you subsequently cause the actor to move through the scene the animation will automatically play at a matching speed. The particular ratio that gives the best result varies from animation to animation, you may need to find the correct ratio by trial and error.
+</p><p>The intention of Movement Link Ratio is to allow more complex behaviors than those pre-encoded into GAD, allowing the actor's trajectory to be fine-tuned using position keys.
+</p><p>You may also wish to use these animations in conjunction with the "Orientation Follows Curve" action to cause the actor to always face in the direction that it's moving, and the "Snap to Walkmesh" action to cause the actor to keep its feet solidly on the ground.
+</p>
+<h2><span class="mw-headline" id="Start.2FEnd_Offsets">Start/End Offsets</span></h2>
+<p>The Start Offset value is used to start the animation somewhere other than its normal start point. For example if an animation is 4.0 seconds long and a Start Offset of 1.5 is used, when the animation action is reached the first 1.5 seconds of the animation is skipped, and only the last 2.5 seconds of it is played.
+</p><p>The End Offset value works much the same way, but is used to skip the end portion of an animation.
+</p><p>If offsets are used with a looping animation, the offset will be used for every loop. For example if a start offset of 0.5 is used, and the animation loops numerous times, every time the animation restarts is will skip the first 0.5 seconds of the animation.
+</p><p>Both offsets default to zero.
+</p>
+<h2><span class="mw-headline" id="Blending_Animations">Blending Animations</span></h2>
+<p>The basic setup of blended animations is pretty simple. The animations to be blended just need to be playing on the same object at the same time. To do this the animations are added to two different tracks (or more tracks, if more are being blended).
+</p>
+<h3><span class="mw-headline" id="Transitions">Transitions</span></h3>
+<p>A transition can be added between two blended animations. The transition affects how much each animation is blended.
+</p><p>To add a transition, select both of the animations, right-click one of them and select Add Transition. The transition is represented by a triangle between the two animations.
+</p><p><a href="File%3ACutscene_add_animation_transition.png.html" class="image"><img alt="Cutscene add animation transition.png" src="../assets/mw/images/b/b0/Cutscene_add_animation_transition.png" width="329" height="295" /></a>
+</p><p><a href="File%3ACutscene_animation_transition.png.html" class="image"><img alt="Cutscene animation transition.png" src="../assets/mw/images/c/ce/Cutscene_animation_transition.png" width="289" height="78" /></a>
+</p><p>Selecting the transition (clicking the triangle) will display the Transition Type field in the Object Inspector. The different transition types will blend the two animations differently. The types are: Linear, Ease In, Ease Out, Ease In/Out, and Instant.
+</p>
+<h3><span class="mw-headline" id="Weight_Curves">Weight Curves</span></h3>
+<p>For more complex control of the blending the weight curves can be edited. Selecting a animation action will display its weight curve in the timeline. By default animations are weighted at 100% throughout. 
+</p><p>To add a weight key, ensure the animation is selected and then press "k" or select "key selection" from the right-click menu. See <a href="Curve_editor.html" title="Curve editor">curve editor</a> for more detail on the use of the curve editor.
+</p><p><a href="File%3ACutscene_animation_weight_curve.png.html" class="image"><img alt="Cutscene animation weight curve.png" src="../assets/mw/images/b/b6/Cutscene_animation_weight_curve.png" width="1018" height="522" /></a>
+</p>
+<table cellspacing="0px" cellpadding="2px" style="background-color:transparent;">
+<tr>
+<td width="13px" style="background-color:#d4d0c8;text-align:center; border: 1px solid #d4d0c8;">&#8863;</td>
+<td width="187px" style="background-color:#d4d0c8; text-align:left; color:#aca899; border: 1px solid #d4d0c8; font-weight:bold;">General</td>
+</tr>
+<tr>
+<td style="background-color:#d4d0c8; border:1px solid #d4d0c8;"> </td>
+<td style="background-color:#ffffff; border:1px solid #d4d0c8; vertical-align:top">End Time</td>
+<td> The time that the action ends </td>
+</tr>
+<tr>
+<td style="background-color:#d4d0c8; border:1px solid #d4d0c8;"> </td>
+<td style="background-color:#ffffff; border:1px solid #d4d0c8; vertical-align:top">Infinite</td>
+<td> If true this action extends on forever. It never ends. </td>
+</tr>
+<tr>
+<td style="background-color:#d4d0c8; border:1px solid #d4d0c8;"> </td>
+<td style="background-color:#ffffff; border:1px solid #d4d0c8; vertical-align:top">Looping End Time</td>
+<td> The time that the action stops looping. </td>
+</tr>
+<tr>
+<td style="background-color:#d4d0c8; border:1px solid #d4d0c8;"> </td>
+<td style="background-color:#ffffff; border:1px solid #d4d0c8; vertical-align:top">Start Time</td>
+<td> The time that the action begins </td>
+</tr>
+
+<tr>
+<td width="13px" style="background-color:#d4d0c8;text-align:center; border: 1px solid #d4d0c8;">&#8863;</td>
+<td width="187px" style="background-color:#d4d0c8; text-align:left; color:#aca899; border: 1px solid #d4d0c8; font-weight:bold;">Animation</td>
+</tr>
+<tr>
+<td style="background-color:#d4d0c8; border:1px solid #d4d0c8;"> </td>
+<td style="background-color:#ffffff; border:1px solid #d4d0c8; vertical-align:top">Animation</td>
+<td> The animation resource to play </td>
+</tr>
+<tr>
+<td style="background-color:#d4d0c8; border:1px solid #d4d0c8;"> </td>
+<td style="background-color:#ffffff; border:1px solid #d4d0c8; vertical-align:top">End Offset</td>
+<td> The offset from the end of the animation at which to stop playing. </td>
+</tr>
+<tr>
+<td style="background-color:#d4d0c8; border:1px solid #d4d0c8;"> </td>
+<td style="background-color:#ffffff; border:1px solid #d4d0c8; vertical-align:top">Movement Link Ratio</td>
+<td> If zero the animation plays normally. If non-zero this field represents a ratio of the number of animation cycles to the distance moved. It can be used to automatically tie the speed of an animation to how far the actor moves. </td>
+</tr>
+<tr>
+<td style="background-color:#d4d0c8; border:1px solid #d4d0c8;"> </td>
+<td style="background-color:#ffffff; border:1px solid #d4d0c8; vertical-align:top">Speed</td>
+<td> The speed at which to play the animation. </td>
+</tr>
+<tr>
+<td style="background-color:#d4d0c8; border:1px solid #d4d0c8;"> </td>
+<td style="background-color:#ffffff; border:1px solid #d4d0c8; vertical-align:top">Start Offset</td>
+<td> The offset into the beginning of the animation at which to start playing. </td>
+</tr>
+
+<tr>
+<td width="13px" style="background-color:#d4d0c8;text-align:center; border: 1px solid #d4d0c8;">&#8863;</td>
+<td width="187px" style="background-color:#d4d0c8; text-align:left; color:#aca899; border: 1px solid #d4d0c8; font-weight:bold;">GAD</td>
+</tr>
+<tr>
+<td style="background-color:#d4d0c8; border:1px solid #d4d0c8;"> </td>
+<td style="background-color:#ffffff; border:1px solid #d4d0c8; vertical-align:top">Play Gad</td>
+<td> If true, gad information associated with this animation will be played. The animation will actually move the actor around. </td>
+</tr>
+<tr>
+<td style="background-color:#d4d0c8; border:1px solid #d4d0c8;"> </td>
+<td style="background-color:#ffffff; border:1px solid #d4d0c8; vertical-align:top">Extend Gad Beyond Action</td>
+<td> If true, the movement caused by the gad will persist after this action has ended. If false, the actor will snap back to its actual keyed location. </td>
+</tr>
+<tr>
+<td style="background-color:#d4d0c8; border:1px solid #d4d0c8;"> </td>
+<td style="background-color:#ffffff; border:1px solid #d4d0c8; vertical-align:top">Apply Rotation To Future Gads</td>
+<td> If true, the rotation of the gad is applied to future gads. This field should always be true, and mainly exists to support legacy assets. </td>
+</tr>
+<tr>
+<td style="background-color:#d4d0c8; border:1px solid #d4d0c8;"> </td>
+<td style="background-color:#ffffff; border:1px solid #d4d0c8; vertical-align:top">Blend Gad</td>
+<td> If true and another gad plays at the same time as this one, the two gads' information will be blended together. Otherwise the two gads are added together. </td>
+</tr>
+<tr>
+<td style="background-color:#d4d0c8; border:1px solid #d4d0c8;"> </td>
+<td style="background-color:#ffffff; border:1px solid #d4d0c8; vertical-align:top">Entrance Gad</td>
+<td> For normal gad behavior this flag should be false. However, for special entrance GADs it should be set to true. This field is automatically populated with the expected value when you set the animation. </td>
+</tr>
+
+<tr>
+<td width="13px" style="background-color:#d4d0c8;text-align:center; border: 1px solid #d4d0c8;">&#8863;</td>
+<td width="187px" style="background-color:#d4d0c8; text-align:left; color:#aca899; border: 1px solid #d4d0c8; font-weight:bold;">Keyable</td>
+</tr>
+<tr>
+<td style="background-color:#d4d0c8; border:1px solid #d4d0c8;"> </td>
+<td style="background-color:#ffffff; border:1px solid #d4d0c8; vertical-align:top">Weight</td>
+<td> The blend weight of the animation from 0 to 100 </td>
+</tr>
+</table>
+
+<!-- 
+NewPP limit report
+CPU time usage: 0.052 seconds
+Real time usage: 0.092 seconds
+Preprocessor visited node count: 207/1000000
+Preprocessor generated node count: 787/1000000
+Post‐expand include size: 6219/2097152 bytes
+Template argument size: 1870/2097152 bytes
+Highest expansion depth: 4/40
+Expensive parser function count: 0/100
+-->
+
+<!-- 
+Transclusion expansion time report (%,ms,calls,template)
+100.00%   23.766      1 - -total
+ 36.88%    8.765      1 - Template:Infobox_cutscenes
+ 21.35%    5.075      1 - Template:Infobox_template
+ 17.11%    4.067     15 - Template:Inspector_row
+ 14.17%    3.367      4 - Template:Inspector_section
+ 13.40%    3.185      1 - Template:Inspector_end
+ 13.26%    3.151      1 - Template:Inspector_start
+-->
+
+<!-- Saved in parser cache with key db714099484-datoolwiki_:pcache:idhash:92-0!*!0!!en!5!* and timestamp 20260531033355 and revision id 16953
+ -->
+</div>									<div class="printfooter">
+						Retrieved from "<a dir="ltr" href="Play_animation.html">https://www.datoolset.net/mw/index.php?title=Play_animation&amp;oldid=16953</a>"					</div>
+													<div id='catlinks' class='catlinks'><div id="mw-normal-catlinks" class="mw-normal-catlinks"><a href="/wiki/Special:Categories" title="Special:Categories">Categories</a>: <ul><li><a href="Category%3ACutscenes.html" title="Category:Cutscenes">Cutscenes</a></li><li><a href="Category%3AAnimations.html" title="Category:Animations">Animations</a></li></ul></div></div>												<div class="visualClear"></div>
+							</div>
+		</div>
+		<div id="mw-navigation">
+			<h2>Navigation menu</h2>
+
+			<div id="mw-head">
+									<div id="p-personal" role="navigation" class="" aria-labelledby="p-personal-label">
+						<h3 id="p-personal-label">Personal tools</h3>
+						<ul>
+							<li id="pt-login"><a href="/mw/index.php?title=Special:UserLogin&amp;returnto=Play+animation" title="You are encouraged to log in; however, it is not mandatory [o]" accesskey="o">Log in</a></li>						</ul>
+					</div>
+									<div id="left-navigation">
+										<div id="p-namespaces" role="navigation" class="vectorTabs" aria-labelledby="p-namespaces-label">
+						<h3 id="p-namespaces-label">Namespaces</h3>
+						<ul>
+															<li  id="ca-nstab-main" class="selected"><span><a href="Play_animation.html"  title="View the content page [c]" accesskey="c">Page</a></span></li>
+															<li  id="ca-talk"><span><a href="Talk%3APlay_animation.html"  title="Discussion about the content page [t]" accesskey="t">Discussion</a></span></li>
+													</ul>
+					</div>
+										<div id="p-variants" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-variants-label">
+												<h3 id="p-variants-label"><span>Variants</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+									</div>
+				<div id="right-navigation">
+										<div id="p-views" role="navigation" class="vectorTabs" aria-labelledby="p-views-label">
+						<h3 id="p-views-label">Views</h3>
+						<ul>
+															<li id="ca-view" class="selected"><span><a href="Play_animation.html" >Read</a></span></li>
+															<li id="ca-viewsource"><span><a href="Play_animation.html"  title="This page is protected.&#10;You can view its source [e]" accesskey="e">View source</a></span></li>
+															<li id="ca-history" class="collapsible"><span><a href="Play_animation.html"  title="Past revisions of this page [h]" accesskey="h">View history</a></span></li>
+													</ul>
+					</div>
+										<div id="p-cactions" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-cactions-label">
+						<h3 id="p-cactions-label"><span>More</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+										<div id="p-search" role="search">
+						<h3>
+							<label for="searchInput">Search</label>
+						</h3>
+
+						<form action="/mw/index.php" id="searchform">
+														<div id="simpleSearch">
+															<input type="search" name="search" placeholder="Search" title="Search Dragon Age Toolset Wiki [f]" accesskey="f" id="searchInput" /><input type="hidden" value="Special:Search" name="title" /><input type="submit" name="fulltext" value="Search" title="Search the pages for this text" id="mw-searchButton" class="searchButton mw-fallbackSearchButton" /><input type="submit" name="go" value="Go" title="Go to a page with this exact name if exists" id="searchButton" class="searchButton" />								</div>
+						</form>
+					</div>
+									</div>
+			</div>
+			<div id="mw-panel">
+				<div id="p-logo" role="banner"><a class="mw-wiki-logo" href="Main_Page.html"  title="Visit the main page"></a></div>
+						<div class="portal" role="navigation" id='p-navigation' aria-labelledby='p-navigation-label'>
+			<h3 id='p-navigation-label'>Navigation</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-mainpage-description"><a href="Main_Page.html" title="Visit the main page [z]" accesskey="z">Main page</a></li>
+													<li id="n-recentchanges"><a href="/wiki/Special:RecentChanges" title="A list of recent changes in the wiki [r]" accesskey="r">Recent changes</a></li>
+													<li id="n-randompage"><a href="/wiki/Special:Random" title="Load a random page [x]" accesskey="x">Random page</a></li>
+													<li id="n-help"><a href="https://www.mediawiki.org/wiki/Special:MyLanguage/Help:Contents" title="The place to find out">Help</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-Links' aria-labelledby='p-Links-label'>
+			<h3 id='p-Links-label'>Links</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-Toolset-forums"><a href="http://forum.bioware.com/forum/30-dragon-age-toolset" rel="nofollow">Toolset forums</a></li>
+													<li id="n-Legacy-forums"><a href="http://social.bioware.com/forum/1/subindex/70" rel="nofollow">Legacy forums</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-tb' aria-labelledby='p-tb-label'>
+			<h3 id='p-tb-label'>Tools</h3>
+
+			<div class="body">
+									<ul>
+													<li id="t-whatlinkshere"><a href="/wiki/Special:WhatLinksHere/Play_animation" title="A list of all wiki pages that link here [j]" accesskey="j">What links here</a></li>
+													<li id="t-recentchangeslinked"><a href="/wiki/Special:RecentChangesLinked/Play_animation" title="Recent changes in pages linked from this page [k]" accesskey="k">Related changes</a></li>
+													<li id="t-specialpages"><a href="/wiki/Special:SpecialPages" title="A list of all special pages [q]" accesskey="q">Special pages</a></li>
+													<li id="t-print"><a href="Play_animation.html" rel="alternate" title="Printable version of this page [p]" accesskey="p">Printable version</a></li>
+													<li id="t-permalink"><a href="Play_animation.html" title="Permanent link to this revision of the page">Permanent link</a></li>
+													<li id="t-info"><a href="Play_animation.html" title="More information about this page">Page information</a></li>
+											</ul>
+							</div>
+		</div>
+				</div>
+		</div>
+		<div id="footer" role="contentinfo">
+							<ul id="footer-info">
+											<li id="footer-info-lastmod"> This page was last modified on 10 August 2011, at 22:49.</li>
+									</ul>
+							<ul id="footer-places">
+											<li id="footer-places-privacy"><a href="/wiki/Dragon_Age_Toolset_Wiki:Privacy_policy" title="Dragon Age Toolset Wiki:Privacy policy">Privacy policy</a></li>
+											<li id="footer-places-about"><a href="/wiki/Dragon_Age_Toolset_Wiki:About" title="Dragon Age Toolset Wiki:About">About Dragon Age Toolset Wiki</a></li>
+											<li id="footer-places-disclaimer"><a href="/wiki/Dragon_Age_Toolset_Wiki:General_disclaimer" title="Dragon Age Toolset Wiki:General disclaimer">Disclaimers</a></li>
+									</ul>
+										<ul id="footer-icons" class="noprint">
+											<li id="footer-poweredbyico">
+															<a href="//www.mediawiki.org/"><img src="../assets/mw/resources/assets/poweredby_mediawiki_88x31.png" alt="Powered by MediaWiki" srcset="../assets/mw/resources/assets/poweredby_mediawiki_132x47.png 1.5x, ../assets/mw/resources/assets/poweredby_mediawiki_176x62.png 2x" width="88" height="31" /></a>
+													</li>
+									</ul>
+						<div style="clear:both"></div>
+		</div>
+		<script>if(window.jQuery)jQuery.ready();</script><script>if(window.mw){
+mw.loader.state({"site":"loading","user":"ready","user.groups":"ready"});
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.toc","mediawiki.action.view.postEdit","mediawiki.user","mediawiki.hidpi","mediawiki.page.ready","mediawiki.searchSuggest"],null,true);
+}</script>
+<script>if(window.mw){
+document.write("\u003Cscript src=\"https://www.datoolset.net/mw/load.php?debug=false\u0026amp;lang=en\u0026amp;modules=site\u0026amp;only=scripts\u0026amp;skin=vector\u0026amp;*\"\u003E\u003C/script\u003E");
+}</script>
+<script>if(window.mw){
+mw.config.set({"wgBackendResponseTime":213});
+}</script>
+	</body>
+</html>

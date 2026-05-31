@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" class="client-nojs">
+<head>
+<meta charset="UTF-8" />
+<title>ERF - Dragon Age Toolset Wiki</title>
+<meta name="generator" content="MediaWiki 1.25.6" />
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="search" type="application/opensearchdescription+xml" href="/mw/opensearch_desc.php" title="Dragon Age Toolset Wiki (en)" />
+<link rel="EditURI" type="application/rsd+xml" href="https://www.datoolset.net/mw/api.php?action=rsd" />
+<link rel="alternate" hreflang="x-default" href="Erf.html" />
+<link rel="alternate" type="application/atom+xml" title="Dragon Age Toolset Wiki Atom feed" href="/mw/index.php?title=Special:RecentChanges&amp;feed=atom" />
+<link rel="canonical" href="Erf.html" />
+<meta name="ResourceLoaderDynamicStyles" content="" />
+<style>a:lang(ar),a:lang(kk-arab),a:lang(mzn),a:lang(ps),a:lang(ur){text-decoration:none}
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-css:7:270a0dcd3ae587df0f041aebfc42e61b */</style>
+<script>if(window.mw){
+mw.config.set({"wgCanonicalNamespace":"","wgCanonicalSpecialPageName":false,"wgNamespaceNumber":0,"wgPageName":"ERF","wgTitle":"ERF","wgCurRevisionId":15968,"wgRevisionId":15968,"wgArticleId":2227,"wgIsArticle":true,"wgIsRedirect":false,"wgAction":"view","wgUserName":null,"wgUserGroups":["*"],"wgCategories":["File types"],"wgBreakFrames":false,"wgPageContentLanguage":"en","wgPageContentModel":"wikitext","wgSeparatorTransformTable":["",""],"wgDigitTransformTable":["",""],"wgDefaultDateFormat":"dmy","wgMonthNames":["","January","February","March","April","May","June","July","August","September","October","November","December"],"wgMonthNamesShort":["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],"wgRelevantPageName":"ERF","wgRelevantArticleId":2227,"wgIsProbablyEditable":false,"wgRestrictionEdit":[],"wgRestrictionMove":[],"wgRedirectedFrom":"Erf","wgInternalRedirectTargetUrl":"/wiki/ERF"});
+}</script><script>if(window.mw){
+mw.loader.implement("user.options",function($,jQuery){mw.user.options.set({"variant":"en"});});mw.loader.implement("user.tokens",function($,jQuery){mw.user.tokens.set({"editToken":"+\\","patrolToken":"+\\","watchToken":"+\\"});});
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-js:7:a5c52c063dc436c1ca7c9f456936a5e9 */
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.action.view.redirect","mediawiki.page.startup","mediawiki.legacy.wikibits","mediawiki.legacy.ajax","skins.vector.js"]);
+}</script>
+<!--[if lt IE 7]><style type="text/css">body{behavior:url("/mw/skins/Vector/csshover.min.htc")}</style><![endif]-->
+<link rel="stylesheet" href="../assets/local/wiki-static.css" />
+</head>
+<body class="mediawiki ltr sitedir-ltr ns-0 ns-subject page-ERF skin-vector action-view">
+		<div id="mw-page-base" class="noprint"></div>
+		<div id="mw-head-base" class="noprint"></div>
+		<div id="content" class="mw-body" role="main">
+			<a id="top"></a>
+
+						<div class="mw-indicators">
+</div>
+			<h1 id="firstHeading" class="firstHeading" lang="en">ERF</h1>
+						<div id="bodyContent" class="mw-body-content">
+									<div id="siteSub">From Dragon Age Toolset Wiki</div>
+								<div id="contentSub"><span class="mw-redirectedfrom">(Redirected from <a href="Erf.html" title="Erf">Erf</a>)</span></div>
+												<div id="jump-to-nav" class="mw-jump">
+					Jump to:					<a href="#mw-head">navigation</a>, 					<a href="#p-search">search</a>
+				</div>
+				<div id="mw-content-text" lang="en" dir="ltr" class="mw-content-ltr"><div class="thumb tright"><div class="thumbinner" style="width:302px;"><a href="File%3AERF_editor.png.html" class="image"><img alt="" src="../assets/mw/images/3/3d/ERF_editor.png" width="300" height="218" class="thumbimage" srcset="../assets/mw/images/3/3d/ERF_editor.png 1.5x, ../assets/mw/images/3/3d/ERF_editor.png 2x" /></a>  <div class="thumbcaption"><div class="magnify"><a href="File%3AERF_editor.png.html" class="internal" title="Enlarge"></a></div>ERF editor</div></div></div>
+<p><b>ERF</b> ("Encapsulated Resource File") files are container files for game resources. 
+</p>
+<div id="toc" class="toc"><div id="toctitle"><h2>Contents</h2></div>
+<ul>
+<li class="toclevel-1 tocsection-1"><a href="#List_of_common_ERF_Files"><span class="tocnumber">1</span> <span class="toctext">List of common ERF Files</span></a></li>
+<li class="toclevel-1 tocsection-2"><a href="#Extracting_Resources"><span class="tocnumber">2</span> <span class="toctext">Extracting Resources</span></a></li>
+<li class="toclevel-1 tocsection-3"><a href="#Packing_Resources"><span class="tocnumber">3</span> <span class="toctext">Packing Resources</span></a></li>
+<li class="toclevel-1 tocsection-4"><a href="#Overriding_Resources"><span class="tocnumber">4</span> <span class="toctext">Overriding Resources</span></a></li>
+<li class="toclevel-1 tocsection-5"><a href="#File_Format"><span class="tocnumber">5</span> <span class="toctext">File Format</span></a>
+<ul>
+<li class="toclevel-2 tocsection-6"><a href="#Version_2.0"><span class="tocnumber">5.1</span> <span class="toctext">Version 2.0</span></a>
+<ul>
+<li class="toclevel-3 tocsection-7"><a href="#Header"><span class="tocnumber">5.1.1</span> <span class="toctext">Header</span></a></li>
+<li class="toclevel-3 tocsection-8"><a href="#Table_of_Contents"><span class="tocnumber">5.1.2</span> <span class="toctext">Table of Contents</span></a>
+<ul>
+<li class="toclevel-4 tocsection-9"><a href="#Entry"><span class="tocnumber">5.1.2.1</span> <span class="toctext">Entry</span></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toclevel-2 tocsection-10"><a href="#Version_2.2"><span class="tocnumber">5.2</span> <span class="toctext">Version 2.2</span></a>
+<ul>
+<li class="toclevel-3 tocsection-11"><a href="#Header_2"><span class="tocnumber">5.2.1</span> <span class="toctext">Header</span></a></li>
+<li class="toclevel-3 tocsection-12"><a href="#Table_of_Contents_2"><span class="tocnumber">5.2.2</span> <span class="toctext">Table of Contents</span></a>
+<ul>
+<li class="toclevel-4 tocsection-13"><a href="#Entry_2"><span class="tocnumber">5.2.2.1</span> <span class="toctext">Entry</span></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toclevel-2 tocsection-14"><a href="#Version_3.0"><span class="tocnumber">5.3</span> <span class="toctext">Version 3.0</span></a>
+<ul>
+<li class="toclevel-3 tocsection-15"><a href="#Header_3"><span class="tocnumber">5.3.1</span> <span class="toctext">Header</span></a></li>
+<li class="toclevel-3 tocsection-16"><a href="#Table_of_Contents_3"><span class="tocnumber">5.3.2</span> <span class="toctext">Table of Contents</span></a>
+<ul>
+<li class="toclevel-4 tocsection-17"><a href="#Entry_3"><span class="tocnumber">5.3.2.1</span> <span class="toctext">Entry</span></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toclevel-2 tocsection-18"><a href="#File_Data"><span class="tocnumber">5.4</span> <span class="toctext">File Data</span></a>
+<ul>
+<li class="toclevel-3 tocsection-19"><a href="#Encryption"><span class="tocnumber">5.4.1</span> <span class="toctext">Encryption</span></a>
+<ul>
+<li class="toclevel-4 tocsection-20"><a href="#Blowfish"><span class="tocnumber">5.4.1.1</span> <span class="toctext">Blowfish</span></a></li>
+<li class="toclevel-4 tocsection-21"><a href="#XOR"><span class="tocnumber">5.4.1.2</span> <span class="toctext">XOR</span></a></li>
+</ul>
+</li>
+<li class="toclevel-3 tocsection-22"><a href="#Compression"><span class="tocnumber">5.4.2</span> <span class="toctext">Compression</span></a>
+<ul>
+<li class="toclevel-4 tocsection-23"><a href="#Bioware_Zlib"><span class="tocnumber">5.4.2.1</span> <span class="toctext">Bioware Zlib</span></a></li>
+<li class="toclevel-4 tocsection-24"><a href="#Headerless_Zlib"><span class="tocnumber">5.4.2.2</span> <span class="toctext">Headerless Zlib</span></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+
+<h1><span class="mw-headline" id="List_of_common_ERF_Files">List of common ERF Files</span></h1>
+<p>ERF Files for Dragon Age Game Resources are stored in the (Dragon Age Install Dir)\packages\core\ Folder and Subdirectories. ERF's for Addons or Mods are usually in their respective Addon or Mod Folder.
+</p><p>Common ERF's of certain interests are,
+</p>
+<ul><li>Game Resources
+<ul><li>packages\core\data\2da.erf</li>
+<li>packages\core\data\anims.erf</li>
+<li>packages\core\data\consolescripts.erf</li>
+<li>packages\core\data\designerareas.erf</li>
+<li>packages\core\data\designercreatures.erf</li>
+<li>packages\core\data\designercutscenes.erf</li>
+<li>packages\core\data\designerdialogs.erf</li>
+<li>packages\core\data\designeritems.erf</li>
+<li>packages\core\data\designerplaceables.erf</li>
+<li>packages\core\data\designerplots.erf</li>
+<li>packages\core\data\designertriggers.erf</li>
+<li>packages\core\data\face.erf</li>
+<li>packages\core\data\gui.erf</li>
+<li>packages\core\data\guiexport.erf</li>
+<li>packages\core\data\iterationtests.erf</li>
+<li>packages\core\data\lightprobedata.erf</li>
+<li>packages\core\data\materialobjects.erf</li>
+<li>packages\core\data\materials.erf</li>
+<li>packages\core\data\misc.erf</li>
+<li>packages\core\data\modelhierarchies.erf</li>
+<li>packages\core\data\modelmeshdata.erf</li>
+<li>packages\core\data\pathfindingpatches.erf</li>
+<li>packages\core\data\postprocesseffects.erf</li>
+<li>packages\core\data\resmetrics.erf</li>
+<li>packages\core\data\scripts.erf</li>
+<li>packages\core\data\shaders.erf</li>
+<li>packages\core\data\states.erf</li>
+<li>packages\core\data\subqueuefiles.erf</li>
+<li>packages\core\data\textures.erf</li>
+<li>packages\core\data\tints.erf</li>
+<li>packages\core\textures\high\texturepack.erf</li>
+<li>packages\core\textures\medium\texturepack.erf</li></ul></li></ul>
+<ul><li>Patch Resources
+<ul><li>packages\core\patch\... --- Contains Resources added by Game Patches</li></ul></li></ul>
+<ul><li>Toolset specific Resources
+<ul><li>packages\core\data_tools\... ---Contains Resources for the Toolset</li></ul></li></ul>
+<h1><span class="mw-headline" id="Extracting_Resources">Extracting Resources</span></h1>
+<p>The Toolset is capable of extracting ERF Files Contents.
+</p><p>If you are modding Resources, the first step would be extracting Resources. You may start of by extracting all Resources of certain interest to you, or just a single File. To Maintain a simple and clean resource place, it is best to use a similar Folder Names to extract in.
+</p><p>One may create a Folder on the HD named for example "gameresources". Then added with subfolders that suit the Purpose, for example "Materials" in which one extracts only Materials. Preferably the Folderscheme is similar to that of the ERF's, to make browsing simple and easy to remember. 
+</p>
+<h1><span class="mw-headline" id="Packing_Resources">Packing Resources</span></h1>
+<p>The <a href="Builder_to_player.html" title="Builder to player">builder to player</a> process packages up resources into ERF files for you, storing the generated ERFs inside <a href="Dazip.html" title="DAZIP">DAZIPs</a>.
+</p><p>Additionally, you can edit any ERF by opening it directly in the Toolset, and add or remove files by drag&amp; dropping them into the Toolset with the ERF open manually. In cases the above process fails or whenever.
+</p>
+<h1><span class="mw-headline" id="Overriding_Resources">Overriding Resources</span></h1>
+<p>ERF's are named by their general purpose. But not all material files need to necessarily be put into Materials.ERF as an example. Patches do add every Patched Resource into one single ERF for example. The Original Game Resource ERF Files however are best left alone, as it has a high risk of breaking the game.
+</p><p>Files do not need to be present in ERF Files at all. When Overriding Gameresources as when modding, this is a pretty easy method. Overriding Files are of equal name to their original Gameresource counterpart, and are to be placed into packages\core\override\. The Game will then choose this File over the original.
+</p>
+<h1><span class="mw-headline" id="File_Format">File Format</span></h1>
+<h2><span class="mw-headline" id="Version_2.0">Version 2.0</span></h2>
+<p>All values are <a rel="nofollow" class="external text" href="http://en.wikipedia.org/wiki/Endianness#Little-endian">little-endian</a>.
+</p>
+<h3><span class="mw-headline" id="Header">Header</span></h3>
+<table border="1" cellspacing="2" cellpadding="2" width="100%">
+
+<tr>
+<th width="20%"> Name
+</th>
+<th width="20%"> Type / Size
+</th>
+<th width="60%"> Info
+</th></tr>
+<tr>
+<td> magic
+</td>
+<td> utf16[8]
+</td>
+<td> "ERF V2.0", a total of 16 bytes.
+</td></tr>
+<tr>
+<td> fileCount
+</td>
+<td> uint32
+</td>
+<td> Number of files encapsulated in this ERF.
+</td></tr>
+<tr>
+<td> year
+</td>
+<td> uint32
+</td>
+<td> Year since 1900.
+</td></tr>
+<tr>
+<td> day
+</td>
+<td> uint32
+</td>
+<td> Day since January 1st.
+</td></tr>
+<tr>
+<td> unknown
+</td>
+<td> uint32
+</td>
+<td> Always 0xFFFFFFFF?
+</td></tr></table>
+<h3><span class="mw-headline" id="Table_of_Contents">Table of Contents</span></h3>
+<table border="1" cellspacing="2" cellpadding="2" width="100%">
+
+<tr>
+<th width="20%"> Name
+</th>
+<th width="20%"> Type / Size
+</th>
+<th width="60%"> Info
+</th></tr>
+<tr>
+<td> toc
+</td>
+<td> <a href="#Entry">entry</a>[fileCount]
+</td>
+<td>
+</td></tr></table>
+<h4><span class="mw-headline" id="Entry">Entry</span></h4>
+<table border="1" cellspacing="2" cellpadding="2" width="100%">
+
+<tr>
+<th width="20%"> Name
+</th>
+<th width="20%"> Type / Size
+</th>
+<th width="60%"> Info
+</th></tr>
+<tr>
+<td> name
+</td>
+<td> utf16[32]
+</td>
+<td>
+</td></tr>
+<tr>
+<td> offset
+</td>
+<td> uint32
+</td>
+<td> Offset to entry file data, from start of ERF file.
+</td></tr>
+<tr>
+<td> size
+</td>
+<td> uint32
+</td>
+<td> Length of file data.
+</td></tr></table>
+<h2><span class="mw-headline" id="Version_2.2">Version 2.2</span></h2>
+<p>This version introduces support for encrypted and compressed file data.
+</p><p>All values are <a rel="nofollow" class="external text" href="http://en.wikipedia.org/wiki/Endianness#Little-endian">little-endian</a>.
+</p>
+<h3><span class="mw-headline" id="Header_2">Header</span></h3>
+<table border="1" cellspacing="2" cellpadding="2" width="100%">
+
+<tr>
+<th width="20%"> Name
+</th>
+<th width="20%"> Type / Size
+</th>
+<th width="60%"> Info
+</th></tr>
+<tr>
+<td> magic
+</td>
+<td> utf16[8]
+</td>
+<td> "ERF V2.2", a total of 16 bytes.
+</td></tr>
+<tr>
+<td> fileCount
+</td>
+<td> uint32
+</td>
+<td> Number of files encapsulated in this ERF.
+</td></tr>
+<tr>
+<td> year
+</td>
+<td> uint32
+</td>
+<td> Year since 1900.
+</td></tr>
+<tr>
+<td> day
+</td>
+<td> uint32
+</td>
+<td> Day since January 1st.
+</td></tr>
+<tr>
+<td> unknown
+</td>
+<td> uint32
+</td>
+<td> Always 0xFFFFFFFF?
+</td></tr>
+<tr>
+<td> flags
+</td>
+<td> uint32 <a rel="nofollow" class="external text" href="http://en.wikipedia.org/wiki/Bit_field">Bit flags</a>
+</td>
+<td>
+<p>Flags:
+</p>
+<ul><li> 0x00000001 (bit 0)&#160;: Unknown</li>
+<li> 0x000000F0 (bits 4 - 7)&#160;: <a href="#Encryption">Encryption</a> scheme</li>
+<li> 0xE0000000 (bits 29 - 31)&#160;: <a href="#Compression">Compression</a> scheme</li></ul>
+<p><a href="#Encryption">Encryption</a> scheme:
+<i>(flags &gt;&gt; 4) &amp; 0xF</i>
+</p>
+<ul><li> 0&#160;: None</li>
+<li> 1&#160;: XOR</li>
+<li> 2&#160;: Blowfish</li>
+<li> 3&#160;: Blowfish <i>(Dragon Age 2 only)</i></li>
+<li> Any other value is invalid.</li></ul>
+<p><a href="#Compression">Compression</a> scheme:
+<i>(flags &gt;&gt; 29) &amp; 0x7</i>
+</p>
+<ul><li> 0&#160;: None</li>
+<li> 1&#160;: Bioware Zlib <i>(Dragon Age 2 only)</i></li>
+<li> 2&#160;: Unknown <i>(Dragon Age 2 only)</i></li>
+<li> 3&#160;: Unknown <i>(Dragon Age 2 only)</i></li>
+<li> 7&#160;: Headerless Zlib <i>(Dragon Age 2 only)</i></li>
+<li> Any other value is invalid.</li></ul>
+</td></tr>
+<tr>
+<td> moduleId
+</td>
+<td> uint32
+</td>
+<td> This id is used to look up the password for the ERF when encryption is present, for example, DLC.
+</td></tr>
+<tr>
+<td> passwordDigest
+</td>
+<td> byte[16]
+</td>
+<td> <a rel="nofollow" class="external text" href="http://en.wikipedia.org/wiki/MD5">MD5</a> sum of password (as a string).
+</td></tr></table>
+<h3><span class="mw-headline" id="Table_of_Contents_2">Table of Contents</span></h3>
+<table border="1" cellspacing="2" cellpadding="2" width="100%">
+
+<tr>
+<th width="20%"> Name
+</th>
+<th width="20%"> Type / Size
+</th>
+<th width="60%"> Info
+</th></tr>
+<tr>
+<td> toc
+</td>
+<td> <a href="#Entry_2">entry</a>[fileCount]
+</td>
+<td>
+</td></tr></table>
+<h4><span class="mw-headline" id="Entry_2">Entry</span></h4>
+<table border="1" cellspacing="2" cellpadding="2" width="100%">
+
+<tr>
+<th width="20%"> Name
+</th>
+<th width="20%"> Type / Size
+</th>
+<th width="60%"> Info
+</th></tr>
+<tr>
+<td> name
+</td>
+<td> utf16[32]
+</td>
+<td>
+</td></tr>
+<tr>
+<td> offset
+</td>
+<td> uint32
+</td>
+<td> Offset to entry file data, from start of ERF file.
+</td></tr>
+<tr>
+<td> packedSize
+</td>
+<td> uint32
+</td>
+<td> Packed length of file data.
+</td></tr>
+<tr>
+<td> unpackedSize
+</td>
+<td> uint32
+</td>
+<td> Unpacked length of file data.
+</td></tr></table>
+<h2><span class="mw-headline" id="Version_3.0">Version 3.0</span></h2>
+<p>Found in Dragon Age 2.
+</p><p>This version introduces hashed file names (and extensions) for faster file lookup.
+</p><p>All values are <a rel="nofollow" class="external text" href="http://en.wikipedia.org/wiki/Endianness#Little-endian">little-endian</a>.
+</p>
+<h3><span class="mw-headline" id="Header_3">Header</span></h3>
+<table border="1" cellspacing="2" cellpadding="2" width="100%">
+
+<tr>
+<th width="20%"> Name
+</th>
+<th width="20%"> Type / Size
+</th>
+<th width="60%"> Info
+</th></tr>
+<tr>
+<td> magic
+</td>
+<td> utf16[8]
+</td>
+<td> "ERF V3.0", a total of 16 bytes.
+</td></tr>
+<tr>
+<td> stringTableSize
+</td>
+<td> uint32
+</td>
+<td> Size of the file name string table.
+</td></tr>
+<tr>
+<td> fileCount
+</td>
+<td> uint32
+</td>
+<td> Number of files encapsulated in this ERF.
+</td></tr>
+<tr>
+<td> flags
+</td>
+<td> uint32 <a rel="nofollow" class="external text" href="http://en.wikipedia.org/wiki/Bit_field">Bit flags</a>
+</td>
+<td>
+<p>Flags:
+</p>
+<ul><li> 0x00000001 (bit 0)&#160;: Unknown</li>
+<li> 0x000000F0 (bits 4 - 7)&#160;: <a href="#Encryption">Encryption</a> scheme</li>
+<li> 0xE0000000 (bits 29 - 31)&#160;: <a href="#Compression">Compression</a> scheme</li></ul>
+<p><a href="#Encryption">Encryption</a> scheme:
+<i>(flags &gt;&gt; 4) &amp; 0xF</i>
+</p>
+<ul><li> 0&#160;: None</li>
+<li> 1&#160;: XOR</li>
+<li> 2&#160;: Blowfish</li>
+<li> 3&#160;: Blowfish <i>(Dragon Age 2 only)</i></li>
+<li> Any other value is invalid.</li></ul>
+<p><a href="#Compression">Compression</a> scheme:
+<i>(flags &gt;&gt; 29) &amp; 0x7</i>
+</p>
+<ul><li> 0&#160;: None</li>
+<li> 1&#160;: Bioware Zlib <i>(Dragon Age 2 only)</i></li>
+<li> 2&#160;: Unknown <i>(Dragon Age 2 only)</i></li>
+<li> 3&#160;: Unknown <i>(Dragon Age 2 only)</i></li>
+<li> 7&#160;: Headerless Zlib <i>(Dragon Age 2 only)</i></li>
+<li> Any other value is invalid.</li></ul>
+</td></tr>
+<tr>
+<td> moduleId
+</td>
+<td> uint32
+</td>
+<td> This id is used to look up the password for the ERF when encryption is present, for example, DLC.
+</td></tr>
+<tr>
+<td> passwordDigest
+</td>
+<td> byte[16]
+</td>
+<td> <a rel="nofollow" class="external text" href="http://en.wikipedia.org/wiki/MD5">MD5</a> sum of password (as a string).
+</td></tr>
+<tr>
+<td> stringTable
+</td>
+<td> char[stringTableSize]
+</td>
+<td> Zero-padded strings referenced by nameOffset in <a href="#Entry_3">TOC entries</a>. Strings are stored as ASCII. Note that not all TOC entries have to reference an entry in the string table.
+</td></tr></table>
+<h3><span class="mw-headline" id="Table_of_Contents_3">Table of Contents</span></h3>
+<table border="1" cellspacing="2" cellpadding="2" width="100%">
+
+<tr>
+<th width="20%"> Name
+</th>
+<th width="20%"> Type / Size
+</th>
+<th width="60%"> Info
+</th></tr>
+<tr>
+<td> toc
+</td>
+<td> <a href="#Entry_3">entry</a>[fileCount]
+</td>
+<td>
+</td></tr></table>
+<h4><span class="mw-headline" id="Entry_3">Entry</span></h4>
+<table border="1" cellspacing="2" cellpadding="2" width="100%">
+
+<tr>
+<th width="20%"> Name
+</th>
+<th width="20%"> Type / Size
+</th>
+<th width="60%"> Info
+</th></tr>
+<tr>
+<td> nameOffset
+</td>
+<td> int32
+</td>
+<td> Offset in stringTable of the file name for this entry. -1 if none.
+</td></tr>
+<tr>
+<td> nameHash
+</td>
+<td> uint64
+</td>
+<td> <a rel="nofollow" class="external text" href="http://en.wikipedia.org/wiki/Fowler–Noll–Vo_hash_function">FNV64 hash</a> of lowercased file name, including path and extension.
+</td></tr>
+<tr>
+<td> typeHash
+</td>
+<td> uint32
+</td>
+<td> <a rel="nofollow" class="external text" href="http://en.wikipedia.org/wiki/Fowler–Noll–Vo_hash_function">FNV32 hash</a> of lowercased file extension.
+</td></tr>
+<tr>
+<td> offset
+</td>
+<td> uint32
+</td>
+<td> Offset to entry file data, from start of ERF file.
+</td></tr>
+<tr>
+<td> packedSize
+</td>
+<td> uint32
+</td>
+<td> Packed length of file data.
+</td></tr>
+<tr>
+<td> unpackedSize
+</td>
+<td> uint32
+</td>
+<td> Unpacked length of file data.
+</td></tr></table>
+<h2><span class="mw-headline" id="File_Data">File Data</span></h2>
+<h3><span class="mw-headline" id="Encryption">Encryption</span></h3>
+<p>When the appropriate flags are set in the header, a digest of the password will be present. File data will be encrypted depending on what scheme is specified.
+</p><p>You may not extract such third party ERF files unless you have permission to do so. This is provided only for purposes when you want to encrypt your own ERF files.
+</p>
+<h4><span class="mw-headline" id="Blowfish">Blowfish</span></h4>
+<p>File data will be encrypted using <a rel="nofollow" class="external text" href="http://en.wikipedia.org/wiki/Blowfish_(cipher)">Blowfish</a> in ECB.
+</p><p>These instructions only apply to encryption scheme #2.
+</p><p><b>To encrypt:</b>
+</p>
+<ul><li> Generate random number (represented as string, base 10), such as "12345678".</li>
+<li> Generate digest of the string (without null-terminating character) using MD5 and store it in the header.</li>
+<li> Convert those digits to 64-bit integer (0x0000000000BC614E).</li>
+<li> Store it in byte array in little-endian encoding (0x4E, 0x61, 0xBC, 0x00, 0x00, 0x00, 0x00, 0x00).</li>
+<li> Use that array as key to initialize Blowfish.</li>
+<li> Pad your content to multiple of 8 with zeroes.</li>
+<li> Encrypt the data.</li></ul>
+<p><b>To decrypt:</b>
+</p>
+<ul><li> You already know your password ("12345678").</li>
+<li> Generate its MD5 digest and compare it with the digest in the header.</li>
+<li> If they don't match file is either damaged or you forgot your password. If you forgot, brute-force attack should take no more than 1 minute. You <b>may not</b> perform brute-force attack on ERF files that are not yours unless you have permission from its owner to do so.</li>
+<li> Convert those digits to 64-bit integer (0x0000000000BC614E).</li>
+<li> Store it in byte array in little-endian encoding (0x4E, 0x61, 0xBC, 0x00, 0x00, 0x00, 0x00, 0x00).</li>
+<li> Use that array as key to initialize Blowfish.</li>
+<li> Decrypt the data.</li></ul>
+<h4><span class="mw-headline" id="XOR">XOR</span></h4>
+<p>Much of the process for protecting data with <a rel="nofollow" class="external text" href="http://en.wikipedia.org/wiki/Exclusive_or">XOR</a> is the same as for Blowfish.
+</p><p><b>To encrypt:</b>
+</p>
+<ul><li> Generate random number (represented as string, base 10), such as "12345678".</li>
+<li> Generate digest of the string (without null-terminating character) using MD5 and store it in the header.</li>
+<li> Convert those digits to 72-bit integer (0x000000000000BC614E).</li>
+<li> Store it in byte array in little-endian encoding (0x4E, 0x61, 0xBC, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00).</li>
+<li> XOR each block of 9 bytes with the array.</li>
+<li> If the final block is not 9 bytes, XOR the block with the first N bytes of the array, where N is the length of the block.</li></ul>
+<p><b>To decrypt:</b>
+</p>
+<ul><li> You already know your password ("12345678").</li>
+<li> Generate its MD5 digest and compare it with the digest in the header.</li>
+<li> If they don't match file is either damaged or you forgot your password. If you forgot, brute-force attack should take no more than 1 minute. You <b>may not</b> perform brute-force attack on ERF files that are not yours unless you have permission from its owner to do so.</li>
+<li> Convert those digits to 72-bit integer (0x000000000000BC614E).</li>
+<li> Store it in byte array in little-endian encoding (0x4E, 0x61, 0xBC, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00).</li>
+<li> XOR each block of 9 bytes with the array.</li>
+<li> If the final block is not 9 bytes, XOR the block with the first N bytes of the array, where N is the length of the block.</li></ul>
+<h3><span class="mw-headline" id="Compression">Compression</span></h3>
+<p><i><b>Compression is not supported by Dragon Age: Origins.</b></i>
+</p><p>Compression is supported by Dragon Age 2.
+</p><p>Note that if encryption is enabled:
+</p>
+<ul><li> When decompressing, file data must first be decrypted.</li>
+<li> When compressing, file data must be encrypted after compression.</li></ul>
+<h4><span class="mw-headline" id="Bioware_Zlib">Bioware Zlib</span></h4>
+<p>File data is compressed with <a rel="nofollow" class="external text" href="http://en.wikipedia.org/wiki/Zlib">zlib</a>, with a custom 1-byte (commonly observed as 0xF9) header (vs the normal 2-byte zlib header).
+</p><p>The upper 4 bits of the header byte represent the window bits. The lower 4 bits are currently unknown.
+</p>
+<h4><span class="mw-headline" id="Headerless_Zlib">Headerless Zlib</span></h4>
+<p>File data is compressed with <a rel="nofollow" class="external text" href="http://en.wikipedia.org/wiki/Zlib">zlib</a>, the normal 2-byte zlib header is omitted.
+</p>
+<!-- 
+NewPP limit report
+CPU time usage: 0.060 seconds
+Real time usage: 0.085 seconds
+Preprocessor visited node count: 97/1000000
+Preprocessor generated node count: 104/1000000
+Post‐expand include size: 0/2097152 bytes
+Template argument size: 0/2097152 bytes
+Highest expansion depth: 2/40
+Expensive parser function count: 0/100
+-->
+
+<!-- 
+Transclusion expansion time report (%,ms,calls,template)
+100.00%    0.000      1 - -total
+-->
+
+<!-- Saved in parser cache with key db714099484-datoolwiki_:pcache:idhash:2227-0!*!0!!en!5!* and timestamp 20260531132037 and revision id 15968
+ -->
+</div>									<div class="printfooter">
+						Retrieved from "<a dir="ltr" href="Erf.html">https://www.datoolset.net/mw/index.php?title=ERF&amp;oldid=15968</a>"					</div>
+													<div id='catlinks' class='catlinks'><div id="mw-normal-catlinks" class="mw-normal-catlinks"><a href="/wiki/Special:Categories" title="Special:Categories">Category</a>: <ul><li><a href="Category%3AFile_types.html" title="Category:File types">File types</a></li></ul></div></div>												<div class="visualClear"></div>
+							</div>
+		</div>
+		<div id="mw-navigation">
+			<h2>Navigation menu</h2>
+
+			<div id="mw-head">
+									<div id="p-personal" role="navigation" class="" aria-labelledby="p-personal-label">
+						<h3 id="p-personal-label">Personal tools</h3>
+						<ul>
+							<li id="pt-login"><a href="/mw/index.php?title=Special:UserLogin&amp;returnto=ERF" title="You are encouraged to log in; however, it is not mandatory [o]" accesskey="o">Log in</a></li>						</ul>
+					</div>
+									<div id="left-navigation">
+										<div id="p-namespaces" role="navigation" class="vectorTabs" aria-labelledby="p-namespaces-label">
+						<h3 id="p-namespaces-label">Namespaces</h3>
+						<ul>
+															<li  id="ca-nstab-main" class="selected"><span><a href="Erf.html"  title="View the content page [c]" accesskey="c">Page</a></span></li>
+															<li  id="ca-talk"><span><a href="Talk%3AERF.html"  title="Discussion about the content page [t]" accesskey="t">Discussion</a></span></li>
+													</ul>
+					</div>
+										<div id="p-variants" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-variants-label">
+												<h3 id="p-variants-label"><span>Variants</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+									</div>
+				<div id="right-navigation">
+										<div id="p-views" role="navigation" class="vectorTabs" aria-labelledby="p-views-label">
+						<h3 id="p-views-label">Views</h3>
+						<ul>
+															<li id="ca-view" class="selected"><span><a href="Erf.html" >Read</a></span></li>
+															<li id="ca-viewsource"><span><a href="Erf.html"  title="This page is protected.&#10;You can view its source [e]" accesskey="e">View source</a></span></li>
+															<li id="ca-history" class="collapsible"><span><a href="Erf.html"  title="Past revisions of this page [h]" accesskey="h">View history</a></span></li>
+													</ul>
+					</div>
+										<div id="p-cactions" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-cactions-label">
+						<h3 id="p-cactions-label"><span>More</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+										<div id="p-search" role="search">
+						<h3>
+							<label for="searchInput">Search</label>
+						</h3>
+
+						<form action="/mw/index.php" id="searchform">
+														<div id="simpleSearch">
+															<input type="search" name="search" placeholder="Search" title="Search Dragon Age Toolset Wiki [f]" accesskey="f" id="searchInput" /><input type="hidden" value="Special:Search" name="title" /><input type="submit" name="fulltext" value="Search" title="Search the pages for this text" id="mw-searchButton" class="searchButton mw-fallbackSearchButton" /><input type="submit" name="go" value="Go" title="Go to a page with this exact name if exists" id="searchButton" class="searchButton" />								</div>
+						</form>
+					</div>
+									</div>
+			</div>
+			<div id="mw-panel">
+				<div id="p-logo" role="banner"><a class="mw-wiki-logo" href="Main_Page.html"  title="Visit the main page"></a></div>
+						<div class="portal" role="navigation" id='p-navigation' aria-labelledby='p-navigation-label'>
+			<h3 id='p-navigation-label'>Navigation</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-mainpage-description"><a href="Main_Page.html" title="Visit the main page [z]" accesskey="z">Main page</a></li>
+													<li id="n-recentchanges"><a href="/wiki/Special:RecentChanges" title="A list of recent changes in the wiki [r]" accesskey="r">Recent changes</a></li>
+													<li id="n-randompage"><a href="/wiki/Special:Random" title="Load a random page [x]" accesskey="x">Random page</a></li>
+													<li id="n-help"><a href="https://www.mediawiki.org/wiki/Special:MyLanguage/Help:Contents" title="The place to find out">Help</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-Links' aria-labelledby='p-Links-label'>
+			<h3 id='p-Links-label'>Links</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-Toolset-forums"><a href="http://forum.bioware.com/forum/30-dragon-age-toolset" rel="nofollow">Toolset forums</a></li>
+													<li id="n-Legacy-forums"><a href="http://social.bioware.com/forum/1/subindex/70" rel="nofollow">Legacy forums</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-tb' aria-labelledby='p-tb-label'>
+			<h3 id='p-tb-label'>Tools</h3>
+
+			<div class="body">
+									<ul>
+													<li id="t-whatlinkshere"><a href="/wiki/Special:WhatLinksHere/ERF" title="A list of all wiki pages that link here [j]" accesskey="j">What links here</a></li>
+													<li id="t-recentchangeslinked"><a href="/wiki/Special:RecentChangesLinked/ERF" title="Recent changes in pages linked from this page [k]" accesskey="k">Related changes</a></li>
+													<li id="t-specialpages"><a href="/wiki/Special:SpecialPages" title="A list of all special pages [q]" accesskey="q">Special pages</a></li>
+													<li id="t-print"><a href="Erf.html" rel="alternate" title="Printable version of this page [p]" accesskey="p">Printable version</a></li>
+													<li id="t-permalink"><a href="Erf.html" title="Permanent link to this revision of the page">Permanent link</a></li>
+													<li id="t-info"><a href="Erf.html" title="More information about this page">Page information</a></li>
+											</ul>
+							</div>
+		</div>
+				</div>
+		</div>
+		<div id="footer" role="contentinfo">
+							<ul id="footer-info">
+											<li id="footer-info-lastmod"> This page was last modified on 12 March 2011, at 22:43.</li>
+									</ul>
+							<ul id="footer-places">
+											<li id="footer-places-privacy"><a href="/wiki/Dragon_Age_Toolset_Wiki:Privacy_policy" title="Dragon Age Toolset Wiki:Privacy policy">Privacy policy</a></li>
+											<li id="footer-places-about"><a href="/wiki/Dragon_Age_Toolset_Wiki:About" title="Dragon Age Toolset Wiki:About">About Dragon Age Toolset Wiki</a></li>
+											<li id="footer-places-disclaimer"><a href="/wiki/Dragon_Age_Toolset_Wiki:General_disclaimer" title="Dragon Age Toolset Wiki:General disclaimer">Disclaimers</a></li>
+									</ul>
+										<ul id="footer-icons" class="noprint">
+											<li id="footer-poweredbyico">
+															<a href="//www.mediawiki.org/"><img src="../assets/mw/resources/assets/poweredby_mediawiki_88x31.png" alt="Powered by MediaWiki" srcset="../assets/mw/resources/assets/poweredby_mediawiki_132x47.png 1.5x, ../assets/mw/resources/assets/poweredby_mediawiki_176x62.png 2x" width="88" height="31" /></a>
+													</li>
+									</ul>
+						<div style="clear:both"></div>
+		</div>
+		<script>if(window.jQuery)jQuery.ready();</script><script>if(window.mw){
+mw.loader.state({"site":"loading","user":"ready","user.groups":"ready"});
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.toc","mediawiki.action.view.postEdit","mediawiki.user","mediawiki.hidpi","mediawiki.page.ready","mediawiki.searchSuggest"],null,true);
+}</script>
+<script>if(window.mw){
+document.write("\u003Cscript src=\"https://www.datoolset.net/mw/load.php?debug=false\u0026amp;lang=en\u0026amp;modules=site\u0026amp;only=scripts\u0026amp;skin=vector\u0026amp;*\"\u003E\u003C/script\u003E");
+}</script>
+<script>if(window.mw){
+mw.config.set({"wgBackendResponseTime":228});
+}</script>
+	</body>
+</html>

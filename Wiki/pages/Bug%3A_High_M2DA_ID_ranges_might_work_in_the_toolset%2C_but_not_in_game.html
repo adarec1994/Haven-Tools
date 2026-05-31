@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" class="client-nojs">
+<head>
+<meta charset="UTF-8" />
+<title>Bug: High M2DA ID ranges might work in the toolset, but not in game - Dragon Age Toolset Wiki</title>
+<meta name="generator" content="MediaWiki 1.25.6" />
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="search" type="application/opensearchdescription+xml" href="/mw/opensearch_desc.php" title="Dragon Age Toolset Wiki (en)" />
+<link rel="EditURI" type="application/rsd+xml" href="https://www.datoolset.net/mw/api.php?action=rsd" />
+<link rel="alternate" hreflang="x-default" href="Bug%3A_High_M2DA_ID_ranges_might_work_in_the_toolset%2C_but_not_in_game.html" />
+<link rel="alternate" type="application/atom+xml" title="Dragon Age Toolset Wiki Atom feed" href="/mw/index.php?title=Special:RecentChanges&amp;feed=atom" />
+<meta name="ResourceLoaderDynamicStyles" content="" />
+<style>a:lang(ar),a:lang(kk-arab),a:lang(mzn),a:lang(ps),a:lang(ur){text-decoration:none}
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-css:7:270a0dcd3ae587df0f041aebfc42e61b */</style>
+<script>if(window.mw){
+mw.config.set({"wgCanonicalNamespace":"","wgCanonicalSpecialPageName":false,"wgNamespaceNumber":0,"wgPageName":"Bug:_High_M2DA_ID_ranges_might_work_in_the_toolset,_but_not_in_game","wgTitle":"Bug: High M2DA ID ranges might work in the toolset, but not in game","wgCurRevisionId":13156,"wgRevisionId":13156,"wgArticleId":4061,"wgIsArticle":true,"wgIsRedirect":false,"wgAction":"view","wgUserName":null,"wgUserGroups":["*"],"wgCategories":["Toolset bugs","2DAs"],"wgBreakFrames":false,"wgPageContentLanguage":"en","wgPageContentModel":"wikitext","wgSeparatorTransformTable":["",""],"wgDigitTransformTable":["",""],"wgDefaultDateFormat":"dmy","wgMonthNames":["","January","February","March","April","May","June","July","August","September","October","November","December"],"wgMonthNamesShort":["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],"wgRelevantPageName":"Bug:_High_M2DA_ID_ranges_might_work_in_the_toolset,_but_not_in_game","wgRelevantArticleId":4061,"wgIsProbablyEditable":false,"wgRestrictionEdit":[],"wgRestrictionMove":[]});
+}</script><script>if(window.mw){
+mw.loader.implement("user.options",function($,jQuery){mw.user.options.set({"variant":"en"});});mw.loader.implement("user.tokens",function($,jQuery){mw.user.tokens.set({"editToken":"+\\","patrolToken":"+\\","watchToken":"+\\"});});
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-js:7:a5c52c063dc436c1ca7c9f456936a5e9 */
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.page.startup","mediawiki.legacy.wikibits","mediawiki.legacy.ajax","skins.vector.js"]);
+}</script>
+<!--[if lt IE 7]><style type="text/css">body{behavior:url("/mw/skins/Vector/csshover.min.htc")}</style><![endif]-->
+<link rel="stylesheet" href="../assets/local/wiki-static.css" />
+</head>
+<body class="mediawiki ltr sitedir-ltr ns-0 ns-subject page-Bug_High_M2DA_ID_ranges_might_work_in_the_toolset_but_not_in_game skin-vector action-view">
+		<div id="mw-page-base" class="noprint"></div>
+		<div id="mw-head-base" class="noprint"></div>
+		<div id="content" class="mw-body" role="main">
+			<a id="top"></a>
+
+						<div class="mw-indicators">
+</div>
+			<h1 id="firstHeading" class="firstHeading" lang="en">Bug: High M2DA ID ranges might work in the toolset, but not in game</h1>
+						<div id="bodyContent" class="mw-body-content">
+									<div id="siteSub">From Dragon Age Toolset Wiki</div>
+								<div id="contentSub"></div>
+												<div id="jump-to-nav" class="mw-jump">
+					Jump to:					<a href="#mw-head">navigation</a>, 					<a href="#p-search">search</a>
+				</div>
+				<div id="mw-content-text" lang="en" dir="ltr" class="mw-content-ltr"><ul><li><b>Version found:</b> 1.0.1008.0</li>
+<li><b>Status:</b> Open</li></ul>
+<p><br />
+</p>
+<table style="background-color:#F9F9F9; border: 1px dashed #2F6FAB;">
+
+<tr>
+<td> <div class="floatleft"><a href="File%3ABioWare_BWIcon_rgb.png.html" class="image"><img alt="BioWare BWIcon rgb.png" src="../assets/mw/images/2/2e/BioWare_BWIcon_rgb.png" width="32" height="32" srcset="../assets/mw/images/2/2e/BioWare_BWIcon_rgb.png 1.5x, ../assets/mw/images/2/2e/BioWare_BWIcon_rgb.png 2x" /></a></div>
+</td>
+<td> This issue has been recorded in BioWare's internal tracking system.<br />
+<p>Reference number: 213544  -<a href="User%3ABryanDerksen.html" title="User:BryanDerksen">BryanDerksen</a>
+</p>
+</td></tr></table>
+<div id="toc" class="toc"><div id="toctitle"><h2>Contents</h2></div>
+<ul>
+<li class="toclevel-1 tocsection-1"><a href="#Description"><span class="tocnumber">1</span> <span class="toctext">Description</span></a>
+<ul>
+<li class="toclevel-2 tocsection-2"><a href="#Synopsis"><span class="tocnumber">1.1</span> <span class="toctext">Synopsis</span></a></li>
+<li class="toclevel-2 tocsection-3"><a href="#Details"><span class="tocnumber">1.2</span> <span class="toctext">Details</span></a></li>
+<li class="toclevel-2 tocsection-4"><a href="#Example:"><span class="tocnumber">1.3</span> <span class="toctext">Example:</span></a></li>
+<li class="toclevel-2 tocsection-5"><a href="#Table_Listing"><span class="tocnumber">1.4</span> <span class="toctext">Table Listing</span></a></li>
+<li class="toclevel-2 tocsection-6"><a href="#Forum_Posts"><span class="tocnumber">1.5</span> <span class="toctext">Forum Posts</span></a></li>
+</ul>
+</li>
+<li class="toclevel-1 tocsection-7"><a href="#Reproduction"><span class="tocnumber">2</span> <span class="toctext">Reproduction</span></a></li>
+<li class="toclevel-1 tocsection-8"><a href="#Workarounds"><span class="tocnumber">3</span> <span class="toctext">Workarounds</span></a></li>
+<li class="toclevel-1 tocsection-9"><a href="#UPDATE"><span class="tocnumber">4</span> <span class="toctext">UPDATE</span></a></li>
+<li class="toclevel-1 tocsection-10"><a href="#See_also"><span class="tocnumber">5</span> <span class="toctext">See also</span></a></li>
+</ul>
+</div>
+
+<h2><span class="mw-headline" id="Description">Description</span></h2>
+<h3><span class="mw-headline" id="Synopsis">Synopsis</span></h3>
+<p>High values for the ID field in various M2DA tables will appear to work correctly while testing in the toolset, but will cause various issues in the game, like missing meshes. The limit for when an ID is "low enough" to work changes depending on the M2DA being used.
+</p>
+<h3><span class="mw-headline" id="Details">Details</span></h3>
+<p>Dragon Age allows to extend the built-in data tables through the M2DA process. A new .gda file is created with the same name as the original, plus an extra suffix, and it contains the data for the additional table rows. To facilitate merging this data with the native 2DA files, a unique ID must be chosen for the additional rows. If two M2DAs with identical IDs get merged, they will overwrite each other.
+</p><p>The valid range for this ID is at least 1 - 2 billion (2^31), with 0 - 1000000 reserved for Bioware's own use. Therefore, picking a random high number should ensure that no two addons ever have ID collisions.
+</p><p>The bug now appears to be, that depending on the tables that get M2DA'd, only very low ID values work correctly in game. They appear to be working as expected in the toolset, but as soon as the mod is tested, issues surface. After further trying, it seems that the affected tables only allow IDs in the 0-255 range.
+</p>
+<h3><span class="mw-headline" id="Example:">Example:</span></h3>
+<p>Extending materialrules.gda, materialtypes.gda and ts_material.gda seems to work fine in the toolset and in game as well, values at least as high as 80000000 work perfectly well. Extending armor_massive_variation.gda does NOT work as expected. picking 1500 as ID, for example, will work in the toolset, but as soon as an armor using this variation is equipped in game, the body mesh will disappear, leaving only floating hands, feet and a head.
+</p><p>Using a file named "armor_massive_variation_ar.gda" with the contents:
+</p>
+<table class="wikitable" border="1">
+
+<tr>
+<th>  ID
+</th>
+<th>  Label
+</th>
+<th>  MODELTYPE
+</th>
+<th>  MODELSUBTYPE
+</th>
+<th>  MODELVARIATION
+</th>
+<th>  ICONNAME
+</th>
+<th>  DefaultMaterial
+</th>
+<th>  SoundMatType
+</th></tr>
+<tr>
+<td>  141
+</td>
+<td>  Knight Champion Armor
+</td>
+<td>  rob
+</td>
+<td>  arc
+</td>
+<td>  h
+</td>
+<td>
+</td>
+<td>  2
+</td>
+<td>  13
+</td></tr></table>
+<p>will work, while:
+</p>
+<table class="wikitable" border="1">
+
+<tr>
+<th>  ID
+</th>
+<th>  Label
+</th>
+<th>  MODELTYPE
+</th>
+<th>  MODELSUBTYPE
+</th>
+<th>  MODELVARIATION
+</th>
+<th>  ICONNAME
+</th>
+<th>  DefaultMaterial
+</th>
+<th>  SoundMatType
+</th></tr>
+<tr>
+<td>  1412
+</td>
+<td>  Knight Champion Armor
+</td>
+<td>  rob
+</td>
+<td>  arc
+</td>
+<td>  h
+</td>
+<td>
+</td>
+<td>  2
+</td>
+<td>  13
+</td></tr></table>
+<p>will not work and produce the behaviour described above.
+</p>
+<h3><span class="mw-headline" id="Table_Listing">Table Listing</span></h3>
+<p>This is a list of all .gda files that can be M2DA'd and whether they show this problem, and at which ranges:
+</p>
+<table class="wikitable" border="1">
+
+<tr>
+<th>  Name
+</th>
+<th>  Appears to work? (y/n)
+</th>
+<th>  Highest tested working ID
+</th></tr>
+<tr>
+<td>  areadata.gda
+</td>
+<td>  Y
+</td>
+<td>  80141200
+</td></tr>
+<tr>
+<td>  armor_massive_variation.gda
+</td>
+<td>  N
+</td>
+<td>  141
+</td></tr>
+<tr>
+<td>  item_sets.gda
+</td>
+<td>  Y
+</td>
+<td>  80141200
+</td></tr>
+<tr>
+<td>  Heraldry.gda
+</td>
+<td>  Y
+</td>
+<td>  203
+</td></tr>
+<tr>
+<td>  materialrules.gda
+</td>
+<td>  Y
+</td>
+<td>  80141200
+</td></tr>
+<tr>
+<td>  materialtypes.gda
+</td>
+<td>  Y
+</td>
+<td>  80141200
+</td></tr>
+<tr>
+<td>  screenshake.gda
+</td>
+<td>  Y
+</td>
+<td>  80141200
+</td></tr>
+<tr>
+<td>  ts_material.gda
+</td>
+<td>  Y
+</td>
+<td>  80141200
+</td></tr></table>
+<h3><span class="mw-headline" id="Forum_Posts">Forum Posts</span></h3>
+<p>Some of the forum posts about this behaviour:
+</p><p><a rel="nofollow" class="external text" href="http://social.bioware.com/forum/1/topic/72/index/508080/1">SOLVED Assigning VFX to a creature</a>
+</p><p><a rel="nofollow" class="external text" href="http://social.bioware.com/forum/1/topic/74/index/498205/1">Did toolset update break m2da process? (was placeables showing up in area editor but not game)</a>
+</p>
+<h2><span class="mw-headline" id="Reproduction">Reproduction</span></h2>
+<p>Steps to reproduce this behaviour:
+</p>
+<ul><li> Create a test module
+<ul><li> Name -&gt; M2DATest</li>
+<li> UID -&gt; m2datest</li>
+<li> Extend -&gt; Single Player</li>
+<li> Module Hierarchy -&gt; Check Single Player</li></ul></li>
+<li> Either copy, create or generate an armor_massive_variation M2DA in AddIns\m2datest\core\data, containing the following data:</li></ul>
+<table class="wikitable" border="1">
+
+<tr>
+<th> ID
+</th>
+<th> Label
+</th>
+<th> MODELTYPE
+</th>
+<th> MODELSUBTYPE
+</th>
+<th> MODELVARIATION
+</th>
+<th> ICONNAME
+</th>
+<th> DefaultMaterial
+</th>
+<th> SoundMaterial
+</th></tr>
+<tr>
+<td> 20
+</td>
+<td> Massive Armor X
+</td>
+<td> arm
+</td>
+<td> max
+</td>
+<td> a
+</td>
+<td>
+</td>
+<td> 2
+</td>
+<td> 13
+</td></tr></table>
+<p>(I used GDApp for this, <a rel="nofollow" class="external autonumber" href="http://social.bioware.com/project/755/">[1]</a> )
+</p>
+<ul><li> Restart the toolset</li>
+<li> Create a new massive armor, by duplicating an existing one (gen_im_arm_cht_mas_hpl for example), naming it m2daarm.uti</li>
+<li> Change the Item Variation to the new Massive Armor X</li>
+<li> Create a script to give the armor to you, containing something like "CreateItemOnObject(R"m2daarm.uti", GetHero());"</li>
+<li> Save, export</li></ul>
+<p>At this point you should be able to spawn the armor in game and equip it, and it should work as expected.
+</p><p>Now:
+</p>
+<ul><li> Edit the armor_massive_variation_x.gda, changing the ID field to 2000000 (two million)</li>
+<li> Restart the toolset</li>
+<li> Edit m2daarm.uti again, setting the Item Variation back to Massive Armor X</li>
+<li> Save, export</li></ul>
+<p>At this point when you spawn and equip the armor, the game will either crash or the body of the character will vanish.
+</p><p><br />
+</p>
+<h2><span class="mw-headline" id="Workarounds">Workarounds</span></h2>
+<p>Only known workaround right now is to use a very very low ID, most likely in the range reserved for Bioware. This is NOT A LONG TERM OPTION, as addon collisions WILL happen.
+</p>
+<h2><span class="mw-headline" id="UPDATE">UPDATE</span></h2>
+<p>Seems like Eshme found the reason, at least for items affected by this <a rel="nofollow" class="external autonumber" href="http://social.bioware.com/forum/1/topic/72/index/722622/1">[2]</a>:
+</p><p>The variation field in .uti files seems to be only 1 byte instead of 4 bytes, only allowing IDs 0-255 to be stored correctly.
+</p>
+<h2><span class="mw-headline" id="See_also">See also</span></h2>
+<ul><li> <a href="Bug%3A_APR_base_maximum_M2DA_row_ID_is_65535_in_the_toolset.html" title="Bug: APR base maximum M2DA row ID is 65535 in the toolset">Bug: APR base maximum M2DA row ID is 65535 in the toolset</a></li></ul>
+
+<!-- 
+NewPP limit report
+CPU time usage: 0.048 seconds
+Real time usage: 0.099 seconds
+Preprocessor visited node count: 47/1000000
+Preprocessor generated node count: 89/1000000
+Post‐expand include size: 251/2097152 bytes
+Template argument size: 40/2097152 bytes
+Highest expansion depth: 2/40
+Expensive parser function count: 0/100
+-->
+
+<!-- 
+Transclusion expansion time report (%,ms,calls,template)
+100.00%   14.019      1 - Template:EV
+100.00%   14.019      1 - -total
+-->
+
+<!-- Saved in parser cache with key db714099484-datoolwiki_:pcache:idhash:4061-0!*!0!!en!5!* and timestamp 20260531053032 and revision id 13156
+ -->
+</div>									<div class="printfooter">
+						Retrieved from "<a dir="ltr" href="Bug%3A_High_M2DA_ID_ranges_might_work_in_the_toolset%2C_but_not_in_game.html">https://www.datoolset.net/mw/index.php?title=Bug:_High_M2DA_ID_ranges_might_work_in_the_toolset,_but_not_in_game&amp;oldid=13156</a>"					</div>
+													<div id='catlinks' class='catlinks'><div id="mw-normal-catlinks" class="mw-normal-catlinks"><a href="/wiki/Special:Categories" title="Special:Categories">Categories</a>: <ul><li><a href="Category%3AToolset_bugs.html" title="Category:Toolset bugs">Toolset bugs</a></li><li><a href="Category%3A2DAs.html" title="Category:2DAs">2DAs</a></li></ul></div></div>												<div class="visualClear"></div>
+							</div>
+		</div>
+		<div id="mw-navigation">
+			<h2>Navigation menu</h2>
+
+			<div id="mw-head">
+									<div id="p-personal" role="navigation" class="" aria-labelledby="p-personal-label">
+						<h3 id="p-personal-label">Personal tools</h3>
+						<ul>
+							<li id="pt-login"><a href="/mw/index.php?title=Special:UserLogin&amp;returnto=Bug%3A+High+M2DA+ID+ranges+might+work+in+the+toolset%2C+but+not+in+game" title="You are encouraged to log in; however, it is not mandatory [o]" accesskey="o">Log in</a></li>						</ul>
+					</div>
+									<div id="left-navigation">
+										<div id="p-namespaces" role="navigation" class="vectorTabs" aria-labelledby="p-namespaces-label">
+						<h3 id="p-namespaces-label">Namespaces</h3>
+						<ul>
+															<li  id="ca-nstab-main" class="selected"><span><a href="Bug%3A_High_M2DA_ID_ranges_might_work_in_the_toolset%2C_but_not_in_game.html"  title="View the content page [c]" accesskey="c">Page</a></span></li>
+															<li  id="ca-talk"><span><a href="Talk%3ABug%3A_High_M2DA_ID_ranges_might_work_in_the_toolset%2C_but_not_in_game.html"  title="Discussion about the content page [t]" accesskey="t">Discussion</a></span></li>
+													</ul>
+					</div>
+										<div id="p-variants" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-variants-label">
+												<h3 id="p-variants-label"><span>Variants</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+									</div>
+				<div id="right-navigation">
+										<div id="p-views" role="navigation" class="vectorTabs" aria-labelledby="p-views-label">
+						<h3 id="p-views-label">Views</h3>
+						<ul>
+															<li id="ca-view" class="selected"><span><a href="Bug%3A_High_M2DA_ID_ranges_might_work_in_the_toolset%2C_but_not_in_game.html" >Read</a></span></li>
+															<li id="ca-viewsource"><span><a href="Bug%3A_High_M2DA_ID_ranges_might_work_in_the_toolset%2C_but_not_in_game.html"  title="This page is protected.&#10;You can view its source [e]" accesskey="e">View source</a></span></li>
+															<li id="ca-history" class="collapsible"><span><a href="Bug%3A_High_M2DA_ID_ranges_might_work_in_the_toolset%2C_but_not_in_game.html"  title="Past revisions of this page [h]" accesskey="h">View history</a></span></li>
+													</ul>
+					</div>
+										<div id="p-cactions" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-cactions-label">
+						<h3 id="p-cactions-label"><span>More</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+										<div id="p-search" role="search">
+						<h3>
+							<label for="searchInput">Search</label>
+						</h3>
+
+						<form action="/mw/index.php" id="searchform">
+														<div id="simpleSearch">
+															<input type="search" name="search" placeholder="Search" title="Search Dragon Age Toolset Wiki [f]" accesskey="f" id="searchInput" /><input type="hidden" value="Special:Search" name="title" /><input type="submit" name="fulltext" value="Search" title="Search the pages for this text" id="mw-searchButton" class="searchButton mw-fallbackSearchButton" /><input type="submit" name="go" value="Go" title="Go to a page with this exact name if exists" id="searchButton" class="searchButton" />								</div>
+						</form>
+					</div>
+									</div>
+			</div>
+			<div id="mw-panel">
+				<div id="p-logo" role="banner"><a class="mw-wiki-logo" href="Main_Page.html"  title="Visit the main page"></a></div>
+						<div class="portal" role="navigation" id='p-navigation' aria-labelledby='p-navigation-label'>
+			<h3 id='p-navigation-label'>Navigation</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-mainpage-description"><a href="Main_Page.html" title="Visit the main page [z]" accesskey="z">Main page</a></li>
+													<li id="n-recentchanges"><a href="/wiki/Special:RecentChanges" title="A list of recent changes in the wiki [r]" accesskey="r">Recent changes</a></li>
+													<li id="n-randompage"><a href="/wiki/Special:Random" title="Load a random page [x]" accesskey="x">Random page</a></li>
+													<li id="n-help"><a href="https://www.mediawiki.org/wiki/Special:MyLanguage/Help:Contents" title="The place to find out">Help</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-Links' aria-labelledby='p-Links-label'>
+			<h3 id='p-Links-label'>Links</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-Toolset-forums"><a href="http://forum.bioware.com/forum/30-dragon-age-toolset" rel="nofollow">Toolset forums</a></li>
+													<li id="n-Legacy-forums"><a href="http://social.bioware.com/forum/1/subindex/70" rel="nofollow">Legacy forums</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-tb' aria-labelledby='p-tb-label'>
+			<h3 id='p-tb-label'>Tools</h3>
+
+			<div class="body">
+									<ul>
+													<li id="t-whatlinkshere"><a href="/wiki/Special:WhatLinksHere/Bug:_High_M2DA_ID_ranges_might_work_in_the_toolset,_but_not_in_game" title="A list of all wiki pages that link here [j]" accesskey="j">What links here</a></li>
+													<li id="t-recentchangeslinked"><a href="/wiki/Special:RecentChangesLinked/Bug:_High_M2DA_ID_ranges_might_work_in_the_toolset,_but_not_in_game" title="Recent changes in pages linked from this page [k]" accesskey="k">Related changes</a></li>
+													<li id="t-specialpages"><a href="/wiki/Special:SpecialPages" title="A list of all special pages [q]" accesskey="q">Special pages</a></li>
+													<li id="t-print"><a href="Bug%3A_High_M2DA_ID_ranges_might_work_in_the_toolset%2C_but_not_in_game.html" rel="alternate" title="Printable version of this page [p]" accesskey="p">Printable version</a></li>
+													<li id="t-permalink"><a href="Bug%3A_High_M2DA_ID_ranges_might_work_in_the_toolset%2C_but_not_in_game.html" title="Permanent link to this revision of the page">Permanent link</a></li>
+													<li id="t-info"><a href="Bug%3A_High_M2DA_ID_ranges_might_work_in_the_toolset%2C_but_not_in_game.html" title="More information about this page">Page information</a></li>
+											</ul>
+							</div>
+		</div>
+				</div>
+		</div>
+		<div id="footer" role="contentinfo">
+							<ul id="footer-info">
+											<li id="footer-info-lastmod"> This page was last modified on 1 July 2010, at 06:44.</li>
+									</ul>
+							<ul id="footer-places">
+											<li id="footer-places-privacy"><a href="/wiki/Dragon_Age_Toolset_Wiki:Privacy_policy" title="Dragon Age Toolset Wiki:Privacy policy">Privacy policy</a></li>
+											<li id="footer-places-about"><a href="/wiki/Dragon_Age_Toolset_Wiki:About" title="Dragon Age Toolset Wiki:About">About Dragon Age Toolset Wiki</a></li>
+											<li id="footer-places-disclaimer"><a href="/wiki/Dragon_Age_Toolset_Wiki:General_disclaimer" title="Dragon Age Toolset Wiki:General disclaimer">Disclaimers</a></li>
+									</ul>
+										<ul id="footer-icons" class="noprint">
+											<li id="footer-poweredbyico">
+															<a href="//www.mediawiki.org/"><img src="../assets/mw/resources/assets/poweredby_mediawiki_88x31.png" alt="Powered by MediaWiki" srcset="../assets/mw/resources/assets/poweredby_mediawiki_132x47.png 1.5x, ../assets/mw/resources/assets/poweredby_mediawiki_176x62.png 2x" width="88" height="31" /></a>
+													</li>
+									</ul>
+						<div style="clear:both"></div>
+		</div>
+		<script>if(window.jQuery)jQuery.ready();</script><script>if(window.mw){
+mw.loader.state({"site":"loading","user":"ready","user.groups":"ready"});
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.toc","mediawiki.action.view.postEdit","mediawiki.user","mediawiki.hidpi","mediawiki.page.ready","mediawiki.searchSuggest"],null,true);
+}</script>
+<script>if(window.mw){
+document.write("\u003Cscript src=\"https://www.datoolset.net/mw/load.php?debug=false\u0026amp;lang=en\u0026amp;modules=site\u0026amp;only=scripts\u0026amp;skin=vector\u0026amp;*\"\u003E\u003C/script\u003E");
+}</script>
+<script>if(window.mw){
+mw.config.set({"wgBackendResponseTime":252});
+}</script>
+	</body>
+</html>

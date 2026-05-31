@@ -1,0 +1,7 @@
+[
+  {
+    "title": "Bug: Cannot open file for writing C:\\Program Files\\BioWare\\.../ru",
+    "url": "https://www.datoolset.net/wiki/Bug:_Cannot_open_file_for_writing_C:%5CProgram_Files%5CBioWare%5C.../ru",
+    "error": "URLError(TimeoutError(10060, 'A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond', None, 10060, None))"
+  }
+]

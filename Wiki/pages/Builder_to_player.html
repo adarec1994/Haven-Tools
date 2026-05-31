@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" class="client-nojs">
+<head>
+<meta charset="UTF-8" />
+<title>Builder to player - Dragon Age Toolset Wiki</title>
+<meta name="generator" content="MediaWiki 1.25.6" />
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="search" type="application/opensearchdescription+xml" href="/mw/opensearch_desc.php" title="Dragon Age Toolset Wiki (en)" />
+<link rel="EditURI" type="application/rsd+xml" href="https://www.datoolset.net/mw/api.php?action=rsd" />
+<link rel="alternate" hreflang="x-default" href="Builder_to_player.html" />
+<link rel="alternate" type="application/atom+xml" title="Dragon Age Toolset Wiki Atom feed" href="/mw/index.php?title=Special:RecentChanges&amp;feed=atom" />
+<meta name="ResourceLoaderDynamicStyles" content="" />
+<style>a:lang(ar),a:lang(kk-arab),a:lang(mzn),a:lang(ps),a:lang(ur){text-decoration:none}
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-css:7:270a0dcd3ae587df0f041aebfc42e61b */</style>
+<script>if(window.mw){
+mw.config.set({"wgCanonicalNamespace":"","wgCanonicalSpecialPageName":false,"wgNamespaceNumber":0,"wgPageName":"Builder_to_player","wgTitle":"Builder to player","wgCurRevisionId":16079,"wgRevisionId":16079,"wgArticleId":3596,"wgIsArticle":true,"wgIsRedirect":false,"wgAction":"view","wgUserName":null,"wgUserGroups":["*"],"wgCategories":["Database","Modules"],"wgBreakFrames":false,"wgPageContentLanguage":"en","wgPageContentModel":"wikitext","wgSeparatorTransformTable":["",""],"wgDigitTransformTable":["",""],"wgDefaultDateFormat":"dmy","wgMonthNames":["","January","February","March","April","May","June","July","August","September","October","November","December"],"wgMonthNamesShort":["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],"wgRelevantPageName":"Builder_to_player","wgRelevantArticleId":3596,"wgIsProbablyEditable":false,"wgRestrictionEdit":[],"wgRestrictionMove":[]});
+}</script><script>if(window.mw){
+mw.loader.implement("user.options",function($,jQuery){mw.user.options.set({"variant":"en"});});mw.loader.implement("user.tokens",function($,jQuery){mw.user.tokens.set({"editToken":"+\\","patrolToken":"+\\","watchToken":"+\\"});});
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-js:7:a5c52c063dc436c1ca7c9f456936a5e9 */
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.page.startup","mediawiki.legacy.wikibits","mediawiki.legacy.ajax","skins.vector.js"]);
+}</script>
+<!--[if lt IE 7]><style type="text/css">body{behavior:url("/mw/skins/Vector/csshover.min.htc")}</style><![endif]-->
+<link rel="stylesheet" href="../assets/local/wiki-static.css" />
+</head>
+<body class="mediawiki ltr sitedir-ltr ns-0 ns-subject page-Builder_to_player skin-vector action-view">
+		<div id="mw-page-base" class="noprint"></div>
+		<div id="mw-head-base" class="noprint"></div>
+		<div id="content" class="mw-body" role="main">
+			<a id="top"></a>
+
+						<div class="mw-indicators">
+</div>
+			<h1 id="firstHeading" class="firstHeading" lang="en">Builder to player</h1>
+						<div id="bodyContent" class="mw-body-content">
+									<div id="siteSub">From Dragon Age Toolset Wiki</div>
+								<div id="contentSub"></div>
+												<div id="jump-to-nav" class="mw-jump">
+					Jump to:					<a href="#mw-head">navigation</a>, 					<a href="#p-search">search</a>
+				</div>
+				<div id="mw-content-text" lang="en" dir="ltr" class="mw-content-ltr"><table style="float:right; background-color:#eeeeee; border:2px #999999 solid; padding:4px; margin:4px; width:220px;">
+
+<tr>
+<th align="center"> Module topics
+</th></tr>
+<tr>
+<td>
+<ul><li><a href="Module.html" title="Module">Module</a>
+<ul><li> <a href="Creating_a_module.html" title="Creating a module">Creating a module</a></li>
+<li> <a href="Manage_modules.html" title="Manage modules">Managing modules</a></li>
+<li> <a href="Exporting_a_module.html" title="Exporting a module">Exporting a module</a></li></ul></li>
+<li><strong class="selflink">Builder to player</strong></li>
+<li><a href="Builder_to_builder.html" title="Builder to builder">Builder to builder</a></li></ul>
+</td></tr></table>
+<p>"Builder to player" packaging is a system for packaging up the playable binary files you've exported from your toolset into a form that is easily installed and played on another system.
+</p><p><br />
+</p>
+<div id="toc" class="toc"><div id="toctitle"><h2>Contents</h2></div>
+<ul>
+<li class="toclevel-1 tocsection-1"><a href="#Overview"><span class="tocnumber">1</span> <span class="toctext">Overview</span></a></li>
+<li class="toclevel-1 tocsection-2"><a href="#Resources_organized"><span class="tocnumber">2</span> <span class="toctext">Resources organized</span></a></li>
+<li class="toclevel-1 tocsection-3"><a href="#Step_by_Step"><span class="tocnumber">3</span> <span class="toctext">Step by Step</span></a></li>
+</ul>
+</div>
+
+<h2><span class="mw-headline" id="Overview">Overview</span></h2>
+<p>"Builder to player" packs every resource that is needed to be installed on another computer into a single filetype called <a href="Dazip.html" title="DAZIP">DAZIP</a>. You however must select those needed resources from folders and files in a treelike view. The "builder to player" function allows only files to be included from your modules "core" and "module" override folders, and the "Core Game Resources" Folder. As so it is very important that your resources are organized correctly.
+</p><p>It can be found under the "Tools -&gt; Builder" menu.
+</p>
+<h2><span class="mw-headline" id="Resources_organized">Resources organized</span></h2>
+<p>While the Toolset exports Designer Resources into their correct location, Art Resources and 2DA's which you created with external tools need to be arranged manually. 
+</p><p>Likely, in your first steps you have placed those into a random Override folder until it works. The Toolset can read every Override folder just fine, so this didnt cause harm until now. The "builder to player" function requires resources to be organized, so it can package them and get distributed. So that no file is missed in the package, which causes the Module to work for you ,but not for someone else. It can help if you place Resources correctly from the start up.
+</p><p>The primary choice is always your custom Modules folders. Depending on whether your Resources shall be available only in your "module", or to other modules "core". 
+</p>
+<pre>*My Documents*\BioWare\Dragon Age\AddIns\*Modulename*\module\override\toolsetexport\
+*My Documents*\BioWare\Dragon Age\AddIns\*Modulename*\core\override\toolsetexport\</pre>
+<p>The other folder that can be included is the "Core Game Resources" Folder. This Folder must be treated with care, as this place is reserved for Gamewide Core Resources..
+</p>
+<pre>*My Documents*\BioWare\Dragon Age\packages\core\override\toolsetexport\</pre>
+<p>Resources in here is not advised, it allows Resources to be available to other modules even if you deactivate your custom Module. Additionally the Toolset has the habbit of exporting Core Game Resources here, which are mere duplicates unless you modified them. These duplicates need to be deleted, as potentially they still create problems in the singleplayer campaign. <small><i>(See: <a href="Bug%3A_export_creates_unnecessary_core_override.html" title="Bug: export creates unnecessary core override">Bug Report</a>)</i></small>  If all your Resources are in your Modules Folder, this is an easy thing of selecting all and deleting.
+</p><p>All Resources need to be present and fully exported (that is if you created them):
+</p>
+<ul><li><a href="Designer_Resources.html" title="Designer Resources">Designer Resources</a></li>
+<li><a href="Art_Resources.html" title="Art Resources">Art Resources</a></li>
+<li><a href="2da.html" title="2DA">2DA's</a></li></ul>
+<h2><span class="mw-headline" id="Step_by_Step">Step by Step</span></h2>
+<p>Start the process by selecting from the menu:
+</p>
+<pre>"Tools -&gt; Builder -&gt; Builder to player package" </pre>
+<p>It will ask for a "Manifest". The "Manifest" is a helper, which isnt available the first time. However can be created afterwards, which will save you resource selection, so that exporting the next time you can select this "Manifest" and wouldnt need to select all the resources again.
+</p>
+<pre>Click cancel, or select a previously saved Manifest.</pre>
+<p>The toolset will now list all the binary files you've exported, including 2DA's, art and designer resources, and give you the opportunity to select which ones to include in the package (you usually won't need to include core game resources "from \packages\core", for example). It will then package them into 3 <a href="Erf.html" title="ERF">ERFs</a> (one for each directory listed above), which will be bundled together into a <a href="Dazip.html" title="DAZIP">DAZIP</a> file along with a manifest file used by the program DAUpdater when installing the package on the end user's machine.
+</p><p>If you followed a clean structure with your resources, you may only select the whole custom module folder and be ready. 
+</p>
+<pre>Select a location to save the file in.
+Click Save.</pre>
+<p>Create a Manifest if you wish, which will save your resources selection for the next time you do the process. 
+</p><p>Currently, there is a <a href="Bug%3A_toolset_export_generates_files_with_names_that_can%27t_be_packaged_in_builder_to_player.html" title="Bug: toolset export generates files with names that can't be packaged in builder to player"> file name bug</a> which affects external levels etc. Refer to that link for a workaround.
+</p><p><br />
+</p>
+<table class="nmbox" style="width:100%; border:1px solid #AAAAAA; border-collapse:collapse; clear:both; font-size:85%; margin:0.25em 0;">
+<tr style="background: #CFDFEF;">
+<th style="border:none; padding:4px 1em; border-right:1px solid #AAAAAA; text-align:center; white-space:nowrap;"> <b><a href="Dragon_Age_Toolset_Wiki%3ALanguage_policy.html" title="Dragon Age Toolset Wiki:Language policy">Language:</a></b></th>
+<td style="border:none; padding:0.25em 0.9em; width:100%; background:#DFEFFF;"><b><strong class="selflink">English</strong></b> <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>&#160;&#8226;&#32;<span lang="ru"><a href="Builder_to_player/ru.html" title="Builder to player/ru">русский</a></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></td>
+</tr></table>
+
+<!-- 
+NewPP limit report
+CPU time usage: 0.064 seconds
+Real time usage: 0.139 seconds
+Preprocessor visited node count: 1066/1000000
+Preprocessor generated node count: 3409/1000000
+Post‐expand include size: 6768/2097152 bytes
+Template argument size: 1206/2097152 bytes
+Highest expansion depth: 8/40
+Expensive parser function count: 54/100
+-->
+
+<!-- 
+Transclusion expansion time report (%,ms,calls,template)
+100.00%  128.151      1 - -total
+ 92.86%  118.998      1 - Template:Languages
+ 89.04%  114.100      1 - Template:LanguagesBox
+ 70.42%   90.242     54 - Template:LanguagesLang
+  9.12%   11.690      1 - Template:LanguagesTitle
+  6.78%    8.684      1 - Template:Infobox_module
+  3.82%    4.896      1 - Template:Infobox_template
+-->
+
+<!-- Saved in parser cache with key db714099484-datoolwiki_:pcache:idhash:3596-0!*!0!!en!*!* and timestamp 20260531073804 and revision id 16079
+ -->
+</div>									<div class="printfooter">
+						Retrieved from "<a dir="ltr" href="Builder_to_player.html">https://www.datoolset.net/mw/index.php?title=Builder_to_player&amp;oldid=16079</a>"					</div>
+													<div id='catlinks' class='catlinks'><div id="mw-normal-catlinks" class="mw-normal-catlinks"><a href="/wiki/Special:Categories" title="Special:Categories">Categories</a>: <ul><li><a href="Category%3ADatabase.html" title="Category:Database">Database</a></li><li><a href="Category%3AModules.html" title="Category:Modules">Modules</a></li></ul></div></div>												<div class="visualClear"></div>
+							</div>
+		</div>
+		<div id="mw-navigation">
+			<h2>Navigation menu</h2>
+
+			<div id="mw-head">
+									<div id="p-personal" role="navigation" class="" aria-labelledby="p-personal-label">
+						<h3 id="p-personal-label">Personal tools</h3>
+						<ul>
+							<li id="pt-login"><a href="/mw/index.php?title=Special:UserLogin&amp;returnto=Builder+to+player" title="You are encouraged to log in; however, it is not mandatory [o]" accesskey="o">Log in</a></li>						</ul>
+					</div>
+									<div id="left-navigation">
+										<div id="p-namespaces" role="navigation" class="vectorTabs" aria-labelledby="p-namespaces-label">
+						<h3 id="p-namespaces-label">Namespaces</h3>
+						<ul>
+															<li  id="ca-nstab-main" class="selected"><span><a href="Builder_to_player.html"  title="View the content page [c]" accesskey="c">Page</a></span></li>
+															<li  id="ca-talk"><span><a href="Talk%3ABuilder_to_player.html"  title="Discussion about the content page [t]" accesskey="t">Discussion</a></span></li>
+													</ul>
+					</div>
+										<div id="p-variants" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-variants-label">
+												<h3 id="p-variants-label"><span>Variants</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+									</div>
+				<div id="right-navigation">
+										<div id="p-views" role="navigation" class="vectorTabs" aria-labelledby="p-views-label">
+						<h3 id="p-views-label">Views</h3>
+						<ul>
+															<li id="ca-view" class="selected"><span><a href="Builder_to_player.html" >Read</a></span></li>
+															<li id="ca-viewsource"><span><a href="Builder_to_player.html"  title="This page is protected.&#10;You can view its source [e]" accesskey="e">View source</a></span></li>
+															<li id="ca-history" class="collapsible"><span><a href="Builder_to_player.html"  title="Past revisions of this page [h]" accesskey="h">View history</a></span></li>
+													</ul>
+					</div>
+										<div id="p-cactions" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-cactions-label">
+						<h3 id="p-cactions-label"><span>More</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+										<div id="p-search" role="search">
+						<h3>
+							<label for="searchInput">Search</label>
+						</h3>
+
+						<form action="/mw/index.php" id="searchform">
+														<div id="simpleSearch">
+															<input type="search" name="search" placeholder="Search" title="Search Dragon Age Toolset Wiki [f]" accesskey="f" id="searchInput" /><input type="hidden" value="Special:Search" name="title" /><input type="submit" name="fulltext" value="Search" title="Search the pages for this text" id="mw-searchButton" class="searchButton mw-fallbackSearchButton" /><input type="submit" name="go" value="Go" title="Go to a page with this exact name if exists" id="searchButton" class="searchButton" />								</div>
+						</form>
+					</div>
+									</div>
+			</div>
+			<div id="mw-panel">
+				<div id="p-logo" role="banner"><a class="mw-wiki-logo" href="Main_Page.html"  title="Visit the main page"></a></div>
+						<div class="portal" role="navigation" id='p-navigation' aria-labelledby='p-navigation-label'>
+			<h3 id='p-navigation-label'>Navigation</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-mainpage-description"><a href="Main_Page.html" title="Visit the main page [z]" accesskey="z">Main page</a></li>
+													<li id="n-recentchanges"><a href="/wiki/Special:RecentChanges" title="A list of recent changes in the wiki [r]" accesskey="r">Recent changes</a></li>
+													<li id="n-randompage"><a href="/wiki/Special:Random" title="Load a random page [x]" accesskey="x">Random page</a></li>
+													<li id="n-help"><a href="https://www.mediawiki.org/wiki/Special:MyLanguage/Help:Contents" title="The place to find out">Help</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-Links' aria-labelledby='p-Links-label'>
+			<h3 id='p-Links-label'>Links</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-Toolset-forums"><a href="http://forum.bioware.com/forum/30-dragon-age-toolset" rel="nofollow">Toolset forums</a></li>
+													<li id="n-Legacy-forums"><a href="http://social.bioware.com/forum/1/subindex/70" rel="nofollow">Legacy forums</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-tb' aria-labelledby='p-tb-label'>
+			<h3 id='p-tb-label'>Tools</h3>
+
+			<div class="body">
+									<ul>
+													<li id="t-whatlinkshere"><a href="/wiki/Special:WhatLinksHere/Builder_to_player" title="A list of all wiki pages that link here [j]" accesskey="j">What links here</a></li>
+													<li id="t-recentchangeslinked"><a href="/wiki/Special:RecentChangesLinked/Builder_to_player" title="Recent changes in pages linked from this page [k]" accesskey="k">Related changes</a></li>
+													<li id="t-specialpages"><a href="/wiki/Special:SpecialPages" title="A list of all special pages [q]" accesskey="q">Special pages</a></li>
+													<li id="t-print"><a href="Builder_to_player.html" rel="alternate" title="Printable version of this page [p]" accesskey="p">Printable version</a></li>
+													<li id="t-permalink"><a href="Builder_to_player.html" title="Permanent link to this revision of the page">Permanent link</a></li>
+													<li id="t-info"><a href="Builder_to_player.html" title="More information about this page">Page information</a></li>
+											</ul>
+							</div>
+		</div>
+				</div>
+		</div>
+		<div id="footer" role="contentinfo">
+							<ul id="footer-info">
+											<li id="footer-info-lastmod"> This page was last modified on 18 April 2011, at 18:49.</li>
+									</ul>
+							<ul id="footer-places">
+											<li id="footer-places-privacy"><a href="/wiki/Dragon_Age_Toolset_Wiki:Privacy_policy" title="Dragon Age Toolset Wiki:Privacy policy">Privacy policy</a></li>
+											<li id="footer-places-about"><a href="/wiki/Dragon_Age_Toolset_Wiki:About" title="Dragon Age Toolset Wiki:About">About Dragon Age Toolset Wiki</a></li>
+											<li id="footer-places-disclaimer"><a href="/wiki/Dragon_Age_Toolset_Wiki:General_disclaimer" title="Dragon Age Toolset Wiki:General disclaimer">Disclaimers</a></li>
+									</ul>
+										<ul id="footer-icons" class="noprint">
+											<li id="footer-poweredbyico">
+															<a href="//www.mediawiki.org/"><img src="../assets/mw/resources/assets/poweredby_mediawiki_88x31.png" alt="Powered by MediaWiki" srcset="../assets/mw/resources/assets/poweredby_mediawiki_132x47.png 1.5x, ../assets/mw/resources/assets/poweredby_mediawiki_176x62.png 2x" width="88" height="31" /></a>
+													</li>
+									</ul>
+						<div style="clear:both"></div>
+		</div>
+		<script>if(window.jQuery)jQuery.ready();</script><script>if(window.mw){
+mw.loader.state({"site":"loading","user":"ready","user.groups":"ready"});
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.toc","mediawiki.action.view.postEdit","mediawiki.user","mediawiki.hidpi","mediawiki.page.ready","mediawiki.searchSuggest"],null,true);
+}</script>
+<script>if(window.mw){
+document.write("\u003Cscript src=\"https://www.datoolset.net/mw/load.php?debug=false\u0026amp;lang=en\u0026amp;modules=site\u0026amp;only=scripts\u0026amp;skin=vector\u0026amp;*\"\u003E\u003C/script\u003E");
+}</script>
+<script>if(window.mw){
+mw.config.set({"wgBackendResponseTime":271});
+}</script>
+	</body>
+</html>

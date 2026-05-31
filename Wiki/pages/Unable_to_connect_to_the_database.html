@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" class="client-nojs">
+<head>
+<meta charset="UTF-8" />
+<title>Unable to connect to the database - Dragon Age Toolset Wiki</title>
+<meta name="generator" content="MediaWiki 1.25.6" />
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="search" type="application/opensearchdescription+xml" href="/mw/opensearch_desc.php" title="Dragon Age Toolset Wiki (en)" />
+<link rel="EditURI" type="application/rsd+xml" href="https://www.datoolset.net/mw/api.php?action=rsd" />
+<link rel="alternate" hreflang="x-default" href="Unable_to_connect_to_the_database.html" />
+<link rel="alternate" type="application/atom+xml" title="Dragon Age Toolset Wiki Atom feed" href="/mw/index.php?title=Special:RecentChanges&amp;feed=atom" />
+<meta name="ResourceLoaderDynamicStyles" content="" />
+<style>a:lang(ar),a:lang(kk-arab),a:lang(mzn),a:lang(ps),a:lang(ur){text-decoration:none}
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-css:7:270a0dcd3ae587df0f041aebfc42e61b */</style>
+<script>if(window.mw){
+mw.config.set({"wgCanonicalNamespace":"","wgCanonicalSpecialPageName":false,"wgNamespaceNumber":0,"wgPageName":"Unable_to_connect_to_the_database","wgTitle":"Unable to connect to the database","wgCurRevisionId":19453,"wgRevisionId":19453,"wgArticleId":3857,"wgIsArticle":true,"wgIsRedirect":false,"wgAction":"view","wgUserName":null,"wgUserGroups":["*"],"wgCategories":["Toolset bugs","Database"],"wgBreakFrames":false,"wgPageContentLanguage":"en","wgPageContentModel":"wikitext","wgSeparatorTransformTable":["",""],"wgDigitTransformTable":["",""],"wgDefaultDateFormat":"dmy","wgMonthNames":["","January","February","March","April","May","June","July","August","September","October","November","December"],"wgMonthNamesShort":["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],"wgRelevantPageName":"Unable_to_connect_to_the_database","wgRelevantArticleId":3857,"wgIsProbablyEditable":false,"wgRestrictionEdit":[],"wgRestrictionMove":[]});
+}</script><script>if(window.mw){
+mw.loader.implement("user.options",function($,jQuery){mw.user.options.set({"variant":"en"});});mw.loader.implement("user.tokens",function($,jQuery){mw.user.tokens.set({"editToken":"+\\","patrolToken":"+\\","watchToken":"+\\"});});
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-js:7:a5c52c063dc436c1ca7c9f456936a5e9 */
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.page.startup","mediawiki.legacy.wikibits","mediawiki.legacy.ajax","skins.vector.js"]);
+}</script>
+<!--[if lt IE 7]><style type="text/css">body{behavior:url("/mw/skins/Vector/csshover.min.htc")}</style><![endif]-->
+<link rel="stylesheet" href="../assets/local/wiki-static.css" />
+</head>
+<body class="mediawiki ltr sitedir-ltr ns-0 ns-subject page-Unable_to_connect_to_the_database skin-vector action-view">
+		<div id="mw-page-base" class="noprint"></div>
+		<div id="mw-head-base" class="noprint"></div>
+		<div id="content" class="mw-body" role="main">
+			<a id="top"></a>
+
+						<div class="mw-indicators">
+</div>
+			<h1 id="firstHeading" class="firstHeading" lang="en">Unable to connect to the database</h1>
+						<div id="bodyContent" class="mw-body-content">
+									<div id="siteSub">From Dragon Age Toolset Wiki</div>
+								<div id="contentSub"></div>
+												<div id="jump-to-nav" class="mw-jump">
+					Jump to:					<a href="#mw-head">navigation</a>, 					<a href="#p-search">search</a>
+				</div>
+				<div id="mw-content-text" lang="en" dir="ltr" class="mw-content-ltr"><div class="floatright"><a href="File%3AUnable_to_connect_to_database.png.html" class="image"><img alt="Unable to connect to database.png" src="../assets/mw/images/1/17/Unable_to_connect_to_database.png" width="566" height="171" /></a></div>
+<p>When the toolset throws this error, it indicates that there was some kind of problem when attempting to connect to the SQL Server Express 2005 database. Unfortunately, this is common, but unpredictable. When the toolset starts up, it attempts to connect to the database.  If the database does not respond, it simply returns this error. The toolset has no ability to diagnose why   
+</p><p>This error is kind of like the "Service Engine" light on your vehicle.  When the service engine light starts flashing, it means something is wrong, but it is a very general warning that does not give you much information on what is wrong, just that something is wrong.  The cause of it could be anything from a loose gas cap to a failed spark plug to some bad sensor.
+</p>
+<div id="toc" class="toc"><div id="toctitle"><h2>Contents</h2></div>
+<ul>
+<li class="toclevel-1 tocsection-1"><a href="#Diagnosing_the_Problem"><span class="tocnumber">1</span> <span class="toctext">Diagnosing the Problem</span></a>
+<ul>
+<li class="toclevel-2 tocsection-2"><a href="#Is_the_Database_Service_Running"><span class="tocnumber">1.1</span> <span class="toctext">Is the Database Service Running</span></a></li>
+<li class="toclevel-2 tocsection-3"><a href="#Did_SQL_Server_Install.3F"><span class="tocnumber">1.2</span> <span class="toctext">Did SQL Server Install?</span></a></li>
+<li class="toclevel-2 tocsection-4"><a href="#Did_the_database_get_restored.3F"><span class="tocnumber">1.3</span> <span class="toctext">Did the database get restored?</span></a></li>
+<li class="toclevel-2 tocsection-5"><a href="#Is_the_Toolset_correctly_pointing_to_database.3F"><span class="tocnumber">1.4</span> <span class="toctext">Is the Toolset correctly pointing to database?</span></a></li>
+</ul>
+</li>
+<li class="toclevel-1 tocsection-6"><a href="#Full_Manual_Install"><span class="tocnumber">2</span> <span class="toctext">Full Manual Install</span></a></li>
+<li class="toclevel-1 tocsection-7"><a href="#Additional_ideas"><span class="tocnumber">3</span> <span class="toctext">Additional ideas</span></a>
+<ul>
+<li class="toclevel-2 tocsection-8"><a href="#MSSQL_Server_cannot_install_to_compressed_or_encrypted_folders"><span class="tocnumber">3.1</span> <span class="toctext">MSSQL Server cannot install to compressed or encrypted folders</span></a></li>
+<li class="toclevel-2 tocsection-9"><a href="#Permissions_issues"><span class="tocnumber">3.2</span> <span class="toctext">Permissions issues</span></a></li>
+</ul>
+</li>
+<li class="toclevel-1 tocsection-10"><a href="#Other_Miscellaneous_Solutions"><span class="tocnumber">4</span> <span class="toctext">Other Miscellaneous Solutions</span></a></li>
+</ul>
+</div>
+
+<h2><span class="mw-headline" id="Diagnosing_the_Problem">Diagnosing the Problem</span></h2>
+<p>When it comes to the cannot connect error, it can range from the long file path issue to interference from UAC, to permissions issues, to a conflict with an existing installation of SQL Server, to registry entries, to the location of the installation file on your computer. The list is long. Here is a troubleshooting guide to try and help you diagnose what particular problem is vexing you and how to repair it.  If the troubleshooting is getting you nowhere, the <a href="#Full_Manual_Install">full manual install</a> is another method that may be more effective, as you take things into your own hands and have better visibility to errors.
+</p>
+As a potential source of more information to diagnose the problem with, you could always look for connection errors in both <div class="dascript" style="font-family:monospace; background-color:#F9F9F9; border: 1px dashed #2F6FAB; line-height: 1.1em; padding: 1em; width: 95%;">C:\Program Files\Microsoft SQL Server\MSSQL10.SQLEXPRESS\MSSQL\Log\ERRORLOG
+<p>and
+</p>
+C:\Program Files\Dragon Age\tools\toolssql\MSSQL.1\MSSQL\LOG\ERRORLOG</div>. You may have to use an administrator account to read this file. As an example ERRORLOG entry:
+<pre>
+2011-01-02 11:32:15.08 Logon       Error: 18456, Severity: 14, State: 38.
+2011-01-02 11:32:15.08 Logon       Login failed for user 'EXAMPLE\Example'. Reason: Failed to open the explicitly specified database. [CLIENT: &lt;named pipe&gt;]
+</pre>
+<p>Please note that Windows 7 automatically locks the files found in c:/ and will have a lock icon on the folder. You will have to right click on the folder, choose share with and click on homegroup(read/write).
+You also may have to exit and open c:/ again to make sure that it took affect. This would allow the installer to access the games file to properly install MSSQL Server Express.
+</p>
+<table cellspacing="5" cellpadding="2" class="toc">
+
+<tr align="center">
+<td style="border:solid 1px">  <a href="#Did_the_database_get_restored.3F">Did the database get restored / created?</a>
+</td>
+<td> No<br />&#8594;
+</td>
+<td style="border:solid 1px"> <a href="#Did_SQL_Server_Install.3F">Did MSSQL Express install?</a>
+</td>
+<td> No<br />&#8594;
+</td>
+<td style="border:solid 1px" align="left"> Possible solutions:
+<ol><li> Permissions issues: run installer as administrator</li>
+<li> Path length</li>
+<li> Compressed drive</li></ol>
+</td></tr>
+<tr align="center">
+<td> Yes<br /> &#8595;
+</td>
+<td>
+</td>
+<td> Yes<br /> &#8595;
+</td></tr>
+<tr align="center">
+<td style="border:solid 1px"> <a href="#Is_the_Database_Service_Running">Is the database service running?</a>
+</td>
+<td>
+</td>
+<td style="border:solid 1px"> <a href="Database_backup_and_restore.html#Restoring_the_Database_if_it_failed_after_Installation" title="Database backup and restore">Restore database and re-run toolset</a>
+</td></tr>
+<tr align="center">
+<td>
+<table cellspacing="5" cellpadding="2" align="center" style="background-color:transparent">
+
+<tr align="center">
+<td> Yes<br />&#8595;
+</td>
+<td> No<br />&#8595;
+</td></tr>
+<tr align="center">
+<td style="border:solid 1px"> <a href="#Is_the_Toolset_correctly_pointing_to_database.3F">Is the Toolset correctly pointing to database?</a>
+</td>
+<td style="border:solid 1px"> Start service and re-run toolset
+</td></tr></table>
+</td>
+<td>
+</td>
+<td>
+</td></tr></table>
+<h3><span class="mw-headline" id="Is_the_Database_Service_Running">Is the Database Service Running</span></h3>
+<p>If the service is running, it is an indication that SQL Server has installed correctly and the database is available for use by the toolset.
+</p><p>You can check to see if the Database Service is running by navigating to your the Services application.  Depending on your operating system, the path may be a bit different, but it should be along the lines of <code>Start&gt;&gt;Control Panel&gt;&gt;Administrative Tools&gt;&gt;Services</code>(alternately type "services.msc" (excluding quotes) into a run window)
+</p><p>Scroll down through the list and look for a service named "SQL Server (BWDATOOLSET)".  Check the Status of the service.  If the status is anything other than "Running" (or, possibly, "Started" in the case of Windows XP users), right click on it and select "Start".  If it then starts successfully the status will change to "Running" 
+</p><p>If the Service refuses to Start or does not exist, more troubleshooting is needed some kind of installation issue with SQL Server.  We need to look at the properties on the service and figure out where to go from here.  One thing I have seen is that it is left over from some manual file deletions,  the .mdf and .ldf files no longer exist, but the service is still there.  Path to executable field may hold some clues. here.
+</p>
+<ul><li> Ensure SQL Server (BWDATOOLSET): Open the <b>SQL Server Configuration Manager</b> (by default <code>Start | Microsoft SQL Server 2005 | Configuration Tools | SQL Server Configuration Manager</code>) and in the object tree in the left hand panel click on the <b>SQL Server 2005 Services</b> entry. Ensure entry for <b>SQL Server (BWDATOOLSET)</b> appearing in the right hand panel has a <b>State</b> of <b>Running</b>.  If not select it and start it (either using the button on the toolbar or the option in the context menu).</li></ul>
+<p><a href="#top">&#8593; Return to top</a>
+</p>
+<h3><span class="mw-headline" id="Did_SQL_Server_Install.3F">Did SQL Server Install?</span></h3>
+<p>Check your Start menu and see if it installed at all.  Go to Start&gt;&gt;Program Files&gt;&gt;Microsoft SQL Server 2005.  If nothing exists here then there are two basic explanations:
+</p>
+<ol><li> When you ran the installer, you may have unchecked the option to Install MSSQL Express 2005 SP3.  If this is the case.  Try running the toolset installer a second time, make sure that you leave that option checked so that the installer will attempt to install SQL Server 2005.</li>
+<li> Something went wrong with the SQL Server installation and it failed to install at all.  You can try installing the toolset again.  If this is unsuccessful, you can try downloading and installing it <a href="Manual_database_installation.html" title="Manual database installation">manually</a>.</li></ol>
+<p><a href="#top">&#8593; Return to top</a>
+</p>
+<h3><span class="mw-headline" id="Did_the_database_get_restored.3F">Did the database get restored?</span></h3>
+<p>Check the toolset installation directory for the restored database files.  Depending on where you installed the Game and Toolset, they will be in a location similar to
+</p>
+<div class="dascript" style="font-family:monospace; background-color:#F9F9F9; border: 1px dashed #2F6FAB; line-height: 1.1em; padding: 1em; width: 95%;">C:\Program Files\Dragon Age\tools\toolssql\Data\ &lt;--- version 1.00 installed under the Tools folder
+<p>or
+</p>
+C:\Program Files\DAODB\ &lt;--- version 1.01 of the toolset goes here, avoiding long path issue</div>
+<p>Browse to this location and look for the existence of the following two files:
+</p>
+<div class="dascript" style="font-family:monospace; background-color:#F9F9F9; border: 1px dashed #2F6FAB; line-height: 1.1em; padding: 1em; width: 95%;">bw_dragonage_content.ldf</div>
+<p>and
+</p>
+<div class="dascript" style="font-family:monospace; background-color:#F9F9F9; border: 1px dashed #2F6FAB; line-height: 1.1em; padding: 1em; width: 95%;">bw_dragonage_content.mdf</div>
+<p><b>If these files exist</b>, it indicates that the SQL Server was installed, and that the actual Dragon Age toolset database was restored.  If they are not present, the restore function failed for some reason.  If the files exist, continue on to the next step of the troubleshooter.
+</p><p><b>If the files do not exist</b>, you can attempt to restore them in a number of ways:
+</p>
+<dl><dd><b>1.</b> Download and use SQL Management Studio to create the database and restore the content database.  This is covered in the <a href="Manual_database_installation.html" title="Manual database installation">manual database installation</a> article.  Since the SQL Server is installed, you should be able to skip the first step, and start from the heading "Installing SQL Server Management Studio Express"</dd>
+<dd><b>2.</b> Running the restore operation through a "batch" file manually. See <a href="Database_backup_and_restore.html#Restoring_the_Database_if_it_failed_after_Installation" title="Database backup and restore">Restoring the Database if it failed after Installation</a>. Also added a section about Error Handling, because the batch file presents error numbers.</dd></dl>
+<p><a href="#top">&#8593; Return to top</a>
+</p>
+<h3><span class="mw-headline" id="Is_the_Toolset_correctly_pointing_to_database.3F">Is the Toolset correctly pointing to database?</span></h3>
+<p>Run <a href="Configure_Toolset.html" title="Configure Toolset" class="mw-redirect">Configure Toolset</a> to send the toolset in the right direction and test the database connection.
+</p><p>Notes: 
+</p>
+<ul><li>It has been observed that for some builds that the Toolset is not looking at the correct registry keys perhaps due to permission restrictions.  
+<ol><li>First use the ConfigureToolset to set the correct string.
+<dl><dd>If you don't use the default settings you can copy the string from from the ConfigureToolset tool otherwise use one of the following command line queries to get the connection string.</dd>
+<dd><i>Win32:</i> <code>reg query "HKLM\SOFTWARE\BioWare\Dragon Age\Toolset\Environment" /v DefaultDatabaseConnection</code></dd>
+<dd><i>Win64:</i> <code>reg query "HKLM\SOFTWARE\Wow6432Node\BioWare\Dragon Age\Toolset\Environment" /v DefaultDatabaseConnection</code></dd></dl></li>
+<li>Now run the following command line (substituting your connection string for the final value)
+<dl><dd><code>reg add "HKCU\Software\BioWare\Dragon Age\Toolset\Environment" /v DefaultDatabaseConnection /t REG_SZ /d "Provider=SQLOLEDB.1;Integrated Security=SSPI;Persist Security Info=False;Initial Catalog=bw_dragonage_content;Data Source=.\BWDATOOLSET"</code></dd></dl></li></ol></li></ul>
+<dl><dd>Double check your entry, a single incorrect character will cause the same "Unable to Connect" error.</dd></dl>
+<p><a href="#top">&#8593; Return to top</a>
+</p>
+<h2><span class="mw-headline" id="Full_Manual_Install">Full Manual Install</span></h2>
+<p>Manual database installation works almost every time.  If it does not, it should at least give you clues as to why it is failing, which you do not generally get when using the toolset installer.  If this "cannot connect to the database" error is frustrating you and you want to just make it work, and don't want to keep troubleshooting, this is probably your best bet:
+</p>
+<ol><li> <b>Install the toolset without any of the database options checked</b>.<div class="floatright"><a href="File%3AToolset_setup_screen.png.html" class="image"><img alt="Toolset setup screen.png" src="../assets/mw/images/f/f1/Toolset_setup_screen.png" width="513" height="397" /></a></div>
+<dl><dd>Uncheck the following both of the database settings options as shown here.  This will just install the toolset files and do nothing at all with the database itself.  Of course, since SQL Server is not installed, you would still get the "Unable to to connect to the database" error at this point.</dd></dl></li>
+<li> <b>Manually install SQL Server and restore the database</b>
+<dl><dd>It is not as hard as it may sound, and is documented <a href="Manual_database_installation.html" title="Manual database installation">here</a>.  Basically, when you do this, you are taking control of the two steps that you told the installer not to do, and doing them on your own.  This is effective as this way you can babysit the installation process.  Running the SQL installer this way will throw more explicit errors at you when it is having problems, making it easier to diagnose the problems and find solutions.</dd></dl></li></ol>
+<p><b>Why does this work?</b>
+</p><p>The toolset needs a database engine to run.  The installer has a copy of SQL Server 2005 embedded in it.  The idea behind this is that we could hide all the SQL Server installation, setup and administration voodoo, and do it all in the background so that you wouldn't have to figure out how to do it on your own.  When it works - it is great, when it doesn't - you land on this page...
+</p><p>When the toolset has finished doing its business (essentially unpacking some files and setting up some permissions and registry entries) it then runs the SQL Server 2005 installer in "silent" mode, where it just tries to install with its default settings.  The toolset installer is "blind" to what goes on during the SQL install, it just gets a message when the SQL installer says "<i>I'm done</i>", regardless of what kind of "<i>done</i>" that is.  It could be "<i>I just failed horribly, but I'm done failing now</i>" or it could be "<i>Whew, everything went as planned, I'm done</i>".  Once the toolset installer gets that message, it says "<i>SQL is done, so I can now restore the database</i>".  It then runs a command line to restore the database.  Again this process does not give proper feedback either, it just spits back another "<i>I'm done</i>" message, at which the toolset installer comes back and tells you it is finished.  Anything that goes wrong in this process will cause the dreaded error when you start the toolset.  Unfortunately there is no easy way for the installer to catch these problems and alert you.  Taking this process out of the installer's hands and running it manually allows you to see what is going wrong and react to it.  A quick internet search for any error that you get will often help you figure out what SQL Server is choking on in your particular case.
+</p><p><a href="#top">&#8593; Return to top</a>
+</p>
+<h2><span class="mw-headline" id="Additional_ideas">Additional ideas</span></h2>
+<h3><span class="mw-headline" id="MSSQL_Server_cannot_install_to_compressed_or_encrypted_folders">MSSQL Server cannot install to compressed or encrypted folders</span></h3>
+<p>SQL Server Setup cannot install files.
+</p><p>Product: Microsoft SQL Server 2005 -- Error 28062. SQL Server Setup cannot install files to the compressed or encrypted folder: X:\. To continue, make sure that your installation directories are not compressed or encrypted, or specify a different directory, and then run SQL Server Setup again.
+</p><p>Cause.
+SQL Server 2005 program files and data files cannot be installed on a file system that uses compression.
+</p><p>Solution.
+You need to uncompressed the drives or folders where the SQL Server 2005 program files and data files will be placed. Please follow the steps below:
+</p>
+<ol><li> From your Windows Explorer, navigate to the path where the SQL Server program files and data files will be placed</li>
+<li> Make a right click on the drive or folder and select Properties</li>
+<li> If you are seeing the properties of a folder click the Advanced button</li>
+<li> Click to clear the "Compress drive to save disk space" or "Compress contents to save disk space" check box</li>
+<li> Return to setup and continue installation.</li></ol>
+<p><a href="#top">&#8593; Return to top</a>
+</p>
+<h3><span class="mw-headline" id="Permissions_issues">Permissions issues</span></h3>
+<ul><li> Sometimes disabling UAC (User Account Control) and reinstalling the toolset will allow the database to install properly.</li></ul>
+<ul><li> SQL Server needs permission to read from the directory that the you have put the installation files, if it does not have permissions, it may be unable to import resources into the database. To correct this change the administrative privileges for the directory you're installing the toolset from.</li></ul>
+<ul><li>On Vista systems the toolset may need administrator privileges to read the database where it's installed but fail to prompt you for them. Try right-clicking the toolset's shortcut and selecting "Run as Administrator" from the dropdown menu.</li></ul>
+<ul><li> On Windows XP systems, you may need to run the toolset as the Administrator by right-clicking on the toolset's shortcut, selecting the "Run as..." menu item, and then select "The following user" radio button where you can enter the password for the Administrator account. You can also run the toolset with a power user account, but you'll have to add a new database user to authenticate your user account with. An easy way is to run the Server Surface Area Configuration tool that should have been installed with the toolset and Microsoft SQL Server 2005 Express. Launch it with the Administrator account and then click the "Add New Administrator" link. For "user to provision", enter your Windows account name and grant them the SysAdmin role from the window below. For possibly more information, see the forum thread <a rel="nofollow" class="external text" href="http://social.bioware.com/forum/1/topic/8/index/5517509/">Anyone able to run the toolset as NOT administrator in XP?</a>. If you were previously using the toolset under another account, then don't forget to check back in any outstanding resources so you can work on them from the current Windows account.</li></ul>
+<p><a href="#top">&#8593; Return to top</a>
+</p>
+<h2><span class="mw-headline" id="Other_Miscellaneous_Solutions">Other Miscellaneous Solutions</span></h2>
+<ul><li> You can use SQL Server Express 2008 instead of 2005.  It is better suited to some of the permissions issues that occur in Vista and Windows 7.  Many users have installed SQL Server Express 2008 and are using it instead of 2005.  You could download it and follow the instructions <a href="Manual_database_installation.html" title="Manual database installation">here</a> substituting 2008 for 2005.</li>
+<li> You can try setting up your database separately from the toolset installer. See <a href="Manual_database_installation.html" title="Manual database installation">Manual database installation</a> for the steps needed to install MSSQL Express 2005 and configure it for use with the toolset manually.  Users have been successful by setting up the toolset this way.</li></ul>
+<ul><li> One User has reported that this sequence of events works:</li></ul>
+<dl><dd><dl><dd><ul><li>Uninstall SQL server and the Toolset from PC.</li>
+<li>Delete C:\Program Files\Microsoft SQL Server</li>
+<li>In Regedit, delete the following:</li></ul>
+<dl><dd>HKEY_LOCAL_MACHINE\System\CurrentControlSet\Services\MSSQLServer</dd>
+<dd>HKEY_LOCAL_MACHINE\Software\Microsoft\Microsoft SQL Server</dd></dl>
+<ul><li>Reboot</li>
+<li>Install Toolset with the SQL.</li></ul></dd></dl></dd></dl>
+<ul><li>If you already have MSSQLServer Express installed as part of a different program, the toolset may not get the correct configuration to use it. Run the toolset configuration program (configuretoolset.exe, in the same directory as the toolset itself) and then click "next" through the configuration wizard until you get to the "Content Database" field. It should read: "<code>Provider=SQLOLEDB.1;Integrated Security=SSPI;Persist Security Info=False;Initial Catalog=bw_dragonage_content;Data Source=.\BWDATOOLSET</code>"</li></ul>
+<ul><li>Some users report that the installer fails to create the SQL database (e.g. your <code>Dragon Age\toolssql\data</code> folder is empty). You can enter the following command to try restoring the database manually (Change the paths to <code>bw_dragonage_content.bak</code> and your Dragon Age folder as appropriate): <code>"C:\Program Files\Microsoft SQL Server\90\Tools\Binn\"sqlcmd -S .\BWDATOOLSET -E -Q "RESTORE DATABASE bw_dragonage_content FROM DISK = 'C:\Program Files\Dragon Age\tools\dbbak\bw_dragonage_content.bak' WITH MOVE 'bw_dragonage_content' TO 'C:\Program Files\Dragon Age\tools\toolssql\Data\bw_dragonage_content.mdf', MOVE 'bw_dragonage_content_Log' TO 'C:\Program Files\Dragon Age\tools\toolssql\Data\bw_dragonage_content.ldf'"</code></li></ul>
+<p>You need to allow Users to Modify the DATA folder, before you can execute this command.
+</p>
+<ul><li>Some users have been successful simply installing from a more direct path (eg place the installer in C:\DAInstall and then run the exe file from that location rather than from My Documents or a similar long path).</li></ul>
+<p><a href="#top">&#8593; Return to top</a>
+</p><p><br />
+</p>
+<table class="nmbox" style="width:100%; border:1px solid #AAAAAA; border-collapse:collapse; clear:both; font-size:85%; margin:0.25em 0;">
+<tr style="background: #CFDFEF;">
+<th style="border:none; padding:4px 1em; border-right:1px solid #AAAAAA; text-align:center; white-space:nowrap;"> <b><a href="Dragon_Age_Toolset_Wiki%3ALanguage_policy.html" title="Dragon Age Toolset Wiki:Language policy">Language:</a></b></th>
+<td style="border:none; padding:0.25em 0.9em; width:100%; background:#DFEFFF;"><b><strong class="selflink">English</strong></b> <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>&#160;&#8226;&#32;<span lang="ru"><a href="Unable_to_connect_to_the_database/ru.html" title="Unable to connect to the database/ru">русский</a></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></td>
+</tr></table>
+
+<!-- 
+NewPP limit report
+CPU time usage: 0.108 seconds
+Real time usage: 0.197 seconds
+Preprocessor visited node count: 1085/1000000
+Preprocessor generated node count: 3352/1000000
+Post‐expand include size: 9066/2097152 bytes
+Template argument size: 1485/2097152 bytes
+Highest expansion depth: 8/40
+Expensive parser function count: 54/100
+-->
+
+<!-- 
+Transclusion expansion time report (%,ms,calls,template)
+100.00%  131.757      1 - -total
+ 94.14%  124.039      1 - Template:Languages
+ 88.77%  116.955      1 - Template:LanguagesBox
+ 69.01%   90.927     54 - Template:LanguagesLang
+ 10.71%   14.114      1 - Template:LanguagesTitle
+  3.99%    5.262      4 - Template:Dashedborder
+-->
+
+<!-- Saved in parser cache with key db714099484-datoolwiki_:pcache:idhash:3857-0!*!0!!en!5!* and timestamp 20260531123615 and revision id 19453
+ -->
+</div>									<div class="printfooter">
+						Retrieved from "<a dir="ltr" href="Unable_to_connect_to_the_database.html">https://www.datoolset.net/mw/index.php?title=Unable_to_connect_to_the_database&amp;oldid=19453</a>"					</div>
+													<div id='catlinks' class='catlinks'><div id="mw-normal-catlinks" class="mw-normal-catlinks"><a href="/wiki/Special:Categories" title="Special:Categories">Categories</a>: <ul><li><a href="Category%3AToolset_bugs.html" title="Category:Toolset bugs">Toolset bugs</a></li><li><a href="Category%3ADatabase.html" title="Category:Database">Database</a></li></ul></div></div>												<div class="visualClear"></div>
+							</div>
+		</div>
+		<div id="mw-navigation">
+			<h2>Navigation menu</h2>
+
+			<div id="mw-head">
+									<div id="p-personal" role="navigation" class="" aria-labelledby="p-personal-label">
+						<h3 id="p-personal-label">Personal tools</h3>
+						<ul>
+							<li id="pt-login"><a href="/mw/index.php?title=Special:UserLogin&amp;returnto=Unable+to+connect+to+the+database" title="You are encouraged to log in; however, it is not mandatory [o]" accesskey="o">Log in</a></li>						</ul>
+					</div>
+									<div id="left-navigation">
+										<div id="p-namespaces" role="navigation" class="vectorTabs" aria-labelledby="p-namespaces-label">
+						<h3 id="p-namespaces-label">Namespaces</h3>
+						<ul>
+															<li  id="ca-nstab-main" class="selected"><span><a href="Unable_to_connect_to_the_database.html"  title="View the content page [c]" accesskey="c">Page</a></span></li>
+															<li  id="ca-talk"><span><a href="Talk%3AUnable_to_connect_to_the_database.html"  title="Discussion about the content page [t]" accesskey="t">Discussion</a></span></li>
+													</ul>
+					</div>
+										<div id="p-variants" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-variants-label">
+												<h3 id="p-variants-label"><span>Variants</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+									</div>
+				<div id="right-navigation">
+										<div id="p-views" role="navigation" class="vectorTabs" aria-labelledby="p-views-label">
+						<h3 id="p-views-label">Views</h3>
+						<ul>
+															<li id="ca-view" class="selected"><span><a href="Unable_to_connect_to_the_database.html" >Read</a></span></li>
+															<li id="ca-viewsource"><span><a href="Unable_to_connect_to_the_database.html"  title="This page is protected.&#10;You can view its source [e]" accesskey="e">View source</a></span></li>
+															<li id="ca-history" class="collapsible"><span><a href="Unable_to_connect_to_the_database.html"  title="Past revisions of this page [h]" accesskey="h">View history</a></span></li>
+													</ul>
+					</div>
+										<div id="p-cactions" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-cactions-label">
+						<h3 id="p-cactions-label"><span>More</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+										<div id="p-search" role="search">
+						<h3>
+							<label for="searchInput">Search</label>
+						</h3>
+
+						<form action="/mw/index.php" id="searchform">
+														<div id="simpleSearch">
+															<input type="search" name="search" placeholder="Search" title="Search Dragon Age Toolset Wiki [f]" accesskey="f" id="searchInput" /><input type="hidden" value="Special:Search" name="title" /><input type="submit" name="fulltext" value="Search" title="Search the pages for this text" id="mw-searchButton" class="searchButton mw-fallbackSearchButton" /><input type="submit" name="go" value="Go" title="Go to a page with this exact name if exists" id="searchButton" class="searchButton" />								</div>
+						</form>
+					</div>
+									</div>
+			</div>
+			<div id="mw-panel">
+				<div id="p-logo" role="banner"><a class="mw-wiki-logo" href="Main_Page.html"  title="Visit the main page"></a></div>
+						<div class="portal" role="navigation" id='p-navigation' aria-labelledby='p-navigation-label'>
+			<h3 id='p-navigation-label'>Navigation</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-mainpage-description"><a href="Main_Page.html" title="Visit the main page [z]" accesskey="z">Main page</a></li>
+													<li id="n-recentchanges"><a href="/wiki/Special:RecentChanges" title="A list of recent changes in the wiki [r]" accesskey="r">Recent changes</a></li>
+													<li id="n-randompage"><a href="/wiki/Special:Random" title="Load a random page [x]" accesskey="x">Random page</a></li>
+													<li id="n-help"><a href="https://www.mediawiki.org/wiki/Special:MyLanguage/Help:Contents" title="The place to find out">Help</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-Links' aria-labelledby='p-Links-label'>
+			<h3 id='p-Links-label'>Links</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-Toolset-forums"><a href="http://forum.bioware.com/forum/30-dragon-age-toolset" rel="nofollow">Toolset forums</a></li>
+													<li id="n-Legacy-forums"><a href="http://social.bioware.com/forum/1/subindex/70" rel="nofollow">Legacy forums</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-tb' aria-labelledby='p-tb-label'>
+			<h3 id='p-tb-label'>Tools</h3>
+
+			<div class="body">
+									<ul>
+													<li id="t-whatlinkshere"><a href="/wiki/Special:WhatLinksHere/Unable_to_connect_to_the_database" title="A list of all wiki pages that link here [j]" accesskey="j">What links here</a></li>
+													<li id="t-recentchangeslinked"><a href="/wiki/Special:RecentChangesLinked/Unable_to_connect_to_the_database" title="Recent changes in pages linked from this page [k]" accesskey="k">Related changes</a></li>
+													<li id="t-specialpages"><a href="/wiki/Special:SpecialPages" title="A list of all special pages [q]" accesskey="q">Special pages</a></li>
+													<li id="t-print"><a href="Unable_to_connect_to_the_database.html" rel="alternate" title="Printable version of this page [p]" accesskey="p">Printable version</a></li>
+													<li id="t-permalink"><a href="Unable_to_connect_to_the_database.html" title="Permanent link to this revision of the page">Permanent link</a></li>
+													<li id="t-info"><a href="Unable_to_connect_to_the_database.html" title="More information about this page">Page information</a></li>
+											</ul>
+							</div>
+		</div>
+				</div>
+		</div>
+		<div id="footer" role="contentinfo">
+							<ul id="footer-info">
+											<li id="footer-info-lastmod"> This page was last modified on 23 August 2015, at 13:33.</li>
+									</ul>
+							<ul id="footer-places">
+											<li id="footer-places-privacy"><a href="/wiki/Dragon_Age_Toolset_Wiki:Privacy_policy" title="Dragon Age Toolset Wiki:Privacy policy">Privacy policy</a></li>
+											<li id="footer-places-about"><a href="/wiki/Dragon_Age_Toolset_Wiki:About" title="Dragon Age Toolset Wiki:About">About Dragon Age Toolset Wiki</a></li>
+											<li id="footer-places-disclaimer"><a href="/wiki/Dragon_Age_Toolset_Wiki:General_disclaimer" title="Dragon Age Toolset Wiki:General disclaimer">Disclaimers</a></li>
+									</ul>
+										<ul id="footer-icons" class="noprint">
+											<li id="footer-poweredbyico">
+															<a href="//www.mediawiki.org/"><img src="../assets/mw/resources/assets/poweredby_mediawiki_88x31.png" alt="Powered by MediaWiki" srcset="../assets/mw/resources/assets/poweredby_mediawiki_132x47.png 1.5x, ../assets/mw/resources/assets/poweredby_mediawiki_176x62.png 2x" width="88" height="31" /></a>
+													</li>
+									</ul>
+						<div style="clear:both"></div>
+		</div>
+		<script>if(window.jQuery)jQuery.ready();</script><script>if(window.mw){
+mw.loader.state({"site":"loading","user":"ready","user.groups":"ready"});
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.toc","mediawiki.action.view.postEdit","mediawiki.user","mediawiki.hidpi","mediawiki.page.ready","mediawiki.searchSuggest"],null,true);
+}</script>
+<script>if(window.mw){
+document.write("\u003Cscript src=\"https://www.datoolset.net/mw/load.php?debug=false\u0026amp;lang=en\u0026amp;modules=site\u0026amp;only=scripts\u0026amp;skin=vector\u0026amp;*\"\u003E\u003C/script\u003E");
+}</script>
+<script>if(window.mw){
+mw.config.set({"wgBackendResponseTime":196});
+}</script>
+	</body>
+</html>

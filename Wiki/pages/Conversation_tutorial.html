@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" class="client-nojs">
+<head>
+<meta charset="UTF-8" />
+<title>Conversation tutorial - Dragon Age Toolset Wiki</title>
+<meta name="generator" content="MediaWiki 1.25.6" />
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="search" type="application/opensearchdescription+xml" href="/mw/opensearch_desc.php" title="Dragon Age Toolset Wiki (en)" />
+<link rel="EditURI" type="application/rsd+xml" href="https://www.datoolset.net/mw/api.php?action=rsd" />
+<link rel="alternate" hreflang="x-default" href="Conversation_tutorial.html" />
+<link rel="alternate" type="application/atom+xml" title="Dragon Age Toolset Wiki Atom feed" href="/mw/index.php?title=Special:RecentChanges&amp;feed=atom" />
+<meta name="ResourceLoaderDynamicStyles" content="" />
+<style>a:lang(ar),a:lang(kk-arab),a:lang(mzn),a:lang(ps),a:lang(ur){text-decoration:none}
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-css:7:270a0dcd3ae587df0f041aebfc42e61b */</style>
+<script>if(window.mw){
+mw.config.set({"wgCanonicalNamespace":"","wgCanonicalSpecialPageName":false,"wgNamespaceNumber":0,"wgPageName":"Conversation_tutorial","wgTitle":"Conversation tutorial","wgCurRevisionId":16964,"wgRevisionId":16964,"wgArticleId":46,"wgIsArticle":true,"wgIsRedirect":false,"wgAction":"view","wgUserName":null,"wgUserGroups":["*"],"wgCategories":["Conversations","Tutorials"],"wgBreakFrames":false,"wgPageContentLanguage":"en","wgPageContentModel":"wikitext","wgSeparatorTransformTable":["",""],"wgDigitTransformTable":["",""],"wgDefaultDateFormat":"dmy","wgMonthNames":["","January","February","March","April","May","June","July","August","September","October","November","December"],"wgMonthNamesShort":["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],"wgRelevantPageName":"Conversation_tutorial","wgRelevantArticleId":46,"wgIsProbablyEditable":false,"wgRestrictionEdit":[],"wgRestrictionMove":[]});
+}</script><script>if(window.mw){
+mw.loader.implement("user.options",function($,jQuery){mw.user.options.set({"variant":"en"});});mw.loader.implement("user.tokens",function($,jQuery){mw.user.tokens.set({"editToken":"+\\","patrolToken":"+\\","watchToken":"+\\"});});
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-js:7:a5c52c063dc436c1ca7c9f456936a5e9 */
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.page.startup","mediawiki.legacy.wikibits","mediawiki.legacy.ajax","skins.vector.js"]);
+}</script>
+<!--[if lt IE 7]><style type="text/css">body{behavior:url("/mw/skins/Vector/csshover.min.htc")}</style><![endif]-->
+<link rel="stylesheet" href="../assets/local/wiki-static.css" />
+</head>
+<body class="mediawiki ltr sitedir-ltr ns-0 ns-subject page-Conversation_tutorial skin-vector action-view">
+		<div id="mw-page-base" class="noprint"></div>
+		<div id="mw-head-base" class="noprint"></div>
+		<div id="content" class="mw-body" role="main">
+			<a id="top"></a>
+
+						<div class="mw-indicators">
+</div>
+			<h1 id="firstHeading" class="firstHeading" lang="en">Conversation tutorial</h1>
+						<div id="bodyContent" class="mw-body-content">
+									<div id="siteSub">From Dragon Age Toolset Wiki</div>
+								<div id="contentSub"></div>
+												<div id="jump-to-nav" class="mw-jump">
+					Jump to:					<a href="#mw-head">navigation</a>, 					<a href="#p-search">search</a>
+				</div>
+				<div id="mw-content-text" lang="en" dir="ltr" class="mw-content-ltr"><table style="float:right; background-color:#eeeeee; border:2px #999999 solid; padding:4px; margin:4px; width:220px;">
+
+<tr>
+<th align="center"> Conversation topics
+</th></tr>
+<tr>
+<td>
+<ul><li><a href="Conversation.html" title="Conversation">Conversations</a></li>
+<li><strong class="selflink">Conversation tutorial</strong></li>
+<li><a href="Conversation_cinematics_and_animation.html" title="Conversation cinematics and animation">Cinematics and animations</a></li>
+<li><a href="Conversation_plots_and_scripting.html" title="Conversation plots and scripting">Plots and scripting</a></li>
+<li><a href="Voice-over.html" title="Voice-Over">Voice-Over</a>
+<ul><li><a href="Preparing_a_dialog_for_recording.html" title="Preparing a dialog for recording">Preparing a dialog for recording</a></li>
+<li><a href="FaceFX.html" title="FaceFX">FaceFX</a></li></ul></li>
+<li><a href="Conversation_editor_options.html" title="Conversation editor options" class="mw-redirect">Conversation editor options</a></li>
+<li><a href="Soundset.html" title="Soundset">Soundset</a></li></ul>
+</td></tr></table>
+<p>Dialog is perhaps the most important part of making an adventure into a story. In Dragon Age, dialog is a collection of lines that are arranged in an interactive tree-shaped structure. This tree structure can be simple or complex, and each line can have conditions and actions attached to it that interact with the state of the world at large.
+</p><p>For this tutorial we will start simple and then progressively add new features and options to a <a href="Conversation.html" title="Conversation">conversation</a> as we go. Later on there will be a separate tutorial for adding cinematic direction to conversations.
+</p>
+<div id="toc" class="toc"><div id="toctitle"><h2>Contents</h2></div>
+<ul>
+<li class="toclevel-1 tocsection-1"><a href="#Creating_and_setting_a_conversation_for_a_creature"><span class="tocnumber">1</span> <span class="toctext">Creating and setting a conversation for a creature</span></a></li>
+<li class="toclevel-1 tocsection-2"><a href="#Adding_some_dialog"><span class="tocnumber">2</span> <span class="toctext">Adding some dialog</span></a></li>
+<li class="toclevel-1 tocsection-3"><a href="#Keeping_track_of_quests_via_plots"><span class="tocnumber">3</span> <span class="toctext">Keeping track of quests via plots</span></a></li>
+<li class="toclevel-1 tocsection-4"><a href="#Simple_stages"><span class="tocnumber">4</span> <span class="toctext">Simple stages</span></a></li>
+<li class="toclevel-1 tocsection-5"><a href="#Gestures"><span class="tocnumber">5</span> <span class="toctext">Gestures</span></a></li>
+<li class="toclevel-1 tocsection-6"><a href="#Voice-over_and_FaceFX"><span class="tocnumber">6</span> <span class="toctext">Voice-over and FaceFX</span></a></li>
+<li class="toclevel-1 tocsection-7"><a href="#Common_Problems"><span class="tocnumber">7</span> <span class="toctext">Common Problems</span></a>
+<ul>
+<li class="toclevel-2 tocsection-8"><a href="#Conversation_history_not_showing_up_in_the_player.27s_journal"><span class="tocnumber">7.1</span> <span class="toctext">Conversation history not showing up in the player's journal</span></a></li>
+</ul>
+</li>
+</ul>
+</div>
+
+<h2><span class="mw-headline" id="Creating_and_setting_a_conversation_for_a_creature">Creating and setting a conversation for a creature</span></h2>
+<div style="float:right; background-color:#ffffcc; border:2px #ffff99 solid; padding:4px; margin:4px; width:200px;">
+<ul><li> The root node of a conversation tree holds global (conversation-wide) settings.</li></ul>
+</div>
+<p>In the <a href="Creature_tutorial.html" title="Creature tutorial">creature tutorial</a> we created a <a href="Creature.html" title="Creature">creature</a> named "Quest Giver", who is standing outside a hut that's filled with monsters. The goal is to have the quest giver ask you to go in and kill all the monsters for him.
+</p><p>First, we need to create the conversation resource. Using the new resource command, select "conversation" and give it a resource name that will help keep track of its purpose. We're calling this conversation "conv_quest_giver". The new conversation starts out empty, with only a "root" node. The root node of a conversation doesn't contain any dialog itself; it is merely a container that holds various global settings that apply to the conversation as a whole.
+</p><p>With the root node highlighted, the global settings become accessible in the tabbed pane at the bottom of the conversation editing window:
+</p><p><a href="File%3AConversation_root_global_settings.png.html" class="image"><img alt="Conversation root global settings.png" src="../assets/mw/images/a/ab/Conversation_root_global_settings.png" width="728" height="325" /></a>
+</p>
+<div style="float:right; background-color:#ffffcc; border:2px #ffff99 solid; padding:4px; margin:4px; width:200px;">
+<ul><li> "OWNER" is the creature the conversation "belongs" to.</li>
+<li> "PLAYER" is the player's character</li>
+<li> A conversation is assigned to a creature in the <i>creature's</i> properties (the "Conversation" property)</li></ul>
+</div>
+<p>These settings have defaults that will be perfectly good for a conversation between a PC and a single NPC, as we will be doing here. The "OWNER" of the conversation will be the creature the conversation is attached to - in this case, Quest Giver. The "PLAYER" is, of course, the player's character.
+</p>
+<ul><li>Default NPC Speaker: This is the creature who, by default, responds to the player's dialog selections.</li>
+<li>Default NPC Listener: This is the creature who the NPC is directing those responses to. This is used to determine who the NPC should turn his head toward when speaking.</li>
+<li>Default PC Listener: This is the creature who the PC is talking to when he makes dialog selections, determining who the PC's avatar turns his head toward.</li></ul>
+<p>These settings can be overridden on a line-by-line basis, something you'll usually only need to do when you're writing a conversation with more than two participants. We won't do that in this introductory tutorial. It's also possible to have an inanimate object (a placeable) as a participant in a conversation, which we also won't get into here.
+</p><p>Also on this page are a number of checkboxes for locking cinematics. This is usually used to prevent the toolset from generating new automatic animations after you've fine-tuned things manually, we won't need to worry about that for now.
+</p><p>Once the conversation resource is created, we'll need to tell the quest_giver creature that he's supposed to use it when the player tries to talk to him. Open the quest giver in the creature editor and change his "Conversation" property from the default (none) to "conv_quest_giver" by pressing the ellipsis (<img alt="Ellipsis.png" src="../assets/mw/images/1/1c/Ellipsis.png" width="17" height="18" />) button and selecting the conv_quest_giver dialog.
+</p>
+<h2><span class="mw-headline" id="Adding_some_dialog">Adding some dialog</span></h2>
+<div style="float:right; background-color:#ffffcc; border:2px #ffff99 solid; padding:4px; margin:4px; width:200px;">
+<ul><li> Red lines of dialog are spoken by NPCs one at a time</li>
+<li> Blue lines of dialog are selected from by the player and are presented as groups of options</li></ul>
+</div>
+<p>To add a line to the root, you can right-click on it and select "Add Line". It's also available as a button in the toolbar (button #23, below) and with the shortcut "control-A".
+</p><p><a href="File%3AConversation_toolbar.png.html" class="image"><img alt="Conversation toolbar.png" src="../assets/mw/images/f/ff/Conversation_toolbar.png" width="573" height="100" /></a>
+</p><p>The added node will be in red text, indicating it's non-interactive (spoken by the NPC) and tagged with [[[[OWNER]]]] to indicate who's speaking it. When the player initiates conversation with the conversation's owner, this is the first line that will be said.
+</p><p>To determine what it is that the conversation owner says, select the node and go down to the dialog tab to enter the text. For the time being we won't need to worry about the other options below the dialog's main text entry field.
+</p><p><a href="File%3AConversation_dialog.png.html" class="image"><img alt="Conversation dialog.png" src="../assets/mw/images/7/74/Conversation_dialog.png" width="688" height="268" /></a>
+</p><p>Once the creature has spoken its line, the player needs to be prompted to give some sort of response. The player could greet the Quest Giver, ask him a question, or choose to ignore him. To add these options, select the line you just added and "Insert line" three times. This will add three blue lines as children of the red one. In each of these lines' dialogue tabs, add the text of the response the player can give.
+</p><p><a href="File%3AConversation_tutorial_1.png.html" class="image"><img alt="Conversation tutorial 1.png" src="../assets/mw/images/5/5c/Conversation_tutorial_1.png" width="397" height="145" /></a>
+</p><p>Here's how it looks in game once we've initiated this conversation:
+</p><p><a href="File%3AConversation_tutorial_quest_giver_speaks.png.html" class="image"><img alt="Conversation tutorial quest giver speaks.png" src="../assets/mw/images/c/ca/Conversation_tutorial_quest_giver_speaks.png" width="600" height="450" srcset="../assets/mw/images/c/ca/Conversation_tutorial_quest_giver_speaks.png 1.5x, ../assets/mw/images/c/ca/Conversation_tutorial_quest_giver_speaks.png 2x" /></a>
+</p><p>The conversation can continue being built in this vein with one NPC response for each of the player's options and one or more player options branching out in turn. When the player runs off the end of the conversation it ends, sending him back to explore mode.
+</p>
+<div style="float:right; background-color:#ffffcc; border:2px #ffff99 solid; padding:4px; margin:4px; width:200px;">
+<ul><li> "Copy" and then "Paste as Link" allows conversation trees to loop or merge branches</li></ul>
+</div>
+<p>Thanks to this branching pattern it is possible for a conversation's volume to grow at an exponential rate, rapidly becoming very tedious to write. Worse, there could be many points within a conversation tree where the same lines might be spoken, leading to redundancy. This can be solved by "linking" lines to each other, allowing the conversation to jump from one branch to another or to loop back on itself to replay parts over again.
+</p><p>In this example, we'll have the Quest Giver respond to the player's first option with "Excellent! I have a quest I need performed for me!". At this point the player could respond with the same "Oh? What quests do you have in mind?" line that was an option initially, leading to the same response. Rather than duplicate the entire tree, select the existing "Oh? What quests do you have in mind?" line and copy it to the clipboard (control-C, or right click copy, or edit -&gt; copy). Then select the new owner line and paste as link (control-shift-V, right click paste as link, or edit -&gt; paste as link)
+</p><p><a href="File%3AConversation_tutorial_2.png.html" class="image"><img alt="Conversation tutorial 2.png" src="../assets/mw/images/6/62/Conversation_tutorial_2.png" width="636" height="199" /></a>
+</p><p>The linked line is shown in gray. To find out where a grey line links to, right-click on it and select "Jump to Target" (or just double click it). To find all the places the target line is linked to from, right-click on it and select "Find Links"
+</p><p>Now both of these paths through the conversation will lead to the same line, wherein the Quest Giver tells the player that the hut behind him is full of monsters. We can add an option to the dialog after this where the player can accept the mission to slay them all, and now when he enters the hut to fight them there will be more of a story behind about how he came to that point.
+</p>
+<h2><span class="mw-headline" id="Keeping_track_of_quests_via_plots">Keeping track of quests via plots</span></h2>
+<div style="float:right; background-color:#ffffcc; border:2px #ffff99 solid; padding:4px; margin:4px; width:200px;">
+<ul><li> Plots contain lists of flags for keeping track of quest status and other world events</li>
+<li> Each flag can also contain journal text for the player to read</li></ul>
+</div>
+<p>Now that we have a mechanism in place where we can assign a quest to the player we'll want some way to keep track of his progress. In Neverwinter Nights this was done using scripting directly, but in Dragon Age a new type of resource has been introduced that helps to simplify the process. These are "<a href="Plot.html" title="Plot">Plots</a>". Go to the resource palette and create a new plot with the resource name "clear_the_hut".
+</p><p>A plot consists of a series of named flags that can be set to true or false. The intent is for these flags to represent significant accomplishments or developments in the plot, with the values being set in response to the player's actions. Each flag can also have an associated journal text, a block of text that is displayed in the  player's journal under the plot's title. Journal text is normally used to keep the player informed of his progress and remind him of important information he's discovered along the way.
+</p><p>We'll need to give the plot a "Name" property, which will be seen by the player as the plot's title in the journal. This plot's name will be "Clear the Hut". There are three significant landmarks in the course of this plot; the moment the player accepts the plot, the moment the player has succeeded in slaying all of the monsters in the hut, and the moment when the player reports back to the quest giver to receive his reward. We will therefore create three flags:
+</p>
+<ul><li>QUEST_ACCEPTED</li>
+<li>MONSTERS_SLAIN</li>
+<li>REWARD_RECEIVED</li></ul>
+<p>Create flags by right-clicking on the plot editor and selecting "Insert -&gt; Main Flag", or by clicking on "Insert Main Flag" in the toolbar, or by selecting "Edit -&gt; Insert -&gt; Main Flag" from the menu bar.
+</p><p><a href="File%3APlot_tutorial_1.png.html" class="image"><img alt="Plot tutorial 1.png" src="../assets/mw/images/a/a6/Plot_tutorial_1.png" width="734" height="353" /></a>
+</p><p>Each time a plot flag is set, that flag's journal text replaces the previous text that was in the journal for that plot.
+</p>
+<div style="float:right; background-color:#ffffcc; border:2px #ffff99 solid; padding:4px; margin:4px; width:200px;">
+<ul><li> The "Action" section of the "Plots and Scripting" tab of a conversation node allows plot flags to be set (made "true") or unset (made "false") when that line is finished</li>
+<li> The "Condition" section of the tab allows the line to be hidden or shown to the player based on the state of plot flags</li></ul>
+</div>
+<p>The easiest way to set a plot flag is in a conversation. When the player accepts the quest to slay the monsters in the hut, we'll want to set the "QUEST_ACCEPTED" flag of the clear_the_hut plot. Select the line where the player accepts the quest and then click on the "Plots and Scripting" tab. Under the "Action" section we'll want to select the clear_the_hut plot. It won't initially appear in the dropdown list since we haven't selected it before (the dropdown list contains recently-used resources), so click on the ellipsis button and select it from the list of all plot resources. Then, once the correct plot is accepted, select the "QUEST_ACCEPTED" flag. The default action is "set", which will set the flag to true.
+</p><p>Now when we reach this line in the conversation, the "QUEST_ACCEPTED" flag in the clear_the_hut plot will be set to true. This will also update the player's journal to show the journal text associated with that plot flag. You'll note that an "A" also appears in the icon for this conversation node, an indicator that this line of dialog has an action associated with it.
+</p>
+<div style="float:right; background-color:#ffffcc; border:2px #ffff99 solid; padding:4px; margin:4px; width:200px;">
+<ul><li> The first NPC (red) line that can be shown to a player will be; all subsequent NPC lines branching from the same node will be hidden</li>
+<li> Make sure the last child line of a node has no condition attached so that there will always be a default line to show the player</li></ul>
+</div>
+<p>Once the quest has been accepted, it makes no sense for the Quest Giver to offer it a second time. Indeed, if the player were to partially complete the quest and then accept it all over again, his progress through the quest would be disrupted and quite likely unexpected errors would slip into the game. Therefore, we are going to go back to the first line in this conversation and add a condition to it. Select the first line, go to the "Plots and Scripting" tab, and this time put the "clear_the_hut" plot in the <i>condition</i> section. Set the flag to "QUEST_ACCEPTED", and set the condition to "is false".
+</p><p><a href="File%3AConversation_tutorial_4.png.html" class="image"><img alt="Conversation tutorial 4.png" src="../assets/mw/images/1/1a/Conversation_tutorial_4.png" width="647" height="458" /></a>
+</p><p>This means that this line of dialog will only appear if the quest has not yet been accepted. You'll note that a "C" appears in the node icon to indicate that this line of dialog has a condition attached. Since all of the other lines of dialog depend on this line appearing, including the offer of the quest and the line where the player accepts it, this means that the quest can only be accepted once; once it's been accepted the quest giver will not offer it again.
+</p><p>However, this will now leave the quest giver with nothing at all to say. We'll want to give him a different line to say instead. Select the root node of the conversation tree, add a line, and you'll get a second "first" line for the quest giver to say. The game will always pick the first line that can be spoken, so the player will never see the line "Have you slain the monsters yet?" until after he has accepted the quest and the line "Ahoy! I am the Quest Giver!" becomes hidden.
+</p><p><a href="File%3AConversation_tutorial_5.png.html" class="image"><img alt="Conversation tutorial 5.png" src="../assets/mw/images/2/22/Conversation_tutorial_5.png" width="588" height="209" /></a>
+</p>
+<div style="float:right; background-color:#ffffcc; border:2px #ffff99 solid; padding:4px; margin:4px; width:200px;">
+<ul><li> Player responses can also be made conditional, being hidden from the player if the condition fails.</li></ul>
+</div>
+<p>Conditions can also be placed on player lines. In this case, we want the player to only be able to tell the quest giver that he's completed the quest once the monsters are actually dead. We'll be showing how the MONSTERS_SLAIN flag will be set up later, using scripting, but the details of how it is set are not important right now; we can set the conversation up to account for it and implement it later.
+</p><p>Set the condition for the line "Yes, I have" to require the MONSTERS_SLAIN flag to be true. The subsequent response from the quest giver can then set the REWARD_RECEIVED flag to true.
+</p><p>To prevent the player from accepting his reward multiple times, add a condition to the line "Have you slain the monsters yet?" to require REWARD_RECEIVED to be false. Finally, add a third line off of root for the quest giver to say once the quest has been confirmed completed and there's nothing more for him to do.
+</p><p><a href="File%3AConversation_tutorial_6.png.html" class="image"><img alt="Conversation tutorial 6.png" src="../assets/mw/images/7/7b/Conversation_tutorial_6.png" width="756" height="492" /></a>
+</p><p>And there you have it, a simple interactive conversation that will affect and be affected by the world around it.
+</p>
+<h2><span class="mw-headline" id="Simple_stages">Simple stages</span></h2>
+<div style="float:right; background-color:#ffffcc; border:2px #ffff99 solid; padding:4px; margin:4px; width:200px;">
+<ul><li> Stages define where characters stand and how the camera is positioned during a conversation</li>
+<li> A conversation without a stage will use a basic default camera positioning</li>
+<li> You need to define a stage for a conversation before you can give the actors animations</li></ul>
+</div>
+<p>If you run through the conversation as it currently exists you'll find that all of the mechanics are there, but that the performance of our virtual actor leaves a lot to be desired - he simply stands there silent and motionless, staring at the player. The camera angle is also somewhat bland. This can be remedied by adding a <a href="Stage.html" title="Stage">stage</a> to perform the conversation in.
+</p><p>A stage is a set of locations where the participants in a conversation will be positioned, and locations where various cameras will be placed. Create a new stage resource and name it something informative, such as hut_exterior_quest_giver. You'll be presented with an empty, featureless stage. The stage editor window defaults to having four different views of the stage; if you want to change this you can find the setting for this under the "Tools-&gt;Options" menu.
+</p>
+<div style="float:right; background-color:#ffffcc; border:2px #ffff99 solid; padding:4px; margin:4px; width:200px;">
+<ul><li> "place" objects are spots where the conversation's participants will stand</li>
+<li> The identity of the creatures occupying places is set in the conversation editor</li>
+<li> Each place should have a default camera selected. This camera is used by default when the creature occupying that place is talking.</li></ul>
+</div>
+<p>Stages can be complex but in this case we'll keep it simple. Right-click somewhere near the center of the stage and insert a "place" object, and then again to insert a second "place" object. You'll create two blank-looking yellow figurines. These figurines will represent the two creatures who will be involved in the conversation, the player and the quest giver. You'll want to turn one of them to face the other and put them relatively close together.
+</p><p>You'll then want to insert a camera for the conversation to use. Right-click, select insert, and select camera. Position the camera so that it has a view over the shoulder of one of the two figures and is looking at the other figure, a standard over-the-shoulder shot. You can adjust the camera more easily by setting one of the four views to be the camera's view; right-click on the frame, go down to the "camera" option, and select which of the cameras the frame should provide the view of. You can also select the "Safe Frame" option, which puts a border on the view showing only what will be visible in-game.
+</p><p><a href="File%3AStage_tutorial_1.png.html" class="image"><img alt="Stage tutorial 1.png" src="../assets/mw/images/b/b2/Stage_tutorial_1.png" width="1057" height="501" /></a>
+</p><p>For each place you'll want to define a default camera; this is the camera that will be used to view the creature standing in this place when that creature is talking in the game. Select the place and in the object inspector select "camera1" for the default camera.
+</p><p>If you wish, you can put in additional cameras. In the conversation editor you will have options to select which cameras are active, and even to cut from one camera to another in the middle of a line. We won't do that yet, however; we currently want this to be as simple a stage as possible. A future tutorial will cover stages in more depth.
+</p>
+<div style="float:right; background-color:#ffffcc; border:2px #ffff99 solid; padding:4px; margin:4px; width:200px;">
+<ul><li> Once a stage resource is created, it must then be placed in the area editor</li>
+<li> Place the stage so that the conversation's participants won't have to be moved far</li></ul>
+</div>
+<p>Once the stage has been created, we'll need to place it in the area where the conversation is to take place. Open the hut exterior area in the area editor and go to the location where you've placed the Quest Giver. Find the stage in the resource palette, place it in the area, and you'll see the blank figures and the camera appear. There will also be a red flag similar to a <a href="Waypoint.html" title="Waypoint">waypoint</a>; this marks the center of the stage and is useful for distinguishing them when there are many stages overlapping each other in an area. Position the stage so that the place where the quest giver will be standing is approximately where he is right now; it doesn't have to be exact, but if he changes location dramatically when the conversation starts it might be a bit jarring.
+</p><p><a href="File%3AStage_tutorial_2.png.html" class="image"><img alt="Stage tutorial 2.png" src="../assets/mw/images/a/a6/Stage_tutorial_2.png" width="534" height="447" /></a>
+</p>
+<div style="float:right; background-color:#ffffcc; border:2px #ffff99 solid; padding:4px; margin:4px; width:200px;">
+<ul><li> Assign the stage to the conversation in the conversation editor</li>
+<li> Then assign which conversation participants use which places defined by the stage</li></ul>
+</div>
+<p>Now that the stage has been placed, we can set the conversation to use it. Go back to the conversation editor, select the root node, and then select the "Cinematics" tab. There will be an option there to set a stage. Since we've never selected this stage before it won't be in the dropdown list, use the ellipsis button to select the stage from the available stage resources.
+</p><p>Once the stage has been selected the two places that are part of the stage will be listed below. You'll want to assign them to the two participants in this conversation, OWNER and PLAYER.
+</p><p><a href="File%3AConversation_tutorial_7.png.html" class="image"><img alt="Conversation tutorial 7.png" src="../assets/mw/images/8/80/Conversation_tutorial_7.png" width="759" height="324" /></a>
+</p>
+<h2><span class="mw-headline" id="Gestures">Gestures</span></h2>
+<div style="float:right; background-color:#ffffcc; border:2px #ffff99 solid; padding:4px; margin:4px; width:200px;">
+<ul><li> Once a stage is set you can automatically generate gestures</li>
+<li> To generate gestures for all nodes in a conversation, select the root node and generate gestures for children</li></ul>
+</div>
+<p>Select the root node of the conversation and then click on the "Generate Gestures for Children" button (#35 on the toolbar, or in the right-click menu for the node, or in the edit menu)
+</p><p><a href="File%3AConversation_toolbar.png.html" class="image"><img alt="Conversation toolbar.png" src="../assets/mw/images/f/ff/Conversation_toolbar.png" width="573" height="100" /></a>
+</p><p>This will run through all of the nodes beneath root and automatically generate some random gestures appropriate for a man standing and talking to someone. These gestures can be customized and fine-tuned, but this will be the subject of a separate tutorial.
+</p><p>Now at last our actors are a little less wooden; they move around a bit, and the camera is in an interesting place. But their faces are still completely blank. This too can be easily remedied.
+</p>
+<h2><span class="mw-headline" id="Voice-over_and_FaceFX">Voice-over and FaceFX</span></h2>
+<div style="float:right; background-color:#ffffcc; border:2px #ffff99 solid; padding:4px; margin:4px; width:200px;">
+<ul><li> You need to have voice-over recorded to generate a facial performance with FaceFX.</li>
+<li> You can generate a basic placeholder voice-over automatically.</li>
+<li> See <a href="Voice-over.html" title="Voice-Over">Voice-Over</a> for information on how to record your own voice over.</li></ul>
+</div>
+<p><br />
+Every line of dialog in Dragon Age can have <a href="Voice-over.html" title="Voice-over" class="mw-redirect">voice-over</a> recorded for it, which as one might imagine can be a daunting task. As a temporary measure during game development you can instead generate a temporary placeholder voice-over using a basic speech synthesis program. Under "Tools" select "Generate VO" and synthesized voice-over will be added to every line.
+</p><p><a href="File%3AConversation_generate_VO.png.html" class="image"><img alt="Conversation generate VO.png" src="../assets/mw/images/3/3c/Conversation_generate_VO.png" width="574" height="426" /></a>
+</p><p>The synthesized voice over is very primitive, but it allows you to test the conversation and fine-tune other details without having to record voice as you go - you can leave voice recording until later, once you've finalized all the dialog. It also allows us to generate a facial performance using <a href="FaceFX.html" title="FaceFX">FaceFX</a>.
+</p><p><a href="File%3AConversation_generate_FaceFX.png.html" class="image"><img alt="Conversation generate FaceFX.png" src="../assets/mw/images/e/e6/Conversation_generate_FaceFX.png" width="580" height="426" /></a>
+</p><p>The most obvious component of facial performance is lip-synching. FaceFX generates lip-synching from the actual audio of the line, not just from the text of the dialog, so voice over needs to be generated before FaceFX can be run. FaceFX also adds emotional cues to the character's expression using an extension called RoboBrad. You can select the emotion to be added from the "Emotion" field in the cinematics tab for each line of dialog.
+</p><p><a href="File%3AConversation_cinematics.png.html" class="image"><img alt="Conversation cinematics.png" src="../assets/mw/images/c/c9/Conversation_cinematics.png" width="774" height="200" /></a>
+</p><p>Once you've generated a facial performance, you can fine-tune it by selecting "Edit FaceFX" from the tools menu. This will open FaceFX with the selected line of dialogue loaded. We won't be doing this in this tutorial, but if you want to try it out and see what options FaceFX provides see the <a href="FaceFX.html" title="FaceFX">FaceFX</a> page for more detail.
+</p><p><a href="File%3AConversation_edit_FaceFX.png.html" class="image"><img alt="Conversation edit FaceFX.png" src="../assets/mw/images/b/bd/Conversation_edit_FaceFX.png" width="424" height="425" /></a>
+</p><p>To record your own <a href="Voice-over.html" title="Voice-over" class="mw-redirect">voice-over</a>, you'll need some method for recording your voice (Windows comes with a basic sound-recording program but other more sophisticated programs are available free for download as well) as a wav file. The wav file must be recorded in or converted to PCM 24 khz 16 bit mono format, otherwise the process will fail and an unhelpful error message will be displayed.
+</p><p>Real vo needs to be stored in ~installpath~\Dragon Age\addins\[moduleuid]\module\override\toolsetexport\[lineid]_m.wav - you can dump wav files anywhere under the toolsetexport directory and they will be picked up but for organizational purposes you should probably organize it into subfolders grouped by conversation.
+</p><p>The wav file's filename must be of the form "[lineid]_m.wav" with [lineid] replaced by the ID number for the conversation line's string table entry. For example, if a conversation's line ID number is 344169, you'd save the voice over for this line as "344169_m.wav".
+</p><p>When you select "generate vo" from the toolset, the toolset will first check the above directory for properly named files. Any wav files that are not present will have robo vo created, and any that do exist will be used as-is.
+</p><p>A quick way to verify that voice over generation worked after processing: go to ~installpath~\Dragon Age\addins\[moduleuid]\core\override\toolsetexport\[conversationname].fsb and play it with windows media player. You will hear all of the vo lines for that conversation packaged together with whatever combination of real and robo vo all slapped together in one file.
+</p><p>Note that when you are doing a <a href="Builder_to_player.html" title="Builder to player">Builder_to_player</a> create, you do not need to include the .wav files within the package. The sound used by the game is all stored in the .fsb files, and thus including the .wav files will only unnecessarily increase the size of mod.
+</p>
+<h2><span class="mw-headline" id="Common_Problems">Common Problems</span></h2>
+<h3><span class="mw-headline" id="Conversation_history_not_showing_up_in_the_player.27s_journal">Conversation history not showing up in the player's journal</span></h3>
+<p>The journal has a conversation history tab that you'll want your dialogue lines to show up in as well. If that doesn't seem to be working right or at all, make sure you <a href="Check_in.html" title="Check in" class="mw-redirect"> check your dialogue and creatures back in</a> before exporting your <a href="Talk_table.html" title="Talk table" class="mw-redirect"> talk table</a>. See the section on <a href="String_editor.html#Generated_string_IDs" title="String editor"> generated string IDs</a> for more information.
+<br />
+</p>
+<table class="nmbox" style="width:100%; border:1px solid #AAAAAA; border-collapse:collapse; clear:both; font-size:85%; margin:0.25em 0;">
+<tr style="background: #CFDFEF;">
+<th style="border:none; padding:4px 1em; border-right:1px solid #AAAAAA; text-align:center; white-space:nowrap;"> <b><a href="Dragon_Age_Toolset_Wiki%3ALanguage_policy.html" title="Dragon Age Toolset Wiki:Language policy">Language:</a></b></th>
+<td style="border:none; padding:0.25em 0.9em; width:100%; background:#DFEFFF;"><b><strong class="selflink">English</strong></b> <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>&#160;&#8226;&#32;<span lang="ru"><a href="Conversation_tutorial/ru.html" title="Conversation tutorial/ru">русский</a></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></td>
+</tr></table>
+
+<!-- 
+NewPP limit report
+CPU time usage: 0.116 seconds
+Real time usage: 0.248 seconds
+Preprocessor visited node count: 1166/1000000
+Preprocessor generated node count: 3642/1000000
+Post‐expand include size: 11877/2097152 bytes
+Template argument size: 3989/2097152 bytes
+Highest expansion depth: 8/40
+Expensive parser function count: 54/100
+-->
+
+<!-- 
+Transclusion expansion time report (%,ms,calls,template)
+100.00%  128.037      1 - -total
+ 83.14%  106.454      1 - Template:Languages
+ 76.77%   98.295      1 - Template:LanguagesBox
+ 61.09%   78.223     54 - Template:LanguagesLang
+  9.71%   12.427      1 - Template:Infobox_conversation
+  7.58%    9.700      1 - Template:LanguagesTitle
+  5.95%    7.617      1 - Template:Infobox_template
+  5.00%    6.405     14 - Template:Sidebox
+-->
+
+<!-- Saved in parser cache with key db714099484-datoolwiki_:pcache:idhash:46-0!*!0!!en!5!* and timestamp 20260531025701 and revision id 16964
+ -->
+</div>									<div class="printfooter">
+						Retrieved from "<a dir="ltr" href="Conversation_tutorial.html">https://www.datoolset.net/mw/index.php?title=Conversation_tutorial&amp;oldid=16964</a>"					</div>
+													<div id='catlinks' class='catlinks'><div id="mw-normal-catlinks" class="mw-normal-catlinks"><a href="/wiki/Special:Categories" title="Special:Categories">Categories</a>: <ul><li><a href="Category%3AConversations.html" title="Category:Conversations">Conversations</a></li><li><a href="Category%3ATutorials.html" title="Category:Tutorials">Tutorials</a></li></ul></div></div>												<div class="visualClear"></div>
+							</div>
+		</div>
+		<div id="mw-navigation">
+			<h2>Navigation menu</h2>
+
+			<div id="mw-head">
+									<div id="p-personal" role="navigation" class="" aria-labelledby="p-personal-label">
+						<h3 id="p-personal-label">Personal tools</h3>
+						<ul>
+							<li id="pt-login"><a href="/mw/index.php?title=Special:UserLogin&amp;returnto=Conversation+tutorial" title="You are encouraged to log in; however, it is not mandatory [o]" accesskey="o">Log in</a></li>						</ul>
+					</div>
+									<div id="left-navigation">
+										<div id="p-namespaces" role="navigation" class="vectorTabs" aria-labelledby="p-namespaces-label">
+						<h3 id="p-namespaces-label">Namespaces</h3>
+						<ul>
+															<li  id="ca-nstab-main" class="selected"><span><a href="Conversation_tutorial.html"  title="View the content page [c]" accesskey="c">Page</a></span></li>
+															<li  id="ca-talk" class="new"><span><a href="/mw/index.php?title=Talk:Conversation_tutorial&amp;action=edit&amp;redlink=1"  title="Discussion about the content page [t]" accesskey="t">Discussion</a></span></li>
+													</ul>
+					</div>
+										<div id="p-variants" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-variants-label">
+												<h3 id="p-variants-label"><span>Variants</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+									</div>
+				<div id="right-navigation">
+										<div id="p-views" role="navigation" class="vectorTabs" aria-labelledby="p-views-label">
+						<h3 id="p-views-label">Views</h3>
+						<ul>
+															<li id="ca-view" class="selected"><span><a href="Conversation_tutorial.html" >Read</a></span></li>
+															<li id="ca-viewsource"><span><a href="Conversation_tutorial.html"  title="This page is protected.&#10;You can view its source [e]" accesskey="e">View source</a></span></li>
+															<li id="ca-history" class="collapsible"><span><a href="Conversation_tutorial.html"  title="Past revisions of this page [h]" accesskey="h">View history</a></span></li>
+													</ul>
+					</div>
+										<div id="p-cactions" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-cactions-label">
+						<h3 id="p-cactions-label"><span>More</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+										<div id="p-search" role="search">
+						<h3>
+							<label for="searchInput">Search</label>
+						</h3>
+
+						<form action="/mw/index.php" id="searchform">
+														<div id="simpleSearch">
+															<input type="search" name="search" placeholder="Search" title="Search Dragon Age Toolset Wiki [f]" accesskey="f" id="searchInput" /><input type="hidden" value="Special:Search" name="title" /><input type="submit" name="fulltext" value="Search" title="Search the pages for this text" id="mw-searchButton" class="searchButton mw-fallbackSearchButton" /><input type="submit" name="go" value="Go" title="Go to a page with this exact name if exists" id="searchButton" class="searchButton" />								</div>
+						</form>
+					</div>
+									</div>
+			</div>
+			<div id="mw-panel">
+				<div id="p-logo" role="banner"><a class="mw-wiki-logo" href="Main_Page.html"  title="Visit the main page"></a></div>
+						<div class="portal" role="navigation" id='p-navigation' aria-labelledby='p-navigation-label'>
+			<h3 id='p-navigation-label'>Navigation</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-mainpage-description"><a href="Main_Page.html" title="Visit the main page [z]" accesskey="z">Main page</a></li>
+													<li id="n-recentchanges"><a href="/wiki/Special:RecentChanges" title="A list of recent changes in the wiki [r]" accesskey="r">Recent changes</a></li>
+													<li id="n-randompage"><a href="/wiki/Special:Random" title="Load a random page [x]" accesskey="x">Random page</a></li>
+													<li id="n-help"><a href="https://www.mediawiki.org/wiki/Special:MyLanguage/Help:Contents" title="The place to find out">Help</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-Links' aria-labelledby='p-Links-label'>
+			<h3 id='p-Links-label'>Links</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-Toolset-forums"><a href="http://forum.bioware.com/forum/30-dragon-age-toolset" rel="nofollow">Toolset forums</a></li>
+													<li id="n-Legacy-forums"><a href="http://social.bioware.com/forum/1/subindex/70" rel="nofollow">Legacy forums</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-tb' aria-labelledby='p-tb-label'>
+			<h3 id='p-tb-label'>Tools</h3>
+
+			<div class="body">
+									<ul>
+													<li id="t-whatlinkshere"><a href="/wiki/Special:WhatLinksHere/Conversation_tutorial" title="A list of all wiki pages that link here [j]" accesskey="j">What links here</a></li>
+													<li id="t-recentchangeslinked"><a href="/wiki/Special:RecentChangesLinked/Conversation_tutorial" title="Recent changes in pages linked from this page [k]" accesskey="k">Related changes</a></li>
+													<li id="t-specialpages"><a href="/wiki/Special:SpecialPages" title="A list of all special pages [q]" accesskey="q">Special pages</a></li>
+													<li id="t-print"><a href="Conversation_tutorial.html" rel="alternate" title="Printable version of this page [p]" accesskey="p">Printable version</a></li>
+													<li id="t-permalink"><a href="Conversation_tutorial.html" title="Permanent link to this revision of the page">Permanent link</a></li>
+													<li id="t-info"><a href="Conversation_tutorial.html" title="More information about this page">Page information</a></li>
+											</ul>
+							</div>
+		</div>
+				</div>
+		</div>
+		<div id="footer" role="contentinfo">
+							<ul id="footer-info">
+											<li id="footer-info-lastmod"> This page was last modified on 10 August 2011, at 23:36.</li>
+									</ul>
+							<ul id="footer-places">
+											<li id="footer-places-privacy"><a href="/wiki/Dragon_Age_Toolset_Wiki:Privacy_policy" title="Dragon Age Toolset Wiki:Privacy policy">Privacy policy</a></li>
+											<li id="footer-places-about"><a href="/wiki/Dragon_Age_Toolset_Wiki:About" title="Dragon Age Toolset Wiki:About">About Dragon Age Toolset Wiki</a></li>
+											<li id="footer-places-disclaimer"><a href="/wiki/Dragon_Age_Toolset_Wiki:General_disclaimer" title="Dragon Age Toolset Wiki:General disclaimer">Disclaimers</a></li>
+									</ul>
+										<ul id="footer-icons" class="noprint">
+											<li id="footer-poweredbyico">
+															<a href="//www.mediawiki.org/"><img src="../assets/mw/resources/assets/poweredby_mediawiki_88x31.png" alt="Powered by MediaWiki" srcset="../assets/mw/resources/assets/poweredby_mediawiki_132x47.png 1.5x, ../assets/mw/resources/assets/poweredby_mediawiki_176x62.png 2x" width="88" height="31" /></a>
+													</li>
+									</ul>
+						<div style="clear:both"></div>
+		</div>
+		<script>if(window.jQuery)jQuery.ready();</script><script>if(window.mw){
+mw.loader.state({"site":"loading","user":"ready","user.groups":"ready"});
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.toc","mediawiki.action.view.postEdit","mediawiki.user","mediawiki.hidpi","mediawiki.page.ready","mediawiki.searchSuggest"],null,true);
+}</script>
+<script>if(window.mw){
+document.write("\u003Cscript src=\"https://www.datoolset.net/mw/load.php?debug=false\u0026amp;lang=en\u0026amp;modules=site\u0026amp;only=scripts\u0026amp;skin=vector\u0026amp;*\"\u003E\u003C/script\u003E");
+}</script>
+<script>if(window.mw){
+mw.config.set({"wgBackendResponseTime":252});
+}</script>
+	</body>
+</html>

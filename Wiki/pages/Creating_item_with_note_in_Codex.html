@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" class="client-nojs">
+<head>
+<meta charset="UTF-8" />
+<title>Creating item with note in Codex - Dragon Age Toolset Wiki</title>
+<meta name="generator" content="MediaWiki 1.25.6" />
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="search" type="application/opensearchdescription+xml" href="/mw/opensearch_desc.php" title="Dragon Age Toolset Wiki (en)" />
+<link rel="EditURI" type="application/rsd+xml" href="https://www.datoolset.net/mw/api.php?action=rsd" />
+<link rel="alternate" hreflang="x-default" href="Creating_item_with_note_in_Codex.html" />
+<link rel="alternate" type="application/atom+xml" title="Dragon Age Toolset Wiki Atom feed" href="/mw/index.php?title=Special:RecentChanges&amp;feed=atom" />
+<meta name="ResourceLoaderDynamicStyles" content="" />
+<style>a:lang(ar),a:lang(kk-arab),a:lang(mzn),a:lang(ps),a:lang(ur){text-decoration:none}
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-css:7:270a0dcd3ae587df0f041aebfc42e61b */</style>
+<script>if(window.mw){
+mw.config.set({"wgCanonicalNamespace":"","wgCanonicalSpecialPageName":false,"wgNamespaceNumber":0,"wgPageName":"Creating_item_with_note_in_Codex","wgTitle":"Creating item with note in Codex","wgCurRevisionId":19480,"wgRevisionId":19480,"wgArticleId":5790,"wgIsArticle":true,"wgIsRedirect":false,"wgAction":"view","wgUserName":null,"wgUserGroups":["*"],"wgCategories":["Scripts","Tutorials"],"wgBreakFrames":false,"wgPageContentLanguage":"en","wgPageContentModel":"wikitext","wgSeparatorTransformTable":["",""],"wgDigitTransformTable":["",""],"wgDefaultDateFormat":"dmy","wgMonthNames":["","January","February","March","April","May","June","July","August","September","October","November","December"],"wgMonthNamesShort":["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],"wgRelevantPageName":"Creating_item_with_note_in_Codex","wgRelevantArticleId":5790,"wgIsProbablyEditable":false,"wgRestrictionEdit":[],"wgRestrictionMove":[]});
+}</script><script>if(window.mw){
+mw.loader.implement("user.options",function($,jQuery){mw.user.options.set({"variant":"en"});});mw.loader.implement("user.tokens",function($,jQuery){mw.user.tokens.set({"editToken":"+\\","patrolToken":"+\\","watchToken":"+\\"});});
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-js:7:a5c52c063dc436c1ca7c9f456936a5e9 */
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.page.startup","mediawiki.legacy.wikibits","mediawiki.legacy.ajax","skins.vector.js"]);
+}</script>
+<!--[if lt IE 7]><style type="text/css">body{behavior:url("/mw/skins/Vector/csshover.min.htc")}</style><![endif]-->
+<link rel="stylesheet" href="../assets/local/wiki-static.css" />
+</head>
+<body class="mediawiki ltr sitedir-ltr ns-0 ns-subject page-Creating_item_with_note_in_Codex skin-vector action-view">
+		<div id="mw-page-base" class="noprint"></div>
+		<div id="mw-head-base" class="noprint"></div>
+		<div id="content" class="mw-body" role="main">
+			<a id="top"></a>
+
+						<div class="mw-indicators">
+</div>
+			<h1 id="firstHeading" class="firstHeading" lang="en">Creating item with note in Codex</h1>
+						<div id="bodyContent" class="mw-body-content">
+									<div id="siteSub">From Dragon Age Toolset Wiki</div>
+								<div id="contentSub"></div>
+												<div id="jump-to-nav" class="mw-jump">
+					Jump to:					<a href="#mw-head">navigation</a>, 					<a href="#p-search">search</a>
+				</div>
+				<div id="mw-content-text" lang="en" dir="ltr" class="mw-content-ltr"><p>Author: dr. dummie, Sunjammer
+Module UID: lpt
+Folder of all my resourses: z_lpt
+</p><p>This tutorial:
+</p>
+<ul><li> Allows you to create book, that add new note in Codex.</li>
+<li> You can create another item with Codex note and even more than one.</li></ul>
+<h2><span class="mw-headline" id="Book_with_Codex">Book with Codex</span></h2>
+<p>this quick version is if you in example find some book in your area and want to give player some information about it (well - codex)
+</p><p>1 - create examinable item on your level (area) like book (gen_ip_book or similar in core resources)..
+</p><p>2 - create new plot (like "lpt_codex_my_book") and add main flag like MY_CODEX _BOOK (it really could be anything here, just make it meaningful).
+</p><p>3 - under journal part of plot create text which you want to be displayed in codex.. 
+</p><p>4 - under properties of plot look for "entry type" and select in example: codex - books &amp; songs (search if i write it wrong)
+</p><p>5 - select your item from level (area) and choose Variable_2da under it's properties
+</p><p>6 - under PLC_CODEX_FLAG insert NUMBER of your flag (in this case it's 0 - coz it's only one flag inside)
+</p><p>7 - under PLC_CODEX_PLOT insert NAME OF YOUR PLOT (lpt_codex_my_book)
+</p><p>now when you examine book in game, new codex entry will be added and displayed..
+</p>
+<h2><span class="mw-headline" id="Another_item">Another item</span></h2>
+<p>rest is relatively simple, so like before:
+</p><p>1 - create your item (in example "lpt_awesome_sword")
+</p><p>2 - create plot file with same ("lpt_awesome_sword") and set it to be codex plot with main flag of your wish (ie. SWORD_ACQUIRED - remember number of flag! it is 0 in this case coz it's first and only one in your plot), and wished journal entry ("You got the Awesome sword!")..
+</p><p>3 -  in VARIABLES section of your item (lpt_awesome_sword) set ITEM_SEND_ACQIURED_EVENT to 1
+</p><p>4 -  in VARIABLES section of your item (lpt_awesome_sword) set ITEM_CODEX_FLAG to number of your MAIN FLAG for your plot (in this case it's 0 coz it's only one codex entry for this item))
+</p><p><br />
+you need to add following section to your module script, this is another "case" statment for module script, and you need to add it like other module events:
+</p><p>//other module events like "module load"..
+</p><p>//we use this to know when we get some important items for campaign
+</p>
+<div dir="ltr" class="mw-geshi mw-code mw-content-ltr"><div class="dascript source-dascript"><pre class="de1"><a href="http://www.datoolset.net/wiki/index.php?title=case keyword"><span class="kw1">case</span></a> EVENT_TYPE_CAMPAIGN_ITEM_ACQUIRED<span class="sy0">:</span>
+<span class="br0">&#123;</span>
+&#160;
+<a href="http://www.datoolset.net/wiki/index.php?title=object keyword"><span class="kw2">object</span></a> oAcquirer <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetEventCreator"><span class="kw4">GetEventCreator</span></a><span class="br0">&#40;</span>ev<span class="br0">&#41;</span>;
+<a href="http://www.datoolset.net/wiki/index.php?title=object keyword"><span class="kw2">object</span></a> oItem <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetEventObject"><span class="kw4">GetEventObject</span></a><span class="br0">&#40;</span>ev, <span class="nu0">0</span><span class="br0">&#41;</span>;
+<a href="http://www.datoolset.net/wiki/index.php?title=string keyword"><span class="kw2">string</span></a> sItem <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetTag"><span class="kw4">GetTag</span></a><span class="br0">&#40;</span>oItem<span class="br0">&#41;</span>;
+&#160;
+<span class="co1">// Make item indestructible - maybe for plot items</span>
+<a href="http://www.datoolset.net/wiki/index.php?title=SetItemIndestructible"><span class="kw4">SetItemIndestructible</span></a><span class="br0">&#40;</span>oItem, TRUE<span class="br0">&#41;</span>;
+&#160;
+<span class="co1">//little debug what item we get</span>
+<span class="co1">//DisplayFloatyMessage(GetHero(), sItem, FLOATY_MESSAGE, 16777215, 20.0);</span>
+&#160;
+<span class="co1">// Set plot flags if required (sItem tells us which item has been acquired)</span>
+<span class="co1">//WR_SetPlotFlag(GetTag(oItem), nCodexItem, TRUE, TRUE);</span>
+&#160;
+<span class="co1">//set codex plot - for this to work &quot;item&quot; must have plot file</span>
+<span class="co1">//with same name, in variables section of item 2 variables must be set:</span>
+<span class="co1">//ITEM_SEND_ACQUIRED_EVENT to 1 and ITEM_CODEX_FLAG to NUMBER of</span>
+<span class="co1">//main flag in your plot file, plot entry type must be set to some codex type</span>
+<a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nCodexItem <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetLocalInt"><span class="kw4">GetLocalInt</span></a><span class="br0">&#40;</span>oItem, ITEM_CODEX_FLAG<span class="br0">&#41;</span>;
+<a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a> <span class="br0">&#40;</span>nCodexItem <span class="sy0">&gt;</span> <span class="sy0">-</span><span class="nu0">1</span> <span class="sy0">&amp;&amp;</span> <a href="http://www.datoolset.net/wiki/index.php?title=IsFollower"><span class="kw4">IsFollower</span></a><span class="br0">&#40;</span>oAcquirer<span class="br0">&#41;</span><span class="br0">&#41;</span>
+<span class="br0">&#123;</span>
+<span class="co1">//we disabled things that we dont need, we dont want to destroy</span>
+<span class="co1">//our new items, right?</span>
+&#160;
+<span class="co1">//some tutorial plot - i guess we dont need it..</span>
+<span class="co1">//WR_SetPlotFlag(PLT_TUT_CODEX_ITEM, TUT_CODEX_ITEM, TRUE);</span>
+&#160;
+<span class="co1">//set codex plot</span>
+WR_SetPlotFlag<span class="br0">&#40;</span><a href="http://www.datoolset.net/wiki/index.php?title=GetTag"><span class="kw4">GetTag</span></a><span class="br0">&#40;</span>oItem<span class="br0">&#41;</span>, nCodexItem, TRUE, TRUE<span class="br0">&#41;</span>;
+&#160;
+<span class="co1">//normally this would be destroyed as codex item</span>
+<span class="co1">//WR_DestroyObject(oItem);</span>
+<span class="br0">&#125;</span>
+&#160;
+<a href="http://www.datoolset.net/wiki/index.php?title=PrintToLog"><span class="kw4">PrintToLog</span></a><span class="br0">&#40;</span><span class="st0">&quot;------&gt; MODULE CAMPAIGN ITEM ACQUIRED: &quot;</span> <span class="sy0">+</span> sItem <span class="br0">&#41;</span>;
+<span class="co1">//we dont want to let main script handle it cause it would destroy item</span>
+nEventHandled <span class="sy0">=</span> TRUE;
+<a href="http://www.datoolset.net/wiki/index.php?title=break keyword"><span class="kw1">break</span></a>;
+<span class="br0">&#125;</span>
+&#160;
+<span class="co1">// add more items</span>
+&#160;
+              <span class="co1">// else if (sTag == &quot;cod_item_bloodofval&quot;)</span>
+                <span class="co1">//{</span>
+                 <span class="co1">//   WR_SetPlotFlag(PLT_COD_ITEM_BLOODOFVAL, COD_ITEM_BLOODOFVAL, TRUE);</span>
+                <span class="co1">//}</span>
+&#160;
+              <span class="co1">// end</span>
+&#160;
+&#160;
+<span class="co1">//How it has to look like</span>
+&#160;
+<a href="http://www.datoolset.net/wiki/index.php?title=case keyword"><span class="kw1">case</span></a> EVENT_TYPE_CAMPAIGN_ITEM_ACQUIRED<span class="sy0">:</span>
+        <span class="br0">&#123;</span>
+           <a href="http://www.datoolset.net/wiki/index.php?title=object keyword"><span class="kw2">object</span></a> oAcquirer <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetEventCreator"><span class="kw4">GetEventCreator</span></a><span class="br0">&#40;</span>ev<span class="br0">&#41;</span>;
+           <a href="http://www.datoolset.net/wiki/index.php?title=object keyword"><span class="kw2">object</span></a> oItem <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetEventObject"><span class="kw4">GetEventObject</span></a><span class="br0">&#40;</span>ev, <span class="nu0">0</span><span class="br0">&#41;</span>;
+           <a href="http://www.datoolset.net/wiki/index.php?title=string keyword"><span class="kw2">string</span></a> sTag <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetTag"><span class="kw4">GetTag</span></a><span class="br0">&#40;</span>oItem<span class="br0">&#41;</span>;
+&#160;
+           <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a><span class="br0">&#40;</span><a href="http://www.datoolset.net/wiki/index.php?title=IsFollower"><span class="kw4">IsFollower</span></a><span class="br0">&#40;</span>oAcquirer<span class="br0">&#41;</span><span class="br0">&#41;</span>
+           <span class="br0">&#123;</span>
+                <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a><span class="br0">&#40;</span>sTag <span class="sy0">==</span> <span class="st0">&quot;cod_item_bldval&quot;</span><span class="br0">&#41;</span>
+                <span class="br0">&#123;</span>
+                    WR_SetPlotFlag<span class="br0">&#40;</span>PLT_COD_ITEM_BLDVAL, COD_ITEM_BLDVAL, TRUE, TRUE<span class="br0">&#41;</span>; 
+                <span class="br0">&#125;</span> 
+                <a href="http://www.datoolset.net/wiki/index.php?title=else keyword"><span class="kw1">else</span></a> <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a><span class="br0">&#40;</span>sTag <span class="sy0">==</span> <span class="st0">&quot;somethingelse&quot;</span><span class="br0">&#41;</span>
+                <span class="br0">&#123;</span>
+                    WR_Set...
+                <span class="br0">&#125;</span>
+                <a href="http://www.datoolset.net/wiki/index.php?title=else keyword"><span class="kw1">else</span></a> <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a><span class="br0">&#40;</span>sTag <span class="sy0">==</span> <span class="st0">&quot;yetandotherthing&quot;</span><span class="br0">&#41;</span>
+                <span class="br0">&#123;</span>
+                    WR_Set...
+                <span class="br0">&#125;</span>
+&#160;
+            <span class="br0">&#125;</span>
+            <a href="http://www.datoolset.net/wiki/index.php?title=break keyword"><span class="kw1">break</span></a>;
+        <span class="br0">&#125;</span></pre></div></div>
+
+<!-- 
+NewPP limit report
+CPU time usage: 0.024 seconds
+Real time usage: 0.026 seconds
+Preprocessor visited node count: 14/1000000
+Preprocessor generated node count: 56/1000000
+Post‐expand include size: 0/2097152 bytes
+Template argument size: 0/2097152 bytes
+Highest expansion depth: 3/40
+Expensive parser function count: 0/100
+-->
+
+<!-- 
+Transclusion expansion time report (%,ms,calls,template)
+100.00%    0.000      1 - -total
+-->
+
+<!-- Saved in parser cache with key db714099484-datoolwiki_:pcache:idhash:5790-0!*!*!!*!*!* and timestamp 20260531025847 and revision id 19480
+ -->
+</div>									<div class="printfooter">
+						Retrieved from "<a dir="ltr" href="Creating_item_with_note_in_Codex.html">https://www.datoolset.net/mw/index.php?title=Creating_item_with_note_in_Codex&amp;oldid=19480</a>"					</div>
+													<div id='catlinks' class='catlinks'><div id="mw-normal-catlinks" class="mw-normal-catlinks"><a href="/wiki/Special:Categories" title="Special:Categories">Categories</a>: <ul><li><a href="Category%3AScripts.html" title="Category:Scripts">Scripts</a></li><li><a href="Category%3ATutorials.html" title="Category:Tutorials">Tutorials</a></li></ul></div></div>												<div class="visualClear"></div>
+							</div>
+		</div>
+		<div id="mw-navigation">
+			<h2>Navigation menu</h2>
+
+			<div id="mw-head">
+									<div id="p-personal" role="navigation" class="" aria-labelledby="p-personal-label">
+						<h3 id="p-personal-label">Personal tools</h3>
+						<ul>
+							<li id="pt-login"><a href="/mw/index.php?title=Special:UserLogin&amp;returnto=Creating+item+with+note+in+Codex" title="You are encouraged to log in; however, it is not mandatory [o]" accesskey="o">Log in</a></li>						</ul>
+					</div>
+									<div id="left-navigation">
+										<div id="p-namespaces" role="navigation" class="vectorTabs" aria-labelledby="p-namespaces-label">
+						<h3 id="p-namespaces-label">Namespaces</h3>
+						<ul>
+															<li  id="ca-nstab-main" class="selected"><span><a href="Creating_item_with_note_in_Codex.html"  title="View the content page [c]" accesskey="c">Page</a></span></li>
+															<li  id="ca-talk" class="new"><span><a href="/mw/index.php?title=Talk:Creating_item_with_note_in_Codex&amp;action=edit&amp;redlink=1"  title="Discussion about the content page [t]" accesskey="t">Discussion</a></span></li>
+													</ul>
+					</div>
+										<div id="p-variants" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-variants-label">
+												<h3 id="p-variants-label"><span>Variants</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+									</div>
+				<div id="right-navigation">
+										<div id="p-views" role="navigation" class="vectorTabs" aria-labelledby="p-views-label">
+						<h3 id="p-views-label">Views</h3>
+						<ul>
+															<li id="ca-view" class="selected"><span><a href="Creating_item_with_note_in_Codex.html" >Read</a></span></li>
+															<li id="ca-viewsource"><span><a href="Creating_item_with_note_in_Codex.html"  title="This page is protected.&#10;You can view its source [e]" accesskey="e">View source</a></span></li>
+															<li id="ca-history" class="collapsible"><span><a href="Creating_item_with_note_in_Codex.html"  title="Past revisions of this page [h]" accesskey="h">View history</a></span></li>
+													</ul>
+					</div>
+										<div id="p-cactions" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-cactions-label">
+						<h3 id="p-cactions-label"><span>More</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+										<div id="p-search" role="search">
+						<h3>
+							<label for="searchInput">Search</label>
+						</h3>
+
+						<form action="/mw/index.php" id="searchform">
+														<div id="simpleSearch">
+															<input type="search" name="search" placeholder="Search" title="Search Dragon Age Toolset Wiki [f]" accesskey="f" id="searchInput" /><input type="hidden" value="Special:Search" name="title" /><input type="submit" name="fulltext" value="Search" title="Search the pages for this text" id="mw-searchButton" class="searchButton mw-fallbackSearchButton" /><input type="submit" name="go" value="Go" title="Go to a page with this exact name if exists" id="searchButton" class="searchButton" />								</div>
+						</form>
+					</div>
+									</div>
+			</div>
+			<div id="mw-panel">
+				<div id="p-logo" role="banner"><a class="mw-wiki-logo" href="Main_Page.html"  title="Visit the main page"></a></div>
+						<div class="portal" role="navigation" id='p-navigation' aria-labelledby='p-navigation-label'>
+			<h3 id='p-navigation-label'>Navigation</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-mainpage-description"><a href="Main_Page.html" title="Visit the main page [z]" accesskey="z">Main page</a></li>
+													<li id="n-recentchanges"><a href="/wiki/Special:RecentChanges" title="A list of recent changes in the wiki [r]" accesskey="r">Recent changes</a></li>
+													<li id="n-randompage"><a href="/wiki/Special:Random" title="Load a random page [x]" accesskey="x">Random page</a></li>
+													<li id="n-help"><a href="https://www.mediawiki.org/wiki/Special:MyLanguage/Help:Contents" title="The place to find out">Help</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-Links' aria-labelledby='p-Links-label'>
+			<h3 id='p-Links-label'>Links</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-Toolset-forums"><a href="http://forum.bioware.com/forum/30-dragon-age-toolset" rel="nofollow">Toolset forums</a></li>
+													<li id="n-Legacy-forums"><a href="http://social.bioware.com/forum/1/subindex/70" rel="nofollow">Legacy forums</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-tb' aria-labelledby='p-tb-label'>
+			<h3 id='p-tb-label'>Tools</h3>
+
+			<div class="body">
+									<ul>
+													<li id="t-whatlinkshere"><a href="/wiki/Special:WhatLinksHere/Creating_item_with_note_in_Codex" title="A list of all wiki pages that link here [j]" accesskey="j">What links here</a></li>
+													<li id="t-recentchangeslinked"><a href="/wiki/Special:RecentChangesLinked/Creating_item_with_note_in_Codex" title="Recent changes in pages linked from this page [k]" accesskey="k">Related changes</a></li>
+													<li id="t-specialpages"><a href="/wiki/Special:SpecialPages" title="A list of all special pages [q]" accesskey="q">Special pages</a></li>
+													<li id="t-print"><a href="Creating_item_with_note_in_Codex.html" rel="alternate" title="Printable version of this page [p]" accesskey="p">Printable version</a></li>
+													<li id="t-permalink"><a href="Creating_item_with_note_in_Codex.html" title="Permanent link to this revision of the page">Permanent link</a></li>
+													<li id="t-info"><a href="Creating_item_with_note_in_Codex.html" title="More information about this page">Page information</a></li>
+											</ul>
+							</div>
+		</div>
+				</div>
+		</div>
+		<div id="footer" role="contentinfo">
+							<ul id="footer-info">
+											<li id="footer-info-lastmod"> This page was last modified on 19 November 2015, at 17:21.</li>
+									</ul>
+							<ul id="footer-places">
+											<li id="footer-places-privacy"><a href="/wiki/Dragon_Age_Toolset_Wiki:Privacy_policy" title="Dragon Age Toolset Wiki:Privacy policy">Privacy policy</a></li>
+											<li id="footer-places-about"><a href="/wiki/Dragon_Age_Toolset_Wiki:About" title="Dragon Age Toolset Wiki:About">About Dragon Age Toolset Wiki</a></li>
+											<li id="footer-places-disclaimer"><a href="/wiki/Dragon_Age_Toolset_Wiki:General_disclaimer" title="Dragon Age Toolset Wiki:General disclaimer">Disclaimers</a></li>
+									</ul>
+										<ul id="footer-icons" class="noprint">
+											<li id="footer-poweredbyico">
+															<a href="//www.mediawiki.org/"><img src="../assets/mw/resources/assets/poweredby_mediawiki_88x31.png" alt="Powered by MediaWiki" srcset="../assets/mw/resources/assets/poweredby_mediawiki_132x47.png 1.5x, ../assets/mw/resources/assets/poweredby_mediawiki_176x62.png 2x" width="88" height="31" /></a>
+													</li>
+									</ul>
+						<div style="clear:both"></div>
+		</div>
+		<script>if(window.jQuery)jQuery.ready();</script><script>if(window.mw){
+mw.loader.state({"site":"loading","user":"ready","user.groups":"ready"});
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.action.view.postEdit","mediawiki.user","mediawiki.hidpi","mediawiki.page.ready","mediawiki.searchSuggest"],null,true);
+}</script>
+<script>if(window.mw){
+document.write("\u003Cscript src=\"https://www.datoolset.net/mw/load.php?debug=false\u0026amp;lang=en\u0026amp;modules=site\u0026amp;only=scripts\u0026amp;skin=vector\u0026amp;*\"\u003E\u003C/script\u003E");
+}</script>
+<script>if(window.mw){
+mw.config.set({"wgBackendResponseTime":292});
+}</script>
+	</body>
+</html>

@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" class="client-nojs">
+<head>
+<meta charset="UTF-8" />
+<title>Talk:GFF - Dragon Age Toolset Wiki</title>
+<meta name="generator" content="MediaWiki 1.25.6" />
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="search" type="application/opensearchdescription+xml" href="/mw/opensearch_desc.php" title="Dragon Age Toolset Wiki (en)" />
+<link rel="EditURI" type="application/rsd+xml" href="https://www.datoolset.net/mw/api.php?action=rsd" />
+<link rel="alternate" hreflang="x-default" href="Talk%3AGFF.html" />
+<link rel="alternate" type="application/atom+xml" title="Dragon Age Toolset Wiki Atom feed" href="/mw/index.php?title=Special:RecentChanges&amp;feed=atom" />
+<meta name="ResourceLoaderDynamicStyles" content="" />
+<style>a:lang(ar),a:lang(kk-arab),a:lang(mzn),a:lang(ps),a:lang(ur){text-decoration:none}
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-css:7:270a0dcd3ae587df0f041aebfc42e61b */</style>
+<script>if(window.mw){
+mw.config.set({"wgCanonicalNamespace":"Talk","wgCanonicalSpecialPageName":false,"wgNamespaceNumber":1,"wgPageName":"Talk:GFF","wgTitle":"GFF","wgCurRevisionId":15884,"wgRevisionId":15884,"wgArticleId":3592,"wgIsArticle":true,"wgIsRedirect":false,"wgAction":"view","wgUserName":null,"wgUserGroups":["*"],"wgCategories":[],"wgBreakFrames":false,"wgPageContentLanguage":"en","wgPageContentModel":"wikitext","wgSeparatorTransformTable":["",""],"wgDigitTransformTable":["",""],"wgDefaultDateFormat":"dmy","wgMonthNames":["","January","February","March","April","May","June","July","August","September","October","November","December"],"wgMonthNamesShort":["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],"wgRelevantPageName":"Talk:GFF","wgRelevantArticleId":3592,"wgIsProbablyEditable":false,"wgRestrictionEdit":[],"wgRestrictionMove":[]});
+}</script><script>if(window.mw){
+mw.loader.implement("user.options",function($,jQuery){mw.user.options.set({"variant":"en"});});mw.loader.implement("user.tokens",function($,jQuery){mw.user.tokens.set({"editToken":"+\\","patrolToken":"+\\","watchToken":"+\\"});});
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-js:7:a5c52c063dc436c1ca7c9f456936a5e9 */
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.page.startup","mediawiki.legacy.wikibits","mediawiki.legacy.ajax","skins.vector.js"]);
+}</script>
+<!--[if lt IE 7]><style type="text/css">body{behavior:url("/mw/skins/Vector/csshover.min.htc")}</style><![endif]-->
+<link rel="stylesheet" href="../assets/local/wiki-static.css" />
+</head>
+<body class="mediawiki ltr sitedir-ltr ns-1 ns-talk page-Talk_GFF skin-vector action-view">
+		<div id="mw-page-base" class="noprint"></div>
+		<div id="mw-head-base" class="noprint"></div>
+		<div id="content" class="mw-body" role="main">
+			<a id="top"></a>
+
+						<div class="mw-indicators">
+</div>
+			<h1 id="firstHeading" class="firstHeading" lang="en">Talk:GFF</h1>
+						<div id="bodyContent" class="mw-body-content">
+									<div id="siteSub">From Dragon Age Toolset Wiki</div>
+								<div id="contentSub"></div>
+												<div id="jump-to-nav" class="mw-jump">
+					Jump to:					<a href="#mw-head">navigation</a>, 					<a href="#p-search">search</a>
+				</div>
+				<div id="mw-content-text" lang="en" dir="ltr" class="mw-content-ltr"><p>Here's some more info on it for consideration. As is, the wiki article leaves you to guess at a lot of what's going on. Listing it here for now so I don't lose track of it.
+</p>
+<ul><li> <a rel="nofollow" class="external free" href="http://social.bioware.com/forum/1/topic/8/index/464166">http://social.bioware.com/forum/1/topic/8/index/464166</a></li>
+<li> <a rel="nofollow" class="external free" href="http://social.bioware.com/forum/1/topic/72/index/508109">http://social.bioware.com/forum/1/topic/72/index/508109</a></li></ul>
+<p>--<a href="User%3AFollowTheGourd.html" title="User:FollowTheGourd">FollowTheGourd</a> 06:56, 26 January 2010 (UTC)
+</p>
+<hr />
+<h2><span class="mw-headline" id="Field_information_incorrect">Field information incorrect</span></h2>
+<p>After checking a .das file with the GFF editor that comes with the toolset, it would appear that FieldType is TypeID *then* flags. Also the flags are Reference (MSB, bit 16), List (bit 15), and Struct (bit 14).
+</p><p>This can be verified with:
+</p>
+<pre>
+# let data be an array of the gff file
+# let offset be the start of a field in the field array
+(id, type, flags, index) = unpack("I H H I),data[offset:offset+12])
+
+isList = (flags &amp; (1 &lt;&lt; 15) &gt;0)
+isStruct = (flags &amp; (1 &lt;&lt; 14) &gt;0)
+isRef = (flags &amp; (1 &lt;&lt; 16) &gt;0)
+</pre>
+<p>Given this, I'm going to change the page. If I'm incorrect, feel free to revert and explain why here.
+</p><p>--<a href="/mw/index.php?title=User:Overture1943&amp;action=edit&amp;redlink=1" class="new" title="User:Overture1943 (page does not exist)">Overture1943</a> 19:22, 6 November 2009 (UTC)
+</p>
+<dl><dd>I say this is not easy, however i think the original was correct. I dont have big explanation at hand, the Bonesused List in MMH for example has Bit 1 set. The "Generic List" has Bit 1 and 3 set (Where with Bit3 Data contains a Struct reference). And lastly "Struct List" has Bit 1 and 2 set. (Where with bit2 the Data contains the Struct itself) All of them data are referenced in itself, however i think that is a given for Lists. </dd>
+<dd>With which if only Bit3 is set, then the Data isnt referenced, but a struct is referenced ,and it is not a list or so it seems to me. <a href="/mw/index.php?title=User:Eshme&amp;action=edit&amp;redlink=1" class="new" title="User:Eshme (page does not exist)">Eshme</a> 07:25, 15 March 2010 (UTC)
+<dl><dd>This appears true in GAD files as well, solely Bit1 is set for a Float32 list. <a href="/mw/index.php?title=User:Eshme&amp;action=edit&amp;redlink=1" class="new" title="User:Eshme (page does not exist)">Eshme</a> 22:51, 15 March 2010 (UTC)</dd></dl></dd></dl>
+<h2><span class="mw-headline" id="GFF_V4.1">GFF V4.1</span></h2>
+<p>Due to the new ERF V3.0 format, we don't have a lot to go on for the new GFF V4.1 format. The only example I know of is profile.dap. However, here are my thoughts. The header has two additional uint32 fields, giving us:
+</p>
+<pre>struct header {
+  char[8] magic = "GFF V4.1";
+  char[4] platform;
+  char[4] file_type;
+  char[4] file_version;
+  uint32 struct_count;
+  uint32 unknown_1;
+  uint32 string_offset;
+  uint32 data_offset;
+}</pre>
+<p>I haven't figured out what the first new field is, but the field I call string_offset appears to be an offset from the beginning of the file to a new list of zero-terminated strings, just like the ERF V3.0 format has for filenames. And as a result of this, it appears that ECStrings are now represented as offsets into this string section. They also do not start with the length of the string, and it appears the strings are most probably encoded in utf-8, but definitely not in utf-16 anymore.
+</p><p>I had an alternate theory that involved the the strings still being part of the data section and the root structure being able to start later in the data section, but the offsets for lists are still relative to the root structure's start, so they appear to be different sections.
+</p><p>I imagine there will be a few more surprises in store for us beyond these, like what the purpose of the first new field is, but it looks like we need to puzzle out the ERF V3.0 format or wait for a toolset so we can get more GFF V4.1 samples. <a href="/mw/index.php?title=User:Mephales&amp;action=edit&amp;redlink=1" class="new" title="User:Mephales (page does not exist)">Mephales</a> 04:20, 28 February 2011 (UTC)
+</p>
+<!-- 
+NewPP limit report
+CPU time usage: 0.008 seconds
+Real time usage: 0.009 seconds
+Preprocessor visited node count: 19/1000000
+Preprocessor generated node count: 52/1000000
+Post‐expand include size: 0/2097152 bytes
+Template argument size: 0/2097152 bytes
+Highest expansion depth: 2/40
+Expensive parser function count: 0/100
+-->
+
+<!-- 
+Transclusion expansion time report (%,ms,calls,template)
+100.00%    0.000      1 - -total
+-->
+
+<!-- Saved in parser cache with key db714099484-datoolwiki_:pcache:idhash:3592-0!*!0!!*!*!* and timestamp 20260531040605 and revision id 15884
+ -->
+</div>									<div class="printfooter">
+						Retrieved from "<a dir="ltr" href="Talk%3AGFF.html">https://www.datoolset.net/mw/index.php?title=Talk:GFF&amp;oldid=15884</a>"					</div>
+													<div id='catlinks' class='catlinks catlinks-allhidden'></div>												<div class="visualClear"></div>
+							</div>
+		</div>
+		<div id="mw-navigation">
+			<h2>Navigation menu</h2>
+
+			<div id="mw-head">
+									<div id="p-personal" role="navigation" class="" aria-labelledby="p-personal-label">
+						<h3 id="p-personal-label">Personal tools</h3>
+						<ul>
+							<li id="pt-login"><a href="/mw/index.php?title=Special:UserLogin&amp;returnto=Talk%3AGFF" title="You are encouraged to log in; however, it is not mandatory [o]" accesskey="o">Log in</a></li>						</ul>
+					</div>
+									<div id="left-navigation">
+										<div id="p-namespaces" role="navigation" class="vectorTabs" aria-labelledby="p-namespaces-label">
+						<h3 id="p-namespaces-label">Namespaces</h3>
+						<ul>
+															<li  id="ca-nstab-main"><span><a href="GFF.html"  title="View the content page [c]" accesskey="c">Page</a></span></li>
+															<li  id="ca-talk" class="selected"><span><a href="Talk%3AGFF.html"  title="Discussion about the content page [t]" accesskey="t">Discussion</a></span></li>
+													</ul>
+					</div>
+										<div id="p-variants" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-variants-label">
+												<h3 id="p-variants-label"><span>Variants</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+									</div>
+				<div id="right-navigation">
+										<div id="p-views" role="navigation" class="vectorTabs" aria-labelledby="p-views-label">
+						<h3 id="p-views-label">Views</h3>
+						<ul>
+															<li id="ca-view" class="selected"><span><a href="Talk%3AGFF.html" >Read</a></span></li>
+															<li id="ca-viewsource"><span><a href="Talk%3AGFF.html"  title="This page is protected.&#10;You can view its source [e]" accesskey="e">View source</a></span></li>
+															<li id="ca-history" class="collapsible"><span><a href="Talk%3AGFF.html"  title="Past revisions of this page [h]" accesskey="h">View history</a></span></li>
+													</ul>
+					</div>
+										<div id="p-cactions" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-cactions-label">
+						<h3 id="p-cactions-label"><span>More</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+										<div id="p-search" role="search">
+						<h3>
+							<label for="searchInput">Search</label>
+						</h3>
+
+						<form action="/mw/index.php" id="searchform">
+														<div id="simpleSearch">
+															<input type="search" name="search" placeholder="Search" title="Search Dragon Age Toolset Wiki [f]" accesskey="f" id="searchInput" /><input type="hidden" value="Special:Search" name="title" /><input type="submit" name="fulltext" value="Search" title="Search the pages for this text" id="mw-searchButton" class="searchButton mw-fallbackSearchButton" /><input type="submit" name="go" value="Go" title="Go to a page with this exact name if exists" id="searchButton" class="searchButton" />								</div>
+						</form>
+					</div>
+									</div>
+			</div>
+			<div id="mw-panel">
+				<div id="p-logo" role="banner"><a class="mw-wiki-logo" href="Main_Page.html"  title="Visit the main page"></a></div>
+						<div class="portal" role="navigation" id='p-navigation' aria-labelledby='p-navigation-label'>
+			<h3 id='p-navigation-label'>Navigation</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-mainpage-description"><a href="Main_Page.html" title="Visit the main page [z]" accesskey="z">Main page</a></li>
+													<li id="n-recentchanges"><a href="/wiki/Special:RecentChanges" title="A list of recent changes in the wiki [r]" accesskey="r">Recent changes</a></li>
+													<li id="n-randompage"><a href="/wiki/Special:Random" title="Load a random page [x]" accesskey="x">Random page</a></li>
+													<li id="n-help"><a href="https://www.mediawiki.org/wiki/Special:MyLanguage/Help:Contents" title="The place to find out">Help</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-Links' aria-labelledby='p-Links-label'>
+			<h3 id='p-Links-label'>Links</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-Toolset-forums"><a href="http://forum.bioware.com/forum/30-dragon-age-toolset" rel="nofollow">Toolset forums</a></li>
+													<li id="n-Legacy-forums"><a href="http://social.bioware.com/forum/1/subindex/70" rel="nofollow">Legacy forums</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-tb' aria-labelledby='p-tb-label'>
+			<h3 id='p-tb-label'>Tools</h3>
+
+			<div class="body">
+									<ul>
+													<li id="t-whatlinkshere"><a href="/wiki/Special:WhatLinksHere/Talk:GFF" title="A list of all wiki pages that link here [j]" accesskey="j">What links here</a></li>
+													<li id="t-recentchangeslinked"><a href="/wiki/Special:RecentChangesLinked/Talk:GFF" title="Recent changes in pages linked from this page [k]" accesskey="k">Related changes</a></li>
+													<li id="t-specialpages"><a href="/wiki/Special:SpecialPages" title="A list of all special pages [q]" accesskey="q">Special pages</a></li>
+													<li id="t-print"><a href="Talk%3AGFF.html" rel="alternate" title="Printable version of this page [p]" accesskey="p">Printable version</a></li>
+													<li id="t-permalink"><a href="Talk%3AGFF.html" title="Permanent link to this revision of the page">Permanent link</a></li>
+													<li id="t-info"><a href="Talk%3AGFF.html" title="More information about this page">Page information</a></li>
+											</ul>
+							</div>
+		</div>
+				</div>
+		</div>
+		<div id="footer" role="contentinfo">
+							<ul id="footer-info">
+											<li id="footer-info-lastmod"> This page was last modified on 28 February 2011, at 05:20.</li>
+									</ul>
+							<ul id="footer-places">
+											<li id="footer-places-privacy"><a href="/wiki/Dragon_Age_Toolset_Wiki:Privacy_policy" title="Dragon Age Toolset Wiki:Privacy policy">Privacy policy</a></li>
+											<li id="footer-places-about"><a href="/wiki/Dragon_Age_Toolset_Wiki:About" title="Dragon Age Toolset Wiki:About">About Dragon Age Toolset Wiki</a></li>
+											<li id="footer-places-disclaimer"><a href="/wiki/Dragon_Age_Toolset_Wiki:General_disclaimer" title="Dragon Age Toolset Wiki:General disclaimer">Disclaimers</a></li>
+									</ul>
+										<ul id="footer-icons" class="noprint">
+											<li id="footer-poweredbyico">
+															<a href="//www.mediawiki.org/"><img src="../assets/mw/resources/assets/poweredby_mediawiki_88x31.png" alt="Powered by MediaWiki" srcset="../assets/mw/resources/assets/poweredby_mediawiki_132x47.png 1.5x, ../assets/mw/resources/assets/poweredby_mediawiki_176x62.png 2x" width="88" height="31" /></a>
+													</li>
+									</ul>
+						<div style="clear:both"></div>
+		</div>
+		<script>if(window.jQuery)jQuery.ready();</script><script>if(window.mw){
+mw.loader.state({"site":"loading","user":"ready","user.groups":"ready"});
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.action.view.postEdit","mediawiki.user","mediawiki.hidpi","mediawiki.page.ready","mediawiki.searchSuggest"],null,true);
+}</script>
+<script>if(window.mw){
+document.write("\u003Cscript src=\"https://www.datoolset.net/mw/load.php?debug=false\u0026amp;lang=en\u0026amp;modules=site\u0026amp;only=scripts\u0026amp;skin=vector\u0026amp;*\"\u003E\u003C/script\u003E");
+}</script>
+<script>if(window.mw){
+mw.config.set({"wgBackendResponseTime":254});
+}</script>
+	</body>
+</html>

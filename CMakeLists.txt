@@ -168,28 +168,28 @@ static unsigned int roboto_ttf_len = 0;
     message(WARNING "Roboto-Regular.ttf not found at ${ROBOTO_FILE}")
 endif()
 
-set(SPT_DLL_PATH "${CMAKE_SOURCE_DIR}/src/dependencies/speedtree/SpeedTreeRT.dll")
-if(EXISTS "${SPT_DLL_PATH}")
-    file(READ "${SPT_DLL_PATH}" SPT_DATA HEX)
-    string(LENGTH "${SPT_DATA}" SPT_HEX_LEN)
-    math(EXPR SPT_LEN "${SPT_HEX_LEN} / 2")
-    string(REGEX REPLACE "([0-9a-f][0-9a-f])" "0x\\1," SPT_ARRAY "${SPT_DATA}")
-    string(REGEX REPLACE ",$" "" SPT_ARRAY "${SPT_ARRAY}")
-    file(WRITE "${CMAKE_BINARY_DIR}/spt_dll_embedded.h"
-            "#pragma once
-static unsigned char spt_dll[] = {
-${SPT_ARRAY}
-};
-static unsigned int spt_dll_len = ${SPT_LEN};
-")
-    message(STATUS "Embedded SpeedTreeRT.dll (${SPT_LEN} bytes)")
+# SpeedTree RT 4.1 runtime, compiled directly into the app (no DLL/exe).
+# Vendored from the open-source SpeedTree SDK (Source-Authors/speedtreesdk, branch
+# speedtree_4_1). FULL_SPEEDTREE_LIB strips the (decorative) license check;
+# UPVECTOR_POS_Z matches SpeedTree's native / Eclipse engine Z-up convention.
+set(SPEEDTREE_DIR "${CMAKE_SOURCE_DIR}/src/SpeedTree")
+file(GLOB_RECURSE SPEEDTREE_SOURCES "${SPEEDTREE_DIR}/*.cpp")
+add_library(speedtree STATIC ${SPEEDTREE_SOURCES})
+target_include_directories(speedtree PUBLIC "${SPEEDTREE_DIR}")
+target_include_directories(speedtree PRIVATE
+        "${SPEEDTREE_DIR}/EvalKey_Source"
+        "${SPEEDTREE_DIR}/LibFilename_Source"
+        "${SPEEDTREE_DIR}/LibGlobals_Source"
+        "${SPEEDTREE_DIR}/LibRandom_Source"
+        "${SPEEDTREE_DIR}/LibSpline_Source"
+        "${SPEEDTREE_DIR}/LibVector_Source"
+)
+target_compile_definitions(speedtree PUBLIC FULL_SPEEDTREE_LIB UPVECTOR_POS_Z)
+if(MSVC)
+    target_compile_definitions(speedtree PRIVATE _CRT_SECURE_NO_WARNINGS)
+    target_compile_options(speedtree PRIVATE /w)  # vendored 3rd-party: silence warnings
 else()
-    file(WRITE "${CMAKE_BINARY_DIR}/spt_dll_embedded.h"
-            "#pragma once
-static unsigned char spt_dll[] = {0};
-static unsigned int spt_dll_len = 0;
-")
-    message(WARNING "SpeedTreeRT.dll not found at ${SPT_DLL_PATH}")
+    target_compile_options(speedtree PRIVATE -w)
 endif()
 
 set(BLENDER_ADDON_PATH "${CMAKE_SOURCE_DIR}/src/python/havenarea_importer.zip")
@@ -328,8 +328,6 @@ add_executable(HavenTools
 
         # dependencies (header-only stuff referenced directly)
         src/dependencies/Fonts/IconsFontAwesome6.h
-        src/dependencies/speedtree/spt_convert.h
-        src/dependencies/speedtree/speedtree_dll.h
 )
 
 target_include_directories(HavenTools PRIVATE
@@ -346,15 +344,7 @@ target_include_directories(HavenTools PRIVATE
         ${CMAKE_BINARY_DIR}
 )
 
-target_link_libraries(HavenTools PRIVATE imgui_lib imguifiledialog_lib tinygltf zlibstatic)
-
-if(MSVC AND EXISTS "${CMAKE_SOURCE_DIR}/src/dependencies/speedtree/SpeedTreeRT.lib")
-    target_link_libraries(HavenTools PRIVATE
-            "${CMAKE_SOURCE_DIR}/src/dependencies/speedtree/SpeedTreeRT.lib"
-            delayimp.lib
-    )
-    target_link_options(HavenTools PRIVATE /DELAYLOAD:SpeedTreeRT.dll)
-endif()
+target_link_libraries(HavenTools PRIVATE imgui_lib imguifiledialog_lib tinygltf zlibstatic speedtree)
 
 if(WIN32)
     target_compile_definitions(HavenTools PRIVATE

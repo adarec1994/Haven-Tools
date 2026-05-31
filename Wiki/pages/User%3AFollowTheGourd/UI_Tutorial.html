@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" class="client-nojs">
+<head>
+<meta charset="UTF-8" />
+<title>UI Tutorial (draft) - Dragon Age Toolset Wiki</title>
+<meta name="generator" content="MediaWiki 1.25.6" />
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="search" type="application/opensearchdescription+xml" href="/mw/opensearch_desc.php" title="Dragon Age Toolset Wiki (en)" />
+<link rel="EditURI" type="application/rsd+xml" href="https://www.datoolset.net/mw/api.php?action=rsd" />
+<link rel="alternate" hreflang="x-default" href="../UI_Tutorial_%28draft%29.html" />
+<link rel="alternate" type="application/atom+xml" title="Dragon Age Toolset Wiki Atom feed" href="/mw/index.php?title=Special:RecentChanges&amp;feed=atom" />
+<link rel="canonical" href="../UI_Tutorial_%28draft%29.html" />
+<meta name="ResourceLoaderDynamicStyles" content="" />
+<style>a:lang(ar),a:lang(kk-arab),a:lang(mzn),a:lang(ps),a:lang(ur){text-decoration:none}
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-css:7:270a0dcd3ae587df0f041aebfc42e61b */</style>
+<script>if(window.mw){
+mw.config.set({"wgCanonicalNamespace":"","wgCanonicalSpecialPageName":false,"wgNamespaceNumber":0,"wgPageName":"UI_Tutorial_(draft)","wgTitle":"UI Tutorial (draft)","wgCurRevisionId":16470,"wgRevisionId":16470,"wgArticleId":4699,"wgIsArticle":true,"wgIsRedirect":false,"wgAction":"view","wgUserName":null,"wgUserGroups":["*"],"wgCategories":[],"wgBreakFrames":false,"wgPageContentLanguage":"en","wgPageContentModel":"wikitext","wgSeparatorTransformTable":["",""],"wgDigitTransformTable":["",""],"wgDefaultDateFormat":"dmy","wgMonthNames":["","January","February","March","April","May","June","July","August","September","October","November","December"],"wgMonthNamesShort":["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],"wgRelevantPageName":"UI_Tutorial_(draft)","wgRelevantArticleId":4699,"wgIsProbablyEditable":false,"wgRestrictionEdit":[],"wgRestrictionMove":[],"wgRedirectedFrom":"User:FollowTheGourd/UI_Tutorial","wgInternalRedirectTargetUrl":"/wiki/UI_Tutorial_(draft)"});
+}</script><script>if(window.mw){
+mw.loader.implement("user.options",function($,jQuery){mw.user.options.set({"variant":"en"});});mw.loader.implement("user.tokens",function($,jQuery){mw.user.tokens.set({"editToken":"+\\","patrolToken":"+\\","watchToken":"+\\"});});
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-js:7:a5c52c063dc436c1ca7c9f456936a5e9 */
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.action.view.redirect","mediawiki.page.startup","mediawiki.legacy.wikibits","mediawiki.legacy.ajax","skins.vector.js"]);
+}</script>
+<!--[if lt IE 7]><style type="text/css">body{behavior:url("/mw/skins/Vector/csshover.min.htc")}</style><![endif]-->
+<link rel="stylesheet" href="../../assets/local/wiki-static.css" />
+</head>
+<body class="mediawiki ltr sitedir-ltr ns-0 ns-subject page-UI_Tutorial_draft skin-vector action-view">
+		<div id="mw-page-base" class="noprint"></div>
+		<div id="mw-head-base" class="noprint"></div>
+		<div id="content" class="mw-body" role="main">
+			<a id="top"></a>
+
+						<div class="mw-indicators">
+</div>
+			<h1 id="firstHeading" class="firstHeading" lang="en">UI Tutorial (draft)</h1>
+						<div id="bodyContent" class="mw-body-content">
+									<div id="siteSub">From Dragon Age Toolset Wiki</div>
+								<div id="contentSub"><span class="mw-redirectedfrom">(Redirected from <a href="UI_Tutorial.html" title="User:FollowTheGourd/UI Tutorial">User:FollowTheGourd/UI Tutorial</a>)</span></div>
+												<div id="jump-to-nav" class="mw-jump">
+					Jump to:					<a href="#mw-head">navigation</a>, 					<a href="#p-search">search</a>
+				</div>
+				<div id="mw-content-text" lang="en" dir="ltr" class="mw-content-ltr"><p><b>Author's note</b>: STILL A WORK IN PROGRESS - FIRST DUMPING INFORMATION OUT, THEN I'LL FORMAT AND SECTION IT OFF BETTER. This isn't a very good tutorial, but as I said, I'm just trying to get the information out there and I'm slow to update this. Also, it may be simpler now that the UDK has support for GFX files, but I don't know the cross-licensing or technical situation on that right now.
+</p>
+<div id="toc" class="toc"><div id="toctitle"><h2>Contents</h2></div>
+<ul>
+<li class="toclevel-1 tocsection-1"><a href="#Introduction"><span class="tocnumber">1</span> <span class="toctext">Introduction</span></a>
+<ul>
+<li class="toclevel-2 tocsection-2"><a href="#Other_information_sources"><span class="tocnumber">1.1</span> <span class="toctext">Other information sources</span></a></li>
+</ul>
+</li>
+<li class="toclevel-1 tocsection-3"><a href="#Toolchain"><span class="tocnumber">2</span> <span class="toctext">Toolchain</span></a></li>
+<li class="toclevel-1 tocsection-4"><a href="#Organizing_Sources"><span class="tocnumber">3</span> <span class="toctext">Organizing Sources</span></a>
+<ul>
+<li class="toclevel-2 tocsection-5"><a href="#GFX_to_SWF"><span class="tocnumber">3.1</span> <span class="toctext">GFX to SWF</span></a></li>
+<li class="toclevel-2 tocsection-6"><a href="#Obtain_ActionScript_Sources"><span class="tocnumber">3.2</span> <span class="toctext">Obtain ActionScript Sources</span></a></li>
+<li class="toclevel-2 tocsection-7"><a href="#Merge_ActionScript_Classes"><span class="tocnumber">3.3</span> <span class="toctext">Merge ActionScript Classes</span></a></li>
+</ul>
+</li>
+<li class="toclevel-1 tocsection-8"><a href="#Making_Modifications"><span class="tocnumber">4</span> <span class="toctext">Making Modifications</span></a>
+<ul>
+<li class="toclevel-2 tocsection-9"><a href="#Bugs_and_getting_sources_to_compile"><span class="tocnumber">4.1</span> <span class="toctext">Bugs and getting sources to compile</span></a></li>
+<li class="toclevel-2 tocsection-10"><a href="#Getting_Information_From_The_Engine"><span class="tocnumber">4.2</span> <span class="toctext">Getting Information From The Engine</span></a></li>
+<li class="toclevel-2 tocsection-11"><a href="#Issues_displaying_custom_MovieClip_subclasses"><span class="tocnumber">4.3</span> <span class="toctext">Issues displaying custom MovieClip subclasses</span></a>
+<ul>
+<li class="toclevel-3 tocsection-12"><a href="#Using_swfmill"><span class="tocnumber">4.3.1</span> <span class="toctext">Using swfmill</span></a></li>
+<li class="toclevel-3 tocsection-13"><a href="#createEmptyMovieClip_method"><span class="tocnumber">4.3.2</span> <span class="toctext">createEmptyMovieClip method</span></a></li>
+<li class="toclevel-3 tocsection-14"><a href="#attachMovie_method"><span class="tocnumber">4.3.3</span> <span class="toctext">attachMovie method</span></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+
+<h2><span class="mw-headline" id="Introduction">Introduction</span></h2>
+<p>The UI files are basically just version 8 Adobe Flash files, but extended with some extra properties and image handling (they even use nonstandard tags in the SWF for that). GFX files supposedly have more optimized fonts and who really knows what else, but you shouldn't have to worry about font embedding in Dragon Age.
+</p><p>This means they use the older ActionScript 2.0, which you can find some learning resources on here <a rel="nofollow" class="external text" href="http://download.macromedia.com/pub/documentation/en/flash/fl8/fl8_learning_as2.pdf">fl8_learning_as2.pdf</a> and here <a rel="nofollow" class="external text" href="http://livedocs.adobe.com/flash/9.0/main/flash_as2_learning.pdf">flash_as2_learning.pdf</a>, among other places scattered on the web. You can download the API reference, but a decent online location is <a rel="nofollow" class="external text" href="http://flash-reference.icod.de/">here</a> (faster than Adobe's site I find).
+</p><p>For it to work in game, the U.I. element must be saved using the name of an existing U.I. file, as the engine will only run U.I. elements it is expecting. You can, however, leave the file extension as .swf and it will still run.
+</p>
+<h3><span class="mw-headline" id="Other_information_sources">Other information sources</span></h3>
+<p>There's a woefully incomplete GUI category on the wiki here <a href="../Category%3AGUI.html" title="Category:GUI">Category:GUI</a>. It was an early effort at detailing some of the class specifics in the UI files. There are a lot of stubs, but some classes are more detailed.
+</p><p>There's also a long-standing draft article on the profile page here <a href="../User%3AFollowTheGourd.html" title="User:FollowTheGourd">User:FollowTheGourd</a> about the conversation UI. It could also be ammended to explain things like 800x600 is treated as if it were 1024x768, and that the cutscene bars actually have a negative height if the screen width is much longer than the screen height, as seen with Eyefinity display setups.
+</p><p>Another thing to realize is the game's aspect ratio correction and how one resolution in window mode will get stretched to fill your screen space in fullscreen mode. So then there's a difference between the Stage (Flash term) width and height and the video settings which you can access using the ExternalCommands ActionScript class. The point is that the Stage dimensions are more reliable than the video settings you can retrieve through the ExternalCommands class, although it doesn't stop the quickbar UI file from reading the attribute <i>"ClientOptions.VideoOptions.ResolutionWidth"</i> from it, but there might be a perfectly good reason for that like the engine notifying the GUI when it changes.
+</p>
+<h2><span class="mw-headline" id="Toolchain">Toolchain</span></h2>
+<p><a rel="nofollow" class="external text" href="http://www.flashdevelop.org/">FlashDevelop IDE.</a>
+etc
+</p>
+<h2><span class="mw-headline" id="Organizing_Sources">Organizing Sources</span></h2>
+<p>Obtain an ActionScript 2.0 decompiler such as Sothink or Trillix. Each has their shortcomings and will require further post-processing. Sothink's ActionScript output will probably require more work to make compile with MTASC, but Trillix's output seems to have some stranger bugs I'll mention later, which makes me more hesitant to recommend it. Sothink's tool still seems to have an issue formatting double-precision values as single-precision, as detailed in the section below. <a rel="nofollow" class="external text" href="http://www.nowrap.de/flare.html">Flare</a> is also a nice free tool to compare output against, but it unfortunately isn't in a format that you can simply recompile.
+</p><p><a rel="nofollow" class="external text" href="http://www.nowrap.de/flasm.html">Flasm</a> is also a useful tool if you wish to examine the p-code directly (as a debug or learning aid perhaps), or even modify it that way.
+</p>
+<h3><span class="mw-headline" id="GFX_to_SWF">GFX to SWF</span></h3>
+<p>If you want your changes to be compatible with a certain or the latest game patch, then you'll also have to first merge the appropriate <a href="/mw/index.php?title=GFX&amp;action=edit&amp;redlink=1" class="new" title="GFX (page does not exist)">GFX</a> files. For example, to be compatible with game v1.03, you'll first need to extract the GFX files from guiexport.erf, and then from the patch000.erf, patch001.erf, and patch002.erf files found under C:\Program Files\Dragon Age\packages\core\patch. If you want to be compatible with v1.02a, then it should suffice to stop merging after patch001.erf.
+</p><p>Then you want to change the first three bytes for the GFX to CWS and change the file suffix to SWF.
+Example Python script:
+</p>
+<div dir="ltr" class="mw-geshi mw-code mw-content-ltr"><div class="dascript source-dascript"><pre class="de1">from __future__ import with_statement
+<span class="co2"># The first line is required if you get the following error when running the python script under 2.5.4/2.5.5</span>
+<span class="co2"># SyntaxError: invalid syntax - with open(gfxPath, &quot;rb+&quot;) as gfxFile:</span>
+import glob
+import os
+import <a href="http://www.datoolset.net/wiki/index.php?title=struct keyword"><span class="kw2">struct</span></a>
+&#160;
+<a href="http://www.datoolset.net/wiki/index.php?title=for keyword"><span class="kw1">for</span></a> gfxPath in glob.<span class="me1">glob</span><span class="br0">&#40;</span>'<span class="sy0">*</span>.<span class="me1">gfx</span>'<span class="br0">&#41;</span><span class="sy0">:</span>
+	with open<span class="br0">&#40;</span>gfxPath, <span class="st0">&quot;rb+&quot;</span><span class="br0">&#41;</span> as gfxFile<span class="sy0">:</span>
+		print<span class="br0">&#40;</span>gfxPath<span class="br0">&#41;</span>
+		gfxFile.<span class="me1">write</span><span class="br0">&#40;</span><a href="http://www.datoolset.net/wiki/index.php?title=struct keyword"><span class="kw2">struct</span></a>.<span class="me1">pack</span><span class="br0">&#40;</span>'3s', <span class="st0">&quot;CWS&quot;</span><span class="br0">&#41;</span><span class="br0">&#41;</span>
+	os.<span class="me1">rename</span><span class="br0">&#40;</span>gfxPath, os.<span class="me1">path</span>.<span class="me1">splitext</span><span class="br0">&#40;</span>gfxPath<span class="br0">&#41;</span><span class="br0">&#91;</span><span class="nu0">0</span><span class="br0">&#93;</span> <span class="sy0">+</span> <span class="st0">&quot;.swf&quot;</span><span class="br0">&#41;</span> 
+&#160;
+line <span class="sy0">=</span> input<span class="br0">&#40;</span><span class="st0">&quot;Press enter to exit.&quot;</span><span class="br0">&#41;</span></pre></div></div>
+<h3><span class="mw-headline" id="Obtain_ActionScript_Sources">Obtain ActionScript Sources</span></h3>
+<p>If you're using Sothink's tool, then here's an example of how you would quickly retrieve the ActionScript, if you've converted the GFX into SWFs as mentioned above. Do a multi-file export with all of the SWF files (merged to whichever patch version you wish). <a rel="nofollow" class="external text" href="http://i1002.photobucket.com/albums/af150/FollowTheGourd/sothink_swf.jpg">Screen shot</a>
+</p>
+<h3><span class="mw-headline" id="Merge_ActionScript_Classes">Merge ActionScript Classes</span></h3>
+<p>It's a good idea to create a single ActionScript library of all the game sources; that way you don't have to repeatedly make the same modifications for every SWF file that uses the same modified classes. As you'll see later when using the SWF injection method, that this doesn't make available all of the classes to every SWF file, but it's a way to avoid redundant editing.
+</p><p>For instance, here's a embarrassingly quick and dirty way of doing it with a Python script:
+<i>Note:</i> this will throw an exception on later versions of Python because shutil.move undocumentedly doesn't want to clobber existing files. You could add a check if the file already exists and not move it - or rewrite the script and make something better.
+</p>
+<div dir="ltr" class="mw-geshi mw-code mw-content-ltr"><div class="dascript source-dascript"><pre class="de1">from __future__ import with_statement
+<span class="co2"># The first line is required if you get the following error when running the python script under 2.5.4/2.5.5</span>
+<span class="co2"># SyntaxError: invalid syntax - with open(gfxPath, &quot;rb+&quot;) as gfxFile:</span>
+<span class="co2"># [Yes, this code probably sucks]</span>
+&#160;
+import shutil
+import os
+import re
+import zlib
+&#160;
+<span class="co2"># Usage: have the batch exported ActionScript from the decompiler (say Sothink) in a dir called export. Then run this </span>
+<span class="co2"># script at the same level as the export dir. It will create a C:\commonlib folder with the ActionScript merged into it.</span>
+<span class="co2"># Left over in export is what you can import into a FlashDevelop project. You'll also want to make</span>
+<span class="co2"># intrinsics out of export and commonlib, but commlib goes in the global classpath, while</span>
+<span class="co2"># the appropriate export subfolder goes in the appropriate project classpath.</span>
+&#160;
+mergedir <span class="sy0">=</span> r'C<span class="sy0">:</span>\commonlib'
+scriptdict <span class="sy0">=</span> <span class="br0">&#123;</span><span class="br0">&#125;</span>
+<a href="http://www.datoolset.net/wiki/index.php?title=for keyword"><span class="kw1">for</span></a> dirpath, dirnames, filenames in os.<span class="me1">walk</span><span class="br0">&#40;</span>'export'<span class="br0">&#41;</span><span class="sy0">:</span>
+	print<span class="br0">&#40;</span>dirpath<span class="br0">&#41;</span>
+	<a href="http://www.datoolset.net/wiki/index.php?title=for keyword"><span class="kw1">for</span></a> junk in filter <span class="br0">&#40;</span>lambda x<span class="sy0">:</span> not x.<span class="me1">endswith</span><span class="br0">&#40;</span><span class="st0">&quot;.as&quot;</span><span class="br0">&#41;</span>, filenames<span class="br0">&#41;</span><span class="sy0">:</span>
+		os.<span class="me1">remove</span><span class="br0">&#40;</span>os.<span class="me1">path</span>.<span class="me1">join</span><span class="br0">&#40;</span>dirpath, junk<span class="br0">&#41;</span><span class="br0">&#41;</span>
+	<a href="http://www.datoolset.net/wiki/index.php?title=for keyword"><span class="kw1">for</span></a> script in filter<span class="br0">&#40;</span> lambda x <span class="sy0">:</span> x.<span class="me1">endswith</span><span class="br0">&#40;</span><span class="st0">&quot;.as&quot;</span><span class="br0">&#41;</span>, filenames<span class="br0">&#41;</span><span class="sy0">:</span>
+		scriptfile <span class="sy0">=</span> open<span class="br0">&#40;</span>os.<span class="me1">path</span>.<span class="me1">join</span><span class="br0">&#40;</span>dirpath, script<span class="br0">&#41;</span><span class="br0">&#41;</span>
+		relativedir <span class="sy0">=</span> re.<span class="me1">sub</span><span class="br0">&#40;</span>r'export\\<span class="br0">&#91;</span><span class="sy0">^</span>\\<span class="br0">&#93;</span><span class="sy0">+</span>\\<span class="sy0">?</span>', '', dirpath<span class="br0">&#41;</span>
+		relativepath <span class="sy0">=</span> os.<span class="me1">path</span>.<span class="me1">join</span><span class="br0">&#40;</span>relativedir, script<span class="br0">&#41;</span>
+		crc32 <span class="sy0">=</span> zlib.<span class="me1">crc32</span><span class="br0">&#40;</span>scriptfile.<span class="me1">read</span><span class="br0">&#40;</span><span class="br0">&#41;</span><span class="br0">&#41;</span>
+		scriptfile.<span class="me1">close</span><span class="br0">&#40;</span><span class="br0">&#41;</span>
+		sourcepath <span class="sy0">=</span> os.<span class="me1">path</span>.<span class="me1">join</span><span class="br0">&#40;</span>dirpath, script<span class="br0">&#41;</span>
+		<a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a> relativepath in scriptdict<span class="sy0">:</span>
+			lastval <span class="sy0">=</span> scriptdict<span class="br0">&#91;</span>relativepath<span class="br0">&#93;</span>
+			<a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a> lastval<span class="br0">&#91;</span>'crc32'<span class="br0">&#93;</span> <span class="sy0">==</span> crc32<span class="sy0">:</span>
+				destdir <span class="sy0">=</span> os.<span class="me1">path</span>.<span class="me1">join</span><span class="br0">&#40;</span>mergedir, relativedir<span class="br0">&#41;</span>
+				<a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a> os.<span class="me1">path</span>.<span class="me1">exists</span><span class="br0">&#40;</span>lastval<span class="br0">&#91;</span>'sourcepath'<span class="br0">&#93;</span><span class="br0">&#41;</span><span class="sy0">:</span>
+					os.<span class="me1">remove</span><span class="br0">&#40;</span>lastval<span class="br0">&#91;</span>'sourcepath'<span class="br0">&#93;</span><span class="br0">&#41;</span>
+				<a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a> not os.<span class="me1">path</span>.<span class="me1">exists</span><span class="br0">&#40;</span>destdir<span class="br0">&#41;</span><span class="sy0">:</span>
+					os.<span class="me1">makedirs</span><span class="br0">&#40;</span>destdir<span class="br0">&#41;</span>
+				<span class="co2">#print(&quot;move &quot; + sourcepath + &quot; to &quot; + destdir)</span>
+				shutil.<span class="me1">move</span><span class="br0">&#40;</span>sourcepath, destdir<span class="br0">&#41;</span>
+			<a href="http://www.datoolset.net/wiki/index.php?title=else keyword"><span class="kw1">else</span></a><span class="sy0">:</span>
+				<span class="co2"># There any many *Scene.as files that are the same</span>
+				<span class="co2"># BUT there's an &quot;emptyish&quot; Scene.as used an as interface as well.</span>
+				<span class="co2"># So you probably want Scene.as as common, but the other scenes as unique</span>
+				<span class="co2"># even if they have the same name. Still throw if script is Scene.as but not if it ends with it.</span>
+				<a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a> not re.<span class="me1">search</span><span class="br0">&#40;</span>r'.<span class="me1">Scene</span>\.<span class="me1">as</span>$', script<span class="br0">&#41;</span><span class="sy0">:</span>
+					raise Exception<span class="br0">&#40;</span><span class="st0">&quot;Same name, different CRC32: &quot;</span> <span class="sy0">+</span> sourcepath<span class="br0">&#41;</span>
+		<a href="http://www.datoolset.net/wiki/index.php?title=else keyword"><span class="kw1">else</span></a><span class="sy0">:</span>
+			scriptdict<span class="br0">&#91;</span>relativepath<span class="br0">&#93;</span> <span class="sy0">=</span> <span class="br0">&#123;</span> 'crc32'<span class="sy0">:</span> crc32, 'sourcepath'<span class="sy0">:</span> sourcepath <span class="br0">&#125;</span>
+&#160;
+<span class="co2"># Find unique entries in SharedLibary, GUI, etc. Copy them over to commonlib but print out what we found.</span>
+<span class="co2"># [Bit of a copy-pasta job here...]</span>
+<a href="http://www.datoolset.net/wiki/index.php?title=for keyword"><span class="kw1">for</span></a> dirpath, dirnames, filenames in os.<span class="me1">walk</span><span class="br0">&#40;</span>'export'<span class="br0">&#41;</span><span class="sy0">:</span>
+	<a href="http://www.datoolset.net/wiki/index.php?title=for keyword"><span class="kw1">for</span></a> script in filter <span class="br0">&#40;</span>lambda x<span class="sy0">:</span> x.<span class="me1">endswith</span><span class="br0">&#40;</span><span class="st0">&quot;.as&quot;</span><span class="br0">&#41;</span>, filenames<span class="br0">&#41;</span><span class="sy0">:</span>
+		relativedir <span class="sy0">=</span> re.<span class="me1">sub</span><span class="br0">&#40;</span>r'export\\<span class="br0">&#91;</span><span class="sy0">^</span>\\<span class="br0">&#93;</span><span class="sy0">+</span>\\<span class="sy0">?</span>', '', dirpath<span class="br0">&#41;</span>
+		<a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a> relativedir <span class="sy0">==</span> ''<span class="sy0">:</span>
+			<a href="http://www.datoolset.net/wiki/index.php?title=continue keyword"><span class="kw1">continue</span></a>
+		relativepath <span class="sy0">=</span> os.<span class="me1">path</span>.<span class="me1">join</span><span class="br0">&#40;</span>relativedir, script<span class="br0">&#41;</span>
+		sourcepath <span class="sy0">=</span> os.<span class="me1">path</span>.<span class="me1">join</span><span class="br0">&#40;</span>dirpath, script<span class="br0">&#41;</span>
+		destdir <span class="sy0">=</span> os.<span class="me1">path</span>.<span class="me1">join</span><span class="br0">&#40;</span>mergedir, relativedir<span class="br0">&#41;</span>
+		<a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a> not os.<span class="me1">path</span>.<span class="me1">exists</span><span class="br0">&#40;</span>destdir<span class="br0">&#41;</span><span class="sy0">:</span>
+			os.<span class="me1">makedirs</span><span class="br0">&#40;</span>destdir<span class="br0">&#41;</span>
+		print<span class="br0">&#40;</span><span class="st0">&quot;Unique commonlib: &quot;</span> <span class="sy0">+</span> sourcepath<span class="br0">&#41;</span>
+		shutil.<span class="me1">move</span><span class="br0">&#40;</span>sourcepath, destdir<span class="br0">&#41;</span>
+&#160;
+<span class="co2"># Clean up empty dirs</span>
+<a href="http://www.datoolset.net/wiki/index.php?title=for keyword"><span class="kw1">for</span></a> dirpath, dirnames, filenames in os.<span class="me1">walk</span><span class="br0">&#40;</span>'export', topdown<span class="sy0">=</span>False<span class="br0">&#41;</span><span class="sy0">:</span>
+	<a href="http://www.datoolset.net/wiki/index.php?title=for keyword"><span class="kw1">for</span></a> d in dirnames<span class="sy0">:</span>
+		try<span class="sy0">:</span>
+			os.<span class="me1">rmdir</span><span class="br0">&#40;</span>os.<span class="me1">path</span>.<span class="me1">join</span><span class="br0">&#40;</span>dirpath, d<span class="br0">&#41;</span><span class="br0">&#41;</span>
+		except OSError<span class="sy0">:</span>
+			pass</pre></div></div>
+<h2><span class="mw-headline" id="Making_Modifications">Making Modifications</span></h2>
+<h3><span class="mw-headline" id="Bugs_and_getting_sources_to_compile">Bugs and getting sources to compile</span></h3>
+<p>[ Note: this is mostly just copy and pasted from my post in another forum at the moment. It still needs some reworking to better explain things ]
+</p><p><br />
+You can first get the open source FlashDevelop IDE which comes with MTASC and the standard Flash library. If you have the SWFs and the ActionScript *.as files, then what you can do is create an empty ActionScript 2 project, in the project settings turn off "use main entry point" and under the project "injection" tab, point it to the SWF you want to update with your new ActionScript.
+</p><p>You'll also want to update the project classpaths to point to your game's ActionScript library. Just in my experience, there seem to be some properties on some of the standard classes that would normally prevent the script from compiling - but in that case what you can do is modify the so-called intrinsic files to let the compiler know about them. E.g., you can add needed function and var declarations to the intrinsic class interfaces under C:\Program Files\FlashDevelop\Tools\mtasc. The nice thing about ActionScript and intrinsics is that (unless used as a case value in a switch-statement) you don't even need to know the values of these "missing" properties or functions if they're basically defined in the runtime environment. E.g., Mouse.LEFT isn't standard Flash, but if you edit Mouse.as and add <b>static var LEFT;</b> to the intrinsic class definition, then you're good to go, as the value gets looked up during execution like a dictionary value (in fact, Mouse["LEFT"] should yield the same result).
+</p><p>Also if you press Ctrl+J you'll get the type explorer where you can right click on a folder (that you've added to your classpath) and select "convert to intrinsic". So this way you only need to compile the actual *.as file you're making changes to and keep the others around as intrinsics. Using the IDE's SWF injection I mentioned above will make it so you don't have to worry about recompiling everything.
+</p><p>You'll probably get a bunch of warnings like "... needs the class &lt;Whatever&gt; which was not compiled" but that's just MTASC not liking how some class names are used outside of what you're compiling like in Flash registerObject calls.
+</p><p>Now the bigger issue is that MTASC is pickier about things than Adobe's compiler. You'll often have to write this.varname or ClassName.varname instead of just varname, and MTASC doesn't like named *nested* functions. So you'll sometimes have to convert function FooBar() { ... } into something like "this.FooBar = function() { };" or "_root.FooBar = function() { };". But also make sure that the variable for the function is a class member and not function-local or it'll just be a register or randomly named variable when compiled, or just not be available in the scope you need it to be.
+</p><p>MTASC is also pickier about the scope of local variables. It may sound weird, but in ActionScript 2.0 a function-local variable is defined for the scope of the function - it doesn't matter if declared in an if-statement or in braces. But the MTASC compiler will enforce that you define the variable in a "proper" scope, so you may need to move where it's declared if you want things to compile. E.g., "if (foo) { var tmp = 1; } else { tmp = 2; }" won't fly with MTASC.
+</p><p>Also it seems like MTASC doesn't like the global function "Array", but doesn't mind if you use the constructor instead. E.g., I've had issues with var ar = Array(...), but var ar = new Array(...) works or you could use the square-bracket notation instead.
+</p><p>Some other stuff... if you want multiple projects, just create the projects all in the same dir (but create folders if you want to separate stuff and adjust the project classpath accordingly).
+Also, don't necessarily set "Always compile" for the *.as file or you might run into duplicate definition errors - things should get drawn in as needed, but I think you need to set it for classes in the original SWF you wish to update. That might be a little hit and miss at first, but you can always check to make sure your changes got in.
+</p><p>Also, looking at the output in FLASM, MTASC might not generate the most blazing bytecode ever - but neither does Adobe's compiler. Just some things I noticed is that Adobe's will use function argument registers more than MTASC seems to... e.g., "push '_root'; getVariable" vs just a r:_root register.
+</p><p>Another apparent annoyance with MTASC is that it doesn't seem to recognize some global variables (which you can confirm with flasm's output (push 'somevar'; getVariable). Workarounds include <i>_global.someVariable</i>, or sometimes <i>_root.someVariable</i> as appropriate.
+</p><p>One last thing... you may want to organize your *.as files so you combine the ones that are commonly used across different SWF files so you're not always having to edit multiple copies of SomeClass.as for each SWF that uses it.
+</p><p>Also, I noticed a bug in sothink that I emailed them about: doubles are formatted as single-precision floating point. But some other tools, e.g., flare, get the value correctly. You might want to search your *.as files for "E-" and "E+" to look for these misformatted values if you're using it.
+</p><p>EDIT: Here's a bug with Trillix I noticed, but they said it'll be fixed soon: if you have "var foo = this" and if a register is used for 'foo', then Trillix doesn't properly initialize the register... but instead just uses 'this' everywhere else. This causes problems if you needed that variable to choose between using 'this' and possibly another object. E.g., "var obj = this; if (something) { obj = someOtherObject; } someFunc.doIt(obj);" only works as long as "obj" is stored as a variable and not a register, which is up to the original compiler. In reply, they mentioned that you could work around that issue by turning off the "ActionScript 'Recover arguments' names" setting, which makes it a bit more difficult to keep track of function arguments, so it's less than ideal.
+</p>
+<h3><span class="mw-headline" id="Getting_Information_From_The_Engine">Getting Information From The Engine</span></h3>
+<p>It is possible to get information from the engine using the ExternalCommands class. More on this class can be found at <a href="../ActionScript%3AExternalCommands.html" title="ActionScript:ExternalCommands">External Commands</a>. Of particular interest is <a href="../ActionScript%3AExternalCommands.GetValue.html" title="ActionScript:ExternalCommands.GetValue">GetValue</a>
+</p>
+<h3><span class="mw-headline" id="Issues_displaying_custom_MovieClip_subclasses">Issues displaying custom MovieClip subclasses</span></h3>
+<p><b>Note:</b> this tries to explain some of the issues, and isn't suggesting best practices. This is a bit rambling and should be presented with more concrete examples. Ideally it wouldn't be needed at all and we could use the Scaleform SDK to convert our SWFs into GFX, or we could splice in our own movieclip symbol tags into the GFX file.
+</p><p>The simple issue is this: if it wasn't originally created in the Flash designer (also having a symbol in the Flash library), then you'll have a harder time of showing custom MovieClip objects through ActionScript alone. This would appear to be a bug, but speculatively, it could be for performance reasons.
+</p>
+<h4><span class="mw-headline" id="Using_swfmill">Using swfmill</span></h4>
+<p>This hasn't been thoroughly tested, but swfmill may be a simple way to add you own symbols. Use swfmill to convert the SWF into an XML file, edit it, and then use swfmill to convert it back. It appears to work, and even properly retains the non-standard SWF tags. For custom class behavior, you'll still need to make an <i>Object.registerClass</i> call to associate the library symbol with the class. If you do use this method, one thing to make sure of is that the embedded textures display properly, since they're being referred to using a non-standard SWF tag.
+</p>
+<h4><span class="mw-headline" id="createEmptyMovieClip_method">createEmptyMovieClip method</span></h4>
+<p>So until splicing in tags becomes more streamlined, or some other method is found, then it may be easier to just create an empty movieclip and then populate the member fields using a mixin from another class or manually, although that's probably still less than ideal for classes that use the onLoad event. Another thing as mentioned below is the possibility of abusing prototype mechanics (which can be somewhat messy) or subclass an existing class to specialize the beha
+</p><p>It would appear that the <i>MovieClip</i> method <i>createEmptyMovieClip</i> is of limited use unless you then load another movieclip (such as an icon image) into it or or do a <i>beginFill ... endFill</i> (<b>fill-code</b>) for a few frames to define its dimensions, filling it for as many frames until, say, its <b>_height</b> property becomes non-zero. It's ugly, but works. Also, if you do a fill on an object in the library, then you actually affect its <b>_xscale</b> and <b>_yscale</b> by making the object stretch to fit into your fill. Ultimately, it'd probably be less of a hassle to alter the SWF file to insert your object. Because of having to rerun the code, you'll probably want to delay having to reload images or other intensive operations. You'll have to rerun the fill-code at least twice for this to work, timing alone doesn't matter as has been determined through trial and error.
+</p>
+<h4><span class="mw-headline" id="attachMovie_method">attachMovie method</span></h4>
+<p>Perhaps a simpler way is to use <i>attachMovie</i>, although you'll have to find a pre-existing movieclip symbol that suites your needs, and if you want to change its default dimensions then you'll have to delay the fill-code for a few (let's say 150 or so since the scene began) frames after the game loads until it actually works. <b>NOTE:</b> Reconfirm this is actually necessary instead of just being able to set the _height/_width/_xscale/_yscale, although you may still need to delay setting those for the change to take effect. This way you shouldn't have to keep rerunning the fill-code as with the above <i>createEmptyMovieClip</i> method. This whole delay business is probably more of an issue in UI elements that are on the HUD instead of selected later from the navbar. You can probably check for when you've waited enough frames by running some simple fill-code on an empty movieclip and checking whether the <b>_height</b> property changes. 
+E.g., the PieCooldown symbol exists in the quickbar.swf file and isn't the worst choice for an empty MovieClip. You can use programs like swix, swfmill, and probably others to find simple objects without much embedded graphics.
+</p>
+<div dir="ltr" class="mw-geshi mw-code mw-content-ltr"><div class="dascript source-dascript"><pre class="de1">private static var EMPTYMC_LINKID<span class="sy0">:</span>String <span class="sy0">=</span> <span class="st0">&quot;PieCooldown&quot;</span>;	
+var mc<span class="sy0">:</span>MovieClip <span class="sy0">=</span> someClip_mc.<span class="me1">attachMovie</span><span class="br0">&#40;</span>EMPTYMC_LINKID, <span class="st0">&quot;SomeName_mc&quot;</span>, someClip_mc.<span class="me1">getNextHighestDepth</span><span class="br0">&#40;</span><span class="br0">&#41;</span>, <span class="br0">&#123;</span>_x<span class="sy0">:</span><span class="nu0">10</span>, _y<span class="sy0">:</span><span class="nu0">10</span><span class="br0">&#125;</span><span class="br0">&#41;</span>;
+&#160;
+<span class="co1">// Changing the default dimensions of &quot;PieCooldown&quot;</span>
+<span class="co1">// Although you can probably just change the _height, _width or scales after the</span>
+<span class="co1">// needed delay instead, unlike with the createEmptyMovieClip method apparently.</span>
+<span class="co1">// Also not really necessary if you just want to use it as an invisible container,</span>
+<span class="co1">// since other items can be positioned outside of it, relative to its local </span>
+<span class="co1">// coordinates.</span>
+with<span class="br0">&#40;</span>mc<span class="br0">&#41;</span>
+<span class="br0">&#123;</span>
+   beginFill<span class="br0">&#40;</span><span class="nu0">0</span>, <span class="nu0">0</span><span class="br0">&#41;</span>; <span class="co1">// alpha is zero.</span>
+   moveTo<span class="br0">&#40;</span><span class="nu0">0</span>, <span class="nu0">0</span><span class="br0">&#41;</span>;
+   lineTo<span class="br0">&#40;</span><span class="nu0">21</span>, <span class="nu0">0</span><span class="br0">&#41;</span>;
+   lineTo<span class="br0">&#40;</span><span class="nu0">21</span>, <span class="nu0">21</span><span class="br0">&#41;</span>;
+   lineTo<span class="br0">&#40;</span><span class="nu0">0</span>, <span class="nu0">21</span><span class="br0">&#41;</span>;
+   endFill<span class="br0">&#40;</span><span class="br0">&#41;</span>;	
+<span class="br0">&#125;</span></pre></div></div>
+<p>The game's script sources also come with a <i>MovieUtils</i> class, which has a wrapper around <i>attachMovie</i>. This can be useful to create an instance of a library symbol in the SWF file and use it instead for another purpose. 
+</p><p>Other useful workaround would be abusing prototype mechanics of ActionScript to give an already existing class other behavior if desired, and can be switched using a custom argument for the initObject during the attachMovie call. This way you don't have to edit the actual class file, if making it recompile is problematic or time consuming. Although this is a kludge method of doing it.
+</p><p>Also of note is that <i>Object.registerClass</i> or the so-called <a rel="nofollow" class="external text" href="http://www.google.com/search?hl=en&amp;source=hp&amp;q=attachMovie+__packages+trick">__Packages trick</a> won't really get you anywhere either. You'll be able to create the MovieClip subclass, but it won't display properly (or just differently) without the above-mentioned tricks.
+</p><p>Creating a subclass of an existing class that's registered with <i>Object.registerClass</i> may also be a convenient way to customize class behavior without having to recompile the base class if you then change the registerClass call to use the subclass.
+</p>
+<!-- 
+NewPP limit report
+CPU time usage: 0.028 seconds
+Real time usage: 0.032 seconds
+Preprocessor visited node count: 88/1000000
+Preprocessor generated node count: 192/1000000
+Post‐expand include size: 0/2097152 bytes
+Template argument size: 0/2097152 bytes
+Highest expansion depth: 3/40
+Expensive parser function count: 0/100
+-->
+
+<!-- 
+Transclusion expansion time report (%,ms,calls,template)
+100.00%    0.000      1 - -total
+-->
+
+<!-- Saved in parser cache with key db714099484-datoolwiki_:pcache:idhash:4699-0!*!0!!en!*!* and timestamp 20260531011754 and revision id 16470
+ -->
+</div>									<div class="printfooter">
+						Retrieved from "<a dir="ltr" href="../UI_Tutorial_%28draft%29.html">https://www.datoolset.net/mw/index.php?title=UI_Tutorial_(draft)&amp;oldid=16470</a>"					</div>
+													<div id='catlinks' class='catlinks catlinks-allhidden'></div>												<div class="visualClear"></div>
+							</div>
+		</div>
+		<div id="mw-navigation">
+			<h2>Navigation menu</h2>
+
+			<div id="mw-head">
+									<div id="p-personal" role="navigation" class="" aria-labelledby="p-personal-label">
+						<h3 id="p-personal-label">Personal tools</h3>
+						<ul>
+							<li id="pt-login"><a href="/mw/index.php?title=Special:UserLogin&amp;returnto=UI+Tutorial+%28draft%29" title="You are encouraged to log in; however, it is not mandatory [o]" accesskey="o">Log in</a></li>						</ul>
+					</div>
+									<div id="left-navigation">
+										<div id="p-namespaces" role="navigation" class="vectorTabs" aria-labelledby="p-namespaces-label">
+						<h3 id="p-namespaces-label">Namespaces</h3>
+						<ul>
+															<li  id="ca-nstab-main" class="selected"><span><a href="../UI_Tutorial_%28draft%29.html"  title="View the content page [c]" accesskey="c">Page</a></span></li>
+															<li  id="ca-talk" class="new"><span><a href="/mw/index.php?title=Talk:UI_Tutorial_(draft)&amp;action=edit&amp;redlink=1"  title="Discussion about the content page [t]" accesskey="t">Discussion</a></span></li>
+													</ul>
+					</div>
+										<div id="p-variants" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-variants-label">
+												<h3 id="p-variants-label"><span>Variants</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+									</div>
+				<div id="right-navigation">
+										<div id="p-views" role="navigation" class="vectorTabs" aria-labelledby="p-views-label">
+						<h3 id="p-views-label">Views</h3>
+						<ul>
+															<li id="ca-view" class="selected"><span><a href="../UI_Tutorial_%28draft%29.html" >Read</a></span></li>
+															<li id="ca-viewsource"><span><a href="../UI_Tutorial_%28draft%29.html"  title="This page is protected.&#10;You can view its source [e]" accesskey="e">View source</a></span></li>
+															<li id="ca-history" class="collapsible"><span><a href="../UI_Tutorial_%28draft%29.html"  title="Past revisions of this page [h]" accesskey="h">View history</a></span></li>
+													</ul>
+					</div>
+										<div id="p-cactions" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-cactions-label">
+						<h3 id="p-cactions-label"><span>More</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+										<div id="p-search" role="search">
+						<h3>
+							<label for="searchInput">Search</label>
+						</h3>
+
+						<form action="/mw/index.php" id="searchform">
+														<div id="simpleSearch">
+															<input type="search" name="search" placeholder="Search" title="Search Dragon Age Toolset Wiki [f]" accesskey="f" id="searchInput" /><input type="hidden" value="Special:Search" name="title" /><input type="submit" name="fulltext" value="Search" title="Search the pages for this text" id="mw-searchButton" class="searchButton mw-fallbackSearchButton" /><input type="submit" name="go" value="Go" title="Go to a page with this exact name if exists" id="searchButton" class="searchButton" />								</div>
+						</form>
+					</div>
+									</div>
+			</div>
+			<div id="mw-panel">
+				<div id="p-logo" role="banner"><a class="mw-wiki-logo" href="../Main_Page.html"  title="Visit the main page"></a></div>
+						<div class="portal" role="navigation" id='p-navigation' aria-labelledby='p-navigation-label'>
+			<h3 id='p-navigation-label'>Navigation</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-mainpage-description"><a href="../Main_Page.html" title="Visit the main page [z]" accesskey="z">Main page</a></li>
+													<li id="n-recentchanges"><a href="/wiki/Special:RecentChanges" title="A list of recent changes in the wiki [r]" accesskey="r">Recent changes</a></li>
+													<li id="n-randompage"><a href="/wiki/Special:Random" title="Load a random page [x]" accesskey="x">Random page</a></li>
+													<li id="n-help"><a href="https://www.mediawiki.org/wiki/Special:MyLanguage/Help:Contents" title="The place to find out">Help</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-Links' aria-labelledby='p-Links-label'>
+			<h3 id='p-Links-label'>Links</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-Toolset-forums"><a href="http://forum.bioware.com/forum/30-dragon-age-toolset" rel="nofollow">Toolset forums</a></li>
+													<li id="n-Legacy-forums"><a href="http://social.bioware.com/forum/1/subindex/70" rel="nofollow">Legacy forums</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-tb' aria-labelledby='p-tb-label'>
+			<h3 id='p-tb-label'>Tools</h3>
+
+			<div class="body">
+									<ul>
+													<li id="t-whatlinkshere"><a href="/wiki/Special:WhatLinksHere/UI_Tutorial_(draft)" title="A list of all wiki pages that link here [j]" accesskey="j">What links here</a></li>
+													<li id="t-recentchangeslinked"><a href="/wiki/Special:RecentChangesLinked/UI_Tutorial_(draft)" title="Recent changes in pages linked from this page [k]" accesskey="k">Related changes</a></li>
+													<li id="t-specialpages"><a href="/wiki/Special:SpecialPages" title="A list of all special pages [q]" accesskey="q">Special pages</a></li>
+													<li id="t-print"><a href="../UI_Tutorial_%28draft%29.html" rel="alternate" title="Printable version of this page [p]" accesskey="p">Printable version</a></li>
+													<li id="t-permalink"><a href="../UI_Tutorial_%28draft%29.html" title="Permanent link to this revision of the page">Permanent link</a></li>
+													<li id="t-info"><a href="../UI_Tutorial_%28draft%29.html" title="More information about this page">Page information</a></li>
+											</ul>
+							</div>
+		</div>
+				</div>
+		</div>
+		<div id="footer" role="contentinfo">
+							<ul id="footer-info">
+											<li id="footer-info-lastmod"> This page was last modified on 14 July 2011, at 02:35.</li>
+									</ul>
+							<ul id="footer-places">
+											<li id="footer-places-privacy"><a href="/wiki/Dragon_Age_Toolset_Wiki:Privacy_policy" title="Dragon Age Toolset Wiki:Privacy policy">Privacy policy</a></li>
+											<li id="footer-places-about"><a href="/wiki/Dragon_Age_Toolset_Wiki:About" title="Dragon Age Toolset Wiki:About">About Dragon Age Toolset Wiki</a></li>
+											<li id="footer-places-disclaimer"><a href="/wiki/Dragon_Age_Toolset_Wiki:General_disclaimer" title="Dragon Age Toolset Wiki:General disclaimer">Disclaimers</a></li>
+									</ul>
+										<ul id="footer-icons" class="noprint">
+											<li id="footer-poweredbyico">
+															<a href="//www.mediawiki.org/"><img src="../../assets/mw/resources/assets/poweredby_mediawiki_88x31.png" alt="Powered by MediaWiki" srcset="../../assets/mw/resources/assets/poweredby_mediawiki_132x47.png 1.5x, ../../assets/mw/resources/assets/poweredby_mediawiki_176x62.png 2x" width="88" height="31" /></a>
+													</li>
+									</ul>
+						<div style="clear:both"></div>
+		</div>
+		<script>if(window.jQuery)jQuery.ready();</script><script>if(window.mw){
+mw.loader.state({"site":"loading","user":"ready","user.groups":"ready"});
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.toc","mediawiki.action.view.postEdit","mediawiki.user","mediawiki.hidpi","mediawiki.page.ready","mediawiki.searchSuggest"],null,true);
+}</script>
+<script>if(window.mw){
+document.write("\u003Cscript src=\"https://www.datoolset.net/mw/load.php?debug=false\u0026amp;lang=en\u0026amp;modules=site\u0026amp;only=scripts\u0026amp;skin=vector\u0026amp;*\"\u003E\u003C/script\u003E");
+}</script>
+<script>if(window.mw){
+mw.config.set({"wgBackendResponseTime":254});
+}</script>
+	</body>
+</html>

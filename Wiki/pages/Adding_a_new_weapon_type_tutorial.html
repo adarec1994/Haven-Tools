@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" class="client-nojs">
+<head>
+<meta charset="UTF-8" />
+<title>Adding a new weapon type tutorial - Dragon Age Toolset Wiki</title>
+<meta name="generator" content="MediaWiki 1.25.6" />
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="search" type="application/opensearchdescription+xml" href="/mw/opensearch_desc.php" title="Dragon Age Toolset Wiki (en)" />
+<link rel="EditURI" type="application/rsd+xml" href="https://www.datoolset.net/mw/api.php?action=rsd" />
+<link rel="alternate" hreflang="x-default" href="Adding_a_new_weapon_type_tutorial.html" />
+<link rel="alternate" type="application/atom+xml" title="Dragon Age Toolset Wiki Atom feed" href="/mw/index.php?title=Special:RecentChanges&amp;feed=atom" />
+<meta name="ResourceLoaderDynamicStyles" content="" />
+<style>a:lang(ar),a:lang(kk-arab),a:lang(mzn),a:lang(ps),a:lang(ur){text-decoration:none}
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-css:7:270a0dcd3ae587df0f041aebfc42e61b */</style>
+<script>if(window.mw){
+mw.config.set({"wgCanonicalNamespace":"","wgCanonicalSpecialPageName":false,"wgNamespaceNumber":0,"wgPageName":"Adding_a_new_weapon_type_tutorial","wgTitle":"Adding a new weapon type tutorial","wgCurRevisionId":18298,"wgRevisionId":18298,"wgArticleId":4409,"wgIsArticle":true,"wgIsRedirect":false,"wgAction":"view","wgUserName":null,"wgUserGroups":["*"],"wgCategories":["Tutorials"],"wgBreakFrames":false,"wgPageContentLanguage":"en","wgPageContentModel":"wikitext","wgSeparatorTransformTable":["",""],"wgDigitTransformTable":["",""],"wgDefaultDateFormat":"dmy","wgMonthNames":["","January","February","March","April","May","June","July","August","September","October","November","December"],"wgMonthNamesShort":["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],"wgRelevantPageName":"Adding_a_new_weapon_type_tutorial","wgRelevantArticleId":4409,"wgIsProbablyEditable":false,"wgRestrictionEdit":[],"wgRestrictionMove":[]});
+}</script><script>if(window.mw){
+mw.loader.implement("user.options",function($,jQuery){mw.user.options.set({"variant":"en"});});mw.loader.implement("user.tokens",function($,jQuery){mw.user.tokens.set({"editToken":"+\\","patrolToken":"+\\","watchToken":"+\\"});});
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-js:7:a5c52c063dc436c1ca7c9f456936a5e9 */
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.page.startup","mediawiki.legacy.wikibits","mediawiki.legacy.ajax","skins.vector.js"]);
+}</script>
+<!--[if lt IE 7]><style type="text/css">body{behavior:url("/mw/skins/Vector/csshover.min.htc")}</style><![endif]-->
+<link rel="stylesheet" href="../assets/local/wiki-static.css" />
+</head>
+<body class="mediawiki ltr sitedir-ltr ns-0 ns-subject page-Adding_a_new_weapon_type_tutorial skin-vector action-view">
+		<div id="mw-page-base" class="noprint"></div>
+		<div id="mw-head-base" class="noprint"></div>
+		<div id="content" class="mw-body" role="main">
+			<a id="top"></a>
+
+						<div class="mw-indicators">
+</div>
+			<h1 id="firstHeading" class="firstHeading" lang="en">Adding a new weapon type tutorial</h1>
+						<div id="bodyContent" class="mw-body-content">
+									<div id="siteSub">From Dragon Age Toolset Wiki</div>
+								<div id="contentSub"></div>
+												<div id="jump-to-nav" class="mw-jump">
+					Jump to:					<a href="#mw-head">navigation</a>, 					<a href="#p-search">search</a>
+				</div>
+				<div id="mw-content-text" lang="en" dir="ltr" class="mw-content-ltr"><p>This tutorial will demonstrate how to add a custom weapon type to the toolset for use in-game. (Theoretically the concept could be used to make a new item type in general, but it seems unlikely to me that you'll need it much more than for weapons.)
+</p><p>Please note that currently the toolset does not allow for the making of custom model animations. This may be added in the future in the form of a 3rd-party extension, but Bioware does not believe they will be able to release any kind of animation maker built into the toolset. This means that making a weapon that would require customized animations to use is not practicable. Fortunately, however, most any normal kind of weapon imaginable will be able to use the default animations, however much of a stretch it may be.
+</p><p>In this example, I will be demonstrating how to create a spear-type weapon. (Models are not included; this is just to teach you how to do it with your own stuff. This tutorial assumes you're changing things to fit your own needs.)
+</p><p>It's been a little annoying trying to figure this out for the last few days, so once I succeeded I thought it would only be proper to spare everyone else the trouble. Hope this helps you guys.
+</p><p>Author: Gammastar
+</p>
+<div id="toc" class="toc"><div id="toctitle"><h2>Contents</h2></div>
+<ul>
+<li class="toclevel-1 tocsection-1"><a href="#First_Things_First"><span class="tocnumber">1</span> <span class="toctext">First Things First</span></a></li>
+<li class="toclevel-1 tocsection-2"><a href="#Materials"><span class="tocnumber">2</span> <span class="toctext">Materials</span></a></li>
+<li class="toclevel-1 tocsection-3"><a href="#Getting_to_Work"><span class="tocnumber">3</span> <span class="toctext">Getting to Work</span></a>
+<ul>
+<li class="toclevel-2 tocsection-4"><a href="#Linking_the_Variations_Sheet"><span class="tocnumber">3.1</span> <span class="toctext">Linking the Variations Sheet</span></a></li>
+<li class="toclevel-2 tocsection-5"><a href="#Creating_the_Variations_Sheet"><span class="tocnumber">3.2</span> <span class="toctext">Creating the Variations Sheet</span></a></li>
+<li class="toclevel-2 tocsection-6"><a href="#Adding_the_Weapon_Type_to_the_Toolset"><span class="tocnumber">3.3</span> <span class="toctext">Adding the Weapon Type to the Toolset</span></a></li>
+</ul>
+</li>
+<li class="toclevel-1 tocsection-7"><a href="#Using_it_in_the_Toolset"><span class="tocnumber">4</span> <span class="toctext">Using it in the Toolset</span></a></li>
+</ul>
+</div>
+
+<h2><span class="mw-headline" id="First_Things_First">First Things First</span></h2>
+<p>I <b>strongly</b> recommend creating a new module for this. Actually no, I demand it. DO NOT DO THIS IN THE SINGLE PLAYER MODULE. 
+</p><p>For more information on creating a module, check out <a href="Creating_a_module.html" title="Creating a module">Creating a module</a>.
+</p>
+<h2><span class="mw-headline" id="Materials">Materials</span></h2>
+<p>This is pretty GDA intensive, so ready your version of Excel for battle. (Or if you don't have Excel, use GDApp. But it's up to you to find the original GDAs.)
+</p><p>Here's what you'll need (all paths relative to "[installdirectory]\tools\Source\2DA\"):
+</p><p>1. BITM_base.xls (found in "\rules")
+</p><p>2. ItemVariations.xls (also found in "\rules")
+</p><p>3. 2DA_base.xls (found in root directory. hard to miss as it's the first one in the folder.)
+</p>
+<h2><span class="mw-headline" id="Getting_to_Work">Getting to Work</span></h2>
+<p>Copy all of the aforementioned files over to your own directory of choice and open them up. We'll start with 2DA_base.xls, because it requires the least amount of modification.
+</p>
+<h3><span class="mw-headline" id="Linking_the_Variations_Sheet">Linking the Variations Sheet</span></h3>
+<p>So, open up 2DA_base.xls and make sure you're looking at the sheet called "M2DA_base" (or, obviously, if you're using GDApp, just open M2DA_base.GDA)
+</p><p>Add in a new row anywhere you please. I've chosen to keep mine right in with all the weapons variations:
+</p><p><a href="File%3A2dabase.PNG.html" class="image"><img alt="2dabase.PNG" src="../assets/mw/images/a/a6/2dabase.PNG" width="721" height="282" /></a>
+</p><p>The ID number on the left should be something unused by the other entries, obviously, so I chose 11000.
+The next two columns contain the name of the variation worksheet we'll be making in the next step, "spear_variation," and just star out the last one like all the other rows are done.
+</p><p>Save that file, run it through the Excel processor (if you're not sure what this is, refer to <a href="Compiling_2DAs.html" title="Compiling 2DAs">Compiling 2DAs</a>), and place it in your module's override directory. (Or, if you're using GDApp, just save it and put it in the directory.)
+</p>
+<h3><span class="mw-headline" id="Creating_the_Variations_Sheet">Creating the Variations Sheet</span></h3>
+<p>It clearly won't do us any good to specify a variations sheet if we don't actually have one, so open up <a href="ItemVariations.xls.html" title="ItemVariations.xls">ItemVariations.xls</a>. If you've never worked with it before, that link will do you some good. Anyway, we'll need to create a new spreadsheet for our new spear weapon type, so go down to the bottom where the tabs are and go all the way to the right.
+</p><p><a href="File%3AItemvariations.PNG.html" class="image"><img alt="Itemvariations.PNG" src="../assets/mw/images/0/0c/Itemvariations.PNG" width="592" height="261" /></a>
+</p><p>Click on that dandy little thingy there and you'll have yourself a fancy new spreadsheet. Double-click on the name and rename it to "spear_variation"
+</p><p>Now then, go to one of the other spreadsheets in that file and copy some of the data, just so you get the general layout right.
+</p><p><a href="File%3AItemvariations2.PNG.html" class="image"><img alt="Itemvariations2.PNG" src="../assets/mw/images/4/46/Itemvariations2.PNG" width="475" height="188" /></a>
+</p><p>If you read the document on this 2DA, you'll understand what this means. If not, go read it. Also, you're probably going to need to know how to add a custom model to the toolset, so check this out:
+</p><p><a href="Adding_a_custom_model_to_the_toolset_tutorial.html" title="Adding a custom model to the toolset tutorial">Adding a custom model to the toolset tutorial</a>
+</p><p>Anyway, now we have our variations sheet. Add to it whatever you need, name it whatever you need, do whatever you have to do in order to get it like you want it for your own purposes. Compile it into 2DAs as per the last step and place your new spear_variation.GDA into your module's override folder. Now we're down to the final and longest step, actually adding the weapon type.
+</p>
+<h3><span class="mw-headline" id="Adding_the_Weapon_Type_to_the_Toolset">Adding the Weapon Type to the Toolset</span></h3>
+<p>This is where BITM_base.xls comes into play. It's going to take a while for you to do this, but just stay patient. The worksheet all the way to the left, called BITM_base, is the big one. Open it up. Make a new row for Weapon - Spear, and edit it accordingly.
+</p><p><a href="File%3ABitmbase.PNG.html" class="image"><img alt="Bitmbase.PNG" src="../assets/mw/images/c/c6/Bitmbase.PNG" width="479" height="195" /></a>
+</p><p>I recommend copying an existing row and pasting it into your new row, choosing which one to be copied based on the similarity of the existing item to what you need, and editing all of the values according to your purpose. I copied the greatsword row, since those animations are decent enough for wielding a spear. I also added in some of the wielding attributes of a staff, considering the length of the spear is only comparable to that of a staff.
+</p><p>Also, remember to make a unique ID number! If you're not careful, you'll run into some serious problems later.
+</p><p>You'll notice that I have a unique number in the <b>NameStrRef</b> column. To do this, open the toolset, open your module, click on Tools &gt; String Editor, create a new string with type "Base Item Type Names," type in the name of the weapon type, and write down the string ID assigned to it and put that in the <b>NameStrRef</b> column. You'll also need it in another worksheet in BITM_base.xls. Also don't forget to export the talktable from the string editor.
+</p><p>Anyway, here's the most important part of this sheet:
+</p><p><a href="File%3ABitmbase2.PNG.html" class="image"><img alt="Bitmbase2.PNG" src="../assets/mw/images/4/47/Bitmbase2.PNG" width="463" height="353" /></a>
+</p><p>Change the <b>Variation_WorkSheet</b> column's value on your row to whatever you made the ID of the variation sheet in M2DA_base.GDA, in this case, 11000.
+</p><p>Now, you're also going to need to make new rows in the ItemStats worksheet (It's self-explanatory what all this means) and _SourceData worksheet (Alright, I'm not 100% sure what this does, but you'll figure out how to edit it easily enough. Just make sure you're consistent with ID numbers and such.)
+</p><p>Again, compile the 2DAs, and place BITM_base.GDA and ItemStats.GDA into your module's override folder.
+</p>
+<h2><span class="mw-headline" id="Using_it_in_the_Toolset">Using it in the Toolset</span></h2>
+<p>At this point, having edited all of those things and placed the GDAs into the proper override folder, you should be able to select Weapon - Spear from the Base Item Type dropdown when making an item, and the Item Variation dropdown should include Spear 1. If not,
+</p><p>1. Make sure your ID numbers are consistent throughout those 3 files.
+</p><p>2. Also make sure your GDAs are in the right directory: they should be in the override directory of your module, not Single Player.
+</p><p>3. As much as it hurts on the inside, it might not be a bad idea to start over if neither of the above two are helpful.
+</p><p>4. And if starting over doesn't help, I did not do a very good job on this tutorial, and someone else needs to come along and correct it for me.&#160;;)
+</p><p>You may encounter some problems after getting your new weapon type into the toolset, specifically "Could not get the name for the model type..." which probably will not allow you to equip any weapon with your new weapon type on a creature in the editor (yeah, this one happens to me every time). Don't worry about that, just close the toolset and open it again, and this problem should be fixed (to a degree. you will still get this error when creating a new weapon of the new type, but again, if you try to equip it on a creature and it won't let you, close the toolset and try again).
+</p><p><br />
+Anyway, here's hoping everything works for you! Good luck!
+</p>
+<!-- 
+NewPP limit report
+CPU time usage: 0.048 seconds
+Real time usage: 0.077 seconds
+Preprocessor visited node count: 27/1000000
+Preprocessor generated node count: 32/1000000
+Post‐expand include size: 0/2097152 bytes
+Template argument size: 0/2097152 bytes
+Highest expansion depth: 2/40
+Expensive parser function count: 0/100
+-->
+
+<!-- 
+Transclusion expansion time report (%,ms,calls,template)
+100.00%    0.000      1 - -total
+-->
+
+<!-- Saved in parser cache with key db714099484-datoolwiki_:pcache:idhash:4409-0!*!0!!en!5!* and timestamp 20260531171053 and revision id 18298
+ -->
+</div>									<div class="printfooter">
+						Retrieved from "<a dir="ltr" href="Adding_a_new_weapon_type_tutorial.html">https://www.datoolset.net/mw/index.php?title=Adding_a_new_weapon_type_tutorial&amp;oldid=18298</a>"					</div>
+													<div id='catlinks' class='catlinks'><div id="mw-normal-catlinks" class="mw-normal-catlinks"><a href="/wiki/Special:Categories" title="Special:Categories">Category</a>: <ul><li><a href="Category%3ATutorials.html" title="Category:Tutorials">Tutorials</a></li></ul></div></div>												<div class="visualClear"></div>
+							</div>
+		</div>
+		<div id="mw-navigation">
+			<h2>Navigation menu</h2>
+
+			<div id="mw-head">
+									<div id="p-personal" role="navigation" class="" aria-labelledby="p-personal-label">
+						<h3 id="p-personal-label">Personal tools</h3>
+						<ul>
+							<li id="pt-login"><a href="/mw/index.php?title=Special:UserLogin&amp;returnto=Adding+a+new+weapon+type+tutorial" title="You are encouraged to log in; however, it is not mandatory [o]" accesskey="o">Log in</a></li>						</ul>
+					</div>
+									<div id="left-navigation">
+										<div id="p-namespaces" role="navigation" class="vectorTabs" aria-labelledby="p-namespaces-label">
+						<h3 id="p-namespaces-label">Namespaces</h3>
+						<ul>
+															<li  id="ca-nstab-main" class="selected"><span><a href="Adding_a_new_weapon_type_tutorial.html"  title="View the content page [c]" accesskey="c">Page</a></span></li>
+															<li  id="ca-talk" class="new"><span><a href="/mw/index.php?title=Talk:Adding_a_new_weapon_type_tutorial&amp;action=edit&amp;redlink=1"  title="Discussion about the content page [t]" accesskey="t">Discussion</a></span></li>
+													</ul>
+					</div>
+										<div id="p-variants" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-variants-label">
+												<h3 id="p-variants-label"><span>Variants</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+									</div>
+				<div id="right-navigation">
+										<div id="p-views" role="navigation" class="vectorTabs" aria-labelledby="p-views-label">
+						<h3 id="p-views-label">Views</h3>
+						<ul>
+															<li id="ca-view" class="selected"><span><a href="Adding_a_new_weapon_type_tutorial.html" >Read</a></span></li>
+															<li id="ca-viewsource"><span><a href="Adding_a_new_weapon_type_tutorial.html"  title="This page is protected.&#10;You can view its source [e]" accesskey="e">View source</a></span></li>
+															<li id="ca-history" class="collapsible"><span><a href="Adding_a_new_weapon_type_tutorial.html"  title="Past revisions of this page [h]" accesskey="h">View history</a></span></li>
+													</ul>
+					</div>
+										<div id="p-cactions" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-cactions-label">
+						<h3 id="p-cactions-label"><span>More</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+										<div id="p-search" role="search">
+						<h3>
+							<label for="searchInput">Search</label>
+						</h3>
+
+						<form action="/mw/index.php" id="searchform">
+														<div id="simpleSearch">
+															<input type="search" name="search" placeholder="Search" title="Search Dragon Age Toolset Wiki [f]" accesskey="f" id="searchInput" /><input type="hidden" value="Special:Search" name="title" /><input type="submit" name="fulltext" value="Search" title="Search the pages for this text" id="mw-searchButton" class="searchButton mw-fallbackSearchButton" /><input type="submit" name="go" value="Go" title="Go to a page with this exact name if exists" id="searchButton" class="searchButton" />								</div>
+						</form>
+					</div>
+									</div>
+			</div>
+			<div id="mw-panel">
+				<div id="p-logo" role="banner"><a class="mw-wiki-logo" href="Main_Page.html"  title="Visit the main page"></a></div>
+						<div class="portal" role="navigation" id='p-navigation' aria-labelledby='p-navigation-label'>
+			<h3 id='p-navigation-label'>Navigation</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-mainpage-description"><a href="Main_Page.html" title="Visit the main page [z]" accesskey="z">Main page</a></li>
+													<li id="n-recentchanges"><a href="/wiki/Special:RecentChanges" title="A list of recent changes in the wiki [r]" accesskey="r">Recent changes</a></li>
+													<li id="n-randompage"><a href="/wiki/Special:Random" title="Load a random page [x]" accesskey="x">Random page</a></li>
+													<li id="n-help"><a href="https://www.mediawiki.org/wiki/Special:MyLanguage/Help:Contents" title="The place to find out">Help</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-Links' aria-labelledby='p-Links-label'>
+			<h3 id='p-Links-label'>Links</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-Toolset-forums"><a href="http://forum.bioware.com/forum/30-dragon-age-toolset" rel="nofollow">Toolset forums</a></li>
+													<li id="n-Legacy-forums"><a href="http://social.bioware.com/forum/1/subindex/70" rel="nofollow">Legacy forums</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-tb' aria-labelledby='p-tb-label'>
+			<h3 id='p-tb-label'>Tools</h3>
+
+			<div class="body">
+									<ul>
+													<li id="t-whatlinkshere"><a href="/wiki/Special:WhatLinksHere/Adding_a_new_weapon_type_tutorial" title="A list of all wiki pages that link here [j]" accesskey="j">What links here</a></li>
+													<li id="t-recentchangeslinked"><a href="/wiki/Special:RecentChangesLinked/Adding_a_new_weapon_type_tutorial" title="Recent changes in pages linked from this page [k]" accesskey="k">Related changes</a></li>
+													<li id="t-specialpages"><a href="/wiki/Special:SpecialPages" title="A list of all special pages [q]" accesskey="q">Special pages</a></li>
+													<li id="t-print"><a href="Adding_a_new_weapon_type_tutorial.html" rel="alternate" title="Printable version of this page [p]" accesskey="p">Printable version</a></li>
+													<li id="t-permalink"><a href="Adding_a_new_weapon_type_tutorial.html" title="Permanent link to this revision of the page">Permanent link</a></li>
+													<li id="t-info"><a href="Adding_a_new_weapon_type_tutorial.html" title="More information about this page">Page information</a></li>
+											</ul>
+							</div>
+		</div>
+				</div>
+		</div>
+		<div id="footer" role="contentinfo">
+							<ul id="footer-info">
+											<li id="footer-info-lastmod"> This page was last modified on 23 February 2012, at 14:06.</li>
+									</ul>
+							<ul id="footer-places">
+											<li id="footer-places-privacy"><a href="/wiki/Dragon_Age_Toolset_Wiki:Privacy_policy" title="Dragon Age Toolset Wiki:Privacy policy">Privacy policy</a></li>
+											<li id="footer-places-about"><a href="/wiki/Dragon_Age_Toolset_Wiki:About" title="Dragon Age Toolset Wiki:About">About Dragon Age Toolset Wiki</a></li>
+											<li id="footer-places-disclaimer"><a href="/wiki/Dragon_Age_Toolset_Wiki:General_disclaimer" title="Dragon Age Toolset Wiki:General disclaimer">Disclaimers</a></li>
+									</ul>
+										<ul id="footer-icons" class="noprint">
+											<li id="footer-poweredbyico">
+															<a href="//www.mediawiki.org/"><img src="../assets/mw/resources/assets/poweredby_mediawiki_88x31.png" alt="Powered by MediaWiki" srcset="../assets/mw/resources/assets/poweredby_mediawiki_132x47.png 1.5x, ../assets/mw/resources/assets/poweredby_mediawiki_176x62.png 2x" width="88" height="31" /></a>
+													</li>
+									</ul>
+						<div style="clear:both"></div>
+		</div>
+		<script>if(window.jQuery)jQuery.ready();</script><script>if(window.mw){
+mw.loader.state({"site":"loading","user":"ready","user.groups":"ready"});
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.toc","mediawiki.action.view.postEdit","mediawiki.user","mediawiki.hidpi","mediawiki.page.ready","mediawiki.searchSuggest"],null,true);
+}</script>
+<script>if(window.mw){
+document.write("\u003Cscript src=\"https://www.datoolset.net/mw/load.php?debug=false\u0026amp;lang=en\u0026amp;modules=site\u0026amp;only=scripts\u0026amp;skin=vector\u0026amp;*\"\u003E\u003C/script\u003E");
+}</script>
+<script>if(window.mw){
+mw.config.set({"wgBackendResponseTime":399});
+}</script>
+	</body>
+</html>

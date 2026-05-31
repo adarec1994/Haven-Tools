@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" class="client-nojs">
+<head>
+<meta charset="UTF-8" />
+<title>Adding custom armor tutorial - Dragon Age Toolset Wiki</title>
+<meta name="generator" content="MediaWiki 1.25.6" />
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="search" type="application/opensearchdescription+xml" href="/mw/opensearch_desc.php" title="Dragon Age Toolset Wiki (en)" />
+<link rel="EditURI" type="application/rsd+xml" href="https://www.datoolset.net/mw/api.php?action=rsd" />
+<link rel="alternate" hreflang="x-default" href="Adding_custom_armor_tutorial.html" />
+<link rel="alternate" type="application/atom+xml" title="Dragon Age Toolset Wiki Atom feed" href="/mw/index.php?title=Special:RecentChanges&amp;feed=atom" />
+<meta name="ResourceLoaderDynamicStyles" content="" />
+<style>a:lang(ar),a:lang(kk-arab),a:lang(mzn),a:lang(ps),a:lang(ur){text-decoration:none}
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-css:7:270a0dcd3ae587df0f041aebfc42e61b */</style>
+<script>if(window.mw){
+mw.config.set({"wgCanonicalNamespace":"","wgCanonicalSpecialPageName":false,"wgNamespaceNumber":0,"wgPageName":"Adding_custom_armor_tutorial","wgTitle":"Adding custom armor tutorial","wgCurRevisionId":20044,"wgRevisionId":20044,"wgArticleId":5834,"wgIsArticle":true,"wgIsRedirect":false,"wgAction":"view","wgUserName":null,"wgUserGroups":["*"],"wgCategories":["Tutorials"],"wgBreakFrames":false,"wgPageContentLanguage":"en","wgPageContentModel":"wikitext","wgSeparatorTransformTable":["",""],"wgDigitTransformTable":["",""],"wgDefaultDateFormat":"dmy","wgMonthNames":["","January","February","March","April","May","June","July","August","September","October","November","December"],"wgMonthNamesShort":["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],"wgRelevantPageName":"Adding_custom_armor_tutorial","wgRelevantArticleId":5834,"wgIsProbablyEditable":false,"wgRestrictionEdit":[],"wgRestrictionMove":[]});
+}</script><script>if(window.mw){
+mw.loader.implement("user.options",function($,jQuery){mw.user.options.set({"variant":"en"});});mw.loader.implement("user.tokens",function($,jQuery){mw.user.tokens.set({"editToken":"+\\","patrolToken":"+\\","watchToken":"+\\"});});
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-js:7:a5c52c063dc436c1ca7c9f456936a5e9 */
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.page.startup","mediawiki.legacy.wikibits","mediawiki.legacy.ajax","skins.vector.js"]);
+}</script>
+<!--[if lt IE 7]><style type="text/css">body{behavior:url("/mw/skins/Vector/csshover.min.htc")}</style><![endif]-->
+<link rel="stylesheet" href="../assets/local/wiki-static.css" />
+</head>
+<body class="mediawiki ltr sitedir-ltr ns-0 ns-subject page-Adding_custom_armor_tutorial skin-vector action-view">
+		<div id="mw-page-base" class="noprint"></div>
+		<div id="mw-head-base" class="noprint"></div>
+		<div id="content" class="mw-body" role="main">
+			<a id="top"></a>
+
+						<div class="mw-indicators">
+</div>
+			<h1 id="firstHeading" class="firstHeading" lang="en">Adding custom armor tutorial</h1>
+						<div id="bodyContent" class="mw-body-content">
+									<div id="siteSub">From Dragon Age Toolset Wiki</div>
+								<div id="contentSub"></div>
+												<div id="jump-to-nav" class="mw-jump">
+					Jump to:					<a href="#mw-head">navigation</a>, 					<a href="#p-search">search</a>
+				</div>
+				<div id="mw-content-text" lang="en" dir="ltr" class="mw-content-ltr"><p>This is a tutorial to import meshes into DAO with Eshme’s 3ds max plugin.
+Some of the things here are not specific to DAO, such as weight painting in 3dsmax. There are many more resources to find than can be put into this tutorial, it is not exhaustive.  
+</p>
+<ul><li>3ds max (or free version - gmax). 3ds max version needs to be 2010-2012 or the import script will not work. GMax needs specific setup- check useful links and fextralife forums.</li>
+<li>Dragon Age Origins</li>
+<li>Dragon Age Toolset</li>
+<li>Gimp/Photoshop/ Anything else that will make .dds files</li>
+<li><a rel="nofollow" class="external text" href="https://www.nexusmods.com/dragonage/mods/214">GDA plugin</a></li>
+<li><a rel="nofollow" class="external text" href="http://www.nexusmods.com/dragonage/mods/895/?">Eshme Import/Export DAO Tools</a> </li></ul>
+<div id="toc" class="toc"><div id="toctitle"><h2>Contents</h2></div>
+<ul>
+<li class="toclevel-1 tocsection-1"><a href="#Anatomy_of_an_Item"><span class="tocnumber">1</span> <span class="toctext">Anatomy of an Item</span></a></li>
+<li class="toclevel-1 tocsection-2"><a href="#Naming"><span class="tocnumber">2</span> <span class="toctext">Naming</span></a></li>
+<li class="toclevel-1 tocsection-3"><a href="#Script_Settings"><span class="tocnumber">3</span> <span class="toctext">Script Settings</span></a></li>
+<li class="toclevel-1 tocsection-4"><a href="#Exporting_a_template"><span class="tocnumber">4</span> <span class="toctext">Exporting a template</span></a></li>
+<li class="toclevel-1 tocsection-5"><a href="#Preparing_A_Model"><span class="tocnumber">5</span> <span class="toctext">Preparing A Model</span></a></li>
+<li class="toclevel-1 tocsection-6"><a href="#Textures"><span class="tocnumber">6</span> <span class="toctext">Textures</span></a></li>
+<li class="toclevel-1 tocsection-7"><a href="#3D_MAX"><span class="tocnumber">7</span> <span class="toctext">3D MAX</span></a></li>
+<li class="toclevel-1 tocsection-8"><a href="#Alternate_Method_to_skin_the_mesh"><span class="tocnumber">8</span> <span class="toctext">Alternate Method to skin the mesh</span></a></li>
+<li class="toclevel-1 tocsection-9"><a href="#Weight_Painting"><span class="tocnumber">9</span> <span class="toctext">Weight Painting</span></a></li>
+<li class="toclevel-1 tocsection-10"><a href="#Assign_materials"><span class="tocnumber">10</span> <span class="toctext">Assign materials</span></a></li>
+<li class="toclevel-1 tocsection-11"><a href="#Export"><span class="tocnumber">11</span> <span class="toctext">Export</span></a></li>
+<li class="toclevel-1 tocsection-12"><a href="#LODS"><span class="tocnumber">12</span> <span class="toctext">LODS</span></a></li>
+<li class="toclevel-1 tocsection-13"><a href="#Hair_And_other_Multi_Mesh_Items"><span class="tocnumber">13</span> <span class="toctext">Hair And other Multi Mesh Items</span></a></li>
+<li class="toclevel-1 tocsection-14"><a href="#Transplanting_MMH_for_separate_armour_chunks_and_tinting"><span class="tocnumber">14</span> <span class="toctext">Transplanting MMH for separate armour chunks and tinting</span></a></li>
+<li class="toclevel-1 tocsection-15"><a href="#Bug_Fixes"><span class="tocnumber">15</span> <span class="toctext">Bug Fixes</span></a></li>
+<li class="toclevel-1 tocsection-16"><a href="#Useful_links"><span class="tocnumber">16</span> <span class="toctext">Useful links</span></a></li>
+</ul>
+</div>
+
+<h2><span class="mw-headline" id="Anatomy_of_an_Item">Anatomy of an Item</span></h2>
+<pre>mmh.
+This is the one the game references first. It defines the path for the other parts of the mesh(msh, mao etc). It has information in it like bone order for whatever skeleton the item uses. 
+</pre>
+<pre>Msh.
+The actual mesh itself.
+</pre>
+<pre>Phy. 
+Handles collision, physics
+</pre>
+<pre>Mao. 
+The material object file. This tells the item which texture files it’s supposed to use. 
+</pre>
+<pre>Textures
+</pre>
+<h2><span class="mw-headline" id="Naming">Naming</span></h2>
+<p>Very important for the GDA. Textures in the game are named as follows: [belonging to a semi-race]_[type of armor\clothing]_[unique index of 4 letters]_0[texture type]. Although you can name your custom textures anything you want so long as it is unique. 
+</p><p>Model naming has more restrictions, no more than 4 letters for the idenfifying string. Check custom item GDAs to get a clearer idea of this.
+</p><p><br />
+Race gender is defined as follows:
+</p>
+<pre>   hf- female Human
+   hm - male Human
+   ef- female elf
+   em - male elf
+   df - female dwarf
+   dm - male dwarf
+   qm - male qunari (there's no female qunari in the game)
+</pre>
+<p>Armor:
+</p>
+<pre>   arm - armor
+   rob - robe (mage, clergyman)
+   cth - clothes (nobleman, wedding)
+</pre>
+<p>Helmets:
+</p>
+<pre>   hlh - for mages.
+   hlf - massive ones.
+</pre>
+<p><br />
+Texture types:
+</p>
+<pre>   d - diffuse (Duffise)
+   n - Normal
+   s - Spectacular
+   t - tint (Tint)
+   e - emissive (Emissive) Need for a glowing effect. Almost never used in dao)
+</pre>
+<p>The result should be something like this: hf_rob_xmpl_0d or em_arm_exmp_0n. *NOTE: The material itself (the name of the material in max, then it will be the MAO file) is named the same, but without the texture type. For example: hf_rob_xmpl or em_arm_exmp. The model is named the same, only with a detail number at the end: hf_rob_xmpl_0 or em_arm_exmp_0 
+</p>
+<h2><span class="mw-headline" id="Script_Settings">Script Settings</span></h2>
+<p>Decide where you install all programs - program files(x86) for 32 bit programs on 64 bit computers. The export script and the game itself must be in the same program files folder.
+To Install Eshme Import/Export script: Startup, YAGG and DAOTools add to C(disk):/Program Files/Autodesk/3dsmax/Scripts -&gt; scripts 
+If you did everything correctly, then at the first start, a window with settings will appear.
+</p><p>The Game Path should be the folder with the game: C:\Program Files (x86)\Dragon Age..
+For the Export Path, make a folder in your Override folder- the one you put mods in, [local_disk_name]:\Documents and Settings\[user_name]\My Documents\BioWare\Dragon Age\packages\core\override\. This makes it easier to test it. 
+</p><p>For scale, tick x100. This makes it much easier to work with them. Note, make sure any obj you import and export also uses the x100 scale, or whatever you are using.
+The toolset itself must be installed in the game folder, after that you can start working in 3 d Max -&gt; Run Script.
+</p><p>Before closing, the configurator will inform us about the possibility to change the settings at any time, this is fine.
+</p>
+<h2><span class="mw-headline" id="Exporting_a_template">Exporting a template</span></h2>
+<p>The engine will not be able to work with a model larger than 45,000 polygons (Faces) and 30,000 vertices (Vertices). 
+</p><p>First, pick an outfit with similar dimensions for the same race and class as the one you want to import for(see below). 
+You will need the  mmh, msh, phy and mao of the item. These can be extracted from the game’s erfs or using DATOOL if you have it.
+</p><p>In the Toolset, open the archives modelhierarchies.erf materialobjects.erf modelmeshdata.erf (you can find them at [game_disk_name]: \Dragon Age\packages\core\data). Also, open the texturepack.erf archive located at [game_disk_name]:\Dragon Age\packages\core\textures\high. If we want the female chantry robe: In these archives we find the files hf_rob_chaa_0.mmh, hf_rob_chaa_0.phy (modelhierarchies.erf) hf_rob_chaa_0.msh (modelmeshdata.erf) pf_rob_chaa.mao (materialobjects.erf) pf_rob_chaa_0d.dds, pf_rob_chaa_0n_dds, pf_rob_chaa_0s. .erf) and unpack it into a separate folder. In total, the output should be 8 files.
+If you are doing an object for a female, you will want to use tmp’s proportion fixes- copy his mmh and msh and let it overwrite the original ones you downloaded.
+</p><p>Run the DAOImport script. In the File section of the Model Import section, specify the location of the .mmh file we recently pulled out (hf_rob_chaa_0.mmh). Click on the Import button, a special window will notify us that it is ready for import, click OK and wait 5-30 seconds (depending on the power of the computer) until the model is loaded.
+</p><p>Select everything except the mesh then delete it.
+Save the model as an obj.
+</p>
+<h2><span class="mw-headline" id="Preparing_A_Model">Preparing A Model</span></h2>
+<p>Pick the new item you want in Origins. If it is an Inquisition item, extract both the model and 4 textures(diffuse, normal, tint and spec) with Frosty mod manager. DAI mod manager extracts textures fine but can jumble or flip Uvs on models.
+</p><p>Open it in blender. Make sure to have ‘seperate groups’ ticked on the import, otherwise it will import with several different meshes layered inside it
+</p><p>The item needs to be should be one mesh object, all on the same UV map. 
+If it is a Dragon age Inquistion item with skin showing, you will need to alter the UV map in Blender to combine them, as all the skin in DAI is on a separate material.
+DA:O has difficulty with multi mesh objects, and will only tint the mesh with higher priority in the mmh- very bad on objects with visible skin. It can cause difficulty elsewhere if you try and use it as a mesh replacer too, so it is best to combine the two textures into one UV map where possible.
+</p><p>Try not to rotate pieces, as keeping them in the same orientation means you can reuse the original’s normal map.
+</p><p>If you are porting a DA2 item or a single mesh DAI item that has no skin showing, you shouldn’t need to alter the UV.
+</p><p>Import the obj. you exported from dao. Flip your model to match it.
+Now either move the model into position with blender pose mode(if you exported a psk or a fbx model), or push it into place in Blender sculpt mode with the grab brush, to match the obj. you exported from the game. 
+</p><p>You may want to check it has no gaps, merge redundant vertices and reset the normals to make it ready for editing.
+</p>
+<h2><span class="mw-headline" id="Textures">Textures</span></h2>
+<p>If your UV map had skin and needed combining, export the UV map as a guideline. You can now move things around and create your texture in any program.
+</p><p><a href="File%3AText1.png.html" class="image"><img alt="Text1.png" src="../assets/mw/images/9/90/Text1.png" width="533" height="538" class="thumbborder" /></a>
+</p><p>If you did not need to change the UV map the textures still need to be changed to meet the DA:O standard, with shading added, normal map converted and appropriate specular and tint maps created. Check various texture guides for more information.
+</p><p>Save them as .dds in GIMP, Photoshop or any other program that can make .dds files. 
+</p><p>You should have textures with distinct unique names as placeholders at least- a diffuse, a normal, a spec and a tint.
+</p>
+<h2><span class="mw-headline" id="3D_MAX">3D MAX</span></h2>
+<p>Import the dragon age mmh you are using as a template. As before it will import with skeleton, glowing green boxes and collision bubbles, take care to move or delete none of these. Do not move the model from its starting position.
+</p><p>Import your own new item as an obj, in the correct scale matching the import scale (x100)
+</p><p>You may want to Poly&gt; Weld polygons to make it easier to weight paint.
+Copy the skin modifier from the dragon age mmh. Paste it into the modifier list of your new mesh. It should now register as having absorbed the weighting, if you click Paint Weights to check. 
+You can delete the template mmh now, it has served its purpose.
+</p><p>Use the Select and Link tool in the top left hand corner. Select your mesh. Draw a line from your mesh to the small green box between its feet. The box should glow upon connection. Return to the regular select tool to make sure you don’t link anything by accident.
+Run script&gt; DAO ModelManager
+</p><p>The mesh will show up. Change its parameters to ‘mesh’ instead of Unknown.
+If you have done this correctly, there should be an option under Poly that contains a list of Dragon Age mesh options. Make sure Cast Runtime Shadow is ticked, or your item will not cast a shadow.
+</p><p>Your poly needs 3 modifiers in the following order(The other two can be found in the dropdown list.):
+1)Skin
+2) Unwrap UVW
+3)Edit Normals
+</p><p><br />
+</p>
+<h2><span class="mw-headline" id="Alternate_Method_to_skin_the_mesh">Alternate Method to skin the mesh</span></h2>
+<p>1) Import both the example mmh with the script, and your new obj.
+1) Select your model. Right-click on an empty space-&gt;Convert To-&gt; Convert To Editable Mesh 
+2)  Select the mmh’s Skin and Edit Normals modifiers. Right Click, Cut
+3) Switch to polygon editing mode
+</p><p><a href="File%3APolygon.png.html" class="image"><img alt="Polygon.png" src="../assets/mw/images/9/9d/Polygon.png" width="172" height="88" class="thumbborder" /></a>
+</p><p>4) Press CTRL+A The entire original outfit should be in the red selection color. Next, you need to deselect a single polygon (done with the ALT key pressed). It doesn't matter which one it is, the main thing is that it should be visible and easy to get to.
+5)Click the Delete button. This will delete the entire model, except for the one polygon we left behind. 
+6)Now we need to attach the new mesh to this polygon. To do this, select the Attach button on the toolbar on the right and click on the suit with the mouse. A window will appear, select the Match Material to Material IDs option. Click OK. 
+7)Now we need to remove the last polygon of the original robe. We again switch to the polygon editing mode (having previously “pressed” the attach button), find the polygon we once left and delete it. 
+5) Paste the cut modifiers in the list 
+6) Either reset the normals or add a new Edit Normals modifier
+</p>
+<h2><span class="mw-headline" id="Weight_Painting">Weight Painting</span></h2>
+<p>If you have just copy/pasted the Skin modifier onto the mesh, it will probably have some weighting problems that will need to be touched up.
+</p><p>Run the import window again. Now, select the animation window.
+First you will need to export some test animations to make your life easier. For example, mh_m.mov_rf is the running animation and it has 3 files in the animations erf.
+</p><p>You can also import a test head, if you extracted all the base head files. (racegenderprefix_uhm_basa_0.mmh, racegenderprefix_uhm_bas_0.msh and so on)
+Tick Merge With Selected and you should be able to see how it reacts with a head in it. Make sure you delete it before exporting.
+</p><p>Now use Paint Weights button to edit anything that needs it.
+</p><p>If you want to do things very well and you used Blender pose mode to match the original mesh in blender, you can import that in as a fbx and do a bone weight transfer(under Utilities&gt;Skin Utilties). This will get you very good weighting, as it was professionally done.
+</p><p>When you are done weighting the mesh, select everything in the scene especially any gizmos that may have moved far out of view.
+Go to timeline, select all the animation frames, right click Delete Selected Frames. This should snap everything back into default positions, ready to export.
+</p>
+<h2><span class="mw-headline" id="Assign_materials">Assign materials</span></h2>
+<p>On the top toolbar we find the material editor button (four multi-colored balls) Next, click Get Material and select Dragon Age Material from the list (if the plugin is installed correctly, it will be in the list)
+</p><p><a href="File%3AMaterialeditor.png.html" class="image"><img alt="Materialeditor.png" src="../assets/mw/images/7/71/Materialeditor.png" width="731" height="350" class="thumbborder" /></a>
+</p><p>In Material Type we specify what type of MAO semantic the item will need.
+For example
+1 - Model with skin and transparent bits (fur robe for example) - [Armor w / Skin Tint][Alpha Blending][No Emissive].
+2- Skinless Model in Render Semantics – [No Tint][Alpha Blending][No Emissive].
+</p><p>Expand the list of Texture Maps and assign the appropriate textures. Next, Assign Material to Selection (the item should be selected). If you really want to see the texture in the editor, then click Show Map in Viewport. It remains only to give our material a normal name. In the corresponding field, enter pf_rob_chaz_0. That's all.
+</p><p><a href="File%3AMaterialwork.png.html" class="image"><img alt="Materialwork.png" src="../assets/mw/images/2/2c/Materialwork.png" width="355" height="199" class="thumbborder" /></a>
+</p><p>You can also select the LOD type. LOD2/3 don’t have normal maps and their maos are a little different in type. LOD MAOs also do not have transparency.
+</p><p>Expand the list of Texture Maps and assign the appropriate textures. Next, Assign Material to Selection (the item should be selected). If you want to see the texture in the editor, then click Show Map in Viewport. 
+</p><p>You can always do all of this in Notepad later and change the file paths of everything, so it’s fine if you don’t have the right textures yet. 
+You do need to apply a placeholder Dragon Age Material so the mesh will export correctly.
+</p><p>You can import a Dragon Age Mesh and use the eyedropper to sample its MAO and apply it to other items.
+</p>
+<h2><span class="mw-headline" id="Export">Export</span></h2>
+<p>To do this, run the DAOModelExport script. We will see a window like this:
+</p><p><a href="File%3AExport.png.html" class="image"><img alt="Export.png" src="../assets/mw/images/4/47/Export.png" width="254" height="447" class="thumbborder" /></a>
+</p><p>Between Name and .MMH enter whatever your new item is named. 
+You should call it something that works with the gda you have already set up. 
+Between Name and .MSH, enter the same thing (if this was not done automatically). Check the Create MAO Material File option. That's it, now click Export. 
+At the end of the export process, five new files should appear in the folder [local_drive_name]:\Documents and Settings\[username]\My Documents\BioWare\Dragon Age\packages\core\override\ hf_rob_chaa_0.phy hf_rob_chaa_0.msh hf_rob_chaa_0.mmh hf_rob_chaa_0.met pf_rob_chaz_0.mao 
+Your textures should already be there. The model is ready, you can run the game and see the result.
+</p>
+<h2><span class="mw-headline" id="LODS">LODS</span></h2>
+<p>Every item imports with its own skeleton. The LOD 0, 2 and 3 skeletons for the races are all different as they have different numbers of bones. You cannot export LOD0 skeleton for a LOD2, it will cause errors.
+To create, just import a LOD2 model (ends with _2.mmh) and repeat the steps. It does not matter how good the LOD2 weighting is, as it is only seen from a distance anyway.
+For a custom item with its own GDA, you only need a LOD2. For an item replacer that replaces a vanilla mesh, you will also need a LOD3.
+It is a good idea to create LOD2 as it stops the character deforming from a distance, such as in the party camp.
+</p><p><br />
+</p>
+<h2><span class="mw-headline" id="Hair_And_other_Multi_Mesh_Items">Hair And other Multi Mesh Items</span></h2>
+<p>Generally, a multi mesh item(merely attach more mesh chunks with skin modifiers to the same GOB) is not an ideal solution for modelling. This is because only the first mesh listed in the MMH will tint. This is obviously bad for any item with skin showing. Very few items in the game are multi mesh MMHs.
+</p><p>An exception is found in hair. Hair is made up of a scalp (HairM1), plus the hair(HairM2). Multiple hair chunks with the hair material will tint(The same applies to beards). Mod authors may often add accessories to hair- this usually shows up as HairM3, but the name given is not important.
+The Eshme script can sometimes jumble the order of these, so ensure they are the right way around or the scalp will not tint correctly. Deleting the scalp entirely can cause odd bugs with the shadows of the hair, so this is not recommended.
+</p><p><br />
+</p>
+<h2><span class="mw-headline" id="Transplanting_MMH_for_separate_armour_chunks_and_tinting">Transplanting MMH for separate armour chunks and tinting</span></h2>
+<p>Sometimes custom meshes have a bug where they hold the goblet upside down (see Ashhawk’s Goblet De-Gobbler - a Joining chalice fix and more <a rel="nofollow" class="external free" href="https://www.nexusmods.com/dragonage/mods/5864">https://www.nexusmods.com/dragonage/mods/5864</a>) 
+Custom armour/glove/boot sets may also have an issue where the gloves/boots do not tint.This is because the 3dsmax exporter slightly corrupts the MMH.
+</p><p>One way to get around this is to steal the MMH of a vanilla item OR tmp7704’s skeleton(tmp’s custom skeletons don’t have this issue, possibly because they were made with lightwave exporter)
+</p><p>You would export your mesh as normal (ef_cth_mymesh_0.msh), then delete the exported MMH, MET and PHY.
+You would find a vanilla or tmp7704 MMH and PHY, and then rename them ef_cth_mymesh_0.mmh and  ef_cth_mymesh_0.phy.
+You would need to open them with DATOOL/PYGFF, find any internal references and change them to match, and also change the materialobject line to put in your custom MAO.
+- The .MMH has the name of the mmh, the msh, and also the same internal name as the original mesh (something like EF_ROB_CHAA_BodyM1)
+- The .PHY just has the name of the MMH in it.
+- We don’t need to bother with a .MET.
+</p><p>However, if your MSH’s skin modifier doesn’t have the same amount of bones as the original MMH, the item will warp and distort.
+</p><p>Weight your full body armour as you would usually, then Use utilities -&gt; skin utilities to export the weighting (search 3ds max skin utilities to find tutorial videos about this). A colourful mesh will appear. You can delete the original skeleton and the none-glove parts of your mesh, then import in a glove from the vanilla game. Give your mesh the modifier from the vanilla glove mesh. Then import the weighting from your 'Skin utility' mesh. A prompt will appear, telling you to match up the bones. Do so. Your mesh should now have the original weighting your full body mesh did. Export the mesh. Find what was exported and delete the MMH. Go into the files and find the vanilla glove MMH. Copy the MMH, change all the names and internal references(including the mesh chunk, if you didn't give it the same name as the donor) to your new msh. The phy doesn't need to be replaced. Your glove should now tint.
+Remember if you try and match up a msh that has more bones listed in its Skin modifier, with a MMH that has less, the game will distort the mesh. 
+</p><p><br />
+</p>
+<h2><span class="mw-headline" id="Bug_Fixes">Bug Fixes</span></h2>
+<p>If something isn’t tinting, you may need to open the .mmh in the toolset, find the field Material Library and make sure it is empty.
+All your LODs(you did make LODs right?) need to be the same 'material type' as the main one or they won't tint- aka RobeM1, CLothesM1 and so on. Capitalization does matter.
+</p><p>You can have more than one mesh chunk in an outfit mmh, but only the top billed one will tint at all, so make sure you put anything with skin at the top.
+</p><p>If your character using tmp proportion has long grotesque hands, you may need to get a vanilla phy and rename it to replace the exported phy. (one that is similar, a boot for a boot and so on)
+</p><p>If something is glowing green and t-posing, your mao is either not connected properly, not connected at all, or missing a texture.
+</p><p>If your item is exporting blank, make sure it is connected to the GOB, checking by launching the DAO Model Manager script.
+</p><p>If your item is losing verts in the export, make sure you are exporting it as what it imported in as- so if you are replacing a hair, export it as a hair. You can rename the msh and mmh and change the file references in the toolset or pygff later.
+</p><p><br />
+</p>
+<h2><span class="mw-headline" id="Useful_links">Useful links</span></h2>
+<ul><li><a rel="nofollow" class="external text" href="https://sapphim.tumblr.com/post/132791322645/dao-mesh-modding-tutorial-1-setting-up">How to set up a mesh for Eshme’s script</a></li>
+<li><a rel="nofollow" class="external text" href="http://forums.nexusmods.com/index.php?/topic/423834-the-witcher-1-armors-in-da-origins/page-2#entry3544131">Similar tutorial, How to add new armor to DAO</a> </li>
+<li><a rel="nofollow" class="external text" href="https://www.youtube.com/watch?v=fpU1yqsT8_A">Guide to 3ds max Weight Painting Mike Pickton</a></li>
+<li> <a rel="nofollow" class="external text" href="https://www.youtube.com/watch?v=HWlxEy2wbcs">Painting Weights 3ds Max tutorial</a></li>
+<li><a rel="nofollow" class="external text" href="https://www.youtube.com/watch?v=GWvxMXzEbuM">Add a weapon with 3ds max Mike Pickton</a> </li>
+<li><a rel="nofollow" class="external text" href="https://www.youtube.com/watch?v=NvJ8yhGborY">Adding Custom Armor to Game in Toolset Mike Pickton- explains GDAS, file naming</a></li>
+<li><a href="Customisation_of_original_Dragon_age_armor.html" title="Customisation of original Dragon age armor">Customisation of original Dragon age armor</a></li>
+<li><a href="Adding_custom_shield_tutorial.html" title="Adding custom shield tutorial">Adding custom shield tutorial</a></li>
+<li><a href="Adding_custom_level_tutorial.html" title="Adding custom level tutorial">Adding custom level tutorial</a> - Add your own level. Contains explanation of adding props with Eshme script</li>
+<li><a rel="nofollow" class="external text" href="http://forums.nexusmods.com/index.php?/topic/1122450-loincloth-fashion/page-56#entry16909714">How to fix GDA conflict</a></li>
+<li><a rel="nofollow" class="external text" href="http://www.nexusmods.com/dragonage/mods/3974/?">Item Variation ID spreadsheet modification</a></li>
+<li> <a rel="nofollow" class="external text" href="https://fextralife.com/forums/t140995/items-the-basics-how?p=1512198#p1512198">How to configure import script for GMAX</a></li>
+<li> <a rel="nofollow" class="external text" href="https://www.youtube.com/watch?v=370D7Lul9tk">Skinning Example video</a></li>
+<li> <a rel="nofollow" class="external text" href="https://www.youtube.com/watch?v=_q4mmFMmIK8">Crinoline example video </a></li>
+<li> <a rel="nofollow" class="external text" href="https://www.youtube.com/watch?v=1QMcAX1cDyo">Own modifications video</a></li>
+<li> <a rel="nofollow" class="external text" href="https://www.youtube.com/watch?v=TPrnSACiTJ4">Learn Blender for beginners tutorials</a></li>
+<li> <a rel="nofollow" class="external text" href="https://www.youtube.com/watch?v=OTxxviChJQw">Converting hair to DAO with blender 2.49</a></li>
+<li><a rel="nofollow" class="external text" href="https://sapphimods.me/tutorials/dragon-age-texture-guide/">DAO texture guide</a></li></ul>
+<p><br />
+</p>
+<table class="nmbox" style="width:100%; border:1px solid #AAAAAA; border-collapse:collapse; clear:both; font-size:85%; margin:0.25em 0;">
+<tr style="background: #CFDFEF;">
+<th style="border:none; padding:4px 1em; border-right:1px solid #AAAAAA; text-align:center; white-space:nowrap;"> <b><a href="Dragon_Age_Toolset_Wiki%3ALanguage_policy.html" title="Dragon Age Toolset Wiki:Language policy">Language:</a></b></th>
+<td style="border:none; padding:0.25em 0.9em; width:100%; background:#DFEFFF;"><b><strong class="selflink">English</strong></b> <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>&#160;&#8226;&#32;<span lang="ru"><a href="Adding_custom_armor_tutorial/ru.html" title="Adding custom armor tutorial/ru">русский</a></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></td>
+</tr></table>
+
+<!-- 
+NewPP limit report
+CPU time usage: 0.144 seconds
+Real time usage: 0.396 seconds
+Preprocessor visited node count: 1072/1000000
+Preprocessor generated node count: 3263/1000000
+Post‐expand include size: 7448/2097152 bytes
+Template argument size: 1078/2097152 bytes
+Highest expansion depth: 8/40
+Expensive parser function count: 54/100
+-->
+
+<!-- 
+Transclusion expansion time report (%,ms,calls,template)
+100.00%  293.112      1 - Template:Languages
+100.00%  293.112      1 - -total
+ 98.00%  287.258      1 - Template:LanguagesBox
+ 85.47%  250.511     54 - Template:LanguagesLang
+  6.19%   18.145      1 - Template:LanguagesTitle
+-->
+
+<!-- Saved in parser cache with key db714099484-datoolwiki_:pcache:idhash:5834-0!*!0!!en!5!* and timestamp 20260530172117 and revision id 20044
+ -->
+</div>									<div class="printfooter">
+						Retrieved from "<a dir="ltr" href="Adding_custom_armor_tutorial.html">https://www.datoolset.net/mw/index.php?title=Adding_custom_armor_tutorial&amp;oldid=20044</a>"					</div>
+													<div id='catlinks' class='catlinks'><div id="mw-normal-catlinks" class="mw-normal-catlinks"><a href="/wiki/Special:Categories" title="Special:Categories">Category</a>: <ul><li><a href="Category%3ATutorials.html" title="Category:Tutorials">Tutorials</a></li></ul></div></div>												<div class="visualClear"></div>
+							</div>
+		</div>
+		<div id="mw-navigation">
+			<h2>Navigation menu</h2>
+
+			<div id="mw-head">
+									<div id="p-personal" role="navigation" class="" aria-labelledby="p-personal-label">
+						<h3 id="p-personal-label">Personal tools</h3>
+						<ul>
+							<li id="pt-login"><a href="/mw/index.php?title=Special:UserLogin&amp;returnto=Adding+custom+armor+tutorial" title="You are encouraged to log in; however, it is not mandatory [o]" accesskey="o">Log in</a></li>						</ul>
+					</div>
+									<div id="left-navigation">
+										<div id="p-namespaces" role="navigation" class="vectorTabs" aria-labelledby="p-namespaces-label">
+						<h3 id="p-namespaces-label">Namespaces</h3>
+						<ul>
+															<li  id="ca-nstab-main" class="selected"><span><a href="Adding_custom_armor_tutorial.html"  title="View the content page [c]" accesskey="c">Page</a></span></li>
+															<li  id="ca-talk" class="new"><span><a href="/mw/index.php?title=Talk:Adding_custom_armor_tutorial&amp;action=edit&amp;redlink=1"  title="Discussion about the content page [t]" accesskey="t">Discussion</a></span></li>
+													</ul>
+					</div>
+										<div id="p-variants" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-variants-label">
+												<h3 id="p-variants-label"><span>Variants</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+									</div>
+				<div id="right-navigation">
+										<div id="p-views" role="navigation" class="vectorTabs" aria-labelledby="p-views-label">
+						<h3 id="p-views-label">Views</h3>
+						<ul>
+															<li id="ca-view" class="selected"><span><a href="Adding_custom_armor_tutorial.html" >Read</a></span></li>
+															<li id="ca-viewsource"><span><a href="Adding_custom_armor_tutorial.html"  title="This page is protected.&#10;You can view its source [e]" accesskey="e">View source</a></span></li>
+															<li id="ca-history" class="collapsible"><span><a href="Adding_custom_armor_tutorial.html"  title="Past revisions of this page [h]" accesskey="h">View history</a></span></li>
+													</ul>
+					</div>
+										<div id="p-cactions" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-cactions-label">
+						<h3 id="p-cactions-label"><span>More</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+										<div id="p-search" role="search">
+						<h3>
+							<label for="searchInput">Search</label>
+						</h3>
+
+						<form action="/mw/index.php" id="searchform">
+														<div id="simpleSearch">
+															<input type="search" name="search" placeholder="Search" title="Search Dragon Age Toolset Wiki [f]" accesskey="f" id="searchInput" /><input type="hidden" value="Special:Search" name="title" /><input type="submit" name="fulltext" value="Search" title="Search the pages for this text" id="mw-searchButton" class="searchButton mw-fallbackSearchButton" /><input type="submit" name="go" value="Go" title="Go to a page with this exact name if exists" id="searchButton" class="searchButton" />								</div>
+						</form>
+					</div>
+									</div>
+			</div>
+			<div id="mw-panel">
+				<div id="p-logo" role="banner"><a class="mw-wiki-logo" href="Main_Page.html"  title="Visit the main page"></a></div>
+						<div class="portal" role="navigation" id='p-navigation' aria-labelledby='p-navigation-label'>
+			<h3 id='p-navigation-label'>Navigation</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-mainpage-description"><a href="Main_Page.html" title="Visit the main page [z]" accesskey="z">Main page</a></li>
+													<li id="n-recentchanges"><a href="/wiki/Special:RecentChanges" title="A list of recent changes in the wiki [r]" accesskey="r">Recent changes</a></li>
+													<li id="n-randompage"><a href="/wiki/Special:Random" title="Load a random page [x]" accesskey="x">Random page</a></li>
+													<li id="n-help"><a href="https://www.mediawiki.org/wiki/Special:MyLanguage/Help:Contents" title="The place to find out">Help</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-Links' aria-labelledby='p-Links-label'>
+			<h3 id='p-Links-label'>Links</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-Toolset-forums"><a href="http://forum.bioware.com/forum/30-dragon-age-toolset" rel="nofollow">Toolset forums</a></li>
+													<li id="n-Legacy-forums"><a href="http://social.bioware.com/forum/1/subindex/70" rel="nofollow">Legacy forums</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-tb' aria-labelledby='p-tb-label'>
+			<h3 id='p-tb-label'>Tools</h3>
+
+			<div class="body">
+									<ul>
+													<li id="t-whatlinkshere"><a href="/wiki/Special:WhatLinksHere/Adding_custom_armor_tutorial" title="A list of all wiki pages that link here [j]" accesskey="j">What links here</a></li>
+													<li id="t-recentchangeslinked"><a href="/wiki/Special:RecentChangesLinked/Adding_custom_armor_tutorial" title="Recent changes in pages linked from this page [k]" accesskey="k">Related changes</a></li>
+													<li id="t-specialpages"><a href="/wiki/Special:SpecialPages" title="A list of all special pages [q]" accesskey="q">Special pages</a></li>
+													<li id="t-print"><a href="Adding_custom_armor_tutorial.html" rel="alternate" title="Printable version of this page [p]" accesskey="p">Printable version</a></li>
+													<li id="t-permalink"><a href="Adding_custom_armor_tutorial.html" title="Permanent link to this revision of the page">Permanent link</a></li>
+													<li id="t-info"><a href="Adding_custom_armor_tutorial.html" title="More information about this page">Page information</a></li>
+											</ul>
+							</div>
+		</div>
+				</div>
+		</div>
+		<div id="footer" role="contentinfo">
+							<ul id="footer-info">
+											<li id="footer-info-lastmod"> This page was last modified on 18 May 2024, at 19:58.</li>
+									</ul>
+							<ul id="footer-places">
+											<li id="footer-places-privacy"><a href="/wiki/Dragon_Age_Toolset_Wiki:Privacy_policy" title="Dragon Age Toolset Wiki:Privacy policy">Privacy policy</a></li>
+											<li id="footer-places-about"><a href="/wiki/Dragon_Age_Toolset_Wiki:About" title="Dragon Age Toolset Wiki:About">About Dragon Age Toolset Wiki</a></li>
+											<li id="footer-places-disclaimer"><a href="/wiki/Dragon_Age_Toolset_Wiki:General_disclaimer" title="Dragon Age Toolset Wiki:General disclaimer">Disclaimers</a></li>
+									</ul>
+										<ul id="footer-icons" class="noprint">
+											<li id="footer-poweredbyico">
+															<a href="//www.mediawiki.org/"><img src="../assets/mw/resources/assets/poweredby_mediawiki_88x31.png" alt="Powered by MediaWiki" srcset="../assets/mw/resources/assets/poweredby_mediawiki_132x47.png 1.5x, ../assets/mw/resources/assets/poweredby_mediawiki_176x62.png 2x" width="88" height="31" /></a>
+													</li>
+									</ul>
+						<div style="clear:both"></div>
+		</div>
+		<script>if(window.jQuery)jQuery.ready();</script><script>if(window.mw){
+mw.loader.state({"site":"loading","user":"ready","user.groups":"ready"});
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.toc","mediawiki.action.view.postEdit","mediawiki.user","mediawiki.hidpi","mediawiki.page.ready","mediawiki.searchSuggest"],null,true);
+}</script>
+<script>if(window.mw){
+document.write("\u003Cscript src=\"https://www.datoolset.net/mw/load.php?debug=false\u0026amp;lang=en\u0026amp;modules=site\u0026amp;only=scripts\u0026amp;skin=vector\u0026amp;*\"\u003E\u003C/script\u003E");
+}</script>
+<script>if(window.mw){
+mw.config.set({"wgBackendResponseTime":240});
+}</script>
+	</body>
+</html>

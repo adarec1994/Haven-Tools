@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" class="client-nojs">
+<head>
+<meta charset="UTF-8" />
+<title>Model - Dragon Age Toolset Wiki</title>
+<meta name="generator" content="MediaWiki 1.25.6" />
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="search" type="application/opensearchdescription+xml" href="/mw/opensearch_desc.php" title="Dragon Age Toolset Wiki (en)" />
+<link rel="EditURI" type="application/rsd+xml" href="https://www.datoolset.net/mw/api.php?action=rsd" />
+<link rel="alternate" hreflang="x-default" href="Model.html" />
+<link rel="alternate" type="application/atom+xml" title="Dragon Age Toolset Wiki Atom feed" href="/mw/index.php?title=Special:RecentChanges&amp;feed=atom" />
+<meta name="ResourceLoaderDynamicStyles" content="" />
+<style>a:lang(ar),a:lang(kk-arab),a:lang(mzn),a:lang(ps),a:lang(ur){text-decoration:none}
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-css:7:270a0dcd3ae587df0f041aebfc42e61b */</style>
+<script>if(window.mw){
+mw.config.set({"wgCanonicalNamespace":"","wgCanonicalSpecialPageName":false,"wgNamespaceNumber":0,"wgPageName":"Model","wgTitle":"Model","wgCurRevisionId":18267,"wgRevisionId":18267,"wgArticleId":785,"wgIsArticle":true,"wgIsRedirect":false,"wgAction":"view","wgUserName":null,"wgUserGroups":["*"],"wgCategories":["Art resources"],"wgBreakFrames":false,"wgPageContentLanguage":"en","wgPageContentModel":"wikitext","wgSeparatorTransformTable":["",""],"wgDigitTransformTable":["",""],"wgDefaultDateFormat":"dmy","wgMonthNames":["","January","February","March","April","May","June","July","August","September","October","November","December"],"wgMonthNamesShort":["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],"wgRelevantPageName":"Model","wgRelevantArticleId":785,"wgIsProbablyEditable":false,"wgRestrictionEdit":[],"wgRestrictionMove":[]});
+}</script><script>if(window.mw){
+mw.loader.implement("user.options",function($,jQuery){mw.user.options.set({"variant":"en"});});mw.loader.implement("user.tokens",function($,jQuery){mw.user.tokens.set({"editToken":"+\\","patrolToken":"+\\","watchToken":"+\\"});});
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-js:7:a5c52c063dc436c1ca7c9f456936a5e9 */
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.page.startup","mediawiki.legacy.wikibits","mediawiki.legacy.ajax","skins.vector.js"]);
+}</script>
+<!--[if lt IE 7]><style type="text/css">body{behavior:url("/mw/skins/Vector/csshover.min.htc")}</style><![endif]-->
+<link rel="stylesheet" href="../assets/local/wiki-static.css" />
+</head>
+<body class="mediawiki ltr sitedir-ltr ns-0 ns-subject page-Model skin-vector action-view">
+		<div id="mw-page-base" class="noprint"></div>
+		<div id="mw-head-base" class="noprint"></div>
+		<div id="content" class="mw-body" role="main">
+			<a id="top"></a>
+
+						<div class="mw-indicators">
+</div>
+			<h1 id="firstHeading" class="firstHeading" lang="en">Model</h1>
+						<div id="bodyContent" class="mw-body-content">
+									<div id="siteSub">From Dragon Age Toolset Wiki</div>
+								<div id="contentSub"></div>
+												<div id="jump-to-nav" class="mw-jump">
+					Jump to:					<a href="#mw-head">navigation</a>, 					<a href="#p-search">search</a>
+				</div>
+				<div id="mw-content-text" lang="en" dir="ltr" class="mw-content-ltr"><p>Models are ordinary, textured, static or animatable 3D Meshes. They make up a big part of every visible entity in the game. The builder consolidates models, along with other files, into a complete visible package which is then seen in the game world.
+</p><p>A Model is an <a href="Art_Resources.html" title="Art Resources">Art Resource</a>.
+</p>
+<div id="toc" class="toc"><div id="toctitle"><h2>Contents</h2></div>
+<ul>
+<li class="toclevel-1 tocsection-1"><a href="#Overview"><span class="tocnumber">1</span> <span class="toctext">Overview</span></a>
+<ul>
+<li class="toclevel-2 tocsection-2"><a href="#Basic_Integration"><span class="tocnumber">1.1</span> <span class="toctext">Basic Integration</span></a></li>
+</ul>
+</li>
+<li class="toclevel-1 tocsection-3"><a href="#File_Formats"><span class="tocnumber">2</span> <span class="toctext">File Formats</span></a>
+<ul>
+<li class="toclevel-2 tocsection-4"><a href="#Textures"><span class="tocnumber">2.1</span> <span class="toctext">Textures</span></a></li>
+</ul>
+</li>
+<li class="toclevel-1 tocsection-5"><a href="#Modding_.2F_Creation"><span class="tocnumber">3</span> <span class="toctext">Modding / Creation</span></a>
+<ul>
+<li class="toclevel-2 tocsection-6"><a href="#Meshes"><span class="tocnumber">3.1</span> <span class="toctext">Meshes</span></a></li>
+<li class="toclevel-2 tocsection-7"><a href="#Materials"><span class="tocnumber">3.2</span> <span class="toctext">Materials</span></a></li>
+</ul>
+</li>
+<li class="toclevel-1 tocsection-8"><a href="#Related_Tutorials"><span class="tocnumber">4</span> <span class="toctext">Related Tutorials</span></a></li>
+<li class="toclevel-1 tocsection-9"><a href="#See_also"><span class="tocnumber">5</span> <span class="toctext">See also</span></a></li>
+</ul>
+</div>
+
+<h2><span class="mw-headline" id="Overview">Overview</span></h2>
+<p>A Model is made up of a collection of files which define its shape, material, and other important information. These are created using external modelling applications such as 3DSMax or Blender which then export information into a game-readable Format. Models can be static, or animated.
+</p><p>The only editor that makes direct use of them is the <a href="Level_editor.html" title="Level editor">level editor</a>, but things like creatures and placeables will make use of them indirectly via <a href="2da.html" title="2DA">2DA</a> definitions.
+</p><p>One model may be used in many different places and contexts. Changing a single model can cause multiple changes in a game world.
+</p><p><b>Note:</b> A Model is an intermediate resource, which are used as part to design entities you see in game. To create or change the design of existing entities, based on existing Models, go straight to <a href="Design.html" title="Design">Design</a>.
+</p>
+<h3><span class="mw-headline" id="Basic_Integration">Basic Integration</span></h3>
+<table border="3" cellpadding="5" cellspacing="0">
+
+<tr style="background-color:white;">
+<td colspan="5" rowspan="2" style="border-right:3px solid black;background-color:#D3CFA0" align="center"><a href="Msh.html" title="MSH">MSH File (Mesh Data)</a>
+</td>
+<td align="center" style="border-right:2px solid black; background-color:#FFAD6B"><a href="Textureformats.html" title="Textureformats" class="mw-redirect">Diffuse</a>
+</td>
+<td align="center" style="border-right:2px solid black; background-color:#FFAD6B"><a href="Textureformats.html" title="Textureformats" class="mw-redirect">Specular</a>
+</td>
+<td align="center" style="border-right:2px solid black; background-color:#FFAD6B"><a href="Textureformats.html" title="Textureformats" class="mw-redirect">Normal</a>
+</td>
+<td align="center" style="background-color:#FFAD6B"><a href="Textureformats.html" title="Textureformats" class="mw-redirect">Tint</a>
+</td></tr>
+<tr>
+<td colspan="4" align="center" style="background-color:#FFAD6B"> <a href="Mao.html" title="MAO">MAO Material File</a>
+</td></tr>
+<tr style="background-color:#E0E0E0;font-weight:bold;text-align:center;">
+<td colspan="9" width="700pt" height="50pt" align="center">
+<p>&#8593;&#8595;
+<a href="Mmh.html" title="MMH">MMH/PHY Model File</a>
+&#8593;&#8595;
+</p>
+</td></tr>
+<tr style="background-color:white;">
+<td colspan="3" align="center" style="border-right:3px solid black; background-color:#FFFFE0"><a href="ItemVariations.xls.html" title="ItemVariations.xls">ItemVariations.XLS</a> <a href="2da.html" title="2DA">(2DA)</a>
+</td>
+<td colspan="2" align="center" style="border-right:3px solid black; background-color:#E0C0C0"><a href="APR_base.xls.html" title="APR base.xls">APR_base.XLS</a> <a href="2da.html" title="2DA">(2DA)</a>
+</td>
+<td colspan="2" align="center" style="border-right:3px solid black; background-color:#BD9970"><a href="Placeables.xls.html" title="Placeables.xls">Placeables.XLS</a> <a href="2da.html" title="2DA">(2DA)</a>
+</td>
+<td colspan="2" align="center" style="background-color:#C0C0E0"><a href="Model_Placement.html" title="Model Placement">Model</a> <a href="Resource_palette.html" title="Resource palette">(ResourcePalette)</a>
+</td></tr>
+<tr>
+<td align="center" style="background-color:#FFFFE0"><a href="ItemVariations.xls.html" title="ItemVariations.xls">Cloth_var.,</a>
+</td>
+<td align="center" style="background-color:#FFFFE0"><a href="ItemVariations.xls.html" title="ItemVariations.xls">Longbows_var.,</a>
+</td>
+<td align="center" style="border-right:3px solid black; background-color:#FFFFE0"><a href="ItemVariations.xls.html" title="ItemVariations.xls">etc.</a>
+</td>
+<td colspan="2" rowspan="3" align="center" style="border-right:3px solid black; background-color:#E0C0C0"><a href="Creature.html" title="Creature">Creature: Appearance</a>
+</td>
+<td colspan="2" rowspan="3" align="center" style="border-right:3px solid black; background-color:#BD9970"><a href="Placeable.html" title="Placeable">Placeable: Appearance</a>
+</td>
+<td colspan="2" rowspan="6" align="center" style="border-bottom:2px solid black; background-color:#C0C0E0"><a href="Level_editor.html" title="Level editor">Level Editor</a>
+</td></tr>
+<tr>
+<td colspan="3" align="center" style="border-right:3px solid black; background-color:#FFFFE0"><a href="2da_base.xls.html" title="2DA base.xls">(M)2DA_base.XLS worksheet ref</a>
+</td></tr>
+<tr>
+<td colspan="3" align="center" style="border-right:3px solid black; background-color:#FFFFE0"><a href="BITM_base.xls.html" title="BITM base.xls">BITM_base.XLS worksheet ref by ID</a>
+</td></tr>
+<tr>
+<td colspan="3" align="center" style="border-right:3px solid black; background-color:#FFFFE0"><a href="Item.html" title="Item">Item: Base Item Type</a>
+</td>
+<td colspan="2" rowspan="3" align="center" style="border-right:3px solid black; border-bottom:2px solid black; background-color:#E0C0C0"><a href="Creature.html" title="Creature">Creature "*.utc"</a> <a href="Resource_palette.html" title="Resource palette">(ResourcePalette)</a>
+</td>
+<td colspan="2" rowspan="3" align="center" style="border-right:3px solid black; border-bottom:2px solid black; background-color:#BD9970"><a href="Placeable.html" title="Placeable">Placeable "*.utp"</a> <a href="Resource_palette.html" title="Resource palette">(ResourcePalette)</a>
+</td></tr>
+<tr>
+<td colspan="3" align="center" style="border-right:3px solid black; background-color:#FFFFE0"><a href="Item.html" title="Item">Item: Itemvariation</a>
+</td></tr>
+<tr>
+<td colspan="3" align="center" style="border-right:3px solid black; border-bottom:2px solid black; background-color:#FFFFE0"><a href="Item.html" title="Item">Item "*.uti"</a> <a href="Resource_palette.html" title="Resource palette">(ResourcePalette)</a>
+</td></tr>
+<tr>
+<td colspan="3" align="center" style="border-right:3px solid black"><b>Game (as Armour/Cloth/etc)</b>
+</td>
+<td colspan="2" align="center" style="border-right:3px solid black"><b>Game (as Creatures/NPC's/etc)</b>
+</td>
+<td colspan="2" align="center" style="border-right:3px solid black"><b>Game (as interactive Level Layout)</b>
+</td>
+<td colspan="2" align="center"><b>Game (as static Level Layouts)</b>
+</td></tr></table>
+<p><br />
+These are the basic dependencies a model got with the Game, in its forms, where each entry links directly to the next. The Level Editor gets direct access to any Model, where the others are listed in <a href="2da.html" title="2DA">2DA's</a>. Where the <a href="2da.html" title="2DA">2DA's</a> are the place to begin listing any new Items. 
+</p>
+<h2><span class="mw-headline" id="File_Formats">File Formats</span></h2>
+<p>Models are principally defined using the following two file formats: <a href="Mmh.html" title="MMH">MMH</a> and <a href="Msh.html" title="MSH">MSH</a>
+</p><p>A Model's Material is defined in a <a href="Mao.html" title="MAO">MAO</a> file which includes a list of Textures, in DDS format, used in the material. 
+</p><p>Bioware made models are stored in the Dragon Age file system's <a href="Erf.html" title="ERF">ERF</a> files. They all share a <a href="Naming_conventions.html" title="Naming conventions">Naming Convention</a>.
+</p>
+<h3><span class="mw-headline" id="Textures">Textures</span></h3>
+<ul><li><a href="Textureformats.html" title="Textureformats" class="mw-redirect">Textureformats</a> in DAO</li></ul>
+<h2><span class="mw-headline" id="Modding_.2F_Creation">Modding / Creation</span></h2>
+<p>Creating or Modding a Model can be done in multiple ways. A common activity in modding is retexturing an existing model. However, entirely new Models can also be created. Custom model import is possible by placing the MMH and all custom files referenced by the MMH into your module's override folder. These files would include any custom <a href="Mao.html" title="MAO">MAO</a> files with their associated DDS files and the <a href="Msh.html" title="MSH">MSH</a> and <a href="/mw/index.php?title=PHY&amp;action=edit&amp;redlink=1" class="new" title="PHY (page does not exist)">PHY</a> files.
+</p><p>See the table above, to work out which dependency is needed to gain the desired endresult. When the goal is to create a Sword, the dependency for a Model has to made with the <a href="ItemVariations.xls.html" title="ItemVariations.xls">ItemVariations.xls</a> in a 2 way connection. In this case, the Itemvariation inquires the Filename and you give the Model the Filename. Bear in mind that such example isnt easily applied to anything, but each 2 items have to have the connection somewhere. 
+</p><p>Many hardcoded conventions apply, which is best found out individually. On other pages, or by learning.
+</p><p>In any case, once the new Model is available to be applied in the Toolset and for the Designer, you should get carried on over to the <a href="Design.html" title="Design">Design</a> Portal. This also accounts for any Resource already in use by the Single Player campaign.
+</p>
+<h3><span class="mw-headline" id="Meshes">Meshes</span></h3>
+<ul><li>Model Import/Export for gmax/3dsmax: see <a rel="nofollow" class="external free" href="http://social.bioware.com/project/2336/">http://social.bioware.com/project/2336/</a> (Fully featured Model Import Export)</li>
+<li>Model Import: see <a rel="nofollow" class="external free" href="http://social.bioware.com/project/218/">http://social.bioware.com/project/218/</a> (Converts game resource files into a readable format by external Modelling Applications. Tutorial needed)</li>
+<li>Model Export for 3dsmax: see <a rel="nofollow" class="external free" href="http://social.bioware.com/project/563/">http://social.bioware.com/project/563/</a> (Works for static and animated Models, soon to work for Animations. Tutorial needed)</li>
+<li>Model Export for Blender: see <a rel="nofollow" class="external free" href="http://social.bioware.com/project/899/">http://social.bioware.com/project/899/</a> (Able to mod Meshes, Tutorial needed)</li></ul>
+<h3><span class="mw-headline" id="Materials">Materials</span></h3>
+<ul><li>Model Import/Export for gmax/3dsmax: see <a rel="nofollow" class="external free" href="http://social.bioware.com/project/2336/">http://social.bioware.com/project/2336/</a> -custom material type accessible within max material editor</li>
+<li><a href="Material_editor.html" title="Material editor">Material editor</a> - Part of the Toolset, and will create <a href="Mao.html" title="MAO">MAO</a> files.</li>
+<li>Model Export for 3dsmax: see <a rel="nofollow" class="external free" href="http://social.bioware.com/project/563/">http://social.bioware.com/project/563/</a> - which also may generate Material <a href="Mao.html" title="MAO">MAO</a> by demand.</li></ul>
+<p>See Related Tutorials for workflows.
+</p>
+<h2><span class="mw-headline" id="Related_Tutorials">Related Tutorials</span></h2>
+<ul><li> <a href="Adding_a_custom_model_to_the_toolset_tutorial.html" title="Adding a custom model to the toolset tutorial">Adding a custom model to the toolset tutorial</a></li>
+<li> <a href="Creating_a_custom_placeable_from_a_model_tutorial.html" title="Creating a custom placeable from a model tutorial">Creating a custom placeable from a model tutorial</a></li>
+<li> <a href="Reskinning_an_item_tutorial.html" title="Reskinning an item tutorial">Reskinning an item tutorial</a></li></ul>
+<h2><span class="mw-headline" id="See_also">See also</span></h2>
+<ul><li><a href="Art.html" title="Art">Art</a> --Dragon Age Game Art</li>
+<li><a href="Model_list.html" title="Model list">Model list</a> --For a list of Models placable in the Level Editor. Static Models.</li></ul>
+
+<!-- 
+NewPP limit report
+CPU time usage: 0.012 seconds
+Real time usage: 0.016 seconds
+Preprocessor visited node count: 37/1000000
+Preprocessor generated node count: 44/1000000
+Post‐expand include size: 0/2097152 bytes
+Template argument size: 0/2097152 bytes
+Highest expansion depth: 2/40
+Expensive parser function count: 0/100
+-->
+
+<!-- 
+Transclusion expansion time report (%,ms,calls,template)
+100.00%    0.000      1 - -total
+-->
+
+<!-- Saved in parser cache with key db714099484-datoolwiki_:pcache:idhash:785-0!*!0!!en!*!* and timestamp 20260531025928 and revision id 18267
+ -->
+</div>									<div class="printfooter">
+						Retrieved from "<a dir="ltr" href="Model.html">https://www.datoolset.net/mw/index.php?title=Model&amp;oldid=18267</a>"					</div>
+													<div id='catlinks' class='catlinks'><div id="mw-normal-catlinks" class="mw-normal-catlinks"><a href="/wiki/Special:Categories" title="Special:Categories">Category</a>: <ul><li><a href="Category%3AArt_resources.html" title="Category:Art resources">Art resources</a></li></ul></div></div>												<div class="visualClear"></div>
+							</div>
+		</div>
+		<div id="mw-navigation">
+			<h2>Navigation menu</h2>
+
+			<div id="mw-head">
+									<div id="p-personal" role="navigation" class="" aria-labelledby="p-personal-label">
+						<h3 id="p-personal-label">Personal tools</h3>
+						<ul>
+							<li id="pt-login"><a href="/mw/index.php?title=Special:UserLogin&amp;returnto=Model" title="You are encouraged to log in; however, it is not mandatory [o]" accesskey="o">Log in</a></li>						</ul>
+					</div>
+									<div id="left-navigation">
+										<div id="p-namespaces" role="navigation" class="vectorTabs" aria-labelledby="p-namespaces-label">
+						<h3 id="p-namespaces-label">Namespaces</h3>
+						<ul>
+															<li  id="ca-nstab-main" class="selected"><span><a href="Model.html"  title="View the content page [c]" accesskey="c">Page</a></span></li>
+															<li  id="ca-talk" class="new"><span><a href="/mw/index.php?title=Talk:Model&amp;action=edit&amp;redlink=1"  title="Discussion about the content page [t]" accesskey="t">Discussion</a></span></li>
+													</ul>
+					</div>
+										<div id="p-variants" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-variants-label">
+												<h3 id="p-variants-label"><span>Variants</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+									</div>
+				<div id="right-navigation">
+										<div id="p-views" role="navigation" class="vectorTabs" aria-labelledby="p-views-label">
+						<h3 id="p-views-label">Views</h3>
+						<ul>
+															<li id="ca-view" class="selected"><span><a href="Model.html" >Read</a></span></li>
+															<li id="ca-viewsource"><span><a href="Model.html"  title="This page is protected.&#10;You can view its source [e]" accesskey="e">View source</a></span></li>
+															<li id="ca-history" class="collapsible"><span><a href="Model.html"  title="Past revisions of this page [h]" accesskey="h">View history</a></span></li>
+													</ul>
+					</div>
+										<div id="p-cactions" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-cactions-label">
+						<h3 id="p-cactions-label"><span>More</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+										<div id="p-search" role="search">
+						<h3>
+							<label for="searchInput">Search</label>
+						</h3>
+
+						<form action="/mw/index.php" id="searchform">
+														<div id="simpleSearch">
+															<input type="search" name="search" placeholder="Search" title="Search Dragon Age Toolset Wiki [f]" accesskey="f" id="searchInput" /><input type="hidden" value="Special:Search" name="title" /><input type="submit" name="fulltext" value="Search" title="Search the pages for this text" id="mw-searchButton" class="searchButton mw-fallbackSearchButton" /><input type="submit" name="go" value="Go" title="Go to a page with this exact name if exists" id="searchButton" class="searchButton" />								</div>
+						</form>
+					</div>
+									</div>
+			</div>
+			<div id="mw-panel">
+				<div id="p-logo" role="banner"><a class="mw-wiki-logo" href="Main_Page.html"  title="Visit the main page"></a></div>
+						<div class="portal" role="navigation" id='p-navigation' aria-labelledby='p-navigation-label'>
+			<h3 id='p-navigation-label'>Navigation</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-mainpage-description"><a href="Main_Page.html" title="Visit the main page [z]" accesskey="z">Main page</a></li>
+													<li id="n-recentchanges"><a href="/wiki/Special:RecentChanges" title="A list of recent changes in the wiki [r]" accesskey="r">Recent changes</a></li>
+													<li id="n-randompage"><a href="/wiki/Special:Random" title="Load a random page [x]" accesskey="x">Random page</a></li>
+													<li id="n-help"><a href="https://www.mediawiki.org/wiki/Special:MyLanguage/Help:Contents" title="The place to find out">Help</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-Links' aria-labelledby='p-Links-label'>
+			<h3 id='p-Links-label'>Links</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-Toolset-forums"><a href="http://forum.bioware.com/forum/30-dragon-age-toolset" rel="nofollow">Toolset forums</a></li>
+													<li id="n-Legacy-forums"><a href="http://social.bioware.com/forum/1/subindex/70" rel="nofollow">Legacy forums</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-tb' aria-labelledby='p-tb-label'>
+			<h3 id='p-tb-label'>Tools</h3>
+
+			<div class="body">
+									<ul>
+													<li id="t-whatlinkshere"><a href="/wiki/Special:WhatLinksHere/Model" title="A list of all wiki pages that link here [j]" accesskey="j">What links here</a></li>
+													<li id="t-recentchangeslinked"><a href="/wiki/Special:RecentChangesLinked/Model" title="Recent changes in pages linked from this page [k]" accesskey="k">Related changes</a></li>
+													<li id="t-specialpages"><a href="/wiki/Special:SpecialPages" title="A list of all special pages [q]" accesskey="q">Special pages</a></li>
+													<li id="t-print"><a href="Model.html" rel="alternate" title="Printable version of this page [p]" accesskey="p">Printable version</a></li>
+													<li id="t-permalink"><a href="Model.html" title="Permanent link to this revision of the page">Permanent link</a></li>
+													<li id="t-info"><a href="Model.html" title="More information about this page">Page information</a></li>
+											</ul>
+							</div>
+		</div>
+				</div>
+		</div>
+		<div id="footer" role="contentinfo">
+							<ul id="footer-info">
+											<li id="footer-info-lastmod"> This page was last modified on 23 February 2012, at 13:30.</li>
+									</ul>
+							<ul id="footer-places">
+											<li id="footer-places-privacy"><a href="/wiki/Dragon_Age_Toolset_Wiki:Privacy_policy" title="Dragon Age Toolset Wiki:Privacy policy">Privacy policy</a></li>
+											<li id="footer-places-about"><a href="/wiki/Dragon_Age_Toolset_Wiki:About" title="Dragon Age Toolset Wiki:About">About Dragon Age Toolset Wiki</a></li>
+											<li id="footer-places-disclaimer"><a href="/wiki/Dragon_Age_Toolset_Wiki:General_disclaimer" title="Dragon Age Toolset Wiki:General disclaimer">Disclaimers</a></li>
+									</ul>
+										<ul id="footer-icons" class="noprint">
+											<li id="footer-poweredbyico">
+															<a href="//www.mediawiki.org/"><img src="../assets/mw/resources/assets/poweredby_mediawiki_88x31.png" alt="Powered by MediaWiki" srcset="../assets/mw/resources/assets/poweredby_mediawiki_132x47.png 1.5x, ../assets/mw/resources/assets/poweredby_mediawiki_176x62.png 2x" width="88" height="31" /></a>
+													</li>
+									</ul>
+						<div style="clear:both"></div>
+		</div>
+		<script>if(window.jQuery)jQuery.ready();</script><script>if(window.mw){
+mw.loader.state({"site":"loading","user":"ready","user.groups":"ready"});
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.toc","mediawiki.action.view.postEdit","mediawiki.user","mediawiki.hidpi","mediawiki.page.ready","mediawiki.searchSuggest"],null,true);
+}</script>
+<script>if(window.mw){
+document.write("\u003Cscript src=\"https://www.datoolset.net/mw/load.php?debug=false\u0026amp;lang=en\u0026amp;modules=site\u0026amp;only=scripts\u0026amp;skin=vector\u0026amp;*\"\u003E\u003C/script\u003E");
+}</script>
+<script>if(window.mw){
+mw.config.set({"wgBackendResponseTime":244});
+}</script>
+	</body>
+</html>

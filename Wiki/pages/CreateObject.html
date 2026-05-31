@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" class="client-nojs">
+<head>
+<meta charset="UTF-8" />
+<title>CreateObject - Dragon Age Toolset Wiki</title>
+<meta name="generator" content="MediaWiki 1.25.6" />
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="search" type="application/opensearchdescription+xml" href="/mw/opensearch_desc.php" title="Dragon Age Toolset Wiki (en)" />
+<link rel="EditURI" type="application/rsd+xml" href="https://www.datoolset.net/mw/api.php?action=rsd" />
+<link rel="alternate" hreflang="x-default" href="CreateObject.html" />
+<link rel="alternate" type="application/atom+xml" title="Dragon Age Toolset Wiki Atom feed" href="/mw/index.php?title=Special:RecentChanges&amp;feed=atom" />
+<meta name="ResourceLoaderDynamicStyles" content="" />
+<style>a:lang(ar),a:lang(kk-arab),a:lang(mzn),a:lang(ps),a:lang(ur){text-decoration:none}
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-css:7:270a0dcd3ae587df0f041aebfc42e61b */</style>
+<script>if(window.mw){
+mw.config.set({"wgCanonicalNamespace":"","wgCanonicalSpecialPageName":false,"wgNamespaceNumber":0,"wgPageName":"CreateObject","wgTitle":"CreateObject","wgCurRevisionId":16793,"wgRevisionId":16793,"wgArticleId":1191,"wgIsArticle":true,"wgIsRedirect":false,"wgAction":"view","wgUserName":null,"wgUserGroups":["*"],"wgCategories":["Functions from script.ldf","Functions from version 1.00","Object functions"],"wgBreakFrames":false,"wgPageContentLanguage":"en","wgPageContentModel":"wikitext","wgSeparatorTransformTable":["",""],"wgDigitTransformTable":["",""],"wgDefaultDateFormat":"dmy","wgMonthNames":["","January","February","March","April","May","June","July","August","September","October","November","December"],"wgMonthNamesShort":["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],"wgRelevantPageName":"CreateObject","wgRelevantArticleId":1191,"wgIsProbablyEditable":false,"wgRestrictionEdit":[],"wgRestrictionMove":[]});
+}</script><script>if(window.mw){
+mw.loader.implement("user.options",function($,jQuery){mw.user.options.set({"variant":"en"});});mw.loader.implement("user.tokens",function($,jQuery){mw.user.tokens.set({"editToken":"+\\","patrolToken":"+\\","watchToken":"+\\"});});
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-js:7:a5c52c063dc436c1ca7c9f456936a5e9 */
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.page.startup","mediawiki.legacy.wikibits","mediawiki.legacy.ajax","skins.vector.js"]);
+}</script>
+<!--[if lt IE 7]><style type="text/css">body{behavior:url("/mw/skins/Vector/csshover.min.htc")}</style><![endif]-->
+<link rel="stylesheet" href="../assets/local/wiki-static.css" />
+</head>
+<body class="mediawiki ltr sitedir-ltr ns-0 ns-subject page-CreateObject skin-vector action-view">
+		<div id="mw-page-base" class="noprint"></div>
+		<div id="mw-head-base" class="noprint"></div>
+		<div id="content" class="mw-body" role="main">
+			<a id="top"></a>
+
+						<div class="mw-indicators">
+</div>
+			<h1 id="firstHeading" class="firstHeading" lang="en">CreateObject</h1>
+						<div id="bodyContent" class="mw-body-content">
+									<div id="siteSub">From Dragon Age Toolset Wiki</div>
+								<div id="contentSub"></div>
+												<div id="jump-to-nav" class="mw-jump">
+					Jump to:					<a href="#mw-head">navigation</a>, 					<a href="#p-search">search</a>
+				</div>
+				<div id="mw-content-text" lang="en" dir="ltr" class="mw-content-ltr"><p>Create an object in the specified location. Will attempt to use a corresponding pool if one exists.
+</p>
+<div class="dascript" style="font-family:monospace; background-color:#F9F9F9; border: 1px dashed #2F6FAB; white-space:pre; line-height:1.25em; padding:1.0em;"><a href="Object_keyword.html" title="Object keyword">object</a> CreateObject(<br />    <a href="Int_keyword.html" title="Int keyword">int</a> nObjectType,<br />    <a href="Resource_keyword.html" title="Resource keyword">resource</a> rTemplate,<br />    <a href="Location_keyword.html" title="Location keyword">location</a> lLoc,<br />    <a href="String_keyword.html" title="String keyword">string</a> sOverrideScript&#160;= "",<br />    <a href="Int_keyword.html" title="Int keyword">int</a> bSpawnActive&#160;= TRUE,<br />    <a href="Int_keyword.html" title="Int keyword">int</a> bNoPermDeath&#160;= FALSE<br />);</div>
+<dl>
+<dt>Parameters:
+<dd><dl><dt style="font-weight:normal; font-style:italic;">nObjectType<dd>The object type (placeable, creature, etc)<dt style="font-weight:normal; font-style:italic;">rTemplate<dd>The template to use<dt style="font-weight:normal; font-style:italic;">lLoc<dd>Location of the object<dt style="font-weight:normal; font-style:italic;">sOverrideScript<dd>Script assigned to the object. If empty, the engine will use the template script<dt style="font-weight:normal; font-style:italic;">bSpawnActive<dd>Whether or not this object is enabled at spawn time<dt style="font-weight:normal; font-style:italic;">bNoPermDeath<dd>Set to TRUE to avoid destroying the object permanently (only valid for pool creatures)
+</dl>
+</dl><dl><dt>Returns:
+<p><dd>The new object, OBJECT_INVALID on failure
+</p>
+</dl><dl><dt>Source:
+<p><dd><a href="Script.ldf.html" title="Script.ldf">script.ldf</a>
+</p>
+</dl>
+<p><br />
+</p>
+<h2><span class="mw-headline" id="Remarks">Remarks</span></h2>
+<p>Note that dynamic creation of objects in the engine is subject to a host of limitations, reason being attempts to cut down 'unaccounted' memory usage.
+</p><p>Avoid using CreateObject whenever possible.
+</p><p><br />
+These objects can be created with CreateObject:<br />
+- Creature<br />
+- Placeable<br />
+</p><p>These objects can not be created with CreateObject:<br />
+- Merchant (Store)<br />
+</p><p><br />
+The function appears to assume that the lLoc parameter represents a valid safe location. If it is valid but not safe, it will be adjusted to the nearest safe location and the object will be created there instead. This is not completely confirmed, but it is clear that placeables cannot be created above the ground level in the air (z-coordinate gets adjusted). However, using SetPosition after creating the object allows you to immediately move the object to an unsafe location if that is desired (see the custom function called CreateObjectIn3DSpace provided in the example below).
+</p>
+<h2><span class="mw-headline" id="Examples">Examples</span></h2>
+<div dir="ltr" class="mw-geshi mw-code mw-content-ltr"><div class="dascript source-dascript"><pre class="de1"><a href="http://www.datoolset.net/wiki/index.php?title=void keyword"><span class="kw2">void</span></a> main<span class="br0">&#40;</span><span class="br0">&#41;</span>
+<span class="br0">&#123;</span>     
+    <span class="co1">// get a location from a waypoint with a unique tag</span>
+    <a href="http://www.datoolset.net/wiki/index.php?title=object keyword"><span class="kw2">object</span></a> oWaypoint <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetObjectByTag"><span class="kw4">GetObjectByTag</span></a><span class="br0">&#40;</span><span class="st0">&quot;wp_werewolf_spawn&quot;</span><span class="br0">&#41;</span>; 
+    <a href="http://www.datoolset.net/wiki/index.php?title=location keyword"><span class="kw2">location</span></a> lWaypoint <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetLocation"><span class="kw4">GetLocation</span></a><span class="br0">&#40;</span>oWaypoint<span class="br0">&#41;</span>;
+&#160;
+    <span class="co1">// create a werewolf object at the location</span>
+    <a href="http://www.datoolset.net/wiki/index.php?title=object keyword"><span class="kw2">object</span></a> oWerewolf <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=CreateObject"><span class="kw4">CreateObject</span></a><span class="br0">&#40;</span><span class="kw3">OBJECT_TYPE_CREATURE</span>, R<span class="st0">&quot;werewolf_core.utc&quot;</span>, lWaypoint<span class="br0">&#41;</span>;
+<span class="br0">&#125;</span></pre></div></div>
+<div dir="ltr" class="mw-geshi mw-code mw-content-ltr"><div class="dascript source-dascript"><pre class="de1"><span class="co1">// CreateObjectIn3DSpace - Creates a new object allowing for</span>
+<span class="co1">//                         locations that are valid but unsafe.</span>
+<span class="co1">//</span>
+<span class="co1">// Same as CreateObject except the lLoc parameter is not adjusted to</span>
+<span class="co1">// the nearest safe location allowing for creation of objects anywhere</span>
+<span class="co1">// in the area including up in the air and below ground.</span>
+<span class="co1">//</span>
+<a href="http://www.datoolset.net/wiki/index.php?title=object keyword"><span class="kw2">object</span></a> CreateObjectIn3DSpace<span class="br0">&#40;</span> <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nObjectType, <a href="http://www.datoolset.net/wiki/index.php?title=resource keyword"><span class="kw2">resource</span></a> rTemplate,
+                              <a href="http://www.datoolset.net/wiki/index.php?title=location keyword"><span class="kw2">location</span></a> lLoc, <a href="http://www.datoolset.net/wiki/index.php?title=string keyword"><span class="kw2">string</span></a> sOverrideScript <span class="sy0">=</span> <span class="st0">&quot;&quot;</span>,
+                              <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> bSpawnActive <span class="sy0">=</span> TRUE, <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> bNoPermDeath <span class="sy0">=</span> FALSE <span class="br0">&#41;</span>;
+&#160;
+<a href="http://www.datoolset.net/wiki/index.php?title=object keyword"><span class="kw2">object</span></a> CreateObjectIn3DSpace<span class="br0">&#40;</span> <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nObjectType, <a href="http://www.datoolset.net/wiki/index.php?title=resource keyword"><span class="kw2">resource</span></a> rTemplate,
+                              <a href="http://www.datoolset.net/wiki/index.php?title=location keyword"><span class="kw2">location</span></a> lLoc, <a href="http://www.datoolset.net/wiki/index.php?title=string keyword"><span class="kw2">string</span></a> sOverrideScript <span class="sy0">=</span> <span class="st0">&quot;&quot;</span>,
+                              <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> bSpawnActive <span class="sy0">=</span> TRUE, <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> bNoPermDeath <span class="sy0">=</span> FALSE <span class="br0">&#41;</span>
+<span class="br0">&#123;</span>     
+    <span class="co1">// Create the object using CreateObject.</span>
+    <a href="http://www.datoolset.net/wiki/index.php?title=object keyword"><span class="kw2">object</span></a> oNewObject <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=CreateObject"><span class="kw4">CreateObject</span></a><span class="br0">&#40;</span> nObjectType, rTemplate, lLoc, sOverrideScript, bSpawnActive, bNoPermDeath <span class="br0">&#41;</span>;
+    <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a><span class="br0">&#40;</span> <span class="sy0">!</span><a href="http://www.datoolset.net/wiki/index.php?title=IsObjectValid"><span class="kw4">IsObjectValid</span></a><span class="br0">&#40;</span> oNewObject <span class="br0">&#41;</span> <span class="br0">&#41;</span> <a href="http://www.datoolset.net/wiki/index.php?title=return keyword"><span class="kw1">return</span></a> <a href="http://www.datoolset.net/wiki/index.php?title=OBJECT_INVALID keyword"><span class="kw1">OBJECT_INVALID</span></a>;
+&#160;
+    <span class="co1">// Move the object to absolute location in 3D space even if it is</span>
+    <span class="co1">// unsafe, then return the new object.</span>
+    <a href="http://www.datoolset.net/wiki/index.php?title=SetPosition"><span class="kw4">SetPosition</span></a><span class="br0">&#40;</span> oNewObject, <a href="http://www.datoolset.net/wiki/index.php?title=GetPositionFromLocation"><span class="kw4">GetPositionFromLocation</span></a><span class="br0">&#40;</span> lLoc <span class="br0">&#41;</span>, FALSE <span class="br0">&#41;</span>;
+    <a href="http://www.datoolset.net/wiki/index.php?title=return keyword"><span class="kw1">return</span></a> oNewObject;
+<span class="br0">&#125;</span></pre></div></div>
+<h2><span class="mw-headline" id="See_also">See also</span></h2>
+<p><a href="CreatePool.html" title="CreatePool">CreatePool</a>, <a href="DestroyObject.html" title="DestroyObject">DestroyObject</a>, <a href="OBJECT_TYPE_%2A.html" title="OBJECT TYPE *">OBJECT_TYPE_*</a>
+</p>
+<!-- 
+NewPP limit report
+CPU time usage: 0.040 seconds
+Real time usage: 0.044 seconds
+Preprocessor visited node count: 289/1000000
+Preprocessor generated node count: 2262/1000000
+Post‐expand include size: 3744/2097152 bytes
+Template argument size: 1198/2097152 bytes
+Highest expansion depth: 5/40
+Expensive parser function count: 0/100
+-->
+
+<!-- 
+Transclusion expansion time report (%,ms,calls,template)
+100.00%   12.914      1 - Template:Dafunction
+100.00%   12.914      1 - -total
+-->
+
+<!-- Saved in parser cache with key db714099484-datoolwiki_:pcache:idhash:1191-0!*!0!!*!*!* and timestamp 20260531164358 and revision id 16793
+ -->
+</div>									<div class="printfooter">
+						Retrieved from "<a dir="ltr" href="CreateObject.html">https://www.datoolset.net/mw/index.php?title=CreateObject&amp;oldid=16793</a>"					</div>
+													<div id='catlinks' class='catlinks'><div id="mw-normal-catlinks" class="mw-normal-catlinks"><a href="/wiki/Special:Categories" title="Special:Categories">Categories</a>: <ul><li><a href="Category%3AFunctions_from_script.ldf.html" title="Category:Functions from script.ldf">Functions from script.ldf</a></li><li><a href="Category%3AFunctions_from_version_1.00.html" title="Category:Functions from version 1.00">Functions from version 1.00</a></li><li><a href="Category%3AObject_functions.html" title="Category:Object functions">Object functions</a></li></ul></div></div>												<div class="visualClear"></div>
+							</div>
+		</div>
+		<div id="mw-navigation">
+			<h2>Navigation menu</h2>
+
+			<div id="mw-head">
+									<div id="p-personal" role="navigation" class="" aria-labelledby="p-personal-label">
+						<h3 id="p-personal-label">Personal tools</h3>
+						<ul>
+							<li id="pt-login"><a href="/mw/index.php?title=Special:UserLogin&amp;returnto=CreateObject" title="You are encouraged to log in; however, it is not mandatory [o]" accesskey="o">Log in</a></li>						</ul>
+					</div>
+									<div id="left-navigation">
+										<div id="p-namespaces" role="navigation" class="vectorTabs" aria-labelledby="p-namespaces-label">
+						<h3 id="p-namespaces-label">Namespaces</h3>
+						<ul>
+															<li  id="ca-nstab-main" class="selected"><span><a href="CreateObject.html"  title="View the content page [c]" accesskey="c">Page</a></span></li>
+															<li  id="ca-talk"><span><a href="Talk%3ACreateObject.html"  title="Discussion about the content page [t]" accesskey="t">Discussion</a></span></li>
+													</ul>
+					</div>
+										<div id="p-variants" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-variants-label">
+												<h3 id="p-variants-label"><span>Variants</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+									</div>
+				<div id="right-navigation">
+										<div id="p-views" role="navigation" class="vectorTabs" aria-labelledby="p-views-label">
+						<h3 id="p-views-label">Views</h3>
+						<ul>
+															<li id="ca-view" class="selected"><span><a href="CreateObject.html" >Read</a></span></li>
+															<li id="ca-viewsource"><span><a href="CreateObject.html"  title="This page is protected.&#10;You can view its source [e]" accesskey="e">View source</a></span></li>
+															<li id="ca-history" class="collapsible"><span><a href="CreateObject.html"  title="Past revisions of this page [h]" accesskey="h">View history</a></span></li>
+													</ul>
+					</div>
+										<div id="p-cactions" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-cactions-label">
+						<h3 id="p-cactions-label"><span>More</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+										<div id="p-search" role="search">
+						<h3>
+							<label for="searchInput">Search</label>
+						</h3>
+
+						<form action="/mw/index.php" id="searchform">
+														<div id="simpleSearch">
+															<input type="search" name="search" placeholder="Search" title="Search Dragon Age Toolset Wiki [f]" accesskey="f" id="searchInput" /><input type="hidden" value="Special:Search" name="title" /><input type="submit" name="fulltext" value="Search" title="Search the pages for this text" id="mw-searchButton" class="searchButton mw-fallbackSearchButton" /><input type="submit" name="go" value="Go" title="Go to a page with this exact name if exists" id="searchButton" class="searchButton" />								</div>
+						</form>
+					</div>
+									</div>
+			</div>
+			<div id="mw-panel">
+				<div id="p-logo" role="banner"><a class="mw-wiki-logo" href="Main_Page.html"  title="Visit the main page"></a></div>
+						<div class="portal" role="navigation" id='p-navigation' aria-labelledby='p-navigation-label'>
+			<h3 id='p-navigation-label'>Navigation</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-mainpage-description"><a href="Main_Page.html" title="Visit the main page [z]" accesskey="z">Main page</a></li>
+													<li id="n-recentchanges"><a href="/wiki/Special:RecentChanges" title="A list of recent changes in the wiki [r]" accesskey="r">Recent changes</a></li>
+													<li id="n-randompage"><a href="/wiki/Special:Random" title="Load a random page [x]" accesskey="x">Random page</a></li>
+													<li id="n-help"><a href="https://www.mediawiki.org/wiki/Special:MyLanguage/Help:Contents" title="The place to find out">Help</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-Links' aria-labelledby='p-Links-label'>
+			<h3 id='p-Links-label'>Links</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-Toolset-forums"><a href="http://forum.bioware.com/forum/30-dragon-age-toolset" rel="nofollow">Toolset forums</a></li>
+													<li id="n-Legacy-forums"><a href="http://social.bioware.com/forum/1/subindex/70" rel="nofollow">Legacy forums</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-tb' aria-labelledby='p-tb-label'>
+			<h3 id='p-tb-label'>Tools</h3>
+
+			<div class="body">
+									<ul>
+													<li id="t-whatlinkshere"><a href="/wiki/Special:WhatLinksHere/CreateObject" title="A list of all wiki pages that link here [j]" accesskey="j">What links here</a></li>
+													<li id="t-recentchangeslinked"><a href="/wiki/Special:RecentChangesLinked/CreateObject" title="Recent changes in pages linked from this page [k]" accesskey="k">Related changes</a></li>
+													<li id="t-specialpages"><a href="/wiki/Special:SpecialPages" title="A list of all special pages [q]" accesskey="q">Special pages</a></li>
+													<li id="t-print"><a href="CreateObject.html" rel="alternate" title="Printable version of this page [p]" accesskey="p">Printable version</a></li>
+													<li id="t-permalink"><a href="CreateObject.html" title="Permanent link to this revision of the page">Permanent link</a></li>
+													<li id="t-info"><a href="CreateObject.html" title="More information about this page">Page information</a></li>
+											</ul>
+							</div>
+		</div>
+				</div>
+		</div>
+		<div id="footer" role="contentinfo">
+							<ul id="footer-info">
+											<li id="footer-info-lastmod"> This page was last modified on 3 August 2011, at 19:27.</li>
+									</ul>
+							<ul id="footer-places">
+											<li id="footer-places-privacy"><a href="/wiki/Dragon_Age_Toolset_Wiki:Privacy_policy" title="Dragon Age Toolset Wiki:Privacy policy">Privacy policy</a></li>
+											<li id="footer-places-about"><a href="/wiki/Dragon_Age_Toolset_Wiki:About" title="Dragon Age Toolset Wiki:About">About Dragon Age Toolset Wiki</a></li>
+											<li id="footer-places-disclaimer"><a href="/wiki/Dragon_Age_Toolset_Wiki:General_disclaimer" title="Dragon Age Toolset Wiki:General disclaimer">Disclaimers</a></li>
+									</ul>
+										<ul id="footer-icons" class="noprint">
+											<li id="footer-poweredbyico">
+															<a href="//www.mediawiki.org/"><img src="../assets/mw/resources/assets/poweredby_mediawiki_88x31.png" alt="Powered by MediaWiki" srcset="../assets/mw/resources/assets/poweredby_mediawiki_132x47.png 1.5x, ../assets/mw/resources/assets/poweredby_mediawiki_176x62.png 2x" width="88" height="31" /></a>
+													</li>
+									</ul>
+						<div style="clear:both"></div>
+		</div>
+		<script>if(window.jQuery)jQuery.ready();</script><script>if(window.mw){
+mw.loader.state({"site":"loading","user":"ready","user.groups":"ready"});
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.action.view.postEdit","mediawiki.user","mediawiki.hidpi","mediawiki.page.ready","mediawiki.searchSuggest"],null,true);
+}</script>
+<script>if(window.mw){
+document.write("\u003Cscript src=\"https://www.datoolset.net/mw/load.php?debug=false\u0026amp;lang=en\u0026amp;modules=site\u0026amp;only=scripts\u0026amp;skin=vector\u0026amp;*\"\u003E\u003C/script\u003E");
+}</script>
+<script>if(window.mw){
+mw.config.set({"wgBackendResponseTime":330});
+}</script>
+	</body>
+</html>

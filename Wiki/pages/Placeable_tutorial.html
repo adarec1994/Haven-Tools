@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" class="client-nojs">
+<head>
+<meta charset="UTF-8" />
+<title>Placeable tutorial - Dragon Age Toolset Wiki</title>
+<meta name="generator" content="MediaWiki 1.25.6" />
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="search" type="application/opensearchdescription+xml" href="/mw/opensearch_desc.php" title="Dragon Age Toolset Wiki (en)" />
+<link rel="EditURI" type="application/rsd+xml" href="https://www.datoolset.net/mw/api.php?action=rsd" />
+<link rel="alternate" hreflang="x-default" href="Placeable_tutorial.html" />
+<link rel="alternate" type="application/atom+xml" title="Dragon Age Toolset Wiki Atom feed" href="/mw/index.php?title=Special:RecentChanges&amp;feed=atom" />
+<meta name="ResourceLoaderDynamicStyles" content="" />
+<style>a:lang(ar),a:lang(kk-arab),a:lang(mzn),a:lang(ps),a:lang(ur){text-decoration:none}
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-css:7:270a0dcd3ae587df0f041aebfc42e61b */</style>
+<script>if(window.mw){
+mw.config.set({"wgCanonicalNamespace":"","wgCanonicalSpecialPageName":false,"wgNamespaceNumber":0,"wgPageName":"Placeable_tutorial","wgTitle":"Placeable tutorial","wgCurRevisionId":19298,"wgRevisionId":19298,"wgArticleId":90,"wgIsArticle":true,"wgIsRedirect":false,"wgAction":"view","wgUserName":null,"wgUserGroups":["*"],"wgCategories":["Placeables","Tutorials"],"wgBreakFrames":false,"wgPageContentLanguage":"en","wgPageContentModel":"wikitext","wgSeparatorTransformTable":["",""],"wgDigitTransformTable":["",""],"wgDefaultDateFormat":"dmy","wgMonthNames":["","January","February","March","April","May","June","July","August","September","October","November","December"],"wgMonthNamesShort":["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],"wgRelevantPageName":"Placeable_tutorial","wgRelevantArticleId":90,"wgIsProbablyEditable":false,"wgRestrictionEdit":[],"wgRestrictionMove":[]});
+}</script><script>if(window.mw){
+mw.loader.implement("user.options",function($,jQuery){mw.user.options.set({"variant":"en"});});mw.loader.implement("user.tokens",function($,jQuery){mw.user.tokens.set({"editToken":"+\\","patrolToken":"+\\","watchToken":"+\\"});});
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-js:7:a5c52c063dc436c1ca7c9f456936a5e9 */
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.page.startup","mediawiki.legacy.wikibits","mediawiki.legacy.ajax","skins.vector.js"]);
+}</script>
+<!--[if lt IE 7]><style type="text/css">body{behavior:url("/mw/skins/Vector/csshover.min.htc")}</style><![endif]-->
+<link rel="stylesheet" href="../assets/local/wiki-static.css" />
+</head>
+<body class="mediawiki ltr sitedir-ltr ns-0 ns-subject page-Placeable_tutorial skin-vector action-view">
+		<div id="mw-page-base" class="noprint"></div>
+		<div id="mw-head-base" class="noprint"></div>
+		<div id="content" class="mw-body" role="main">
+			<a id="top"></a>
+
+						<div class="mw-indicators">
+</div>
+			<h1 id="firstHeading" class="firstHeading" lang="en">Placeable tutorial</h1>
+						<div id="bodyContent" class="mw-body-content">
+									<div id="siteSub">From Dragon Age Toolset Wiki</div>
+								<div id="contentSub"></div>
+												<div id="jump-to-nav" class="mw-jump">
+					Jump to:					<a href="#mw-head">navigation</a>, 					<a href="#p-search">search</a>
+				</div>
+				<div id="mw-content-text" lang="en" dir="ltr" class="mw-content-ltr"><p>In Dragon Age, "<a href="Placeable.html" title="Placeable">placeables</a>" are objects that a player can interact with or are objects simply added to the area to create greater detail. They are added to areas simply by dropping them into the area landscape. Once placed, they can easily be moved into position or rotated on their axis to achieve the look you want.
+</p><p>In general, placeables can serve a wide variety of functions. They can render popup text. They can be destroyed or bashed or hold inventory or treasure within. They can be holders of conversations. In this tutorial we'll mainly stick to the basics, but placeables are an important part of any area design.
+</p>
+<div id="toc" class="toc"><div id="toctitle"><h2>Contents</h2></div>
+<ul>
+<li class="toclevel-1 tocsection-1"><a href="#Creating_A_Placeable"><span class="tocnumber">1</span> <span class="toctext">Creating A Placeable</span></a></li>
+<li class="toclevel-1 tocsection-2"><a href="#Placing_.2F_Adjusting_your_Placeable"><span class="tocnumber">2</span> <span class="toctext">Placing / Adjusting your Placeable</span></a></li>
+<li class="toclevel-1 tocsection-3"><a href="#Field_Notes"><span class="tocnumber">3</span> <span class="toctext">Field Notes</span></a></li>
+<li class="toclevel-1 tocsection-4"><a href="#Codex"><span class="tocnumber">4</span> <span class="toctext">Codex</span></a></li>
+</ul>
+</div>
+
+<h2><span class="mw-headline" id="Creating_A_Placeable">Creating A Placeable</span></h2>
+<p>Similar to creating anything within the toolset, go to File &gt; New &gt; Placeable or right click in the Palette Window to access the New Placeable option.
+</p>
+<div class="thumb tright"><div class="thumbinner" style="width:302px;"><a href="File%3ANew_resource.png.html" class="image"><img alt="" src="../assets/mw/images/thumb/0/0a/New_resource.png/300px-New_resource.png" width="300" height="471" class="thumbimage" srcset="../assets/mw/images/0/0a/New_resource.png 1.5x, ../assets/mw/images/0/0a/New_resource.png 2x" /></a>  <div class="thumbcaption"><div class="magnify"><a href="File%3ANew_resource.png.html" class="internal" title="Enlarge"></a></div>New resource menu</div></div></div>
+<p>The first step is naming the placeable. We'll need a door for the tutorial so lets start with a door that will serve as an area transition. Name the placeable "transition_door". Luckily and unluckily, the default object is a door. The lucky part is that it is a door. The unlucky part is that this is a non-area transition door. There are two types of doors, ones that open and allow for an area transition and ones that simply open. For the upcoming <a href="Area_tutorial.html" title="Area tutorial">area tutorial</a> we need a door that will allow the player to move from outside the hut to inside the hut.
+</p><p>Doors that allow transitions are all grouped under the Appearance beginning with "Area Transition". Change the appearance to be "Area Transition, Ferelden, Small". The placeable has the exact same appearance it had but now it will be able to function as an area transition. For more detail on doors, please see <a href="Door.html" title="Door">doors</a>. They are a bit unique within the placeable world so it is important to understand how the two types function as well as some of the finer options that are available.
+</p><p>Note that when you are placing an area transition door, the arrow should point in the direction you are going to travel. When placing a standard door the arrow points in the direction the door will open.
+</p><p>As you can see, placeables are straightforward and easy to create. Let's build one more for our module before moving along with the tutorial. Again create a new placeable and let's name it "statue". Any good exterior can always use a statue. For this lets set the appearance to "Statue, Giant" and rename the placeable "Huge Statue". By default, the placeable is "Interactive" so let's toggle that setting to false:
+<b>Scroll down to Stats; locate Interactive;</b>
+Use the drop down menu OR just double click on TRUE to toggle the state. 
+Now our statue is ready to be placed. It is basically an addition to the landscape. It won't be something you can interact with but it can add detail to your area and to your story.
+</p><p>While we are in the tutorial, let's quickly cover checking in and checking out resources which is a new concept for Dragon Age. For a more detailed summary, please see <a href="Resource_palette.html" title="Resource palette">Resource palette</a>. Briefly, in Dragon Age resources are stored within databases. When you work on a module and alter any existing work or create new work, you are creating an instance of the object (be it a placeable, item, creature, area etc.). There are a number of benefits for this that are beyond the scope of this tutorial but when you edit something, it has to be "checked out" (or never checked in) with you working on an instance.
+</p><p>For example, select your new statue and right click and you will see that many common tasks are NOT available because it has not been "<a href="Checked_in.html" title="Checked in" class="mw-redirect">checked in</a>" to the database. For example, you can't rename or delete the placeable. In order to rename the placeable, we'll need to check in the placeable. Right click and select check in. Check the box for no comment or enter a comment and hit ok. At this point, the resource has been written to the database. Once the object is "checked in" you can adjust the name or delete it if you so choose (assuming it doesn't have other dependent resources).
+</p>
+<h2><span class="mw-headline" id="Placing_.2F_Adjusting_your_Placeable">Placing / Adjusting your Placeable</span></h2>
+<p>That is a brief overview of how to create your first placeables. Now let's cover putting them into your module. To place a placeable, simply bring up an area (which we will make in the <a href="Area_tutorial.html" title="Area Tutorial" class="mw-redirect">Area Tutorial</a>), then highlight the placeable (which can be found by clicking on the table image in the palette window) and left-click within the region.
+</p><p>To adjust the position or orientation of the object, you'll need to use the Camera and Movement Toolbar:
+</p><p><a href="File%3ACamera_and_movement_toolbar_labeled.png.html" class="image"><img alt="Camera and movement toolbar labeled.png" src="../assets/mw/images/f/f3/Camera_and_movement_toolbar_labeled.png" width="227" height="123" /></a>
+</p><p>To adjust the x,y,z position either activate the Local Coordinates button <a href="File%3AIconLocalCoordinates.png.html" class="image"><img alt="IconLocalCoordinates.png" src="../assets/mw/images/a/a2/IconLocalCoordinates.png" width="16" height="16" /></a> or use the keyboard shortcut 'q'. With this activated, you can mouse over any axis (notice the change to the yellow highlight) and the object will move only in the selected dimension. 
+</p><p>To adjust the rotational orientation, highlight the 3 Axis Rotation button <a href="File%3AIcon3AxisRotation.png.html" class="image"><img alt="Icon3AxisRotation.png" src="../assets/mw/images/c/c0/Icon3AxisRotation.png" width="14" height="12" /></a> or use the keyboard shortcut 'e'. In a similar fashion, you can easily select and adjust the rotational orientation of the placeable.
+</p><p>'R' is the keyboard shortcut to return to the standard selection tool <a href="File%3AIconStandardSelection.png.html" class="image"><img alt="IconStandardSelection.png" src="../assets/mw/images/2/2a/IconStandardSelection.png" width="10" height="16" /></a>.
+</p><p>(For much more detail regarding 3D controls please see the <a href="3D_control.html" title="3D control" class="mw-redirect">3D control</a> page).
+</p><p>Of course, you can use the Object Inspector to type in exact numbers for any of these parameters you choose. Simply ensure the object is selected within the area viewer and type in your changes.
+</p>
+<h2><span class="mw-headline" id="Field_Notes">Field Notes</span></h2>
+<ul><li><b>Character</b>: Mapping a character to a placeable is done for VO when a placeable owns a conversation.</li></ul>
+<p><br />
+</p>
+<h2><span class="mw-headline" id="Codex">Codex</span></h2>
+<p>Create examinable item on your level (area) like book (gen_ip_book or similar in core resources). Create new plot, or use DAO Codex Plots (like "lpt_codex_my_book") and add main flag like MY_CODEX _BOOK (it really could be anything here, just make it meaningful). Under journal part of plot create text which you want to be displayed in codex. Under properties of plot look for "entry type" and select in example: codex - books &amp; songs . Select your item from level (area) and choose Variable_2da under it's properties:
+</p>
+<ul><li> under PLC_CODEX_FLAG insert NUMBER of your flag (in this case it's 0 - coz it's only one flag inside)</li></ul>
+<ul><li> under PLC_CODEX_PLOT insert NAME OF YOUR PLOT (lpt_codex_my_book)</li></ul>
+<p>now when you examine book in game, new codex entry will be added and displayed.
+</p><p><b>NOTE:</b> If you choose invisible onject in Apperiance you will be able to add it in some parts of level.
+</p>
+<!-- 
+NewPP limit report
+CPU time usage: 0.036 seconds
+Real time usage: 0.052 seconds
+Preprocessor visited node count: 15/1000000
+Preprocessor generated node count: 20/1000000
+Post‐expand include size: 0/2097152 bytes
+Template argument size: 0/2097152 bytes
+Highest expansion depth: 2/40
+Expensive parser function count: 0/100
+-->
+
+<!-- 
+Transclusion expansion time report (%,ms,calls,template)
+100.00%    0.000      1 - -total
+-->
+
+<!-- Saved in parser cache with key db714099484-datoolwiki_:pcache:idhash:90-0!*!0!!en!5!* and timestamp 20260531035113 and revision id 19298
+ -->
+</div>									<div class="printfooter">
+						Retrieved from "<a dir="ltr" href="Placeable_tutorial.html">https://www.datoolset.net/mw/index.php?title=Placeable_tutorial&amp;oldid=19298</a>"					</div>
+													<div id='catlinks' class='catlinks'><div id="mw-normal-catlinks" class="mw-normal-catlinks"><a href="/wiki/Special:Categories" title="Special:Categories">Categories</a>: <ul><li><a href="Category%3APlaceables.html" title="Category:Placeables">Placeables</a></li><li><a href="Category%3ATutorials.html" title="Category:Tutorials">Tutorials</a></li></ul></div></div>												<div class="visualClear"></div>
+							</div>
+		</div>
+		<div id="mw-navigation">
+			<h2>Navigation menu</h2>
+
+			<div id="mw-head">
+									<div id="p-personal" role="navigation" class="" aria-labelledby="p-personal-label">
+						<h3 id="p-personal-label">Personal tools</h3>
+						<ul>
+							<li id="pt-login"><a href="/mw/index.php?title=Special:UserLogin&amp;returnto=Placeable+tutorial" title="You are encouraged to log in; however, it is not mandatory [o]" accesskey="o">Log in</a></li>						</ul>
+					</div>
+									<div id="left-navigation">
+										<div id="p-namespaces" role="navigation" class="vectorTabs" aria-labelledby="p-namespaces-label">
+						<h3 id="p-namespaces-label">Namespaces</h3>
+						<ul>
+															<li  id="ca-nstab-main" class="selected"><span><a href="Placeable_tutorial.html"  title="View the content page [c]" accesskey="c">Page</a></span></li>
+															<li  id="ca-talk"><span><a href="Talk%3APlaceable_tutorial.html"  title="Discussion about the content page [t]" accesskey="t">Discussion</a></span></li>
+													</ul>
+					</div>
+										<div id="p-variants" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-variants-label">
+												<h3 id="p-variants-label"><span>Variants</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+									</div>
+				<div id="right-navigation">
+										<div id="p-views" role="navigation" class="vectorTabs" aria-labelledby="p-views-label">
+						<h3 id="p-views-label">Views</h3>
+						<ul>
+															<li id="ca-view" class="selected"><span><a href="Placeable_tutorial.html" >Read</a></span></li>
+															<li id="ca-viewsource"><span><a href="Placeable_tutorial.html"  title="This page is protected.&#10;You can view its source [e]" accesskey="e">View source</a></span></li>
+															<li id="ca-history" class="collapsible"><span><a href="Placeable_tutorial.html"  title="Past revisions of this page [h]" accesskey="h">View history</a></span></li>
+													</ul>
+					</div>
+										<div id="p-cactions" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-cactions-label">
+						<h3 id="p-cactions-label"><span>More</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+										<div id="p-search" role="search">
+						<h3>
+							<label for="searchInput">Search</label>
+						</h3>
+
+						<form action="/mw/index.php" id="searchform">
+														<div id="simpleSearch">
+															<input type="search" name="search" placeholder="Search" title="Search Dragon Age Toolset Wiki [f]" accesskey="f" id="searchInput" /><input type="hidden" value="Special:Search" name="title" /><input type="submit" name="fulltext" value="Search" title="Search the pages for this text" id="mw-searchButton" class="searchButton mw-fallbackSearchButton" /><input type="submit" name="go" value="Go" title="Go to a page with this exact name if exists" id="searchButton" class="searchButton" />								</div>
+						</form>
+					</div>
+									</div>
+			</div>
+			<div id="mw-panel">
+				<div id="p-logo" role="banner"><a class="mw-wiki-logo" href="Main_Page.html"  title="Visit the main page"></a></div>
+						<div class="portal" role="navigation" id='p-navigation' aria-labelledby='p-navigation-label'>
+			<h3 id='p-navigation-label'>Navigation</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-mainpage-description"><a href="Main_Page.html" title="Visit the main page [z]" accesskey="z">Main page</a></li>
+													<li id="n-recentchanges"><a href="/wiki/Special:RecentChanges" title="A list of recent changes in the wiki [r]" accesskey="r">Recent changes</a></li>
+													<li id="n-randompage"><a href="/wiki/Special:Random" title="Load a random page [x]" accesskey="x">Random page</a></li>
+													<li id="n-help"><a href="https://www.mediawiki.org/wiki/Special:MyLanguage/Help:Contents" title="The place to find out">Help</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-Links' aria-labelledby='p-Links-label'>
+			<h3 id='p-Links-label'>Links</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-Toolset-forums"><a href="http://forum.bioware.com/forum/30-dragon-age-toolset" rel="nofollow">Toolset forums</a></li>
+													<li id="n-Legacy-forums"><a href="http://social.bioware.com/forum/1/subindex/70" rel="nofollow">Legacy forums</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-tb' aria-labelledby='p-tb-label'>
+			<h3 id='p-tb-label'>Tools</h3>
+
+			<div class="body">
+									<ul>
+													<li id="t-whatlinkshere"><a href="/wiki/Special:WhatLinksHere/Placeable_tutorial" title="A list of all wiki pages that link here [j]" accesskey="j">What links here</a></li>
+													<li id="t-recentchangeslinked"><a href="/wiki/Special:RecentChangesLinked/Placeable_tutorial" title="Recent changes in pages linked from this page [k]" accesskey="k">Related changes</a></li>
+													<li id="t-specialpages"><a href="/wiki/Special:SpecialPages" title="A list of all special pages [q]" accesskey="q">Special pages</a></li>
+													<li id="t-print"><a href="Placeable_tutorial.html" rel="alternate" title="Printable version of this page [p]" accesskey="p">Printable version</a></li>
+													<li id="t-permalink"><a href="Placeable_tutorial.html" title="Permanent link to this revision of the page">Permanent link</a></li>
+													<li id="t-info"><a href="Placeable_tutorial.html" title="More information about this page">Page information</a></li>
+											</ul>
+							</div>
+		</div>
+				</div>
+		</div>
+		<div id="footer" role="contentinfo">
+							<ul id="footer-info">
+											<li id="footer-info-lastmod"> This page was last modified on 22 July 2014, at 11:25.</li>
+									</ul>
+							<ul id="footer-places">
+											<li id="footer-places-privacy"><a href="/wiki/Dragon_Age_Toolset_Wiki:Privacy_policy" title="Dragon Age Toolset Wiki:Privacy policy">Privacy policy</a></li>
+											<li id="footer-places-about"><a href="/wiki/Dragon_Age_Toolset_Wiki:About" title="Dragon Age Toolset Wiki:About">About Dragon Age Toolset Wiki</a></li>
+											<li id="footer-places-disclaimer"><a href="/wiki/Dragon_Age_Toolset_Wiki:General_disclaimer" title="Dragon Age Toolset Wiki:General disclaimer">Disclaimers</a></li>
+									</ul>
+										<ul id="footer-icons" class="noprint">
+											<li id="footer-poweredbyico">
+															<a href="//www.mediawiki.org/"><img src="../assets/mw/resources/assets/poweredby_mediawiki_88x31.png" alt="Powered by MediaWiki" srcset="../assets/mw/resources/assets/poweredby_mediawiki_132x47.png 1.5x, ../assets/mw/resources/assets/poweredby_mediawiki_176x62.png 2x" width="88" height="31" /></a>
+													</li>
+									</ul>
+						<div style="clear:both"></div>
+		</div>
+		<script>if(window.jQuery)jQuery.ready();</script><script>if(window.mw){
+mw.loader.state({"site":"loading","user":"ready","user.groups":"ready"});
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.toc","mediawiki.action.view.postEdit","mediawiki.user","mediawiki.hidpi","mediawiki.page.ready","mediawiki.searchSuggest"],null,true);
+}</script>
+<script>if(window.mw){
+document.write("\u003Cscript src=\"https://www.datoolset.net/mw/load.php?debug=false\u0026amp;lang=en\u0026amp;modules=site\u0026amp;only=scripts\u0026amp;skin=vector\u0026amp;*\"\u003E\u003C/script\u003E");
+}</script>
+<script>if(window.mw){
+mw.config.set({"wgBackendResponseTime":235});
+}</script>
+	</body>
+</html>

@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" class="client-nojs">
+<head>
+<meta charset="UTF-8" />
+<title>Adding custom armor tutorial/ru - Dragon Age Toolset Wiki</title>
+<meta name="generator" content="MediaWiki 1.25.6" />
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="search" type="application/opensearchdescription+xml" href="/mw/opensearch_desc.php" title="Dragon Age Toolset Wiki (en)" />
+<link rel="EditURI" type="application/rsd+xml" href="https://www.datoolset.net/mw/api.php?action=rsd" />
+<link rel="alternate" hreflang="x-default" href="ru.html" />
+<link rel="alternate" type="application/atom+xml" title="Dragon Age Toolset Wiki Atom feed" href="/mw/index.php?title=Special:RecentChanges&amp;feed=atom" />
+<meta name="ResourceLoaderDynamicStyles" content="" />
+<style>a:lang(ar),a:lang(kk-arab),a:lang(mzn),a:lang(ps),a:lang(ur){text-decoration:none}
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-css:7:270a0dcd3ae587df0f041aebfc42e61b */</style>
+<script>if(window.mw){
+mw.config.set({"wgCanonicalNamespace":"","wgCanonicalSpecialPageName":false,"wgNamespaceNumber":0,"wgPageName":"Adding_custom_armor_tutorial/ru","wgTitle":"Adding custom armor tutorial/ru","wgCurRevisionId":19865,"wgRevisionId":19865,"wgArticleId":5733,"wgIsArticle":true,"wgIsRedirect":false,"wgAction":"view","wgUserName":null,"wgUserGroups":["*"],"wgCategories":["Tutorials"],"wgBreakFrames":false,"wgPageContentLanguage":"en","wgPageContentModel":"wikitext","wgSeparatorTransformTable":["",""],"wgDigitTransformTable":["",""],"wgDefaultDateFormat":"dmy","wgMonthNames":["","January","February","March","April","May","June","July","August","September","October","November","December"],"wgMonthNamesShort":["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],"wgRelevantPageName":"Adding_custom_armor_tutorial/ru","wgRelevantArticleId":5733,"wgIsProbablyEditable":false,"wgRestrictionEdit":[],"wgRestrictionMove":[]});
+}</script><script>if(window.mw){
+mw.loader.implement("user.options",function($,jQuery){mw.user.options.set({"variant":"en"});});mw.loader.implement("user.tokens",function($,jQuery){mw.user.tokens.set({"editToken":"+\\","patrolToken":"+\\","watchToken":"+\\"});});
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-js:7:a5c52c063dc436c1ca7c9f456936a5e9 */
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.page.startup","mediawiki.legacy.wikibits","mediawiki.legacy.ajax","skins.vector.js"]);
+}</script>
+<!--[if lt IE 7]><style type="text/css">body{behavior:url("/mw/skins/Vector/csshover.min.htc")}</style><![endif]-->
+<link rel="stylesheet" href="../../assets/local/wiki-static.css" />
+</head>
+<body class="mediawiki ltr sitedir-ltr ns-0 ns-subject page-Adding_custom_armor_tutorial_ru skin-vector action-view">
+		<div id="mw-page-base" class="noprint"></div>
+		<div id="mw-head-base" class="noprint"></div>
+		<div id="content" class="mw-body" role="main">
+			<a id="top"></a>
+
+						<div class="mw-indicators">
+</div>
+			<h1 id="firstHeading" class="firstHeading" lang="en">Adding custom armor tutorial/ru</h1>
+						<div id="bodyContent" class="mw-body-content">
+									<div id="siteSub">From Dragon Age Toolset Wiki</div>
+								<div id="contentSub"><span class="subpages">&lt; <a href="../Adding_custom_armor_tutorial.html" title="Adding custom armor tutorial">Adding custom armor tutorial</a></span></div>
+												<div id="jump-to-nav" class="mw-jump">
+					Jump to:					<a href="#mw-head">navigation</a>, 					<a href="#p-search">search</a>
+				</div>
+				<div id="mw-content-text" lang="en" dir="ltr" class="mw-content-ltr"><p>В ходе этого туториала мы импортируем платье Кристины Веспуччи из Assassins Creed: Brotherhood в ДАО. Вернее из XNA Lara, потому что ничего другого я не нашел. Это платье я выбрал не случайно - в ходе его адаптации мы используем все те приемы, которые часто используются в этом процессе ("дырявая ткань" аля кружева, текстуры кложи, зависящие от кожи персонажа, многослойный материал и т.д.).Это будет всего-лишь реплейсер, заменитель. Заменять будем церковную робу - просто потому что ее легче всего достать (в прологе мага, например, или с Лелианы в Лотеринге). Ну чтож, приступим...
+Инструменты, что нам понадобятся:
+</p>
+<ul><li>3ds max (или бесплатная версия - gmax). 3ds max не старше 2011 года- скрипт по импорту не будет работать.</li>
+<li>Dragon Age Origins</li>
+<li>Dragon Age Toolset</li>
+<li>Adobe Photoshop 32 version only because Nvidia DDS Plugin work only with 32 program.</li>
+<li><a rel="nofollow" class="external text" href="http://www.nexusmods.com/dragonage/mods/895/?">Eshme Import/Export DAO Tools</a> (плагин для 3ds max)</li>
+<li>Вы можете использовать эту программу <a rel="nofollow" class="external text" href="http://www.nexusmods.com/dragonage/mods/214/?">GDA Editor</a> для файлов GDA типа.</li>
+<li>Движок не сможет работать с моделью больше 45 000 полигонов (Faces) и 30 000 вершин (Vertices).</li></ul>
+<div id="toc" class="toc"><div id="toctitle"><h2>Contents</h2></div>
+<ul>
+<li class="toclevel-1 tocsection-1"><a href="#Script_Settings"><span class="tocnumber">1</span> <span class="toctext">Script Settings</span></a></li>
+<li class="toclevel-1 tocsection-2"><a href="#Textures_preparation"><span class="tocnumber">2</span> <span class="toctext">Textures preparation</span></a></li>
+<li class="toclevel-1 tocsection-3"><a href="#Connecting_textures"><span class="tocnumber">3</span> <span class="toctext">Connecting textures</span></a></li>
+<li class="toclevel-1 tocsection-4"><a href="#Save_textures"><span class="tocnumber">4</span> <span class="toctext">Save textures</span></a></li>
+<li class="toclevel-1 tocsection-5"><a href="#Names"><span class="tocnumber">5</span> <span class="toctext">Names</span></a></li>
+<li class="toclevel-1 tocsection-6"><a href="#3D_MAX"><span class="tocnumber">6</span> <span class="toctext">3D MAX</span></a></li>
+<li class="toclevel-1 tocsection-7"><a href="#Working_with_materials"><span class="tocnumber">7</span> <span class="toctext">Working with materials</span></a></li>
+<li class="toclevel-1 tocsection-8"><a href="#More_than_one_texture"><span class="tocnumber">8</span> <span class="toctext">More than one texture</span></a></li>
+<li class="toclevel-1 tocsection-9"><a href="#Continue_working_with_materials"><span class="tocnumber">9</span> <span class="toctext">Continue working with materials</span></a></li>
+<li class="toclevel-1 tocsection-10"><a href="#Rigging"><span class="tocnumber">10</span> <span class="toctext">Rigging</span></a></li>
+<li class="toclevel-1 tocsection-11"><a href="#Dress_with_crinoline"><span class="tocnumber">11</span> <span class="toctext">Dress with crinoline</span></a></li>
+<li class="toclevel-1 tocsection-12"><a href="#Export"><span class="tocnumber">12</span> <span class="toctext">Export</span></a></li>
+<li class="toclevel-1 tocsection-13"><a href="#Addding_custom_shield"><span class="tocnumber">13</span> <span class="toctext">Addding custom shield</span></a></li>
+<li class="toclevel-1 tocsection-14"><a href="#Custom_icons"><span class="tocnumber">14</span> <span class="toctext">Custom icons</span></a></li>
+<li class="toclevel-1 tocsection-15"><a href="#Useful_links"><span class="tocnumber">15</span> <span class="toctext">Useful links</span></a></li>
+</ul>
+</div>
+
+<h2><span class="mw-headline" id="Script_Settings">Script Settings</span></h2>
+<p>Сделите за тем, куда вы устанавливаете все программы- program files(x86) для 32 битных программ на 64 bit компьютерах. Скрипт экспорта и сама игра должны быть в одной папке program files.
+</p><p>Установка скрипта Eshme Import/Export: Startup, YAGG и DAOTools добавить в C(диск):/Program Files/Autodesk/3dsmax/Scripts -&gt; scripts 
+</p><p>Настройка. Если вы все сделали правильно, то при первом запуске возникнет окно с настройками. 
+</p><p>В Game Path должно быть указано папка с игрой аля C:\Program Files (x86)\Dragon Age, в Export Path папка Override в документах аля C:\Program Files (x86)\Dragon Age\packages\core\override. Наличие установленного тулсета самой последней версии  ОБЯЗАТЕЛЬНО. Сам тулсет должен быть установлен в папку с игрой и после этого вы сможете начать работу в 3 d Max -&gt; Run Script.
+</p>
+<h2><span class="mw-headline" id="Textures_preparation">Textures preparation</span></h2>
+<p>Нам понадобятся четыре: диффузная карта (основная, видимая текстура), нормал карта (однотонная рельефная карта), спекуляр карта (она помогает настроить освещение конкретно под модель) и тинт карта (она говорит двужку где кожа, а где не изменная ткань). Так как исходная модель содержит несколько материалов, то и наборов текстур тоже несколько. Это значит, что например диффузных карт будет тоже несколько.
+Сначала переведем их в формат .DDS с помощью фотошопа. Помните, что размер текстур ВСЕГДА должен быть кратным 4: 1024 -&gt; 2048 -&gt; 4096 -&gt; 8192.
+</p><p>Diffuse map:
+Кожа обязательно должна быть перведена в бледно-серый цвет, чтобы максимально корректно отображать цвет кожи. Должно получиться примерно так:
+</p><p><a href="../File%3ASkin1ex.png.html" class="image"><img alt="Skin1ex.png" src="../../assets/mw/images/3/3c/Skin1ex.png" width="283" height="304" class="thumbborder" /></a>
+</p><p>В альфа канале (если его нету, то создаем его с названием Alpha 1) выделяем черным те области, которые будут "дырками", белое так и останется не прозрачным. Получиться должно нечто вроде этого:
+</p><p><a href="../File%3AAlpha1ex.png.html" class="image"><img alt="Alpha1ex.png" src="../../assets/mw/images/7/70/Alpha1ex.png" width="266" height="243" class="thumbborder" /></a>
+</p><p>Normal map: 
+Нужно перенести текстуру в монотонно серый. Помимо этого, нужно еще изменить изображение альфа-канала на идентичный зеленому каналу. Должно получится нечто вроде этого:
+</p><p><a href="../File%3ANormalex.png.html" class="image"><img alt="Normalex.png" src="../../assets/mw/images/d/dc/Normalex.png" width="525" height="533" class="thumbborder" /></a>
+</p><p>Spectacular map:
+Почти ничем не отличается от диффузной, только чуть более темней. Элементы с кожей в обязательном порядке нужно модифицировать. Цвет нужно изменить на темно-красный, почти черный. Саму область нужно подвергнуть обработке: image-&gt; adjustments -&gt;brightness/contrast значение выставлять примерно такие brightness -45, contrast 95. В итоге кожа должна стать примерно такой:
+</p><p><a href="../File%3ASpectacularex.png.html" class="image"><img alt="Spectacularex.png" src="../../assets/mw/images/f/fd/Spectacularex.png" width="516" height="533" class="thumbborder" /></a>
+</p>
+<ul><li> Note: В альфа канал спекуляр карты нужно просто скопировать синий канал. <b>Делать это нужно уже после того, как разберетесь с участками кожи.</b>Чем больше белого на текстуре _s тем больше и интенсивней будет блеск.</li></ul>
+<p>Tint map:
+</p>
+<ul><li> <b>Note: Не нужна вам если на вашей броне нет участков кожи</b></li></ul>
+<p>Самая простая текстура - работать будет только в альфа канале. Всю текстуру полностью залейте черным цветом. В альфа канале нужно будет сделать примерно тоже самое, что мы уже проделали с альфа каналом диффузной карты, только на этот раз черным будут зоны, которые будут менять тон в соответствии с кожей персонажа, а белые оставаться не изменными. Эта тесктура полностью залита черным потому, что она полностью покрывает кожу и участки, а значит и выделываться здесь смысла нет. То есть да - конкретно в нашем случае должна получиться полностью черная текстура - все четыре канала залиты черным.
+</p>
+<h2><span class="mw-headline" id="Connecting_textures">Connecting textures</span></h2>
+<p>Cоединение текстур. Как я уже упомянал, платье Кристины Веспуччи содержит несколько материалов. Движок ДАО может поддерживать только один материал, а значит нам придется все текстуры объединить.
+Самое главное в том, что один раз определившись порядком текстур, нужно придерживаться его постоянно. В общем, нам нужно выстроить примерно такую конструкцию:
+</p><p><a href="../File%3AText1.png.html" class="image"><img alt="Text1.png" src="../../assets/mw/images/9/90/Text1.png" width="533" height="538" class="thumbborder" /></a>
+</p><p><b>*Note: Запомните положение текстур, оно вам понадобится при объединении материалов в 3ds Max.</b>Тоже самое и для остальных карт (нормали, спекуляр и тинт). Альфа каналы выстраиваем так же. Размер текстур должен быть кратным 4.
+</p>
+<h2><span class="mw-headline" id="Save_textures">Save textures</span></h2>
+<p>Текстуры нужно сохранять с такими настройками: 
+</p><p><a href="../File%3ATherestsave.png.html" class="image" title="50%"><img alt="50%" src="../../assets/mw/images/5/59/Therestsave.png" width="588" height="373" class="thumbborder" /></a>
+</p><p>Normal map:
+</p><p><a href="../File%3ANormalsave.png.html" class="image" title="50%"><img alt="50%" src="../../assets/mw/images/5/58/Normalsave.png" width="579" height="365" class="thumbborder" /></a>
+</p><p>Все, на этом в фотошопе закончено. Можно его закрывать. Переименуйте текстуры в hf_rob_chaz_0n.dds (normal-текстура), hf_rob_chaz_0d (diffuse-текстура), hf_rob_chaz_0s (спекуляр) и hf_rob_chaz_0t (тинт карта). Сами текстуры уже можно переместить в папку [имя_локального_диска]:\Documents and Settings\[имя_пользователя]\My Documents\BioWare\Dragon Age\packages\core\override\
+</p>
+<h2><span class="mw-headline" id="Names">Names</span></h2>
+<p>Очень важно для GDA. 
+Текстуры надо называть так: [принадлежность полу-расе]_[тип брони\одежды]_[уникальный индекс из 4 букв]_0[тип текстуры].
+Принадлежность полу расе обозначается так:
+</p>
+<ul><li>hf- жен. человек</li>
+<li>hm- муж. человек</li>
+<li>ef- жен. эльф</li>
+<li>em- муж. эльф</li>
+<li>df- жен. гном</li>
+<li>dm- муж. гном</li>
+<li>qm- кунари-мужик</li></ul>
+<p>Броня:
+</p>
+<ul><li>arm - броня</li>
+<li>rob - роба (мага, церковника)</li>
+<li>cth - одежда (дворянина, свадебная)</li></ul>
+<p>Helmets:
+</p>
+<ul><li>hlh - for mages.</li>
+<li>hlf - massive ones.</li></ul>
+<p><b>NOTE: Уникальный индекс можете выбрать любой. Главное помните - не больше 4 букв и не занятый другой вещью.</b>
+</p><p>Типов текстур 5:
+</p>
+<ul><li>d - диффузная (Duffise)</li>
+<li>n - нормаль (Normal)</li>
+<li>s - спекуляр (Spectacular)</li>
+<li>t - тинт (Tint)</li>
+<li>e - эммиссив (Emissive) Нужна для свечения аля скай-фай броня. В дао почти не используется)</li></ul>
+<p>В итоге должно получиться нечто вроде такого: hf_rob_xmpl_0d или em_arm_exmp_0n. 
+<b>*NOTE: Сам материал (название материала в максе, потом это будет MAO файл) именуем также, только без типа текстуры. Например: hf_rob_xmpl или em_arm_exmp. Модель именуется так-же, только с цифрой детализации в конце: hf_rob_xmpl_0 или em_arm_exmp_0</b>
+</p>
+<h2><span class="mw-headline" id="3D_MAX">3D MAX</span></h2>
+<p><b>NOTE: Если ваша броня выглядит слишком "грубой", то это можно исправить ПКМ-&gt; Convert to Edit Poly -&gt; Режим Vertex на панели справа -&gt; press button Weld (Vertexes) на панели справа. Можно там же использовать и Smooth, но будьте осторожны- это добавит новые полигоны ваша модель может не подойти для движка.</b>
+</p><p>В ходе адаптации модели нам понадобится максимально похожий образец из оригинальной игры. В моем случае я выбрал церковную робу (hf_rob_chaa) – этакий универсальный образец, который подходит для большинства случаев. В Toolset’е откроем архивы modelhierarchies.erf materialobjects.erf modelmeshdata.erf (найти их можно по даресу [имя_диска_с_игрой]: \Dragon Age\packages\core\data). Так-же откроем архив texturepack.erf находящийся по адресу [имя_диска_с_игрой]:\Dragon Age\packages\core\textures\high. В этих архивах находим файлы
+hf_rob_chaa_0.mmh, hf_rob_chaa_0.phy (modelhierarchies.erf)
+hf_rob_chaa_0.msh (modelmeshdata.erf)
+pf_rob_chaa.mao (materialobjects.erf)
+pf_rob_chaa_0d.dds, pf_rob_chaa_0n.dds, pf_rob_chaa_0s.dds, pf_rob_chaa_0t.dds (texturepack.erf)
+и распаковываем в отдельную папку. Всего на выходе должно получится 8 файлов.
+</p><p>А теперь перейдем в 3ds max. Прежде, чем приступить непосредственно к конвентированию, настроим плагин для 3ds max. Мне гораздо удобнее запускать сразу скрипты, чем захламлять разными кнопками рабочее пространство редактора. Для запуска конфигуратора запустим скрипт (Max Script-&gt;Run Script) DAOToolsSetup находящийся по адресу C:\Program Files\Autodesk\3dsMax8\Scripts\DAOTools.
+</p><p>Итак, приступим, к настройке. В строке Game Path указываем адрес к папке с игрой. В Export Path указываем, куда будут сохранятся экспортированные файлы. Т.к. наша модель будет заменять уже имеющуюся, то укажем там адрес [имя_локального_диска]:\Documents and Settings\[имя_пользователя]\My Documents\BioWare\Dragon Age\packages\core\override\ Ползунок World Scale ставим на значение 100. Дело в том, что в своем «естественном» виде, модели ДА очень маленькие. Для комфортной работы с ними нужно увеличить их в 100 (сто) раз. Эта функция как раз создана для того, чтобы на время работы увеличивать модель в удобный размер, а экспортируя обратно возвращая к естественным размерам. Все остальное оставляем нетронутым и нажимаем ОК. Конфигуратор перед закрытием проинформирует нас о возможности в любой момент изменить настройки, не пугайтесь выскочившего окна.
+</p><p>И вот наконец теперь можно заняться непосредственно конвертированием. В окне редактора у нас должна уже быть открыта сама модель. Следующее, что нам нужно сделать, это загрузить оригинальную модель из ДАО. Для этого запускаем скрипт DAOImport. В пункте File секции Model Import указываем месторасположение недавно вытащенного нами .mmh файла (hf_rob_chaa_0.mmh). Нажимаем на кнопку Import, специальное окно известит нас о готовности к импорту, жмем ОК и ждем 5-30 секунд (в зависимости от мощности компьютера) пока загрузится модель.
+</p><p>Для начала скроем все, что нам в данный момент не понадобится. Откроем Schematic View (Graph Editors-&gt; New Schematic View) 
+</p><p>Здесь можно увидеть две большие древовидные структуры – это обе наши модели с их иерархией. Полностью выделим структуру оригинальной модели (легко определить по наличию в ней зеленых элементов). Сворачиваем Schematic View. В основном рабочем окне можно увидеть, что выделена оригинальная игровая модель и все ее элементы 
+</p><p>Теперь снимем выделение с самой робы, так чтобы выделенными остались лишь второстепенные элементы. Скроем их, чтобы не мешались, они нам все-равно не понадобятся. Для этого нажмем по пустому пространству рабочей области правой кнопкой мыши-&gt;hide selection. Теперь осталось только зафиксировать оригинальную модель. Для этого выделяем ее и правой кнопкой мыши-&gt;properties.
+Поставьте напротив опции Freeze секции interactivity, уберите напротив опции Show Frozen in Gray секции display Properties соответственно. Все, теперь оригинальная модель зафиксирована и защищена от случайных манипуляций.
+</p><p>Теперь нужно подогнать модель платья Кристины под габариты игровой робы. Желательно сделать это как можно точнее. Для трансформации модели лучше всего воздействовать на ее кости, так гораздо удобнее. Масштабируем, поворачиваем и двигаем кости так, чтобы модель ровно легла в очертания оригинальной робы. Разводим руки, сводим ноги – процесс нужно делать на «глазок».
+</p>
+<h2><span class="mw-headline" id="Working_with_materials">Working with materials</span></h2>
+<ul><li>NOTE: Работать с материалами нужно до риггинга. Иначе будут проблемы.</li></ul>
+<h2><span class="mw-headline" id="More_than_one_texture">More than one texture</span></h2>
+<p>Важное отступление - если ваша модель полностью покрывается одной текстурой, то ничего из нижеописанного вам проделывать не нужно.
+Сейчас нам нужно объединить несколько материалов в один. Процесс не тривиальный. Итак, когда вы откроете редактор координат, то увидите вот такую картину:
+</p><p><a href="../File%3AEditingmaterials.png.html" class="image"><img alt="Editingmaterials.png" src="../../assets/mw/images/4/4e/Editingmaterials.png" width="525" height="521" class="thumbborder" /></a>
+</p><p>Зеленые линии - это координаты модели на текстуре. Многие игровые движки используют все пространство редактора, но не ДАО. Наша игра не видит ничего за границами выделенного квадрата. Наша задача - передвинуть все координаты во внутрь этого квадрата. Во вкладке All ID's можно выбирать отдельные материалы и двигать их. Наложите текстуру, которую вы создали в фотошопе и согласно ее контурам отмасштабируте и перенесите ее на соответствующее место. Тоже самое нужно бьудет проделать и со всеми сетами материалов, чтобы в конце-концов получилось что-то вроде этого:
+</p><p><a href="../File%3AMated2.png.html" class="image"><img alt="Mated2.png" src="../../assets/mw/images/5/53/Mated2.png" width="1363" height="656" class="thumbborder" /></a>
+</p><p>После этого можно закрывать редактор координат.
+</p>
+<h2><span class="mw-headline" id="Continue_working_with_materials">Continue working with materials</span></h2>
+<p>На верхней панели инструментов найдем кнопку редактора метериалов (четыре разноцветных шара) 
+Далее нажимаем Get Material и выбираем из списка Dragon Age Material (если плагин установлен правильно, то он в списке будет) 
+</p><p><a href="../File%3AMaterialeditor.png.html" class="image"><img alt="Materialeditor.png" src="../../assets/mw/images/7/71/Materialeditor.png" width="731" height="350" class="thumbborder" /></a>
+</p><p>В Material Type указываем Character, 
+</p><p>1 - Модель с кожей в Render Semantics – [Armor w / Skin Tint][Alpha Blending][No Emissive]. 
+</p><p>2- Модель без кожи в Render Semantics – [No Tint][Alpha Blending][No Emissive]. 
+</p><p>3- Разворачиваем список Texture Maps и назначаем соответствующие текстуры. Далее Assign Material to Selection (платье должно быть выделенным). Если так хочется увидеть текстуру в редакторе, то жмем Show Map in Viewport. Осталось только дать нашему материалу нормальное имя. В соответствующем поле введем pf_rob_chaz_0. Вот и все.
+</p><p><a href="../File%3AMaterialwork.png.html" class="image"><img alt="Materialwork.png" src="../../assets/mw/images/2/2c/Materialwork.png" width="355" height="199" class="thumbborder" /></a>
+</p>
+<h2><span class="mw-headline" id="Rigging">Rigging</span></h2>
+<ul><li> <a rel="nofollow" class="external text" href="https://youtu.be/1QMcAX1cDyo">Rigging tutorial</a></li></ul>
+<p>Как только наша модель полностью ляжет в очертания оригинальной робы, можно приступать к следующей фазе 
+Выделим нашу модель, правой кнопкой мыши по пустому месту-&gt;Convert To-&gt; Convert To Editable Mesh.
+Теперь полностью выделяем все объекты, снимаем выделение с самой модели платья Кристины (выделеными должны остаться все объекты КРОМЕ платья Кристины) и удаляем. Должны остаться только церковная роба и платье Кристины. Далее правой кнопкой мыши по пустому месту-&gt;Unfreeze All. Это разморозит оригинальную робу, сделав ее доступной для редактирования. Затем в списке ее модификаторов выделим Skin и Edit Normals (с зажатым CTRL). Правой кнопкой мыши по ним-&gt;Cut. Из списка модификаторов они должны исчезнуть. Далее правой кнопкой мыши по пустому месту рабочего пространства-&gt;Convert To-&gt;Convert To Editable Mesh. Это низведет оригинальную робу в тоже состояние, в котором сейчас пребывает и платье Кристины.
+</p><p>Теперь перейдем в режим редактирования полигонов 
+</p><p><a href="../File%3APolygon.png.html" class="image"><img alt="Polygon.png" src="../../assets/mw/images/9/9d/Polygon.png" width="172" height="88" class="thumbborder" /></a>
+</p><p>Нажмите CTL+ A Вся оригинальная роба должна окраситься в красный цвет выделения. Далее нужно снять выделение с одного-единственного полигона (делается с зажатой клавишей ALT). Какого именно – неважно, главное чтобы он был на виду и до него было просто добраться. Я выбрал один у самых ног. Все, что теперь нужно сделать – нажать кнопку Delete. Это удалит всю модель, кроме одного оставленного нами полигона. Теперь нам нужно прирастить к этому полигону платье Кристины. Для этого выберем на панели инструментов справа кнопку Attach  и нажмем мышью на скафандр. Появится окно, выбрать опцию Match Material to Material IDs. Жмем ОК. Теперь нужно убрать последний полигон оригинальной робы. Вновь переходим в режим редактирования полигонов (предварительно «отжав» кнопку attach), находим когда-то оставленный нами полигон и удаляем его. Все, теперь уже не осталось ничего, что напоминало-бы нам о церковной робе.
+</p><p>Вы должны закончить со всеми правками модели до того, как добавите модификатор Unwrap UVW. Если ваша модель выглядит грубой, то необходимо  исправить:
+ПКМ -&gt; converto to Editable Poly-&gt; Vertex-&gt; Select all (CTRL+ A)-&gt; Weld -&gt; Convert to editable Mesh
+</p><p><b>Note:</b>Закончите все правки модели и материалов до следующего шага - после него все изменения не отобразятся на конечном результате и придется переделывать. 
+</p><p>В списке модификаторов нашей модели найдем Unwrap UVW и добавим его к нашей модели. Модель должна окраситься ярко зелеными линиями.
+</p><p>Далее правой кнопкой мыши по списку модификаторов-&gt;Paste. Список модификаторов должен стать таким (сверху-вниз: Skin, Edit Normals, Unwrap UVW)
+</p><p>С самой моделью мы наконец закончили.
+</p>
+<h2><span class="mw-headline" id="Dress_with_crinoline">Dress with crinoline</span></h2>
+<p><a href="../File%3ACrinoline_dressDAO.jpg.html" class="image"><img alt="Crinoline dressDAO.jpg" src="../../assets/mw/images/5/5f/Crinoline_dressDAO.jpg" width="1920" height="1050" class="thumbborder" /></a>
+</p>
+<ul><li><a rel="nofollow" class="external text" href="https://youtu.be/_q4mmFMmIK8">Как сделать платье с кринолином</a></li></ul>
+<h2><span class="mw-headline" id="Export">Export</span></h2>
+<p>Для этого запускаем скрипт DAOModelExport. Нам предстанет вот так вот такое окно:
+</p><p><a href="../File%3AExport.png.html" class="image"><img alt="Export.png" src="../../assets/mw/images/4/47/Export.png" width="254" height="447" class="thumbborder" /></a>
+</p><p>Между Name и .MMH вписать hf_rob_chaa_0. Между Name и .MSH вписать тоже самое (если этого не сделалось автоматически). Отметить опцию Create MAO Material File. Все, теперь жмем Export. По окончании процесса экспорта в папке [имя_локального_диска]:\Documents and Settings\[имя_пользователя]\My Documents\BioWare\Dragon Age\packages\core\override\ должны появится пять новых файлов
+hf_rob_chaa_0.phy
+hf_rob_chaa_0.msh
+hf_rob_chaa_0.mmh
+hf_rob_chaa_0.met
+pf_rob_chaz_0.mao
+Там-же уже должны находится обе текстуры. Ну, вот собственно и все. Модель готова, можно запускать игру и смотреть результат.
+</p>
+<h2><span class="mw-headline" id="Addding_custom_shield">Addding custom shield</span></h2>
+<p>Процесс тот же самый с разницей, что щиту не нужен rigging.
+</p><p>1) Импортируйте любой щит из игры. В отличие от брони тут не нужно следить за размером - ЛЮБОЙ щит подойдет.
+</p><p>2) Импортируйте ваш щит в ту же сцену и погдгоните его размер к тому, что из игры.
+</p><p>3) Сделайте из ващего нового щита ПКМ -&gt; "make editable mesh". Collapse any active modifiers on the "new" item. Then add a new "unwrap UVW" modiefier to it, and double click it to open the UVW window. then drag and select everything you see there, and DRAG IT ANYWHERE OUTSIDE THE OUTLINED BOX IN THE CENTER. This will make life easier for you in step 6.
+</p><p>4) Выберите щит из игры и выберете все модификаторы исключая "unwrap UVW". ПКМ -&gt;"cut", а не удалить, потому что м ыбудем их использовать. Далее ПКМ -&gt; "make editable mesh". 
+</p><p>5) Теперь "attach" щит из ДАО к вашему новому щиту. 
+</p><p>6) Добавть новый "unwrap uvw" к этому mesh. Проверьте все ли модификаторы на месте - press the "+" слева. Выберите "face", и выберете все, что внутри the outlined box в середине. ПКМ "unwrap UVW" и выберете "collapse to".
+</p><p>7) Потом нажмите "+" слева от слов "editable mesh". Выберте "element" и удалите. Вставьте все модификаторы, которые мы вырезали на шаге 4.
+</p><p>8) Добавьте текстуры и экспортируйте.
+</p>
+<h2><span class="mw-headline" id="Custom_icons">Custom icons</span></h2>
+<p>Добавьте icon через тулсет. Иконка должна быть с такими настройками:
+</p><p><a href="../File%3AYourlvl_FOLDER.PNG.html" class="image"><img alt="Yourlvl FOLDER.PNG" src="../../assets/mw/images/3/31/Yourlvl_FOLDER.PNG" width="579" height="331" class="thumbborder" /></a>
+</p>
+<h2><span class="mw-headline" id="Useful_links">Useful links</span></h2>
+<ul><li><a href="../Customisation_of_original_Dragon_age_armor.html" title="Customisation of original Dragon age armor">Customisation of original Dragon age armor</a></li>
+<li><a href="../Adding_custom_shield_tutorial.html" title="Adding custom shield tutorial">Adding custom shield tutorial</a></li>
+<li><a href="../Adding_custom_level_tutorial.html" title="Adding custom level tutorial">Adding custom level tutorial</a> - Add your own level.</li>
+<li><a rel="nofollow" class="external text" href="http://forums.nexusmods.com/index.php?/topic/423834-the-witcher-1-armors-in-da-origins/page-2#entry3544131">How to add new armor to DAO on English</a> </li>
+<li><a rel="nofollow" class="external text" href="http://forums.nexusmods.com/index.php?/topic/1122450-loincloth-fashion/page-56#entry16909714">How to fix GDA conflict</a></li>
+<li><a rel="nofollow" class="external text" href="http://www.nexusmods.com/dragonage/mods/3974/?">Item Variation ID spreadsheet modification</a></li>
+<li><a rel="nofollow" class="external text" href="https://youtu.be/370D7Lul9tk">Skinning tutorial</a></li></ul>
+<p><br />
+</p>
+<table class="nmbox" style="width:100%; border:1px solid #AAAAAA; border-collapse:collapse; clear:both; font-size:85%; margin:0.25em 0;">
+<tr style="background: #CFDFEF;">
+<th style="border:none; padding:4px 1em; border-right:1px solid #AAAAAA; text-align:center; white-space:nowrap;"> <b><a href="../Dragon_Age_Toolset_Wiki%3ALanguage_policy.html" title="Dragon Age Toolset Wiki:Language policy">Язык:</a></b></th>
+<td style="border:none; padding:0.25em 0.9em; width:100%; background:#DFEFFF;"><b><a href="../Adding_custom_armor_tutorial.html" title="Adding custom armor tutorial">English</a></b> <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>&#160;&#8226;&#32;<span lang="ru"><strong class="selflink">русский</strong></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></td>
+</tr></table>
+
+<!-- 
+NewPP limit report
+CPU time usage: 0.132 seconds
+Real time usage: 0.253 seconds
+Preprocessor visited node count: 1008/1000000
+Preprocessor generated node count: 3259/1000000
+Post‐expand include size: 7422/2097152 bytes
+Template argument size: 1052/2097152 bytes
+Highest expansion depth: 8/40
+Expensive parser function count: 53/100
+-->
+
+<!-- 
+Transclusion expansion time report (%,ms,calls,template)
+100.00%  124.802      1 - Template:Languages
+100.00%  124.802      1 - -total
+ 94.87%  118.396      1 - Template:LanguagesBox
+ 71.97%   89.819     54 - Template:LanguagesLang
+  9.76%   12.182      1 - Template:LanguagesTitle
+-->
+
+<!-- Saved in parser cache with key db714099484-datoolwiki_:pcache:idhash:5733-0!*!0!!en!5!* and timestamp 20260531051917 and revision id 19865
+ -->
+</div>									<div class="printfooter">
+						Retrieved from "<a dir="ltr" href="ru.html">https://www.datoolset.net/mw/index.php?title=Adding_custom_armor_tutorial/ru&amp;oldid=19865</a>"					</div>
+													<div id='catlinks' class='catlinks'><div id="mw-normal-catlinks" class="mw-normal-catlinks"><a href="/wiki/Special:Categories" title="Special:Categories">Category</a>: <ul><li><a href="../Category%3ATutorials.html" title="Category:Tutorials">Tutorials</a></li></ul></div></div>												<div class="visualClear"></div>
+							</div>
+		</div>
+		<div id="mw-navigation">
+			<h2>Navigation menu</h2>
+
+			<div id="mw-head">
+									<div id="p-personal" role="navigation" class="" aria-labelledby="p-personal-label">
+						<h3 id="p-personal-label">Personal tools</h3>
+						<ul>
+							<li id="pt-login"><a href="/mw/index.php?title=Special:UserLogin&amp;returnto=Adding+custom+armor+tutorial%2Fru" title="You are encouraged to log in; however, it is not mandatory [o]" accesskey="o">Log in</a></li>						</ul>
+					</div>
+									<div id="left-navigation">
+										<div id="p-namespaces" role="navigation" class="vectorTabs" aria-labelledby="p-namespaces-label">
+						<h3 id="p-namespaces-label">Namespaces</h3>
+						<ul>
+															<li  id="ca-nstab-main" class="selected"><span><a href="ru.html"  title="View the content page [c]" accesskey="c">Page</a></span></li>
+															<li  id="ca-talk" class="new"><span><a href="/mw/index.php?title=Talk:Adding_custom_armor_tutorial/ru&amp;action=edit&amp;redlink=1"  title="Discussion about the content page [t]" accesskey="t">Discussion</a></span></li>
+													</ul>
+					</div>
+										<div id="p-variants" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-variants-label">
+												<h3 id="p-variants-label"><span>Variants</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+									</div>
+				<div id="right-navigation">
+										<div id="p-views" role="navigation" class="vectorTabs" aria-labelledby="p-views-label">
+						<h3 id="p-views-label">Views</h3>
+						<ul>
+															<li id="ca-view" class="selected"><span><a href="ru.html" >Read</a></span></li>
+															<li id="ca-viewsource"><span><a href="ru.html"  title="This page is protected.&#10;You can view its source [e]" accesskey="e">View source</a></span></li>
+															<li id="ca-history" class="collapsible"><span><a href="ru.html"  title="Past revisions of this page [h]" accesskey="h">View history</a></span></li>
+													</ul>
+					</div>
+										<div id="p-cactions" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-cactions-label">
+						<h3 id="p-cactions-label"><span>More</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+										<div id="p-search" role="search">
+						<h3>
+							<label for="searchInput">Search</label>
+						</h3>
+
+						<form action="/mw/index.php" id="searchform">
+														<div id="simpleSearch">
+															<input type="search" name="search" placeholder="Search" title="Search Dragon Age Toolset Wiki [f]" accesskey="f" id="searchInput" /><input type="hidden" value="Special:Search" name="title" /><input type="submit" name="fulltext" value="Search" title="Search the pages for this text" id="mw-searchButton" class="searchButton mw-fallbackSearchButton" /><input type="submit" name="go" value="Go" title="Go to a page with this exact name if exists" id="searchButton" class="searchButton" />								</div>
+						</form>
+					</div>
+									</div>
+			</div>
+			<div id="mw-panel">
+				<div id="p-logo" role="banner"><a class="mw-wiki-logo" href="../Main_Page.html"  title="Visit the main page"></a></div>
+						<div class="portal" role="navigation" id='p-navigation' aria-labelledby='p-navigation-label'>
+			<h3 id='p-navigation-label'>Navigation</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-mainpage-description"><a href="../Main_Page.html" title="Visit the main page [z]" accesskey="z">Main page</a></li>
+													<li id="n-recentchanges"><a href="/wiki/Special:RecentChanges" title="A list of recent changes in the wiki [r]" accesskey="r">Recent changes</a></li>
+													<li id="n-randompage"><a href="/wiki/Special:Random" title="Load a random page [x]" accesskey="x">Random page</a></li>
+													<li id="n-help"><a href="https://www.mediawiki.org/wiki/Special:MyLanguage/Help:Contents" title="The place to find out">Help</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-Links' aria-labelledby='p-Links-label'>
+			<h3 id='p-Links-label'>Links</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-Toolset-forums"><a href="http://forum.bioware.com/forum/30-dragon-age-toolset" rel="nofollow">Toolset forums</a></li>
+													<li id="n-Legacy-forums"><a href="http://social.bioware.com/forum/1/subindex/70" rel="nofollow">Legacy forums</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-tb' aria-labelledby='p-tb-label'>
+			<h3 id='p-tb-label'>Tools</h3>
+
+			<div class="body">
+									<ul>
+													<li id="t-whatlinkshere"><a href="/wiki/Special:WhatLinksHere/Adding_custom_armor_tutorial/ru" title="A list of all wiki pages that link here [j]" accesskey="j">What links here</a></li>
+													<li id="t-recentchangeslinked"><a href="/wiki/Special:RecentChangesLinked/Adding_custom_armor_tutorial/ru" title="Recent changes in pages linked from this page [k]" accesskey="k">Related changes</a></li>
+													<li id="t-specialpages"><a href="/wiki/Special:SpecialPages" title="A list of all special pages [q]" accesskey="q">Special pages</a></li>
+													<li id="t-print"><a href="ru.html" rel="alternate" title="Printable version of this page [p]" accesskey="p">Printable version</a></li>
+													<li id="t-permalink"><a href="ru.html" title="Permanent link to this revision of the page">Permanent link</a></li>
+													<li id="t-info"><a href="ru.html" title="More information about this page">Page information</a></li>
+											</ul>
+							</div>
+		</div>
+				</div>
+		</div>
+		<div id="footer" role="contentinfo">
+							<ul id="footer-info">
+											<li id="footer-info-lastmod"> This page was last modified on 5 January 2018, at 19:03.</li>
+									</ul>
+							<ul id="footer-places">
+											<li id="footer-places-privacy"><a href="/wiki/Dragon_Age_Toolset_Wiki:Privacy_policy" title="Dragon Age Toolset Wiki:Privacy policy">Privacy policy</a></li>
+											<li id="footer-places-about"><a href="/wiki/Dragon_Age_Toolset_Wiki:About" title="Dragon Age Toolset Wiki:About">About Dragon Age Toolset Wiki</a></li>
+											<li id="footer-places-disclaimer"><a href="/wiki/Dragon_Age_Toolset_Wiki:General_disclaimer" title="Dragon Age Toolset Wiki:General disclaimer">Disclaimers</a></li>
+									</ul>
+										<ul id="footer-icons" class="noprint">
+											<li id="footer-poweredbyico">
+															<a href="//www.mediawiki.org/"><img src="../../assets/mw/resources/assets/poweredby_mediawiki_88x31.png" alt="Powered by MediaWiki" srcset="../../assets/mw/resources/assets/poweredby_mediawiki_132x47.png 1.5x, ../../assets/mw/resources/assets/poweredby_mediawiki_176x62.png 2x" width="88" height="31" /></a>
+													</li>
+									</ul>
+						<div style="clear:both"></div>
+		</div>
+		<script>if(window.jQuery)jQuery.ready();</script><script>if(window.mw){
+mw.loader.state({"site":"loading","user":"ready","user.groups":"ready"});
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.toc","mediawiki.action.view.postEdit","mediawiki.user","mediawiki.hidpi","mediawiki.page.ready","mediawiki.searchSuggest"],null,true);
+}</script>
+<script>if(window.mw){
+document.write("\u003Cscript src=\"https://www.datoolset.net/mw/load.php?debug=false\u0026amp;lang=en\u0026amp;modules=site\u0026amp;only=scripts\u0026amp;skin=vector\u0026amp;*\"\u003E\u003C/script\u003E");
+}</script>
+<script>if(window.mw){
+mw.config.set({"wgBackendResponseTime":210});
+}</script>
+	</body>
+</html>

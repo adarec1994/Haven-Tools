@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" class="client-nojs">
+<head>
+<meta charset="UTF-8" />
+<title>Endless Adventures Companion Hire Include - Dragon Age Toolset Wiki</title>
+<meta name="generator" content="MediaWiki 1.25.6" />
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="search" type="application/opensearchdescription+xml" href="/mw/opensearch_desc.php" title="Dragon Age Toolset Wiki (en)" />
+<link rel="EditURI" type="application/rsd+xml" href="https://www.datoolset.net/mw/api.php?action=rsd" />
+<link rel="alternate" hreflang="x-default" href="Endless_Adventures_Companion_Hire_Include.html" />
+<link rel="alternate" type="application/atom+xml" title="Dragon Age Toolset Wiki Atom feed" href="/mw/index.php?title=Special:RecentChanges&amp;feed=atom" />
+<meta name="ResourceLoaderDynamicStyles" content="" />
+<style>a:lang(ar),a:lang(kk-arab),a:lang(mzn),a:lang(ps),a:lang(ur){text-decoration:none}
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-css:7:270a0dcd3ae587df0f041aebfc42e61b */</style>
+<script>if(window.mw){
+mw.config.set({"wgCanonicalNamespace":"","wgCanonicalSpecialPageName":false,"wgNamespaceNumber":0,"wgPageName":"Endless_Adventures_Companion_Hire_Include","wgTitle":"Endless Adventures Companion Hire Include","wgCurRevisionId":16374,"wgRevisionId":16374,"wgArticleId":5205,"wgIsArticle":true,"wgIsRedirect":false,"wgAction":"view","wgUserName":null,"wgUserGroups":["*"],"wgCategories":[],"wgBreakFrames":false,"wgPageContentLanguage":"en","wgPageContentModel":"wikitext","wgSeparatorTransformTable":["",""],"wgDigitTransformTable":["",""],"wgDefaultDateFormat":"dmy","wgMonthNames":["","January","February","March","April","May","June","July","August","September","October","November","December"],"wgMonthNamesShort":["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],"wgRelevantPageName":"Endless_Adventures_Companion_Hire_Include","wgRelevantArticleId":5205,"wgIsProbablyEditable":false,"wgRestrictionEdit":[],"wgRestrictionMove":[]});
+}</script><script>if(window.mw){
+mw.loader.implement("user.options",function($,jQuery){mw.user.options.set({"variant":"en"});});mw.loader.implement("user.tokens",function($,jQuery){mw.user.tokens.set({"editToken":"+\\","patrolToken":"+\\","watchToken":"+\\"});});
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-js:7:a5c52c063dc436c1ca7c9f456936a5e9 */
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.page.startup","mediawiki.legacy.wikibits","mediawiki.legacy.ajax","skins.vector.js"]);
+}</script>
+<!--[if lt IE 7]><style type="text/css">body{behavior:url("/mw/skins/Vector/csshover.min.htc")}</style><![endif]-->
+<link rel="stylesheet" href="../assets/local/wiki-static.css" />
+</head>
+<body class="mediawiki ltr sitedir-ltr ns-0 ns-subject page-Endless_Adventures_Companion_Hire_Include skin-vector action-view">
+		<div id="mw-page-base" class="noprint"></div>
+		<div id="mw-head-base" class="noprint"></div>
+		<div id="content" class="mw-body" role="main">
+			<a id="top"></a>
+
+						<div class="mw-indicators">
+</div>
+			<h1 id="firstHeading" class="firstHeading" lang="en">Endless Adventures Companion Hire Include</h1>
+						<div id="bodyContent" class="mw-body-content">
+									<div id="siteSub">From Dragon Age Toolset Wiki</div>
+								<div id="contentSub"></div>
+												<div id="jump-to-nav" class="mw-jump">
+					Jump to:					<a href="#mw-head">navigation</a>, 					<a href="#p-search">search</a>
+				</div>
+				<div id="mw-content-text" lang="en" dir="ltr" class="mw-content-ltr"><p><a href="Endless_Adventures_Main_Page.html" title="Endless Adventures Main Page">Endless Adventures Main Page</a>
+</p><p><a href="Endless_Adventures_EAC_Tutorials.html" title="Endless Adventures EAC Tutorials">Endless Adventures EAC Tutorials</a>
+</p><p>This page holds the code for the common "ea_companion_h" script used for EAC modules. This script is included in the base module, so modders don't need to include it in their addins. Note that making any changes to the script and including it in an addin could break other addin modules.
+</p>
+<div dir="ltr" class="mw-geshi mw-code mw-content-ltr"><div class="dascript source-dascript"><pre class="de1"><span class="co2">#include &quot;sys_chargen_h&quot;</span>
+<span class="co2">#include &quot;wrappers_h&quot;</span>
+<span class="co2">#include &quot;utility_h&quot;</span>
+<span class="co2">#include &quot;sys_rewards_h&quot;</span>
+<span class="co2">#include &quot;approval_h&quot;</span>
+<span class="co2">#include &quot;sys_autolevelup_h&quot;</span>
+&#160;
+<span class="coMULTI">/*  Jye Nicolson 5-Jan-2010
+This function set duplicates the full functionality chain of UT_HireFollower, with the following exceptions:
+&#160;
+-  Followers can gain XP
+-  Autolevel status can be set (default off)
+-  Followers can be set to any starting state (default Available) and will still be properly initalised and added to the party pool
+-  Autolevel tables for non-core followers can be explicitly set.
+-  Class and Specialisation can be chosen via script
+-  Followers without specialisations are granted a spec point by default.
+&#160;
+It should only ever be called once each for characters you intend to be full followers.
+Much of the protective code handling summoned creatures etc. in player_core is not present here.
+&#160;
+*/</span>
+&#160;
+<span class="co1">// This just cleans up the main function a little</span>
+&#160;
+<a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> GetCustomFollowerTargetLevel<span class="br0">&#40;</span><a href="http://www.datoolset.net/wiki/index.php?title=object keyword"><span class="kw2">object</span></a> oFollower, <a href="http://www.datoolset.net/wiki/index.php?title=object keyword"><span class="kw2">object</span></a> oHero, <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nPackage, <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nMinLevel <span class="sy0">=</span> <span class="nu0">0</span><span class="br0">&#41;</span> <span class="br0">&#123;</span>
+            <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nPlayerLevel <span class="sy0">=</span> GetLevel<span class="br0">&#40;</span>oHero<span class="br0">&#41;</span>;
+            <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nTargetLevel <span class="sy0">=</span> <span class="nu0">0</span>;
+&#160;
+            <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a><span class="br0">&#40;</span><span class="br0">&#40;</span>nPlayerLevel <span class="sy0">&gt;=</span> <span class="nu0">13</span><span class="br0">&#41;</span> <span class="sy0">||</span> <span class="br0">&#40;</span>nPlayerLevel <span class="sy0">==</span> <span class="nu0">1</span><span class="br0">&#41;</span> <span class="sy0">||</span> <span class="br0">&#40;</span><span class="sy0">!</span>_UT_GetIsPlotFollower<span class="br0">&#40;</span>oFollower<span class="br0">&#41;</span><span class="br0">&#41;</span><span class="br0">&#41;</span> <span class="br0">&#123;</span>
+               nTargetLevel <span class="sy0">=</span> nPlayerLevel;
+            <span class="br0">&#125;</span> <a href="http://www.datoolset.net/wiki/index.php?title=else keyword"><span class="kw1">else</span></a> <span class="br0">&#123;</span>
+               nTargetLevel <span class="sy0">=</span> nPlayerLevel <span class="sy0">+</span> <span class="nu0">1</span>;
+            <span class="br0">&#125;</span>
+&#160;
+            <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a> <span class="br0">&#40;</span>nMinLevel <span class="sy0">==</span> <span class="nu0">0</span><span class="br0">&#41;</span> <span class="br0">&#123;</span>  <span class="co1">//If nMinLevel is not specified, checks package 2DA for a value</span>
+              nMinLevel <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetM2DAInt"><span class="kw4">GetM2DAInt</span></a><span class="br0">&#40;</span>TABLE_PACKAGES, <span class="st0">&quot;MinLevel&quot;</span>, nPackage<span class="br0">&#41;</span>;
+             <span class="br0">&#125;</span>
+            <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a><span class="br0">&#40;</span>nMinLevel <span class="sy0">&gt;</span> <span class="nu0">0</span> <span class="sy0">&amp;&amp;</span> nMinLevel <span class="sy0">&gt;</span> nTargetLevel<span class="br0">&#41;</span> <span class="br0">&#123;</span>
+               nTargetLevel <span class="sy0">=</span> nMinLevel;
+            <span class="br0">&#125;</span>
+            <a href="http://www.datoolset.net/wiki/index.php?title=return keyword"><span class="kw1">return</span></a> nTargetLevel;
+<span class="br0">&#125;</span>
+&#160;
+<span class="coMULTI">/* InitCustomFollowerSpec:
+This function tries to set the forced Specialisation.  If there is none, it checks the package for one.
+If there isn't either of those, it grants a free spec point if bFreeSpecPoint is true.
+*/</span>
+<a href="http://www.datoolset.net/wiki/index.php?title=void keyword"><span class="kw2">void</span></a> InitCustomFollowerSpec<span class="br0">&#40;</span><a href="http://www.datoolset.net/wiki/index.php?title=object keyword"><span class="kw2">object</span></a> oFollower, <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nPackage, <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nForceSpec, <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> bFreeSpecPoint<span class="br0">&#41;</span> <span class="br0">&#123;</span>
+    <span class="co1">// Find specialization, and optionally add a spec point if none is found.</span>
+        <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a> <span class="br0">&#40;</span>nForceSpec <span class="sy0">==</span> <span class="nu0">0</span><span class="br0">&#41;</span> <span class="br0">&#123;</span>
+        <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nSpecAbility <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetM2DAInt"><span class="kw4">GetM2DAInt</span></a><span class="br0">&#40;</span>TABLE_PACKAGES, <span class="st0">&quot;switch1_class&quot;</span>, nPackage<span class="br0">&#41;</span>; <span class="co1">// followers can have only 1 advanced class</span>
+         <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a><span class="br0">&#40;</span>nSpecAbility <span class="sy0">&gt;</span> <span class="nu0">0</span><span class="br0">&#41;</span>
+         <span class="br0">&#123;</span>
+          <a href="http://www.datoolset.net/wiki/index.php?title=AddAbility"><span class="kw4">AddAbility</span></a><span class="br0">&#40;</span>oFollower, nSpecAbility<span class="br0">&#41;</span>;
+         <span class="br0">&#125;</span> <a href="http://www.datoolset.net/wiki/index.php?title=else keyword"><span class="kw1">else</span></a> <span class="br0">&#123;</span>
+             <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a> <span class="br0">&#40;</span>bFreeSpecPoint<span class="br0">&#41;</span> <span class="br0">&#123;</span>
+                 <a href="http://www.datoolset.net/wiki/index.php?title=SetCreatureProperty"><span class="kw4">SetCreatureProperty</span></a><span class="br0">&#40;</span>oFollower, <span class="nu0">38</span>, <span class="nu0">1.00</span><span class="br0">&#41;</span>;
+             <span class="br0">&#125;</span>
+         <span class="br0">&#125;</span>
+        <span class="br0">&#125;</span> <a href="http://www.datoolset.net/wiki/index.php?title=else keyword"><span class="kw1">else</span></a> <span class="br0">&#123;</span>
+             <a href="http://www.datoolset.net/wiki/index.php?title=AddAbility"><span class="kw4">AddAbility</span></a><span class="br0">&#40;</span>oFollower, nForceSpec<span class="br0">&#41;</span>;
+        <span class="br0">&#125;</span>
+<span class="br0">&#125;</span>
+&#160;
+<span class="coMULTI">/* hireCustomFollower()  (See doco at top of page)
+&#160;
+I strongly suggest you reorder the parameters if you're adding many followers with advanced options.
+&#160;
+Feel free to leave them alone if you only want to set class, plot, spec or don't mind long declarations.
+&#160;
+Note nForceClass is currently compulsory due to flakiness with GetCreatureCoreClass()
+*/</span>
+&#160;
+<a href="http://www.datoolset.net/wiki/index.php?title=void keyword"><span class="kw2">void</span></a> EA_HireFollower<span class="br0">&#40;</span><a href="http://www.datoolset.net/wiki/index.php?title=object keyword"><span class="kw2">object</span></a> oFollower, <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nForceClass, <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nForceSpec <span class="sy0">=</span> <span class="nu0">0</span>,
+<a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nALTable <span class="sy0">=</span> <span class="nu0">0</span>, <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nAutolevel <span class="sy0">=</span> <span class="nu0">0</span>, <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> bFreeSpecPoint <span class="sy0">=</span> TRUE, <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nTargetLevel <span class="sy0">=</span> <span class="nu0">0</span>, <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nMinLevel <span class="sy0">=</span> <span class="nu0">0</span><span class="br0">&#41;</span>
+<span class="br0">&#123;</span><a href="http://www.datoolset.net/wiki/index.php?title=object keyword"><span class="kw2">object</span></a> oHero <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetHero"><span class="kw4">GetHero</span></a><span class="br0">&#40;</span><span class="br0">&#41;</span>;
+ <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nInitialState <span class="sy0">=</span> <span class="kw3">FOLLOWER_STATE_AVAILABLE</span>;
+&#160;
+        <span class="coMULTI">/* #################  BEGIN BASIC FOLLOWER JOIN BLOCK   ###################
+        This loosely replicates WR_SetFollowerState.
+        */</span>
+        <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a> <span class="br0">&#40;</span>nForceClass <span class="sy0">==</span> <span class="nu0">0</span><span class="br0">&#41;</span> <span class="br0">&#123;</span>
+            nForceClass <span class="sy0">=</span> GetCreatureCoreClass<span class="br0">&#40;</span>oFollower<span class="br0">&#41;</span>;           <span class="co1">//This is not working.  Hence nForceClass mandatory.</span>
+        <span class="br0">&#125;</span>
+&#160;
+        <a href="http://www.datoolset.net/wiki/index.php?title=SetGroupId"><span class="kw4">SetGroupId</span></a><span class="br0">&#40;</span>oFollower, <a href="http://www.datoolset.net/wiki/index.php?title=GetGroupId"><span class="kw4">GetGroupId</span></a><span class="br0">&#40;</span>oHero<span class="br0">&#41;</span><span class="br0">&#41;</span>;      <span class="co1">//Puts the follower in the pc's Group.</span>
+        <a href="http://www.datoolset.net/wiki/index.php?title=SetEventScript"><span class="kw4">SetEventScript</span></a><span class="br0">&#40;</span>oFollower, RESOURCE_SCRIPT_PLAYER_CORE<span class="br0">&#41;</span>;  <span class="co1">//This makes them act like a player.</span>
+        <a href="http://www.datoolset.net/wiki/index.php?title=SetFollowerState"><span class="kw4">SetFollowerState</span></a><span class="br0">&#40;</span>oFollower, nInitialState<span class="br0">&#41;</span>;  <span class="co1">//This sets whether they are available, in the active party etc.</span>
+&#160;
+        <span class="coMULTI">/* #################  END BASIC FOLLOWER JOIN BLOCK ##################### */</span>
+&#160;
+        <span class="coMULTI">/* #################  BEGIN PLAYER_CORE EVENT_TYPE_PARTY_MEMBER_HIRED EMULATION #################
+         This replicates the EVENT_TYPE_PARTY_MEMBER_HIRED handler from player_core, stripped down for simplicity and allowing our custom options.
+        */</span>
+        Chargen_EnableTacticsPresets<span class="br0">&#40;</span>oFollower<span class="br0">&#41;</span>;    <span class="co1">//I assume this is important.</span>
+&#160;
+        <a href="http://www.datoolset.net/wiki/index.php?title=SetLocalInt"><span class="kw4">SetLocalInt</span></a><span class="br0">&#40;</span>oFollower, FOLLOWER_SCALED, <span class="nu0">1</span><span class="br0">&#41;</span>;  <span class="co1">//This should prevent the follower being rescaled by player_core or what have you</span>
+&#160;
+        <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nPackage <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetPackage"><span class="kw4">GetPackage</span></a><span class="br0">&#40;</span>oFollower<span class="br0">&#41;</span>;  <span class="co1">//Gets the package, which will be used to find a number of 2DA IDs.</span>
+        <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nPackageClass <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetM2DAInt"><span class="kw4">GetM2DAInt</span></a><span class="br0">&#40;</span>TABLE_PACKAGES, <span class="st0">&quot;StartingClass&quot;</span>, nPackage<span class="br0">&#41;</span>;  <span class="co1">//I don't think this is used, even by player_core</span>
+&#160;
+        <span class="co1">// set behavior according to package</span>
+        <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nBehavior <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetM2DAInt"><span class="kw4">GetM2DAInt</span></a><span class="br0">&#40;</span>TABLE_PACKAGES, <span class="st0">&quot;FollowerBehavior&quot;</span>, nPackage<span class="br0">&#41;</span>;
+&#160;
+        <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a><span class="br0">&#40;</span>nBehavior <span class="sy0">&gt;=</span> <span class="nu0">0</span><span class="br0">&#41;</span> <span class="br0">&#123;</span>
+            SetAIBehavior<span class="br0">&#40;</span>oFollower, nBehavior<span class="br0">&#41;</span>;
+        <span class="br0">&#125;</span>
+&#160;
+        Chargen_InitializeCharacter<span class="br0">&#40;</span>oFollower<span class="br0">&#41;</span>;      <span class="co1">//We initialise the follower and choose race/class.</span>
+        Chargen_SelectRace<span class="br0">&#40;</span>oFollower,<a href="http://www.datoolset.net/wiki/index.php?title=GetCreatureRacialType"><span class="kw4">GetCreatureRacialType</span></a><span class="br0">&#40;</span>oFollower<span class="br0">&#41;</span><span class="br0">&#41;</span>;
+        Chargen_SelectCoreClass<span class="br0">&#40;</span>oFollower,nForceClass<span class="br0">&#41;</span>;
+&#160;
+         <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a> <span class="br0">&#40;</span>nTargetLevel <span class="sy0">==</span> <span class="nu0">0</span><span class="br0">&#41;</span> <span class="br0">&#123;</span>   <span class="co1">//This block picks a target level if not specified</span>
+&#160;
+              nTargetLevel <span class="sy0">=</span> GetCustomFollowerTargetLevel<span class="br0">&#40;</span>oFollower, oHero, nPackage, nMinLevel<span class="br0">&#41;</span>;
+         <span class="br0">&#125;</span>
+&#160;
+         <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nXp <span class="sy0">=</span> RW_GetXPNeededForLevel<span class="br0">&#40;</span>Max<span class="br0">&#40;</span>nTargetLevel, <span class="nu0">1</span><span class="br0">&#41;</span><span class="br0">&#41;</span>;      <span class="co1">//Here is where the XP is calculated and rewarded</span>
+         RewardXP<span class="br0">&#40;</span>oFollower, nXp, FALSE, FALSE<span class="br0">&#41;</span>;
+&#160;
+         <span class="co1">// -------------------------------------------------------------</span>
+         <span class="co1">// add hidden approval talents - (JN: I don't know how to set these yet, but when I figure it out this should make it work)</span>
+         <span class="co1">// -------------------------------------------------------------</span>
+         <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nIndex <span class="sy0">=</span> Approval_GetFollowerIndex<span class="br0">&#40;</span>oFollower<span class="br0">&#41;</span>;
+         Approval_AddFollowerBonusAbility<span class="br0">&#40;</span>nIndex, <span class="nu0">0</span><span class="br0">&#41;</span>;
+&#160;
+          <span class="co1">//Handle Specialisation</span>
+          InitCustomFollowerSpec<span class="br0">&#40;</span>oFollower, nPackage, nForceSpec, bFreeSpecPoint<span class="br0">&#41;</span>;
+&#160;
+         <span class="co1">// -------------------------------------------------------------</span>
+         <span class="co1">// This spends all available attribute and stat points on the</span>
+         <span class="co1">// creature according to the levelup table.  (JN:  this replicates AL_DoAutoLevelUp but with our choice of table)</span>
+         <span class="co1">// -------------------------------------------------------------</span>
+&#160;
+         <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a> <span class="br0">&#40;</span>nALTable <span class="sy0">==</span> <span class="nu0">0</span><span class="br0">&#41;</span> <span class="br0">&#123;</span>
+            nALTable <span class="sy0">=</span> <span class="nu0">1002</span>;
+            <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a> <span class="br0">&#40;</span>nForceClass <span class="sy0">=</span> CLASS_WIZARD<span class="br0">&#41;</span>
+            nALTable <span class="sy0">=</span> <span class="nu0">1003</span>;
+            <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a> <span class="br0">&#40;</span>nForceClass <span class="sy0">=</span> CLASS_ROGUE<span class="br0">&#41;</span>
+            nALTable <span class="sy0">=</span> <span class="nu0">1004</span>;
+         <span class="br0">&#125;</span>
+&#160;
+         AL_SpendAttributePoints<span class="br0">&#40;</span>oFollower, nALTable, FALSE<span class="br0">&#41;</span>;
+         AL_SpendSkillPoints<span class="br0">&#40;</span>oFollower, nALTable, TRUE<span class="br0">&#41;</span>;
+         AL_SpendSpecializationPoints<span class="br0">&#40;</span>oFollower, nALTable<span class="br0">&#41;</span>;
+         AL_SpendTalentSpellPoints<span class="br0">&#40;</span>oFollower, nALTable, TRUE<span class="br0">&#41;</span>;
+&#160;
+        <span class="co1">// -------------------------------------------------------------------------</span>
+        <span class="co1">// Update various UIs</span>
+        <span class="co1">// -------------------------------------------------------------------------</span>
+        Chargen_SetNumTactics<span class="br0">&#40;</span>oFollower<span class="br0">&#41;</span>;
+        <a href="http://www.datoolset.net/wiki/index.php?title=SetCanLevelUp"><span class="kw4">SetCanLevelUp</span></a><span class="br0">&#40;</span>oFollower,Chargen_HasPointsToSpend<span class="br0">&#40;</span>oFollower<span class="br0">&#41;</span><span class="br0">&#41;</span>;
+&#160;
+         <span class="coMULTI">/* #################  END PLAYER_CORE EVENT_TYPE_PARTY_MEMBER_HIRED EMULATION ################# */</span>
+&#160;
+           <a href="http://www.datoolset.net/wiki/index.php?title=SetAutoLevelUp"><span class="kw4">SetAutoLevelUp</span></a><span class="br0">&#40;</span>oFollower, nAutolevel<span class="br0">&#41;</span>;         <span class="co1">//This is the autolevel flag on the character sheet.</span>
+&#160;
+           <a href="http://www.datoolset.net/wiki/index.php?title=SetCreatureProperty"><span class="kw4">SetCreatureProperty</span></a><span class="br0">&#40;</span>oFollower, PROPERTY_ATTRIBUTE_REGENERATION_HEALTH_COMBAT,  <span class="nu0">10.0f</span><span class="br0">&#41;</span>;
+           <a href="http://www.datoolset.net/wiki/index.php?title=SetCreatureProperty"><span class="kw4">SetCreatureProperty</span></a><span class="br0">&#40;</span>oFollower, PROPERTY_ATTRIBUTE_REGENERATION_STAMINA_COMBAT, <span class="nu0">10.0f</span><span class="br0">&#41;</span>;
+           <a href="http://www.datoolset.net/wiki/index.php?title=SetCreatureProperty"><span class="kw4">SetCreatureProperty</span></a><span class="br0">&#40;</span>oFollower, <span class="kw3">PROPERTY_ATTRIBUTE_REGENERATION_HEALTH</span>,<span class="nu0">30.0f</span>, <span class="kw3">PROPERTY_VALUE_BASE</span><span class="br0">&#41;</span>;
+           <a href="http://www.datoolset.net/wiki/index.php?title=SetCreatureProperty"><span class="kw4">SetCreatureProperty</span></a><span class="br0">&#40;</span>oFollower, PROPERTY_ATTRIBUTE_REGENERATION_STAMINA, <span class="nu0">30.0f</span>, <span class="kw3">PROPERTY_VALUE_BASE</span><span class="br0">&#41;</span>;
+        <span class="co1">// Invoke picker if requested.</span>
+             <a href="http://www.datoolset.net/wiki/index.php?title=SetPartyPickerGUIStatus"><span class="kw4">SetPartyPickerGUIStatus</span></a><span class="br0">&#40;</span><span class="nu0">2</span><span class="br0">&#41;</span>;
+             <a href="http://www.datoolset.net/wiki/index.php?title=ShowPartyPickerGUI"><span class="kw4">ShowPartyPickerGUI</span></a><span class="br0">&#40;</span><span class="br0">&#41;</span>;
+&#160;
+<span class="br0">&#125;</span></pre></div></div>
+
+<!-- 
+NewPP limit report
+CPU time usage: 0.032 seconds
+Real time usage: 0.034 seconds
+Preprocessor visited node count: 8/1000000
+Preprocessor generated node count: 48/1000000
+Post‐expand include size: 0/2097152 bytes
+Template argument size: 0/2097152 bytes
+Highest expansion depth: 3/40
+Expensive parser function count: 0/100
+-->
+
+<!-- 
+Transclusion expansion time report (%,ms,calls,template)
+100.00%    0.000      1 - -total
+-->
+
+<!-- Saved in parser cache with key db714099484-datoolwiki_:pcache:idhash:5205-0!*!0!*!*!*!* and timestamp 20260531122734 and revision id 16374
+ -->
+</div>									<div class="printfooter">
+						Retrieved from "<a dir="ltr" href="Endless_Adventures_Companion_Hire_Include.html">https://www.datoolset.net/mw/index.php?title=Endless_Adventures_Companion_Hire_Include&amp;oldid=16374</a>"					</div>
+													<div id='catlinks' class='catlinks catlinks-allhidden'></div>												<div class="visualClear"></div>
+							</div>
+		</div>
+		<div id="mw-navigation">
+			<h2>Navigation menu</h2>
+
+			<div id="mw-head">
+									<div id="p-personal" role="navigation" class="" aria-labelledby="p-personal-label">
+						<h3 id="p-personal-label">Personal tools</h3>
+						<ul>
+							<li id="pt-login"><a href="/mw/index.php?title=Special:UserLogin&amp;returnto=Endless+Adventures+Companion+Hire+Include" title="You are encouraged to log in; however, it is not mandatory [o]" accesskey="o">Log in</a></li>						</ul>
+					</div>
+									<div id="left-navigation">
+										<div id="p-namespaces" role="navigation" class="vectorTabs" aria-labelledby="p-namespaces-label">
+						<h3 id="p-namespaces-label">Namespaces</h3>
+						<ul>
+															<li  id="ca-nstab-main" class="selected"><span><a href="Endless_Adventures_Companion_Hire_Include.html"  title="View the content page [c]" accesskey="c">Page</a></span></li>
+															<li  id="ca-talk" class="new"><span><a href="/mw/index.php?title=Talk:Endless_Adventures_Companion_Hire_Include&amp;action=edit&amp;redlink=1"  title="Discussion about the content page [t]" accesskey="t">Discussion</a></span></li>
+													</ul>
+					</div>
+										<div id="p-variants" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-variants-label">
+												<h3 id="p-variants-label"><span>Variants</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+									</div>
+				<div id="right-navigation">
+										<div id="p-views" role="navigation" class="vectorTabs" aria-labelledby="p-views-label">
+						<h3 id="p-views-label">Views</h3>
+						<ul>
+															<li id="ca-view" class="selected"><span><a href="Endless_Adventures_Companion_Hire_Include.html" >Read</a></span></li>
+															<li id="ca-viewsource"><span><a href="Endless_Adventures_Companion_Hire_Include.html"  title="This page is protected.&#10;You can view its source [e]" accesskey="e">View source</a></span></li>
+															<li id="ca-history" class="collapsible"><span><a href="Endless_Adventures_Companion_Hire_Include.html"  title="Past revisions of this page [h]" accesskey="h">View history</a></span></li>
+													</ul>
+					</div>
+										<div id="p-cactions" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-cactions-label">
+						<h3 id="p-cactions-label"><span>More</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+										<div id="p-search" role="search">
+						<h3>
+							<label for="searchInput">Search</label>
+						</h3>
+
+						<form action="/mw/index.php" id="searchform">
+														<div id="simpleSearch">
+															<input type="search" name="search" placeholder="Search" title="Search Dragon Age Toolset Wiki [f]" accesskey="f" id="searchInput" /><input type="hidden" value="Special:Search" name="title" /><input type="submit" name="fulltext" value="Search" title="Search the pages for this text" id="mw-searchButton" class="searchButton mw-fallbackSearchButton" /><input type="submit" name="go" value="Go" title="Go to a page with this exact name if exists" id="searchButton" class="searchButton" />								</div>
+						</form>
+					</div>
+									</div>
+			</div>
+			<div id="mw-panel">
+				<div id="p-logo" role="banner"><a class="mw-wiki-logo" href="Main_Page.html"  title="Visit the main page"></a></div>
+						<div class="portal" role="navigation" id='p-navigation' aria-labelledby='p-navigation-label'>
+			<h3 id='p-navigation-label'>Navigation</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-mainpage-description"><a href="Main_Page.html" title="Visit the main page [z]" accesskey="z">Main page</a></li>
+													<li id="n-recentchanges"><a href="/wiki/Special:RecentChanges" title="A list of recent changes in the wiki [r]" accesskey="r">Recent changes</a></li>
+													<li id="n-randompage"><a href="/wiki/Special:Random" title="Load a random page [x]" accesskey="x">Random page</a></li>
+													<li id="n-help"><a href="https://www.mediawiki.org/wiki/Special:MyLanguage/Help:Contents" title="The place to find out">Help</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-Links' aria-labelledby='p-Links-label'>
+			<h3 id='p-Links-label'>Links</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-Toolset-forums"><a href="http://forum.bioware.com/forum/30-dragon-age-toolset" rel="nofollow">Toolset forums</a></li>
+													<li id="n-Legacy-forums"><a href="http://social.bioware.com/forum/1/subindex/70" rel="nofollow">Legacy forums</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-tb' aria-labelledby='p-tb-label'>
+			<h3 id='p-tb-label'>Tools</h3>
+
+			<div class="body">
+									<ul>
+													<li id="t-whatlinkshere"><a href="/wiki/Special:WhatLinksHere/Endless_Adventures_Companion_Hire_Include" title="A list of all wiki pages that link here [j]" accesskey="j">What links here</a></li>
+													<li id="t-recentchangeslinked"><a href="/wiki/Special:RecentChangesLinked/Endless_Adventures_Companion_Hire_Include" title="Recent changes in pages linked from this page [k]" accesskey="k">Related changes</a></li>
+													<li id="t-specialpages"><a href="/wiki/Special:SpecialPages" title="A list of all special pages [q]" accesskey="q">Special pages</a></li>
+													<li id="t-print"><a href="Endless_Adventures_Companion_Hire_Include.html" rel="alternate" title="Printable version of this page [p]" accesskey="p">Printable version</a></li>
+													<li id="t-permalink"><a href="Endless_Adventures_Companion_Hire_Include.html" title="Permanent link to this revision of the page">Permanent link</a></li>
+													<li id="t-info"><a href="Endless_Adventures_Companion_Hire_Include.html" title="More information about this page">Page information</a></li>
+											</ul>
+							</div>
+		</div>
+				</div>
+		</div>
+		<div id="footer" role="contentinfo">
+							<ul id="footer-info">
+											<li id="footer-info-lastmod"> This page was last modified on 14 June 2011, at 20:40.</li>
+									</ul>
+							<ul id="footer-places">
+											<li id="footer-places-privacy"><a href="/wiki/Dragon_Age_Toolset_Wiki:Privacy_policy" title="Dragon Age Toolset Wiki:Privacy policy">Privacy policy</a></li>
+											<li id="footer-places-about"><a href="/wiki/Dragon_Age_Toolset_Wiki:About" title="Dragon Age Toolset Wiki:About">About Dragon Age Toolset Wiki</a></li>
+											<li id="footer-places-disclaimer"><a href="/wiki/Dragon_Age_Toolset_Wiki:General_disclaimer" title="Dragon Age Toolset Wiki:General disclaimer">Disclaimers</a></li>
+									</ul>
+										<ul id="footer-icons" class="noprint">
+											<li id="footer-poweredbyico">
+															<a href="//www.mediawiki.org/"><img src="../assets/mw/resources/assets/poweredby_mediawiki_88x31.png" alt="Powered by MediaWiki" srcset="../assets/mw/resources/assets/poweredby_mediawiki_132x47.png 1.5x, ../assets/mw/resources/assets/poweredby_mediawiki_176x62.png 2x" width="88" height="31" /></a>
+													</li>
+									</ul>
+						<div style="clear:both"></div>
+		</div>
+		<script>if(window.jQuery)jQuery.ready();</script><script>if(window.mw){
+mw.loader.state({"site":"loading","user":"ready","user.groups":"ready"});
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.action.view.postEdit","mediawiki.user","mediawiki.hidpi","mediawiki.page.ready","mediawiki.searchSuggest"],null,true);
+}</script>
+<script>if(window.mw){
+document.write("\u003Cscript src=\"https://www.datoolset.net/mw/load.php?debug=false\u0026amp;lang=en\u0026amp;modules=site\u0026amp;only=scripts\u0026amp;skin=vector\u0026amp;*\"\u003E\u003C/script\u003E");
+}</script>
+<script>if(window.mw){
+mw.config.set({"wgBackendResponseTime":226});
+}</script>
+	</body>
+</html>

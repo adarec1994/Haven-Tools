@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" class="client-nojs">
+<head>
+<meta charset="UTF-8" />
+<title>Talk:Backgrounds tutorial - Dragon Age Toolset Wiki</title>
+<meta name="generator" content="MediaWiki 1.25.6" />
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="search" type="application/opensearchdescription+xml" href="/mw/opensearch_desc.php" title="Dragon Age Toolset Wiki (en)" />
+<link rel="EditURI" type="application/rsd+xml" href="https://www.datoolset.net/mw/api.php?action=rsd" />
+<link rel="alternate" hreflang="x-default" href="Talk%3ABackgrounds_tutorial.html" />
+<link rel="alternate" type="application/atom+xml" title="Dragon Age Toolset Wiki Atom feed" href="/mw/index.php?title=Special:RecentChanges&amp;feed=atom" />
+<meta name="ResourceLoaderDynamicStyles" content="" />
+<style>a:lang(ar),a:lang(kk-arab),a:lang(mzn),a:lang(ps),a:lang(ur){text-decoration:none}
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-css:7:270a0dcd3ae587df0f041aebfc42e61b */</style>
+<script>if(window.mw){
+mw.config.set({"wgCanonicalNamespace":"Talk","wgCanonicalSpecialPageName":false,"wgNamespaceNumber":1,"wgPageName":"Talk:Backgrounds_tutorial","wgTitle":"Backgrounds tutorial","wgCurRevisionId":16033,"wgRevisionId":16033,"wgArticleId":3769,"wgIsArticle":true,"wgIsRedirect":false,"wgAction":"view","wgUserName":null,"wgUserGroups":["*"],"wgCategories":[],"wgBreakFrames":false,"wgPageContentLanguage":"en","wgPageContentModel":"wikitext","wgSeparatorTransformTable":["",""],"wgDigitTransformTable":["",""],"wgDefaultDateFormat":"dmy","wgMonthNames":["","January","February","March","April","May","June","July","August","September","October","November","December"],"wgMonthNamesShort":["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],"wgRelevantPageName":"Talk:Backgrounds_tutorial","wgRelevantArticleId":3769,"wgIsProbablyEditable":false,"wgRestrictionEdit":[],"wgRestrictionMove":[]});
+}</script><script>if(window.mw){
+mw.loader.implement("user.options",function($,jQuery){mw.user.options.set({"variant":"en"});});mw.loader.implement("user.tokens",function($,jQuery){mw.user.tokens.set({"editToken":"+\\","patrolToken":"+\\","watchToken":"+\\"});});
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-js:7:a5c52c063dc436c1ca7c9f456936a5e9 */
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.page.startup","mediawiki.legacy.wikibits","mediawiki.legacy.ajax","skins.vector.js"]);
+}</script>
+<!--[if lt IE 7]><style type="text/css">body{behavior:url("/mw/skins/Vector/csshover.min.htc")}</style><![endif]-->
+<link rel="stylesheet" href="../assets/local/wiki-static.css" />
+</head>
+<body class="mediawiki ltr sitedir-ltr ns-1 ns-talk page-Talk_Backgrounds_tutorial skin-vector action-view">
+		<div id="mw-page-base" class="noprint"></div>
+		<div id="mw-head-base" class="noprint"></div>
+		<div id="content" class="mw-body" role="main">
+			<a id="top"></a>
+
+						<div class="mw-indicators">
+</div>
+			<h1 id="firstHeading" class="firstHeading" lang="en">Talk:Backgrounds tutorial</h1>
+						<div id="bodyContent" class="mw-body-content">
+									<div id="siteSub">From Dragon Age Toolset Wiki</div>
+								<div id="contentSub"></div>
+												<div id="jump-to-nav" class="mw-jump">
+					Jump to:					<a href="#mw-head">navigation</a>, 					<a href="#p-search">search</a>
+				</div>
+				<div id="mw-content-text" lang="en" dir="ltr" class="mw-content-ltr"><div id="toc" class="toc"><div id="toctitle"><h2>Contents</h2></div>
+<ul>
+<li class="toclevel-1 tocsection-1"><a href="#Bugfixes_and_some_comments"><span class="tocnumber">1</span> <span class="toctext">Bugfixes and some comments</span></a></li>
+<li class="toclevel-1 tocsection-2"><a href="#When_is_an_M2DA_not_like_an_M2DA.3F"><span class="tocnumber">2</span> <span class="toctext">When is an M2DA not like an M2DA?</span></a></li>
+<li class="toclevel-1 tocsection-3"><a href="#Is_this_correct.3F"><span class="tocnumber">3</span> <span class="toctext">Is this correct?</span></a></li>
+<li class="toclevel-1 tocsection-4"><a href="#Why_are_the_CHARGEN_event_scripts_customised.3F"><span class="tocnumber">4</span> <span class="toctext">Why are the CHARGEN event scripts customised?</span></a></li>
+</ul>
+</div>
+
+<h2><span class="mw-headline" id="Bugfixes_and_some_comments">Bugfixes and some comments</span></h2>
+<p>The crashing because of the background description string ID is actually because of the UI and can be fixed by modders. In the chargen.gfx's ActionScript RaceGenderScene.GrabBackgrounds() static function, the following is what's causing the crash - basically using the StringID as an array index for the sole purpose of checking if that StringID has been seen yet, so this can be worked around to check it some way else - or just drop it if it's not strictly needed (Apparently it is, but see below the code). Incidentally, this is probably also why you need unique background description string IDs for each race for them to get properly enumerated.
+</p><p>You *could* just constrain your string ID to a lower value given the other mentioned workaround, but wouldn't it be nice not to have to worry about bugs?
+</p><p><b>This is the code causing the crash:</b>
+</p>
+<div dir="ltr" class="mw-geshi mw-code mw-content-ltr"><div class="dascript source-dascript"><pre class="de1">var aStringCheck <span class="sy0">=</span> <span class="br0">&#91;</span><span class="br0">&#93;</span>;
+<span class="co1">// ...</span>
+<span class="co1">// ... nested for-loops</span>
+       var bBackgroundAllowedByRace <span class="sy0">=</span> Number<span class="br0">&#40;</span>ExternalCommands.<span class="me1">Get2DAValueByRowIndexColumnName</span><span class="br0">&#40;</span>_2DA.<span class="me1">TABLE_BACKGROUND</span>, nBackgroundRow, RaceGenderScene.<span class="me1">m_aRaces</span><span class="br0">&#91;</span>nRaceIndex<span class="br0">&#93;</span>.<span class="me1">sLabel</span><span class="br0">&#41;</span><span class="br0">&#41;</span>;
+       var nDescStringID <span class="sy0">=</span> Number<span class="br0">&#40;</span>ExternalCommands.<span class="me1">Get2DAValueByRowIndexColumnName</span><span class="br0">&#40;</span>_2DA.<span class="me1">TABLE_BACKGROUND_DESC</span>, nBackgroundRow, RaceGenderScene.<span class="me1">m_aRaces</span><span class="br0">&#91;</span>nRaceIndex<span class="br0">&#93;</span>.<span class="me1">sLabel</span><span class="br0">&#41;</span><span class="br0">&#41;</span>;
+       <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a> <span class="br0">&#40;</span>bBackgroundAllowedByRace <span class="sy0">==</span> <span class="nu0">1</span> <span class="sy0">&amp;&amp;</span> aStringCheck<span class="br0">&#91;</span>nDescStringID<span class="br0">&#93;</span> <span class="sy0">==</span> null<span class="br0">&#41;</span>
+       <span class="br0">&#123;</span>
+                    aStringCheck<span class="br0">&#91;</span>nDescStringID<span class="br0">&#93;</span> <span class="sy0">=</span> nDescStringID;
+&#160;
+       <span class="br0">&#125;</span>
+<span class="co1">// ... end nested for-loops</span></pre></div></div>
+<p>The check *is* needed or else the background will show up active in the list of each race that possesses it. One simple workaround is use a dictionary instead of an array:
+</p><p><b>This would seem to be a workaround:</b>
+</p>
+<div dir="ltr" class="mw-geshi mw-code mw-content-ltr"><div class="dascript source-dascript"><pre class="de1">var aStringCheck <span class="sy0">=</span> <span class="br0">&#123;</span><span class="br0">&#125;</span>;
+<span class="co1">// ...</span>
+<span class="co1">// ... nested for-loops</span>
+       var bBackgroundAllowedByRace <span class="sy0">=</span> Number<span class="br0">&#40;</span>ExternalCommands.<span class="me1">Get2DAValueByRowIndexColumnName</span><span class="br0">&#40;</span>_2DA.<span class="me1">TABLE_BACKGROUND</span>, nBackgroundRow, RaceGenderScene.<span class="me1">m_aRaces</span><span class="br0">&#91;</span>nRaceIndex<span class="br0">&#93;</span>.<span class="me1">sLabel</span><span class="br0">&#41;</span><span class="br0">&#41;</span>;
+       var nDescStringID <span class="sy0">=</span> Number<span class="br0">&#40;</span>ExternalCommands.<span class="me1">Get2DAValueByRowIndexColumnName</span><span class="br0">&#40;</span>_2DA.<span class="me1">TABLE_BACKGROUND_DESC</span>, nBackgroundRow, RaceGenderScene.<span class="me1">m_aRaces</span><span class="br0">&#91;</span>nRaceIndex<span class="br0">&#93;</span>.<span class="me1">sLabel</span><span class="br0">&#41;</span><span class="br0">&#41;</span>;
+       <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a> <span class="br0">&#40;</span>bBackgroundAllowedByRace <span class="sy0">==</span> <span class="nu0">1</span> <span class="sy0">&amp;&amp;</span> aStringCheck<span class="br0">&#91;</span><span class="st0">&quot;&quot;</span> <span class="sy0">+</span> nDescStringID<span class="br0">&#93;</span> <span class="sy0">==</span> null<span class="br0">&#41;</span>
+       <span class="br0">&#123;</span>
+                    aStringCheck<span class="br0">&#91;</span><span class="st0">&quot;&quot;</span> <span class="sy0">+</span> nDescStringID<span class="br0">&#93;</span> <span class="sy0">=</span> nDescStringID;
+&#160;
+       <span class="br0">&#125;</span>
+<span class="co1">// ... end nested for-loops</span></pre></div></div>
+<p>I think it should be possible to make it so you can share background descriptions, but that would require a bit more work.
+</p><p>--<a href="User%3AFollowTheGourd.html" title="User:FollowTheGourd">FollowTheGourd</a> 02:44, 29 March 2011 (UTC)
+</p>
+<h2><span class="mw-headline" id="When_is_an_M2DA_not_like_an_M2DA.3F">When is an M2DA not like an M2DA?</span></h2>
+<p>When its rows are enumerated by the UI. Since the UI lacks a function to map a row to its M2DA ID, some of the M2DA files need to be treated as if they're actually just 2DAs. E.g, the classes and some backgrounds tables. E.g., if you had an M2DA with two rows, both with ID 0 and ID 5, then the UI only knows there are two rows, but doesn't know how to map the second row to ID 5. I.e., the UI sees this when trying to enumerate the rows of the M2DA file, but it's told there are only two rows by the functions available to it.
+0 Data
+1 (uninitialized)
+2 (uninitialized)
+3 (uninitialized)
+4 (uninitialized)
+5 Data
+</p><p>Of course if there's a way to derive the row ID (by a prearranged formula or given by another M2DA cell's value), then the UI can use it just like a normal M2DA.
+</p><p>--<a href="User%3AFollowTheGourd.html" title="User:FollowTheGourd">FollowTheGourd</a> 03:25, 29 March 2011 (UTC)
+</p>
+<h2><span class="mw-headline" id="Is_this_correct.3F">Is this correct?</span></h2>
+<p>I have problems with this solution. I tried it twice now, once I tried to implement it into my module, the other time I did it exactly as written here. 1. The custom templates for the Backgrounds don't work (The character has no equipment, no matter what background I choose) with the scripts on this tutorial, although the changes work fine if I run RESOURCE_SCRIPT_MODULE_CORE 2. The race choice doesn't change the character (But that could be because the scripts are missing alot, it's not that important for test purposes) 3. The strings for the Background description don't work (Yes I have corrected them in the Toolset, because the ExcelProcessor can't handle that big numbers), they don't show up, when I'm clicking on the Backgrounds.
+</p><p>I have not tested dialouge yet, but am I making something wrong? Or has this tutorial some errors? <a href="/mw/index.php?title=User:Nobody123456&amp;action=edit&amp;redlink=1" class="new" title="User:Nobody123456 (page does not exist)">Nobody123456</a> 13:49, 26 November 2009 (UTC)
+</p>
+<dl><dd>I think you might be making some errors (although it is possible that there is some error or ommision in what I wrote). I tested the tutorial by running through it from scratch after I wrote it and my game worked fine. It is a very sensitive process though, so the slightest thing wrong can really throw you out. </dd></dl>
+<dl><dd> The first thing I would suggest is to get the background description strings working because I know that can cause issues if you don't get it right. Try a new module and don't make any changes execpt for adding your own strings to the backgrounds and see if that works. Oh and be sure to export your talk table along with any other resources before you play. Actaully that's probably it - I should add that to the tutorial. <a href="/mw/index.php?title=User:Stuntpope&amp;action=edit&amp;redlink=1" class="new" title="User:Stuntpope (page does not exist)">Stuntpope</a> 15:01, 26 November 2009 (UTC)</dd></dl>
+<dl><dd><dl><dd> I did export the string table, so that can't be it. I recreated it from scratch, now some equipment choices work, some don't. The race choices now works fine, but the strings still don't show up. I tested the background choices in a dialouge, and this works perfectly fine. I uploaded the module, so if you wanna take a quick look, that would be great. <a rel="nofollow" class="external text" href="http://www.megaupload.com/?d=CYHIVYJL">Background Test Module</a> and if you want to install the module as an addin <a rel="nofollow" class="external text" href="http://www.megaupload.com/?d=2FILLQ5N">DAZIP format</a> <a href="/mw/index.php?title=User:Nobody123456&amp;action=edit&amp;redlink=1" class="new" title="User:Nobody123456 (page does not exist)">Nobody123456</a> 05:20, 27 November 2009 (UTC)</dd></dl></dd></dl>
+<dl><dd>I notice your talk table is called strings.tlk. That seems strange to me, I didn't know you could rename tlk files but mine is called bg_demo_en-us, where bg_demo is what my module is called. so i would have expected yours to be bdm_2_en-us.tlk if you hadn't renamed it. You say that you are able to display strings in dialogue though so maybe that's not it. Another possibility is that this is another bug in the description strings. Your strings are a good million higher than mine - try using exctly the same string ID range that I used.</dd></dl>
+<dl><dd>As for equipment - I didn't really spend any time looking at what equipment those templates start with. I just selected some that had the look I was going for in chargen, so the ones that are just dressed plainly and don't have weapons or anything are that way becasue that is what those templates are (I think i used those for the servants). To check that this is working go into the toolset and find those templates - compare them to what those characters have if you create them. If you want them to have equipment, simply create a new creature and give them whatever equipment you want, then use that template name in the GDA. Try and resolve your other issue first though before you try that. <a href="/mw/index.php?title=User:Stuntpope&amp;action=edit&amp;redlink=1" class="new" title="User:Stuntpope (page does not exist)">Stuntpope</a> 07:25, 27 November 2009 (UTC)</dd></dl>
+<dl><dd><dl><dd> It was indeed the table name. It was exportet that way, that's strange, but now the Strings work fine, thank you very much! <a href="/mw/index.php?title=User:Nobody123456&amp;action=edit&amp;redlink=1" class="new" title="User:Nobody123456 (page does not exist)">Nobody123456</a> 07:52, 27 November 2009 (UTC)</dd></dl></dd></dl>
+<dl><dd><dl><dd><dl><dd> I ran into this same problem which is a user error. Make sure you export the "talk table" and NOT "string table". The export "string table" option appears on the export menu if you have the talk table open at the time. <a href="/mw/index.php?title=User:Deadrockstar&amp;action=edit&amp;redlink=1" class="new" title="User:Deadrockstar (page does not exist)">Deadrockstar</a> 11:43, 8 December 2009 (UTC)</dd></dl></dd></dl></dd></dl>
+<dl><dd>Great to hear you got it working! <a href="/mw/index.php?title=User:Stuntpope&amp;action=edit&amp;redlink=1" class="new" title="User:Stuntpope (page does not exist)">Stuntpope</a> 08:14, 27 November 2009 (UTC)</dd></dl>
+<h2><span class="mw-headline" id="Why_are_the_CHARGEN_event_scripts_customised.3F">Why are the CHARGEN event scripts customised?</span></h2>
+<p>I managed to get my custom background working without customising the CHARGEN event scripts. In fact, I don't remember seeing those scripts, so maybe they were added later? At any rate, now we have a forum query about it. Can anyone explain why that customisation is proposed, and how the code differs from the Bioware script? That would help people to understand which lines they need to change to suit their own scenario. <a href="/mw/index.php?title=User:Proleric1&amp;action=edit&amp;redlink=1" class="new" title="User:Proleric1 (page does not exist)">Proleric1</a> 09:41, 7 January 2011 (UTC)
+</p>
+<!-- 
+NewPP limit report
+CPU time usage: 0.028 seconds
+Real time usage: 0.032 seconds
+Preprocessor visited node count: 41/1000000
+Preprocessor generated node count: 108/1000000
+Post‐expand include size: 0/2097152 bytes
+Template argument size: 0/2097152 bytes
+Highest expansion depth: 3/40
+Expensive parser function count: 0/100
+-->
+
+<!-- 
+Transclusion expansion time report (%,ms,calls,template)
+100.00%    0.000      1 - -total
+-->
+
+<!-- Saved in parser cache with key db714099484-datoolwiki_:pcache:idhash:3769-0!*!0!!en!*!* and timestamp 20260531083406 and revision id 16033
+ -->
+</div>									<div class="printfooter">
+						Retrieved from "<a dir="ltr" href="Talk%3ABackgrounds_tutorial.html">https://www.datoolset.net/mw/index.php?title=Talk:Backgrounds_tutorial&amp;oldid=16033</a>"					</div>
+													<div id='catlinks' class='catlinks catlinks-allhidden'></div>												<div class="visualClear"></div>
+							</div>
+		</div>
+		<div id="mw-navigation">
+			<h2>Navigation menu</h2>
+
+			<div id="mw-head">
+									<div id="p-personal" role="navigation" class="" aria-labelledby="p-personal-label">
+						<h3 id="p-personal-label">Personal tools</h3>
+						<ul>
+							<li id="pt-login"><a href="/mw/index.php?title=Special:UserLogin&amp;returnto=Talk%3ABackgrounds+tutorial" title="You are encouraged to log in; however, it is not mandatory [o]" accesskey="o">Log in</a></li>						</ul>
+					</div>
+									<div id="left-navigation">
+										<div id="p-namespaces" role="navigation" class="vectorTabs" aria-labelledby="p-namespaces-label">
+						<h3 id="p-namespaces-label">Namespaces</h3>
+						<ul>
+															<li  id="ca-nstab-main"><span><a href="Backgrounds_tutorial.html"  title="View the content page [c]" accesskey="c">Page</a></span></li>
+															<li  id="ca-talk" class="selected"><span><a href="Talk%3ABackgrounds_tutorial.html"  title="Discussion about the content page [t]" accesskey="t">Discussion</a></span></li>
+													</ul>
+					</div>
+										<div id="p-variants" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-variants-label">
+												<h3 id="p-variants-label"><span>Variants</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+									</div>
+				<div id="right-navigation">
+										<div id="p-views" role="navigation" class="vectorTabs" aria-labelledby="p-views-label">
+						<h3 id="p-views-label">Views</h3>
+						<ul>
+															<li id="ca-view" class="selected"><span><a href="Talk%3ABackgrounds_tutorial.html" >Read</a></span></li>
+															<li id="ca-viewsource"><span><a href="Talk%3ABackgrounds_tutorial.html"  title="This page is protected.&#10;You can view its source [e]" accesskey="e">View source</a></span></li>
+															<li id="ca-history" class="collapsible"><span><a href="Talk%3ABackgrounds_tutorial.html"  title="Past revisions of this page [h]" accesskey="h">View history</a></span></li>
+													</ul>
+					</div>
+										<div id="p-cactions" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-cactions-label">
+						<h3 id="p-cactions-label"><span>More</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+										<div id="p-search" role="search">
+						<h3>
+							<label for="searchInput">Search</label>
+						</h3>
+
+						<form action="/mw/index.php" id="searchform">
+														<div id="simpleSearch">
+															<input type="search" name="search" placeholder="Search" title="Search Dragon Age Toolset Wiki [f]" accesskey="f" id="searchInput" /><input type="hidden" value="Special:Search" name="title" /><input type="submit" name="fulltext" value="Search" title="Search the pages for this text" id="mw-searchButton" class="searchButton mw-fallbackSearchButton" /><input type="submit" name="go" value="Go" title="Go to a page with this exact name if exists" id="searchButton" class="searchButton" />								</div>
+						</form>
+					</div>
+									</div>
+			</div>
+			<div id="mw-panel">
+				<div id="p-logo" role="banner"><a class="mw-wiki-logo" href="Main_Page.html"  title="Visit the main page"></a></div>
+						<div class="portal" role="navigation" id='p-navigation' aria-labelledby='p-navigation-label'>
+			<h3 id='p-navigation-label'>Navigation</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-mainpage-description"><a href="Main_Page.html" title="Visit the main page [z]" accesskey="z">Main page</a></li>
+													<li id="n-recentchanges"><a href="/wiki/Special:RecentChanges" title="A list of recent changes in the wiki [r]" accesskey="r">Recent changes</a></li>
+													<li id="n-randompage"><a href="/wiki/Special:Random" title="Load a random page [x]" accesskey="x">Random page</a></li>
+													<li id="n-help"><a href="https://www.mediawiki.org/wiki/Special:MyLanguage/Help:Contents" title="The place to find out">Help</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-Links' aria-labelledby='p-Links-label'>
+			<h3 id='p-Links-label'>Links</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-Toolset-forums"><a href="http://forum.bioware.com/forum/30-dragon-age-toolset" rel="nofollow">Toolset forums</a></li>
+													<li id="n-Legacy-forums"><a href="http://social.bioware.com/forum/1/subindex/70" rel="nofollow">Legacy forums</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-tb' aria-labelledby='p-tb-label'>
+			<h3 id='p-tb-label'>Tools</h3>
+
+			<div class="body">
+									<ul>
+													<li id="t-whatlinkshere"><a href="/wiki/Special:WhatLinksHere/Talk:Backgrounds_tutorial" title="A list of all wiki pages that link here [j]" accesskey="j">What links here</a></li>
+													<li id="t-recentchangeslinked"><a href="/wiki/Special:RecentChangesLinked/Talk:Backgrounds_tutorial" title="Recent changes in pages linked from this page [k]" accesskey="k">Related changes</a></li>
+													<li id="t-specialpages"><a href="/wiki/Special:SpecialPages" title="A list of all special pages [q]" accesskey="q">Special pages</a></li>
+													<li id="t-print"><a href="Talk%3ABackgrounds_tutorial.html" rel="alternate" title="Printable version of this page [p]" accesskey="p">Printable version</a></li>
+													<li id="t-permalink"><a href="Talk%3ABackgrounds_tutorial.html" title="Permanent link to this revision of the page">Permanent link</a></li>
+													<li id="t-info"><a href="Talk%3ABackgrounds_tutorial.html" title="More information about this page">Page information</a></li>
+											</ul>
+							</div>
+		</div>
+				</div>
+		</div>
+		<div id="footer" role="contentinfo">
+							<ul id="footer-info">
+											<li id="footer-info-lastmod"> This page was last modified on 29 March 2011, at 04:28.</li>
+									</ul>
+							<ul id="footer-places">
+											<li id="footer-places-privacy"><a href="/wiki/Dragon_Age_Toolset_Wiki:Privacy_policy" title="Dragon Age Toolset Wiki:Privacy policy">Privacy policy</a></li>
+											<li id="footer-places-about"><a href="/wiki/Dragon_Age_Toolset_Wiki:About" title="Dragon Age Toolset Wiki:About">About Dragon Age Toolset Wiki</a></li>
+											<li id="footer-places-disclaimer"><a href="/wiki/Dragon_Age_Toolset_Wiki:General_disclaimer" title="Dragon Age Toolset Wiki:General disclaimer">Disclaimers</a></li>
+									</ul>
+										<ul id="footer-icons" class="noprint">
+											<li id="footer-poweredbyico">
+															<a href="//www.mediawiki.org/"><img src="../assets/mw/resources/assets/poweredby_mediawiki_88x31.png" alt="Powered by MediaWiki" srcset="../assets/mw/resources/assets/poweredby_mediawiki_132x47.png 1.5x, ../assets/mw/resources/assets/poweredby_mediawiki_176x62.png 2x" width="88" height="31" /></a>
+													</li>
+									</ul>
+						<div style="clear:both"></div>
+		</div>
+		<script>if(window.jQuery)jQuery.ready();</script><script>if(window.mw){
+mw.loader.state({"site":"loading","user":"ready","user.groups":"ready"});
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.toc","mediawiki.action.view.postEdit","mediawiki.user","mediawiki.hidpi","mediawiki.page.ready","mediawiki.searchSuggest"],null,true);
+}</script>
+<script>if(window.mw){
+document.write("\u003Cscript src=\"https://www.datoolset.net/mw/load.php?debug=false\u0026amp;lang=en\u0026amp;modules=site\u0026amp;only=scripts\u0026amp;skin=vector\u0026amp;*\"\u003E\u003C/script\u003E");
+}</script>
+<script>if(window.mw){
+mw.config.set({"wgBackendResponseTime":274});
+}</script>
+	</body>
+</html>

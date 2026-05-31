@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" class="client-nojs">
+<head>
+<meta charset="UTF-8" />
+<title>Basic follower tutorial - Dragon Age Toolset Wiki</title>
+<meta name="generator" content="MediaWiki 1.25.6" />
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="search" type="application/opensearchdescription+xml" href="/mw/opensearch_desc.php" title="Dragon Age Toolset Wiki (en)" />
+<link rel="EditURI" type="application/rsd+xml" href="https://www.datoolset.net/mw/api.php?action=rsd" />
+<link rel="alternate" hreflang="x-default" href="Basic_follower_tutorial.html" />
+<link rel="alternate" type="application/atom+xml" title="Dragon Age Toolset Wiki Atom feed" href="/mw/index.php?title=Special:RecentChanges&amp;feed=atom" />
+<meta name="ResourceLoaderDynamicStyles" content="" />
+<style>a:lang(ar),a:lang(kk-arab),a:lang(mzn),a:lang(ps),a:lang(ur){text-decoration:none}
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-css:7:270a0dcd3ae587df0f041aebfc42e61b */</style>
+<script>if(window.mw){
+mw.config.set({"wgCanonicalNamespace":"","wgCanonicalSpecialPageName":false,"wgNamespaceNumber":0,"wgPageName":"Basic_follower_tutorial","wgTitle":"Basic follower tutorial","wgCurRevisionId":19359,"wgRevisionId":19359,"wgArticleId":5763,"wgIsArticle":true,"wgIsRedirect":false,"wgAction":"view","wgUserName":null,"wgUserGroups":["*"],"wgCategories":["Follower tutorials"],"wgBreakFrames":false,"wgPageContentLanguage":"en","wgPageContentModel":"wikitext","wgSeparatorTransformTable":["",""],"wgDigitTransformTable":["",""],"wgDefaultDateFormat":"dmy","wgMonthNames":["","January","February","March","April","May","June","July","August","September","October","November","December"],"wgMonthNamesShort":["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],"wgRelevantPageName":"Basic_follower_tutorial","wgRelevantArticleId":5763,"wgIsProbablyEditable":false,"wgRestrictionEdit":[],"wgRestrictionMove":[]});
+}</script><script>if(window.mw){
+mw.loader.implement("user.options",function($,jQuery){mw.user.options.set({"variant":"en"});});mw.loader.implement("user.tokens",function($,jQuery){mw.user.tokens.set({"editToken":"+\\","patrolToken":"+\\","watchToken":"+\\"});});
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-js:7:a5c52c063dc436c1ca7c9f456936a5e9 */
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.page.startup","mediawiki.legacy.wikibits","mediawiki.legacy.ajax","skins.vector.js"]);
+}</script>
+<!--[if lt IE 7]><style type="text/css">body{behavior:url("/mw/skins/Vector/csshover.min.htc")}</style><![endif]-->
+<link rel="stylesheet" href="../assets/local/wiki-static.css" />
+</head>
+<body class="mediawiki ltr sitedir-ltr ns-0 ns-subject page-Basic_follower_tutorial skin-vector action-view">
+		<div id="mw-page-base" class="noprint"></div>
+		<div id="mw-head-base" class="noprint"></div>
+		<div id="content" class="mw-body" role="main">
+			<a id="top"></a>
+
+						<div class="mw-indicators">
+</div>
+			<h1 id="firstHeading" class="firstHeading" lang="en">Basic follower tutorial</h1>
+						<div id="bodyContent" class="mw-body-content">
+									<div id="siteSub">From Dragon Age Toolset Wiki</div>
+								<div id="contentSub"></div>
+												<div id="jump-to-nav" class="mw-jump">
+					Jump to:					<a href="#mw-head">navigation</a>, 					<a href="#p-search">search</a>
+				</div>
+				<div id="mw-content-text" lang="en" dir="ltr" class="mw-content-ltr"><p>The <strong class="selflink">basic follower tutorial</strong> provides a step-by-step guide on how to create a follower that will:
+</p>
+<ul><li> Can be chosen from the party picker</li>
+<li> Can gain XP and level up with a default package</li></ul>
+<p>The tutorial assumes you know how to create a <a href="Creature.html" title="Creature">creature</a>; <a href="Compiling_2DAs.html" title="Compiling 2DAs">compile a 2DA</a> and are comfortable with basic <a href="/mw/index.php?title=Scripting&amp;action=edit&amp;redlink=1" class="new" title="Scripting (page does not exist)">scripting</a>.
+</p><p>The approach in the tutorial is intended as an introduction and should only be used if you are sure there will be empty slot in the active party when your follower is recruited. For a more comprehensive approach see the other <a href="Category%3AFollower_tutorials.html" title="Category:Follower tutorials">follower tutorials</a>. 
+</p>
+<div id="toc" class="toc"><div id="toctitle"><h2>Contents</h2></div>
+<ul>
+<li class="toclevel-1 tocsection-1"><a href="#Create_the_creature"><span class="tocnumber">1</span> <span class="toctext">Create the creature</span></a></li>
+<li class="toclevel-1 tocsection-2"><a href="#Overlay_the_party_picker"><span class="tocnumber">2</span> <span class="toctext">Overlay the party picker</span></a></li>
+<li class="toclevel-1 tocsection-3"><a href="#Create_the_party_picker_M2DA_fragment"><span class="tocnumber">3</span> <span class="toctext">Create the party picker M2DA fragment</span></a>
+<ul>
+<li class="toclevel-2 tocsection-4"><a href="#partypicker_m2da"><span class="tocnumber">3.1</span> <span class="toctext">partypicker m2da</span></a>
+<ul>
+<li class="toclevel-3 tocsection-5"><a href="#Animations"><span class="tocnumber">3.1.1</span> <span class="toctext">Animations</span></a></li>
+<li class="toclevel-3 tocsection-6"><a href="#Visual_effects"><span class="tocnumber">3.1.2</span> <span class="toctext">Visual effects</span></a></li>
+</ul>
+</li>
+<li class="toclevel-2 tocsection-7"><a href="#party_picker_m2da"><span class="tocnumber">3.2</span> <span class="toctext">party_picker m2da</span></a></li>
+</ul>
+</li>
+<li class="toclevel-1 tocsection-8"><a href="#Handle_the_Party_Member_Added_Event"><span class="tocnumber">4</span> <span class="toctext">Handle the Party Member Added Event</span></a></li>
+<li class="toclevel-1 tocsection-9"><a href="#Create_the_Hiring_Script"><span class="tocnumber">5</span> <span class="toctext">Create the Hiring Script</span></a></li>
+<li class="toclevel-1 tocsection-10"><a href="#Conclusion"><span class="tocnumber">6</span> <span class="toctext">Conclusion</span></a></li>
+</ul>
+</div>
+
+<h2><span class="mw-headline" id="Create_the_creature">Create the creature</span></h2>
+<p>Create a creature to act as your follower. Set its name, appearance, gender, head morph, conversation, inventory, etc. as you want them to behave in-game.
+</p><p>Set an appropriate <b>Tag</b> (you'll be using it a lot).  I suggest "party_charname".
+</p><p>Make sure you choose a <b>Class</b>.  For most followers this should be Rogue, Warrior or Wizard.
+</p><p><a href="File%3AClass.jpg.html" class="image"><img alt="Class.jpg" src="../assets/mw/images/a/af/Class.jpg" width="300" height="218" srcset="../assets/mw/images/a/af/Class.jpg 1.5x, ../assets/mw/images/a/af/Class.jpg 2x" /></a>
+</p><p>Under Package/Scaling set:
+</p>
+<ul><li> <b>General Package Type</b> to be <b>Party Members</b></li></ul>
+<ul><li> <b>Package</b> to be an appropriate value (probably "Generic - Wizard" or similar)</li></ul>
+<ul><li> <b>Package AI</b> (there should only be one choice)</li></ul>
+<ul><li> <b>Rank</b> to be <b>Player</b></li></ul>
+<p><a href="File%3APackage.jpg.html" class="image"><img alt="Package.jpg" src="../assets/mw/images/8/85/Package.jpg" width="300" height="116" srcset="../assets/mw/images/8/85/Package.jpg 1.5x, ../assets/mw/images/8/85/Package.jpg 2x" /></a>
+</p><p>Save and export your character as normal.
+</p>
+<h2><span class="mw-headline" id="Overlay_the_party_picker">Overlay the party picker</span></h2>
+<p>In  the official campaign, the party picker uses a special area called <a href="/mw/index.php?title=Char_stage&amp;action=edit&amp;redlink=1" class="new" title="Char stage (page does not exist)">char_stage</a>. Whether you're extending the official campaign or making a standalone campaign, there is a function that allows you to overlap the official stage with your own, so that both stages are active simultaneously in game.
+</p><p>In your resource palette, right-click char_stage under the <b>Global</b> folder and select <b>Duplicate</b> to make a copy of the stage with a new resource name, for example, bc_char_stage. In the resource properties, ensure that both <b>Module</b> and <b>Owner Module</b> are set to  your module, and the folder of your choice.
+</p><p><a href="File%3AArea_palette.jpg.html" class="image"><img alt="Area palette.jpg" src="../assets/mw/images/d/d4/Area_palette.jpg" width="300" height="214" /></a>
+</p><p>Create a new waypoint for your follower to appear on the party picker.  This waypoint <b>must</b> have a tag in the form of "char_" followed by the exact tag of your follower.
+</p><p><a href="File%3AChar_stage.jpg.html" class="image"><img alt="Char stage.jpg" src="../assets/mw/images/9/96/Char_stage.jpg" width="300" height="225" srcset="../assets/mw/images/9/96/Char_stage.jpg 1.5x, ../assets/mw/images/9/96/Char_stage.jpg 2x" /></a>
+</p><p>In this example the tag of my follower is <b>bc_party_miera</b> so her waypoint tag must be <b>char_bc_party_miera</b>
+</p><p>For a standalone module (such as in this example), put your waypoint wherever you please.  The one illustrated is directly on top of Morrigan's.  For an add-in to the main campaign, you should position your waypoint appropriately relative to the core party members.
+</p><p>Save and export the area.
+</p><p>Add the following to your module event script:
+</p>
+<div dir="ltr" class="mw-geshi mw-code mw-content-ltr"><div class="dascript source-dascript"><pre class="de1"><a href="http://www.datoolset.net/wiki/index.php?title=case keyword"><span class="kw1">case</span></a> <span class="kw3">EVENT_TYPE_MODULE_GETCHARSTAGE</span><span class="sy0">:</span>
+<span class="br0">&#123;</span>
+   <span class="co1">// Overlay the existing stage with my stage &quot;bc_char_stage&quot; is the resource name of the overlay area</span>
+   <span class="co1">// &quot;partypicker&quot; is the name of the default GDA</span>
+   <a href="http://www.datoolset.net/wiki/index.php?title=SetPartyPickerStage"><span class="kw4">SetPartyPickerStage</span></a><span class="br0">&#40;</span><span class="st0">&quot;bc_char_stage&quot;</span>, <span class="st0">&quot;partypicker&quot;</span><span class="br0">&#41;</span>;
+   <a href="http://www.datoolset.net/wiki/index.php?title=break keyword"><span class="kw1">break</span></a>;
+<span class="br0">&#125;</span></pre></div></div>
+<h2><span class="mw-headline" id="Create_the_party_picker_M2DA_fragment">Create the party picker M2DA fragment</span></h2>
+<p>You will need to create two <a href="/mw/index.php?title=M2da&amp;action=edit&amp;redlink=1" class="new" title="M2da (page does not exist)">m2da</a> fragment:
+</p>
+<ul><li> partypicker_*</li>
+<li> party_picker_*</li></ul>
+<p>The worksheets for these can be created in the same workbook or different workbooks.
+</p><p>Once you have completed the worksheets, use the <a href="/mw/index.php?title=ExcelProcessor&amp;action=edit&amp;redlink=1" class="new" title="ExcelProcessor (page does not exist)">ExcelProcessor</a> to compile the <a href="GDA.html" title="GDA">GDA</a> files and move/copy them to your module's override directory. Make sure they are included in the <a href="Builder_to_player.html" title="Builder to player">builder to player</a> (<a href="Dazip.html" title="DAZIP">DAZIP</a>) file when the time comes to build your module.
+</p>
+<h3><span class="mw-headline" id="partypicker_m2da">partypicker m2da</span></h3>
+<p><a href="File%3APartypickerm2da.jpg.html" class="image"><img alt="Partypickerm2da.jpg" src="../assets/mw/images/thumb/1/13/Partypickerm2da.jpg/300px-Partypickerm2da.jpg" width="300" height="39" srcset="../assets/mw/images/thumb/1/13/Partypickerm2da.jpg/450px-Partypickerm2da.jpg 1.5x, ../assets/mw/images/thumb/1/13/Partypickerm2da.jpg/600px-Partypickerm2da.jpg 2x" /></a>
+</p><p>The first worksheet should be named <b>partypicker_</b>  with a unique suffix.  For example example adding a "bc" suffix to produce "partypicker_bc".
+</p><p>Set up your columns as follows:
+</p>
+<ul><li> The <b>ID</b> for your follower must be <b>12 or higher</b>.  11 is the highest value used in the base 2DA.  12 is fine for standalone modules, add-ins will probably want to use an arbitrarily high number to avoid potential conflicts.</li></ul>
+<ul><li> The <b>Label</b> should be the follower's name as you wish it to appear on the party picker.</li></ul>
+<ul><li> The <b>Tag</b> must be your follower's tag.</li></ul>
+<p>All other values are non-functioning defaults and should be specified as in the image above unless you know explicitly what you're doing.
+</p>
+<h4><span class="mw-headline" id="Animations">Animations</span></h4>
+<p><b>Add Animation</b> and <b>Remove Animation</b> are actually <b>ID</b> numbers of different animations, taken from <a href="ANIM_2da.html" title="ANIM 2da">ANIM_base</a> m2da file.
+</p><p>Enter and exit version of animations are generally the best ones to use, although others may work. Note that not all animations will work as some require special conditions.
+</p><p>Here are some examples you can use:
+</p>
+<table class="wikitable">
+
+<tr>
+<th> ID </th>
+<th> Description
+</th></tr>
+<tr>
+<td> 255 </td>
+<td> Flying in place
+</td></tr>
+<tr>
+<td> 277 </td>
+<td> Dance
+</td></tr>
+<tr>
+<td> 247 </td>
+<td> Cast area spell
+</td></tr>
+<tr>
+<td> 500 </td>
+<td> VFX cast
+</td></tr>
+<tr>
+<td> 600 </td>
+<td> Surprised
+</td></tr>
+<tr>
+<td> 603 </td>
+<td> Praying
+</td></tr>
+<tr>
+<td> 607 </td>
+<td> Head bow
+</td></tr>
+<tr>
+<td> 609 </td>
+<td> Standing at attention
+</td></tr>
+<tr>
+<td> 651, 652 </td>
+<td> Crouch pray (enter and exit)
+</td></tr>
+<tr>
+<td> 808 </td>
+<td> Point forward
+</td></tr>
+<tr>
+<td> 811 </td>
+<td> Fist pounding
+</td></tr>
+<tr>
+<td> 825 </td>
+<td> Nodding
+</td></tr>
+<tr>
+<td> 840 </td>
+<td> Hand chop or frustration
+</td></tr>
+<tr>
+<td> 819 </td>
+<td> Talk cursing
+</td></tr>
+<tr>
+<td> 844 </td>
+<td> Hands behind back (848 and 849 are enter and exit)
+</td></tr>
+<tr>
+<td> 850 </td>
+<td> Chest pounding salute
+</td></tr>
+<tr>
+<td> 905, 906 </td>
+<td> Crouch (enter, exit)
+</td></tr>
+<tr>
+<td> 919, 920 </td>
+<td> Sit on ground (enter, exit)
+</td></tr>
+<tr>
+<td> 965 </td>
+<td> Kneel down loop
+</td></tr>
+<tr>
+<td> 972 </td>
+<td> Wipe nose
+</td></tr>
+<tr>
+<td> 976, 977 </td>
+<td> Squat (enter, exit)
+</td></tr>
+<tr>
+<td> 986 </td>
+<td> Wipe eyes
+</td></tr>
+<tr>
+<td> 998, 999 </td>
+<td> Hands clasped (enter, exit)
+</td></tr>
+<tr>
+<td> 3029 </td>
+<td> Inspect nails
+</td></tr>
+<tr>
+<td> 3031, 3032 </td>
+<td> Playful (enter, exit)
+</td></tr>
+<tr>
+<td> 3054, 3056 </td>
+<td> Slouch (enter, exit)
+</td></tr></table>
+<h4><span class="mw-headline" id="Visual_effects">Visual effects</span></h4>
+<p>The <b>VFX</b> column is the <b>ID</b> of the visual effect taken from <a href="VFX_Base_2da.html" title="VFX Base 2da" class="mw-redirect">VFX_Base</a> m2da file. This one is a bit more tricky, since it also references the <b>BlendTreeName</b> value from the same file.
+Find the <b>ID</b> of the visual effect and look for the <b>BlendTreeName</b> column and enter BOTH into the respective columns for your character in the party picker file.
+</p><p>Here are some examples you can use:
+</p>
+<table class="wikitable">
+
+<tr>
+<th> ID  </th>
+<th> BlendTreeName </th>
+<th> Effect
+</th></tr>
+<tr>
+<td> 1076 </td>
+<td> fxa_spi_aur_mht_c </td>
+<td> Aura of Might crust
+</td></tr>
+<tr>
+<td> 1549 </td>
+<td> fxa_hly_imp_c </td>
+<td> Holy Impact crust
+</td></tr>
+<tr>
+<td> 3009 </td>
+<td> fxc_succubus_c </td>
+<td> Succubus crust
+</td></tr>
+<tr>
+<td> 3054 </td>
+<td> fxc_lotf_c </td>
+<td> Lady of the Forest - swirling leaves
+</td></tr>
+<tr>
+<td> 6039 </td>
+<td> fxm_energy_up_p </td>
+<td> Lady of the Forest pillar of light
+</td></tr>
+<tr>
+<td> 6040 </td>
+<td> fxm_power_in_p </td>
+<td>  Branka - power in
+</td></tr></table>
+<h3><span class="mw-headline" id="party_picker_m2da">party_picker m2da</span></h3>
+<p><a href="File%3AParty_pickerm2da.jpg.html" class="image"><img alt="Party pickerm2da.jpg" src="../assets/mw/images/c/cc/Party_pickerm2da.jpg" width="300" height="96" srcset="../assets/mw/images/c/cc/Party_pickerm2da.jpg 1.5x, ../assets/mw/images/c/cc/Party_pickerm2da.jpg 2x" /></a>
+</p><p>The second worksheet should be named <b>party_picker_</b>  (note middle underscore) with a unique suffix. For example example adding a "bc" suffix to produce "party_picker_bc".
+</p><p>Set up your columns and data like so:
+</p>
+<ul><li> <b>ID</b> and <b>Tag</b> should match what you did in the first spreadsheet.  </li></ul>
+<ul><li> <b>Portrait</b> should be <b>INVALID COLUMN</b>.</li></ul>
+<h2><span class="mw-headline" id="Handle_the_Party_Member_Added_Event">Handle the Party Member Added Event</span></h2>
+<p>The Party Picker does not actually add followers to the party. Instead it raises an <a href="Event.html" title="Event">event</a> that allows you to do so.  Your module script needs to capture this event and execute some code.
+</p><p>The following example shows what to do with the event. The full script would work as a module script for an add-in (assuming it didn't need to do anything else), but otherwise you'll have to incorporate the event into your own module script.  
+</p>
+<div dir="ltr" class="mw-geshi mw-code mw-content-ltr"><div class="dascript source-dascript"><pre class="de1"><span class="co2">#include &quot;utility_h&quot;</span>
+&#160;
+<a href="http://www.datoolset.net/wiki/index.php?title=void keyword"><span class="kw2">void</span></a> main<span class="br0">&#40;</span><span class="br0">&#41;</span>
+<span class="br0">&#123;</span>
+    <a href="http://www.datoolset.net/wiki/index.php?title=event keyword"><span class="kw2">event</span></a> ev <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetCurrentEvent"><span class="kw4">GetCurrentEvent</span></a><span class="br0">&#40;</span><span class="br0">&#41;</span>;
+    <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nEventType <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetEventType"><span class="kw4">GetEventType</span></a><span class="br0">&#40;</span>ev<span class="br0">&#41;</span>;
+&#160;
+    <a href="http://www.datoolset.net/wiki/index.php?title=switch keyword"><span class="kw1">switch</span></a><span class="br0">&#40;</span>nEventType<span class="br0">&#41;</span>
+    <span class="br0">&#123;</span>
+        <a href="http://www.datoolset.net/wiki/index.php?title=case keyword"><span class="kw1">case</span></a> <span class="kw3">EVENT_TYPE_PARTYMEMBER_ADDED</span><span class="sy0">:</span>
+        <span class="br0">&#123;</span>
+            <a href="http://www.datoolset.net/wiki/index.php?title=object keyword"><span class="kw2">object</span></a> oFollower <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetEventObject"><span class="kw4">GetEventObject</span></a><span class="br0">&#40;</span>ev, <span class="nu0">0</span><span class="br0">&#41;</span>;
+&#160;
+            <span class="co1">// Allow the follower to gain XP.</span>
+            <a href="http://www.datoolset.net/wiki/index.php?title=SetLocalInt"><span class="kw4">SetLocalInt</span></a><span class="br0">&#40;</span>oFollower, CREATURE_REWARD_FLAGS, <span class="nu0">0</span><span class="br0">&#41;</span>;  
+&#160;
+            <span class="co1">// Ensure follower appears at PC's location.</span>
+            <a href="http://www.datoolset.net/wiki/index.php?title=AddCommand"><span class="kw4">AddCommand</span></a><span class="br0">&#40;</span>oFollower, <a href="http://www.datoolset.net/wiki/index.php?title=CommandJumpToLocation"><span class="kw4">CommandJumpToLocation</span></a><span class="br0">&#40;</span><a href="http://www.datoolset.net/wiki/index.php?title=GetLocation"><span class="kw4">GetLocation</span></a><span class="br0">&#40;</span><a href="http://www.datoolset.net/wiki/index.php?title=GetHero"><span class="kw4">GetHero</span></a><span class="br0">&#40;</span><span class="br0">&#41;</span><span class="br0">&#41;</span><span class="br0">&#41;</span><span class="br0">&#41;</span>;  
+&#160;
+            <span class="co1">// Add follower to the active party.</span>
+            WR_SetFollowerState<span class="br0">&#40;</span>oFollower, <span class="kw3">FOLLOWER_STATE_ACTIVE</span><span class="br0">&#41;</span>; 
+            <a href="http://www.datoolset.net/wiki/index.php?title=break keyword"><span class="kw1">break</span></a>;
+        <span class="br0">&#125;</span>
+    <span class="br0">&#125;</span>
+&#160;
+<span class="br0">&#125;</span></pre></div></div>
+<p><b>WR_SetFollowerState(oFollower, FOLLOWER_STATE_ACTIVE)</b> is the key statement to add the follower to the active party.  You must have this.
+</p><p><b>SetLocalInt(oFollower, CREATURE_REWARD_FLAGS, 0)</b> is a bug-fix, as followers hired with <a href="UT_HireFollower.html" title="UT HireFollower">UT_HireFollower</a> do not receive XP by default. This statement fixes that, and I consider it best practice to keep it in this event to ensure it is always set.  You will not wish to  do this if you want a follower that should not gain XP to be on the party picker.
+</p><p>Note that you do not need to intercept the corresponding event for a party member being removed: the party picker handles spawning/despawning, and thus will successfully remove members.
+</p><p>Remember to save and export your module script.
+</p><p>If you're not sure how to set a module script, go to <b>File</b> then <b>Manage Modules,</b> select your module and click <b>Properties.</b>  The module script is in the <b>General</b> category, as seen below:
+</p><p><a href="File%3AModule_script.jpg.html" class="image"><img alt="Module script.jpg" src="../assets/mw/images/5/50/Module_script.jpg" width="300" height="146" srcset="../assets/mw/images/5/50/Module_script.jpg 1.5x, ../assets/mw/images/5/50/Module_script.jpg 2x" /></a>
+</p><p>You can set this to any script you've created.  See the <a href="Scripting_tutorial.html" title="Scripting tutorial">scripting tutorial</a> and <a href="Character_generation.html" title="Character generation">character generation</a> for more background and some simple examples of event-handling  scripts.  In general, you will want to make sure standalone module scripts pass events through to module_core (as in the <a href="Character_generation.html" title="Character generation">character generation</a> examples) and add-in scripts do not (as in the example above).
+</p>
+<h2><span class="mw-headline" id="Create_the_Hiring_Script">Create the Hiring Script</span></h2>
+<p>Now all that remains is to actually hire the follower&#160;:)
+</p><p>Create a script to handle the hiring (which will most likely be fired from a conversation).  The script is quite simple:
+</p>
+<div dir="ltr" class="mw-geshi mw-code mw-content-ltr"><div class="dascript source-dascript"><pre class="de1"><span class="co2">#include &quot;utility_h&quot;</span>
+&#160;
+<a href="http://www.datoolset.net/wiki/index.php?title=void keyword"><span class="kw2">void</span></a> main<span class="br0">&#40;</span><span class="br0">&#41;</span> 
+<span class="br0">&#123;</span>
+    <span class="co1">// Use CreateObject() if the creature isn't present in the module yet.</span>
+    <a href="http://www.datoolset.net/wiki/index.php?title=object keyword"><span class="kw2">object</span></a> oFollower <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetObjectByTag"><span class="kw4">GetObjectByTag</span></a><span class="br0">&#40;</span><span class="st0">&quot;bc_party_miera&quot;</span><span class="br0">&#41;</span>; 
+&#160;
+    <span class="co1">// Hire the follower.</span>
+    UT_HireFollower<span class="br0">&#40;</span>oFollower<span class="br0">&#41;</span>;   
+&#160;
+    <a href="http://www.datoolset.net/wiki/index.php?title=SetPartyPickerGUIStatus"><span class="kw4">SetPartyPickerGUIStatus</span></a><span class="br0">&#40;</span><span class="nu0">2</span><span class="br0">&#41;</span>;
+&#160;
+    <span class="co1">// Shows the Party Picker (necessary for the follower to gain XP).</span>
+    <a href="http://www.datoolset.net/wiki/index.php?title=ShowPartyPickerGUI"><span class="kw4">ShowPartyPickerGUI</span></a><span class="br0">&#40;</span><span class="br0">&#41;</span>;  
+<span class="br0">&#125;</span></pre></div></div>
+<p>Make sure you use your own follower's tag and not the example one.
+</p><p>This script fires the party picker after hiring the follower.  That is absolutely necessary via this method, as we have put the XP fix onto an event fired by the party picker. You cannot put the XP fix into this script, it must be called from a later one (the bug is caused by an errant call to an event in player_core, which will be executed AFTER this script).
+</p><p>The easiest way to use this script is directly from conversation, putting it as an action on a line of dialogue where the PC invites the follower to join them. If you're not sure how to associate a script with a dialogue line, see the following image:
+</p><p><a href="File%3AHire_conv.jpg.html" class="image"><img alt="Hire conv.jpg" src="../assets/mw/images/d/d9/Hire_conv.jpg" width="300" height="158" srcset="../assets/mw/images/d/d9/Hire_conv.jpg 1.5x, ../assets/mw/images/d/d9/Hire_conv.jpg 2x" /></a>
+</p><p>Create your dialogue as normal, select the line you want to fire the script, and click the <b>Plots and Scripting</b> tab.  Use the <b>Script</b> file chooser in the Action section to browse to the script you created.
+</p>
+<h2><span class="mw-headline" id="Conclusion">Conclusion</span></h2>
+<p>If everything worked, when you run your module you should see something like this:
+</p><p><a href="File%3APicker_success.jpg.html" class="image"><img alt="Picker success.jpg" src="../assets/mw/images/2/25/Picker_success.jpg" width="300" height="480" srcset="../assets/mw/images/2/25/Picker_success.jpg 1.5x, ../assets/mw/images/2/25/Picker_success.jpg 2x" /></a>
+</p>
+<!-- 
+NewPP limit report
+CPU time usage: 0.080 seconds
+Real time usage: 0.114 seconds
+Preprocessor visited node count: 78/1000000
+Preprocessor generated node count: 176/1000000
+Post‐expand include size: 0/2097152 bytes
+Template argument size: 0/2097152 bytes
+Highest expansion depth: 3/40
+Expensive parser function count: 0/100
+-->
+
+<!-- 
+Transclusion expansion time report (%,ms,calls,template)
+100.00%    0.000      1 - -total
+-->
+
+<!-- Saved in parser cache with key db714099484-datoolwiki_:pcache:idhash:5763-0!*!0!!en!5!* and timestamp 20260531084335 and revision id 19359
+ -->
+</div>									<div class="printfooter">
+						Retrieved from "<a dir="ltr" href="Basic_follower_tutorial.html">https://www.datoolset.net/mw/index.php?title=Basic_follower_tutorial&amp;oldid=19359</a>"					</div>
+													<div id='catlinks' class='catlinks'><div id="mw-normal-catlinks" class="mw-normal-catlinks"><a href="/wiki/Special:Categories" title="Special:Categories">Category</a>: <ul><li><a href="Category%3AFollower_tutorials.html" title="Category:Follower tutorials">Follower tutorials</a></li></ul></div></div>												<div class="visualClear"></div>
+							</div>
+		</div>
+		<div id="mw-navigation">
+			<h2>Navigation menu</h2>
+
+			<div id="mw-head">
+									<div id="p-personal" role="navigation" class="" aria-labelledby="p-personal-label">
+						<h3 id="p-personal-label">Personal tools</h3>
+						<ul>
+							<li id="pt-login"><a href="/mw/index.php?title=Special:UserLogin&amp;returnto=Basic+follower+tutorial" title="You are encouraged to log in; however, it is not mandatory [o]" accesskey="o">Log in</a></li>						</ul>
+					</div>
+									<div id="left-navigation">
+										<div id="p-namespaces" role="navigation" class="vectorTabs" aria-labelledby="p-namespaces-label">
+						<h3 id="p-namespaces-label">Namespaces</h3>
+						<ul>
+															<li  id="ca-nstab-main" class="selected"><span><a href="Basic_follower_tutorial.html"  title="View the content page [c]" accesskey="c">Page</a></span></li>
+															<li  id="ca-talk" class="new"><span><a href="/mw/index.php?title=Talk:Basic_follower_tutorial&amp;action=edit&amp;redlink=1"  title="Discussion about the content page [t]" accesskey="t">Discussion</a></span></li>
+													</ul>
+					</div>
+										<div id="p-variants" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-variants-label">
+												<h3 id="p-variants-label"><span>Variants</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+									</div>
+				<div id="right-navigation">
+										<div id="p-views" role="navigation" class="vectorTabs" aria-labelledby="p-views-label">
+						<h3 id="p-views-label">Views</h3>
+						<ul>
+															<li id="ca-view" class="selected"><span><a href="Basic_follower_tutorial.html" >Read</a></span></li>
+															<li id="ca-viewsource"><span><a href="Basic_follower_tutorial.html"  title="This page is protected.&#10;You can view its source [e]" accesskey="e">View source</a></span></li>
+															<li id="ca-history" class="collapsible"><span><a href="Basic_follower_tutorial.html"  title="Past revisions of this page [h]" accesskey="h">View history</a></span></li>
+													</ul>
+					</div>
+										<div id="p-cactions" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-cactions-label">
+						<h3 id="p-cactions-label"><span>More</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+										<div id="p-search" role="search">
+						<h3>
+							<label for="searchInput">Search</label>
+						</h3>
+
+						<form action="/mw/index.php" id="searchform">
+														<div id="simpleSearch">
+															<input type="search" name="search" placeholder="Search" title="Search Dragon Age Toolset Wiki [f]" accesskey="f" id="searchInput" /><input type="hidden" value="Special:Search" name="title" /><input type="submit" name="fulltext" value="Search" title="Search the pages for this text" id="mw-searchButton" class="searchButton mw-fallbackSearchButton" /><input type="submit" name="go" value="Go" title="Go to a page with this exact name if exists" id="searchButton" class="searchButton" />								</div>
+						</form>
+					</div>
+									</div>
+			</div>
+			<div id="mw-panel">
+				<div id="p-logo" role="banner"><a class="mw-wiki-logo" href="Main_Page.html"  title="Visit the main page"></a></div>
+						<div class="portal" role="navigation" id='p-navigation' aria-labelledby='p-navigation-label'>
+			<h3 id='p-navigation-label'>Navigation</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-mainpage-description"><a href="Main_Page.html" title="Visit the main page [z]" accesskey="z">Main page</a></li>
+													<li id="n-recentchanges"><a href="/wiki/Special:RecentChanges" title="A list of recent changes in the wiki [r]" accesskey="r">Recent changes</a></li>
+													<li id="n-randompage"><a href="/wiki/Special:Random" title="Load a random page [x]" accesskey="x">Random page</a></li>
+													<li id="n-help"><a href="https://www.mediawiki.org/wiki/Special:MyLanguage/Help:Contents" title="The place to find out">Help</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-Links' aria-labelledby='p-Links-label'>
+			<h3 id='p-Links-label'>Links</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-Toolset-forums"><a href="http://forum.bioware.com/forum/30-dragon-age-toolset" rel="nofollow">Toolset forums</a></li>
+													<li id="n-Legacy-forums"><a href="http://social.bioware.com/forum/1/subindex/70" rel="nofollow">Legacy forums</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-tb' aria-labelledby='p-tb-label'>
+			<h3 id='p-tb-label'>Tools</h3>
+
+			<div class="body">
+									<ul>
+													<li id="t-whatlinkshere"><a href="/wiki/Special:WhatLinksHere/Basic_follower_tutorial" title="A list of all wiki pages that link here [j]" accesskey="j">What links here</a></li>
+													<li id="t-recentchangeslinked"><a href="/wiki/Special:RecentChangesLinked/Basic_follower_tutorial" title="Recent changes in pages linked from this page [k]" accesskey="k">Related changes</a></li>
+													<li id="t-specialpages"><a href="/wiki/Special:SpecialPages" title="A list of all special pages [q]" accesskey="q">Special pages</a></li>
+													<li id="t-print"><a href="Basic_follower_tutorial.html" rel="alternate" title="Printable version of this page [p]" accesskey="p">Printable version</a></li>
+													<li id="t-permalink"><a href="Basic_follower_tutorial.html" title="Permanent link to this revision of the page">Permanent link</a></li>
+													<li id="t-info"><a href="Basic_follower_tutorial.html" title="More information about this page">Page information</a></li>
+											</ul>
+							</div>
+		</div>
+				</div>
+		</div>
+		<div id="footer" role="contentinfo">
+							<ul id="footer-info">
+											<li id="footer-info-lastmod"> This page was last modified on 27 October 2014, at 23:19.</li>
+									</ul>
+							<ul id="footer-places">
+											<li id="footer-places-privacy"><a href="/wiki/Dragon_Age_Toolset_Wiki:Privacy_policy" title="Dragon Age Toolset Wiki:Privacy policy">Privacy policy</a></li>
+											<li id="footer-places-about"><a href="/wiki/Dragon_Age_Toolset_Wiki:About" title="Dragon Age Toolset Wiki:About">About Dragon Age Toolset Wiki</a></li>
+											<li id="footer-places-disclaimer"><a href="/wiki/Dragon_Age_Toolset_Wiki:General_disclaimer" title="Dragon Age Toolset Wiki:General disclaimer">Disclaimers</a></li>
+									</ul>
+										<ul id="footer-icons" class="noprint">
+											<li id="footer-poweredbyico">
+															<a href="//www.mediawiki.org/"><img src="../assets/mw/resources/assets/poweredby_mediawiki_88x31.png" alt="Powered by MediaWiki" srcset="../assets/mw/resources/assets/poweredby_mediawiki_132x47.png 1.5x, ../assets/mw/resources/assets/poweredby_mediawiki_176x62.png 2x" width="88" height="31" /></a>
+													</li>
+									</ul>
+						<div style="clear:both"></div>
+		</div>
+		<script>if(window.jQuery)jQuery.ready();</script><script>if(window.mw){
+mw.loader.state({"site":"loading","user":"ready","user.groups":"ready"});
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.toc","mediawiki.action.view.postEdit","mediawiki.user","mediawiki.hidpi","mediawiki.page.ready","mediawiki.searchSuggest"],null,true);
+}</script>
+<script>if(window.mw){
+document.write("\u003Cscript src=\"https://www.datoolset.net/mw/load.php?debug=false\u0026amp;lang=en\u0026amp;modules=site\u0026amp;only=scripts\u0026amp;skin=vector\u0026amp;*\"\u003E\u003C/script\u003E");
+}</script>
+<script>if(window.mw){
+mw.config.set({"wgBackendResponseTime":239});
+}</script>
+	</body>
+</html>

@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" class="client-nojs">
+<head>
+<meta charset="UTF-8" />
+<title>Adding custom items to custom modules tutorial - Dragon Age Toolset Wiki</title>
+<meta name="generator" content="MediaWiki 1.25.6" />
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="search" type="application/opensearchdescription+xml" href="/mw/opensearch_desc.php" title="Dragon Age Toolset Wiki (en)" />
+<link rel="EditURI" type="application/rsd+xml" href="https://www.datoolset.net/mw/api.php?action=rsd" />
+<link rel="alternate" hreflang="x-default" href="Adding_custom_items_to_custom_modules_tutorial.html" />
+<link rel="alternate" type="application/atom+xml" title="Dragon Age Toolset Wiki Atom feed" href="/mw/index.php?title=Special:RecentChanges&amp;feed=atom" />
+<meta name="ResourceLoaderDynamicStyles" content="" />
+<style>a:lang(ar),a:lang(kk-arab),a:lang(mzn),a:lang(ps),a:lang(ur){text-decoration:none}
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-css:7:270a0dcd3ae587df0f041aebfc42e61b */</style>
+<script>if(window.mw){
+mw.config.set({"wgCanonicalNamespace":"","wgCanonicalSpecialPageName":false,"wgNamespaceNumber":0,"wgPageName":"Adding_custom_items_to_custom_modules_tutorial","wgTitle":"Adding custom items to custom modules tutorial","wgCurRevisionId":18752,"wgRevisionId":18752,"wgArticleId":3865,"wgIsArticle":true,"wgIsRedirect":false,"wgAction":"view","wgUserName":null,"wgUserGroups":["*"],"wgCategories":["Tutorials"],"wgBreakFrames":false,"wgPageContentLanguage":"en","wgPageContentModel":"wikitext","wgSeparatorTransformTable":["",""],"wgDigitTransformTable":["",""],"wgDefaultDateFormat":"dmy","wgMonthNames":["","January","February","March","April","May","June","July","August","September","October","November","December"],"wgMonthNamesShort":["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],"wgRelevantPageName":"Adding_custom_items_to_custom_modules_tutorial","wgRelevantArticleId":3865,"wgIsProbablyEditable":false,"wgRestrictionEdit":[],"wgRestrictionMove":[]});
+}</script><script>if(window.mw){
+mw.loader.implement("user.options",function($,jQuery){mw.user.options.set({"variant":"en"});});mw.loader.implement("user.tokens",function($,jQuery){mw.user.tokens.set({"editToken":"+\\","patrolToken":"+\\","watchToken":"+\\"});});
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-js:7:a5c52c063dc436c1ca7c9f456936a5e9 */
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.page.startup","mediawiki.legacy.wikibits","mediawiki.legacy.ajax","skins.vector.js"]);
+}</script>
+<!--[if lt IE 7]><style type="text/css">body{behavior:url("/mw/skins/Vector/csshover.min.htc")}</style><![endif]-->
+<link rel="stylesheet" href="../assets/local/wiki-static.css" />
+</head>
+<body class="mediawiki ltr sitedir-ltr ns-0 ns-subject page-Adding_custom_items_to_custom_modules_tutorial skin-vector action-view">
+		<div id="mw-page-base" class="noprint"></div>
+		<div id="mw-head-base" class="noprint"></div>
+		<div id="content" class="mw-body" role="main">
+			<a id="top"></a>
+
+						<div class="mw-indicators">
+</div>
+			<h1 id="firstHeading" class="firstHeading" lang="en">Adding custom items to custom modules tutorial</h1>
+						<div id="bodyContent" class="mw-body-content">
+									<div id="siteSub">From Dragon Age Toolset Wiki</div>
+								<div id="contentSub"></div>
+												<div id="jump-to-nav" class="mw-jump">
+					Jump to:					<a href="#mw-head">navigation</a>, 					<a href="#p-search">search</a>
+				</div>
+				<div id="mw-content-text" lang="en" dir="ltr" class="mw-content-ltr"><p>This guide will show you the easiest way to create a custom item and add it to your inventory by using a console command <b>runscript aa_give_item</b>.
+</p><p>There are people who say that using the default 'singleplayer' module is a source for future problems so we'll be using our own module.
+</p>
+<div id="toc" class="toc"><div id="toctitle"><h2>Contents</h2></div>
+<ul>
+<li class="toclevel-1 tocsection-1"><a href="#Things_needed"><span class="tocnumber">1</span> <span class="toctext">Things needed</span></a></li>
+<li class="toclevel-1 tocsection-2"><a href="#Creating_a_new_module"><span class="tocnumber">2</span> <span class="toctext">Creating a new module</span></a></li>
+<li class="toclevel-1 tocsection-3"><a href="#Creating_an_item"><span class="tocnumber">3</span> <span class="toctext">Creating an item</span></a></li>
+<li class="toclevel-1 tocsection-4"><a href="#Creating_a_script_to_summon_your_item"><span class="tocnumber">4</span> <span class="toctext">Creating a script to summon your item</span></a></li>
+<li class="toclevel-1 tocsection-5"><a href="#Last_Steps"><span class="tocnumber">5</span> <span class="toctext">Last Steps</span></a></li>
+</ul>
+</div>
+
+<h2><span class="mw-headline" id="Things_needed">Things needed</span></h2>
+<dl><dd>1. Dragon age origins game.</dd>
+<dd>2. Access to the console in-game (<a rel="nofollow" class="external text" href="http://dragonage.wikia.com/wiki/Console">Instructions on accessing console</a>).</dd>
+<dd>3. Dragon age origins Toolset.</dd>
+<dd>4. Ability to follow instructions.</dd></dl>
+<h2><span class="mw-headline" id="Creating_a_new_module">Creating a new module</span></h2>
+<table width="400" style="background-color:#eefaee; border: 1px solid #aca899; margin:2px; float:right;"><tr>
+<td valign="top" align="left" width="70"><img alt="Arrowblue.png" src="../assets/mw/images/c/c6/Arrowblue.png" width="50" height="30" /></td>
+<td><i>- <a href="Module.html" title="Module">Module</a></i><br /><i>- <a href="Module.html#Creating_a_new_module" title="Module">Module#Creating a new module</a></i></td>
+</tr></table>
+<dl><dd>1. Open the toolset and click on <b>File -&gt; Manage Modules</b>.</dd>
+<dd>2. Click <b>New</b>.</dd>
+<dd>3. Enter 'my_module' in <i>Name</i> and <i>UID</i> fields, ignore the rest. Click <b>OK</b>.</dd>
+<dd>4. Double-click 'my_module' that was added to the list.</dd></dl>
+<h2><span class="mw-headline" id="Creating_an_item">Creating an item</span></h2>
+<table width="400" style="background-color:#eefaee; border: 1px solid #aca899; margin:2px; float:right;"><tr>
+<td valign="top" align="left" width="70"><img alt="Arrowblue.png" src="../assets/mw/images/c/c6/Arrowblue.png" width="50" height="30" /></td>
+<td><i>- <a href="Designer_Resources.html#Creating_new_resources" title="Designer Resources">Designer Resources#Creating new resources</a></i><br /><i>- <a href="Item.html" title="Item">Item</a></i><br /><i>- <a href="Module.html#Exporting_a_module" title="Module">Module#Exporting a module</a></i></td>
+</tr></table>
+<dl><dd>1. On the palette window select items (the sword icon).</dd>
+<dd>2. Choose an item under global.</dd>
+<dd>3. Right click on the item and select <b>Duplicate</b>.</dd>
+<dd>4. A window will popup, ignore all fields except resource name.</dd>
+<dd>5. Name your item in the resource name field (only letters, numbers and '_').</dd>
+<dd>6. In the main tab you will see your item, modify it to your liking. Editing the item's additional effects is in 'Item properties'.</dd>
+<dd>7. Once finished: click <b>Tools -&gt; save</b>.</dd>
+<dd>8. look above at the tab's title, it should be <b>custom_resource_name.uti</b> (with your selected name).</dd>
+<dd>9. Right click on it again and select <b>Export -&gt; Export without dependent resources</b>.</dd></dl>
+<h2><span class="mw-headline" id="Creating_a_script_to_summon_your_item">Creating a script to summon your item</span></h2>
+<table width="400" style="background-color:#eefaee; border: 1px solid #aca899; margin:2px; float:right;"><tr>
+<td valign="top" align="left" width="70"><img alt="Arrowblue.png" src="../assets/mw/images/c/c6/Arrowblue.png" width="50" height="30" /></td>
+<td><i>- <a href="Script.html" title="Script">Script</a></i></td>
+</tr></table>
+<dl><dd>1. Click on <b>File -&gt; new -&gt; Script</b>.</dd>
+<dd>2. A window will popup, ignore all fields except resource name.</dd>
+<dd>3. Enter a custom name, <b>aa_give_item</b> (only letters, numbers and '_'), click Ok.</dd>
+<dd>4. Copy the following to the blank script window:</dd></dl>
+<div dir="ltr" class="mw-geshi mw-code mw-content-ltr"><div class="dascript source-dascript"><pre class="de1"><a href="http://www.datoolset.net/wiki/index.php?title=void keyword"><span class="kw2">void</span></a> main<span class="br0">&#40;</span><span class="br0">&#41;</span>
+<span class="br0">&#123;</span>
+  <a href="http://www.datoolset.net/wiki/index.php?title=CreateItemOnObject"><span class="kw4">CreateItemOnObject</span></a><span class="br0">&#40;</span>R<span class="st0">&quot;Item file.uti&quot;</span>, <a href="http://www.datoolset.net/wiki/index.php?title=OBJECT_SELF keyword"><span class="kw1">OBJECT_SELF</span></a>, <span class="nu0">1</span>, <span class="st0">&quot;&quot;</span>, TRUE<span class="br0">&#41;</span>;
+<span class="br0">&#125;</span></pre></div></div>
+<dl><dd>5. Replace <b>Item file.uti</b> with your <b>custom_resource_name.uti</b> (the title on your item's tab).</dd>
+<dd>6. Click <b>File -&gt; save</b> (saving automatically compiles the script).</dd></dl>
+<p>Note: If you make more than one item you can duplicate the script line for each item with it's file name. No need for a script for every item.
+</p>
+<h2><span class="mw-headline" id="Last_Steps">Last Steps</span></h2>
+<dl><dd>1. Goto folder: <code>[My Documents]\BioWare\Dragon Age\AddIns\my_module\core\override\toolsetexport\</code>.</dd>
+<dd>2. look for the <b>custom_resource_name.uti</b> file.</dd>
+<dd>3. Goto folder: <code>[My Documents]\BioWare\Dragon Age\AddIns\my_module\module\override\toolsetexport\</code>.</dd>
+<dd>4. look for two files named <b>aa_give_item</b>, of types <b>nss</b> and <b>ncs</b>.</dd>
+<dd>5. Move the <b>uti</b> and <b>ncs</b> to <code>[My Documents]\BioWare\Dragon Age\packages\core\override\</code>.</dd>
+<dd>6. Delete the <b>nss</b> file.</dd>
+<dd>7. Load a saved game and enter a console command <b>runscript aa_give_item</b> (<a rel="nofollow" class="external text" href="http://dragonage.wikia.com/wiki/Console">Instructions on accessing console</a>).</dd>
+<dd>8. Your custom item should be in your inventory.</dd></dl>
+<p>Note: You may find that <a href="PRCSCR.html" title="PRCSCR">PRCSCR</a> is a better approach (depending on your requirements).
+</p>
+<!-- 
+NewPP limit report
+CPU time usage: 0.072 seconds
+Real time usage: 0.094 seconds
+Preprocessor visited node count: 107/1000000
+Preprocessor generated node count: 345/1000000
+Post‐expand include size: 1006/2097152 bytes
+Template argument size: 220/2097152 bytes
+Highest expansion depth: 3/40
+Expensive parser function count: 0/100
+-->
+
+<!-- 
+Transclusion expansion time report (%,ms,calls,template)
+100.00%    9.907      1 - -total
+ 96.44%    9.554      3 - Template:TutorialRef
+-->
+
+<!-- Saved in parser cache with key db714099484-datoolwiki_:pcache:idhash:3865-0!*!0!!en!5!* and timestamp 20260531171053 and revision id 18752
+ -->
+</div>									<div class="printfooter">
+						Retrieved from "<a dir="ltr" href="Adding_custom_items_to_custom_modules_tutorial.html">https://www.datoolset.net/mw/index.php?title=Adding_custom_items_to_custom_modules_tutorial&amp;oldid=18752</a>"					</div>
+													<div id='catlinks' class='catlinks'><div id="mw-normal-catlinks" class="mw-normal-catlinks"><a href="/wiki/Special:Categories" title="Special:Categories">Category</a>: <ul><li><a href="Category%3ATutorials.html" title="Category:Tutorials">Tutorials</a></li></ul></div></div>												<div class="visualClear"></div>
+							</div>
+		</div>
+		<div id="mw-navigation">
+			<h2>Navigation menu</h2>
+
+			<div id="mw-head">
+									<div id="p-personal" role="navigation" class="" aria-labelledby="p-personal-label">
+						<h3 id="p-personal-label">Personal tools</h3>
+						<ul>
+							<li id="pt-login"><a href="/mw/index.php?title=Special:UserLogin&amp;returnto=Adding+custom+items+to+custom+modules+tutorial" title="You are encouraged to log in; however, it is not mandatory [o]" accesskey="o">Log in</a></li>						</ul>
+					</div>
+									<div id="left-navigation">
+										<div id="p-namespaces" role="navigation" class="vectorTabs" aria-labelledby="p-namespaces-label">
+						<h3 id="p-namespaces-label">Namespaces</h3>
+						<ul>
+															<li  id="ca-nstab-main" class="selected"><span><a href="Adding_custom_items_to_custom_modules_tutorial.html"  title="View the content page [c]" accesskey="c">Page</a></span></li>
+															<li  id="ca-talk"><span><a href="Talk%3AAdding_custom_items_to_custom_modules_tutorial.html"  title="Discussion about the content page [t]" accesskey="t">Discussion</a></span></li>
+													</ul>
+					</div>
+										<div id="p-variants" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-variants-label">
+												<h3 id="p-variants-label"><span>Variants</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+									</div>
+				<div id="right-navigation">
+										<div id="p-views" role="navigation" class="vectorTabs" aria-labelledby="p-views-label">
+						<h3 id="p-views-label">Views</h3>
+						<ul>
+															<li id="ca-view" class="selected"><span><a href="Adding_custom_items_to_custom_modules_tutorial.html" >Read</a></span></li>
+															<li id="ca-viewsource"><span><a href="Adding_custom_items_to_custom_modules_tutorial.html"  title="This page is protected.&#10;You can view its source [e]" accesskey="e">View source</a></span></li>
+															<li id="ca-history" class="collapsible"><span><a href="Adding_custom_items_to_custom_modules_tutorial.html"  title="Past revisions of this page [h]" accesskey="h">View history</a></span></li>
+													</ul>
+					</div>
+										<div id="p-cactions" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-cactions-label">
+						<h3 id="p-cactions-label"><span>More</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+										<div id="p-search" role="search">
+						<h3>
+							<label for="searchInput">Search</label>
+						</h3>
+
+						<form action="/mw/index.php" id="searchform">
+														<div id="simpleSearch">
+															<input type="search" name="search" placeholder="Search" title="Search Dragon Age Toolset Wiki [f]" accesskey="f" id="searchInput" /><input type="hidden" value="Special:Search" name="title" /><input type="submit" name="fulltext" value="Search" title="Search the pages for this text" id="mw-searchButton" class="searchButton mw-fallbackSearchButton" /><input type="submit" name="go" value="Go" title="Go to a page with this exact name if exists" id="searchButton" class="searchButton" />								</div>
+						</form>
+					</div>
+									</div>
+			</div>
+			<div id="mw-panel">
+				<div id="p-logo" role="banner"><a class="mw-wiki-logo" href="Main_Page.html"  title="Visit the main page"></a></div>
+						<div class="portal" role="navigation" id='p-navigation' aria-labelledby='p-navigation-label'>
+			<h3 id='p-navigation-label'>Navigation</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-mainpage-description"><a href="Main_Page.html" title="Visit the main page [z]" accesskey="z">Main page</a></li>
+													<li id="n-recentchanges"><a href="/wiki/Special:RecentChanges" title="A list of recent changes in the wiki [r]" accesskey="r">Recent changes</a></li>
+													<li id="n-randompage"><a href="/wiki/Special:Random" title="Load a random page [x]" accesskey="x">Random page</a></li>
+													<li id="n-help"><a href="https://www.mediawiki.org/wiki/Special:MyLanguage/Help:Contents" title="The place to find out">Help</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-Links' aria-labelledby='p-Links-label'>
+			<h3 id='p-Links-label'>Links</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-Toolset-forums"><a href="http://forum.bioware.com/forum/30-dragon-age-toolset" rel="nofollow">Toolset forums</a></li>
+													<li id="n-Legacy-forums"><a href="http://social.bioware.com/forum/1/subindex/70" rel="nofollow">Legacy forums</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-tb' aria-labelledby='p-tb-label'>
+			<h3 id='p-tb-label'>Tools</h3>
+
+			<div class="body">
+									<ul>
+													<li id="t-whatlinkshere"><a href="/wiki/Special:WhatLinksHere/Adding_custom_items_to_custom_modules_tutorial" title="A list of all wiki pages that link here [j]" accesskey="j">What links here</a></li>
+													<li id="t-recentchangeslinked"><a href="/wiki/Special:RecentChangesLinked/Adding_custom_items_to_custom_modules_tutorial" title="Recent changes in pages linked from this page [k]" accesskey="k">Related changes</a></li>
+													<li id="t-specialpages"><a href="/wiki/Special:SpecialPages" title="A list of all special pages [q]" accesskey="q">Special pages</a></li>
+													<li id="t-print"><a href="Adding_custom_items_to_custom_modules_tutorial.html" rel="alternate" title="Printable version of this page [p]" accesskey="p">Printable version</a></li>
+													<li id="t-permalink"><a href="Adding_custom_items_to_custom_modules_tutorial.html" title="Permanent link to this revision of the page">Permanent link</a></li>
+													<li id="t-info"><a href="Adding_custom_items_to_custom_modules_tutorial.html" title="More information about this page">Page information</a></li>
+											</ul>
+							</div>
+		</div>
+				</div>
+		</div>
+		<div id="footer" role="contentinfo">
+							<ul id="footer-info">
+											<li id="footer-info-lastmod"> This page was last modified on 30 April 2012, at 10:48.</li>
+									</ul>
+							<ul id="footer-places">
+											<li id="footer-places-privacy"><a href="/wiki/Dragon_Age_Toolset_Wiki:Privacy_policy" title="Dragon Age Toolset Wiki:Privacy policy">Privacy policy</a></li>
+											<li id="footer-places-about"><a href="/wiki/Dragon_Age_Toolset_Wiki:About" title="Dragon Age Toolset Wiki:About">About Dragon Age Toolset Wiki</a></li>
+											<li id="footer-places-disclaimer"><a href="/wiki/Dragon_Age_Toolset_Wiki:General_disclaimer" title="Dragon Age Toolset Wiki:General disclaimer">Disclaimers</a></li>
+									</ul>
+										<ul id="footer-icons" class="noprint">
+											<li id="footer-poweredbyico">
+															<a href="//www.mediawiki.org/"><img src="../assets/mw/resources/assets/poweredby_mediawiki_88x31.png" alt="Powered by MediaWiki" srcset="../assets/mw/resources/assets/poweredby_mediawiki_132x47.png 1.5x, ../assets/mw/resources/assets/poweredby_mediawiki_176x62.png 2x" width="88" height="31" /></a>
+													</li>
+									</ul>
+						<div style="clear:both"></div>
+		</div>
+		<script>if(window.jQuery)jQuery.ready();</script><script>if(window.mw){
+mw.loader.state({"site":"loading","user":"ready","user.groups":"ready"});
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.toc","mediawiki.action.view.postEdit","mediawiki.user","mediawiki.hidpi","mediawiki.page.ready","mediawiki.searchSuggest"],null,true);
+}</script>
+<script>if(window.mw){
+document.write("\u003Cscript src=\"https://www.datoolset.net/mw/load.php?debug=false\u0026amp;lang=en\u0026amp;modules=site\u0026amp;only=scripts\u0026amp;skin=vector\u0026amp;*\"\u003E\u003C/script\u003E");
+}</script>
+<script>if(window.mw){
+mw.config.set({"wgBackendResponseTime":436});
+}</script>
+	</body>
+</html>

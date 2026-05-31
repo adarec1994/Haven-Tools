@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" class="client-nojs">
+<head>
+<meta charset="UTF-8" />
+<title>Creature tutorial - Dragon Age Toolset Wiki</title>
+<meta name="generator" content="MediaWiki 1.25.6" />
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="search" type="application/opensearchdescription+xml" href="/mw/opensearch_desc.php" title="Dragon Age Toolset Wiki (en)" />
+<link rel="EditURI" type="application/rsd+xml" href="https://www.datoolset.net/mw/api.php?action=rsd" />
+<link rel="alternate" hreflang="x-default" href="Creature_tutorial.html" />
+<link rel="alternate" type="application/atom+xml" title="Dragon Age Toolset Wiki Atom feed" href="/mw/index.php?title=Special:RecentChanges&amp;feed=atom" />
+<meta name="ResourceLoaderDynamicStyles" content="" />
+<style>a:lang(ar),a:lang(kk-arab),a:lang(mzn),a:lang(ps),a:lang(ur){text-decoration:none}
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-css:7:270a0dcd3ae587df0f041aebfc42e61b */</style>
+<script>if(window.mw){
+mw.config.set({"wgCanonicalNamespace":"","wgCanonicalSpecialPageName":false,"wgNamespaceNumber":0,"wgPageName":"Creature_tutorial","wgTitle":"Creature tutorial","wgCurRevisionId":16965,"wgRevisionId":16965,"wgArticleId":51,"wgIsArticle":true,"wgIsRedirect":false,"wgAction":"view","wgUserName":null,"wgUserGroups":["*"],"wgCategories":["Tutorials","Creatures"],"wgBreakFrames":false,"wgPageContentLanguage":"en","wgPageContentModel":"wikitext","wgSeparatorTransformTable":["",""],"wgDigitTransformTable":["",""],"wgDefaultDateFormat":"dmy","wgMonthNames":["","January","February","March","April","May","June","July","August","September","October","November","December"],"wgMonthNamesShort":["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],"wgRelevantPageName":"Creature_tutorial","wgRelevantArticleId":51,"wgIsProbablyEditable":false,"wgRestrictionEdit":[],"wgRestrictionMove":[]});
+}</script><script>if(window.mw){
+mw.loader.implement("user.options",function($,jQuery){mw.user.options.set({"variant":"en"});});mw.loader.implement("user.tokens",function($,jQuery){mw.user.tokens.set({"editToken":"+\\","patrolToken":"+\\","watchToken":"+\\"});});
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-js:7:a5c52c063dc436c1ca7c9f456936a5e9 */
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.page.startup","mediawiki.legacy.wikibits","mediawiki.legacy.ajax","skins.vector.js"]);
+}</script>
+<!--[if lt IE 7]><style type="text/css">body{behavior:url("/mw/skins/Vector/csshover.min.htc")}</style><![endif]-->
+<link rel="stylesheet" href="../assets/local/wiki-static.css" />
+</head>
+<body class="mediawiki ltr sitedir-ltr ns-0 ns-subject page-Creature_tutorial skin-vector action-view">
+		<div id="mw-page-base" class="noprint"></div>
+		<div id="mw-head-base" class="noprint"></div>
+		<div id="content" class="mw-body" role="main">
+			<a id="top"></a>
+
+						<div class="mw-indicators">
+</div>
+			<h1 id="firstHeading" class="firstHeading" lang="en">Creature tutorial</h1>
+						<div id="bodyContent" class="mw-body-content">
+									<div id="siteSub">From Dragon Age Toolset Wiki</div>
+								<div id="contentSub"></div>
+												<div id="jump-to-nav" class="mw-jump">
+					Jump to:					<a href="#mw-head">navigation</a>, 					<a href="#p-search">search</a>
+				</div>
+				<div id="mw-content-text" lang="en" dir="ltr" class="mw-content-ltr"><p>Now the player can navigate around between the various areas you've set up, but he's got nothing he can actually do there. Other tutorials will cover how to add interactive quests, conversations, and other such things, but for now to make things just a little more interesting, we can add a couple of monsters for the player to slay. We'll put them in the hut_interior area so the player won't be instantly thrust into combat.
+</p>
+<div id="toc" class="toc"><div id="toctitle"><h2>Contents</h2></div>
+<ul>
+<li class="toclevel-1 tocsection-1"><a href="#Creating_a_monstrous_creature.27s_template"><span class="tocnumber">1</span> <span class="toctext">Creating a monstrous creature's template</span></a></li>
+<li class="toclevel-1 tocsection-2"><a href="#Placing_creatures"><span class="tocnumber">2</span> <span class="toctext">Placing creatures</span></a></li>
+<li class="toclevel-1 tocsection-3"><a href="#Creating_an_NPC_quest_giver"><span class="tocnumber">3</span> <span class="toctext">Creating an NPC quest giver</span></a></li>
+<li class="toclevel-1 tocsection-4"><a href="#Ambient_behaviour"><span class="tocnumber">4</span> <span class="toctext">Ambient behaviour</span></a></li>
+</ul>
+</div>
+
+<h2><span class="mw-headline" id="Creating_a_monstrous_creature.27s_template">Creating a monstrous creature's template</span></h2>
+<div style="float:right; background-color:#ffffcc; border:2px #ffff99 solid; padding:4px; margin:4px; width:200px;">
+<ul><li> The "Group" property determines who is hostile to whom</li>
+<li> "Resource Name" and "Tag" are only seen by developers </li>
+<li> "Name" may be seen by players </li></ul>
+</div>
+<p>First, create a new creature template. (File-&gt;New-&gt;Creature) You can leave most of its properties at their defaults for starters. To make it fight the player when it sees him, set the "Group" property to "_Hostile". Give it a name in the "Name" property ("Hut Monster" in this example) and change the "Appearance" property to something appropriate (a normal Hurlock in this case). You might also want to add a head and eyes. Set them to whatever you find suitable (in this case "Hurlock").
+</p><p><a href="File%3ATutorial_hut_monster.png.html" class="image"><img alt="Tutorial hut monster.png" src="../assets/mw/images/b/bc/Tutorial_hut_monster.png" width="540" height="498" /></a>
+</p>
+<div style="float:right; background-color:#ffffcc; border:2px #ffff99 solid; padding:4px; margin:4px; width:200px;">
+<ul><li> Put weapons in inventory and set them as "equipped"</li></ul>
+</div>
+<p>To make our monsters a bit more of a challenge for the player to fight, we'll add a sword to the creature's inventory and set it as "equipped". This will put the sword on the creature's back, where it will draw it from when it enters combat. To prevent the player from being laden down with hundreds of looted swords over the course of the game we'll leave the "Droppable" and "Stealable" flags unset - when the creature dies the sword will be unrecoverable.
+</p><p><a href="File%3ATutorial_inventory.png.html" class="image"><img alt="Tutorial inventory.png" src="../assets/mw/images/6/6f/Tutorial_inventory.png" width="719" height="473" /></a>
+</p>
+<div style="float:right; background-color:#ffffcc; border:2px #ffff99 solid; padding:4px; margin:4px; width:200px;">
+<ul><li> "Package" determines what sorts of abilities the creature will have</li>
+<li> "Package AI" determines how it will behave</li>
+<li> "Rank" determines how strong the creature will be and how much loot it drops</li>
+<li> "Treasure category" determines what type of loot it drops</li></ul>
+</div>
+<p>Finally, we'll want to set the creature's stats so that it will be the correct level of toughness to challenge the player when he meets him. The game has two basic parameters that need to be set for this; package (determines what general sorts of abilities the creature has) and rank (determines how good the creature is at what it does, and how tough it is).
+</p><p>We set the general package type to "Darkspawn" (this tells the game what general type of creature it is), the package to "Darkspawn weapon + shield (Hurlock)" since that's the closest match to a Hurlock weilding a one-handed sword that's available, and the package AI to "AIP_DS_WPN_SHLD_Hurlock" (since this is the only AI available for the selected package the choice is obvious. For some creatures there may be other AIs available, for example making the creature behave in a more "cowardly" fashion).
+</p><p>The rank of the creature tells the game's autoscaling system how good the creature should be at using its abilities and how tough it is. Since we want these creatures to be an interesting fight but not a serious challenge for our demo, we'll set the hut monster to "Critter". Rank also determines the quality of the treasure that is automatically generated for the player to loot from the monster's corpse; tougher monsters have higher-quality loot. To determine what <i>kind</i> of loot is generated, set the treasure category property. Different types of monsters will generally carry different types of loot, for example the Darkspawn are more likely to have vials of poison in their possession.
+</p><p>Creatures in Dragon Age have a level range that scales to the player's current level.  For example, if a darkspawn had a level range of 3-8, then it would spawn around level 4 if the player encountering it was level 4.  The level range defines the creatures minimum and maximum levels for these encounters. The default level range is 0-0, and must be changed to a positive number if the creature is hostile to the player at any point.
+</p><p>Note that the level of creatures spawned in a given area is further limited to the range specified in <a href="Areadata.xls.html" title="Areadata.xls">areadata.xls</a>. Unless the area variable AREA_ID is set manually in the toolset to a valid line id in that table, creatures spawn at level 1.
+</p>
+<h2><span class="mw-headline" id="Placing_creatures">Placing creatures</span></h2>
+<div style="float:right; background-color:#ffffcc; border:2px #ffff99 solid; padding:4px; margin:4px; width:200px;">
+<ul><li> See <a href="3D_control.html" title="3D control" class="mw-redirect">3D control</a> for camera and movement controls </li></ul>
+</div>
+<p>Now that we have the basic template for the horrible hut monsters defined, we can place some in the hut's interior. The creature we've designed in the creature editor is a template from which many identical copies can be spawned and placed within the area, much like the placeable doors we've inserted previously. Open the area in the area editor, select the hut monster from the palette, and click on the area in the places you want to put copies of the creature.
+</p><p><a href="File%3ATutorial_hut_interior.png.html" class="image"><img alt="Tutorial hut interior.png" src="../assets/mw/images/6/67/Tutorial_hut_interior.png" width="872" height="490" /></a>
+</p><p>We've put three monsters in the hut. If we play the game now the monsters will attack the player as soon as they perceive him, which the small size of the hut will make almost instantaneous. Once slain the player will be able to loot their corpses for a small amount of treasure.
+</p><p>If you want to customize the individual monsters you've placed, you can right-click on the creature (either in the area map or on the area's object list to the left of the area display) and select "properties" from the menu.
+</p><p><a href="File%3ATutorial_individal_creature_properties.png.html" class="image"><img alt="Tutorial individal creature properties.png" src="../assets/mw/images/f/fb/Tutorial_individal_creature_properties.png" width="261" height="290" /></a>
+</p>
+<div style="float:right; background-color:#ffffcc; border:2px #ffff99 solid; padding:4px; margin:4px; width:200px;">
+<ul><li> Some creature properties can be customized on a per-creature basis, others are fixed with whatever value you set in the creature template it's based on.</li></ul>
+</div>
+<p>This will open the object inspector with a subset of the creature's properties that can be customized on a per-creature basis. Not all of the properties of the creature can be modified; some of them are defined by the template and can only be modified there. The properties that can be modified on a per-creature basis are:
+</p>
+<ul><li>Active (useful for placing monsters that only "appear" later on when a script changes their active status)</li>
+<li>Interaction Radius (if not zero, overrides the default distance the PC needs to be to interact with this object)</li>
+<li>Platform (used when developing a game that can be ported to multiple different platforms with different capabilities)</li>
+<li>Rank (how tough the monster is, described above)</li>
+<li>Tag (a label the creature can be referred to by with scripting)</li>
+<li>Team (an identifier for grouping several monsters together, useful for keeping track of quests and for coordinated behavior)</li>
+<li>Trackable</li>
+<li>Treasure Category (type of treasure dropped, described above)</li>
+<li>Variables</li>
+<li>WeaponsDrawn</li>
+<li>Orientation (Don't bother manually setting orientation and position unless you need high-precision control, the area editor's positioning controls are generally easier)</li>
+<li>Position</li></ul>
+<p>So, for example, we could pick a particular one of these hut monsters and make him tougher than his fellows, or give him a different team ID (we'll see one way team IDs can be used later in the tutorial when we set up a quest for the player to slay all three of the monsters we've put in the hut).
+</p>
+<h2><span class="mw-headline" id="Creating_an_NPC_quest_giver">Creating an NPC quest giver</span></h2>
+<div style="float:right; background-color:#ffffcc; border:2px #ffff99 solid; padding:4px; margin:4px; width:200px;">
+<ul><li> Some humanoid creatures don't have clothing built in and need it to be added to their inventory and equipped for it to appear.</li>
+<li> Some humanoid creatures can have their appearance customized by selecting head <a href="Morph.html" title="Morph">morphs</a>.</li></ul>
+</div>
+<p>The module is now vaguely playable, but not really all that interesting - it's hard to tell a story with nothing but area transitions and meaningless combat. The easiest way to add some depth to the adventure is to include some people that can be talked with. Conversations are complex and will be dealt with in a separate section of the tutorial, but we can lay the foundation here by creating and placing a neutral human to talk to. By putting him in the "_Neutral" group he won't attack the player and won't get involved in the player's fights. If he were in the _Friendly group he'd attack any _Hostile-grouped creatures he perceived, but for now we'll be putting him in an area with no other creatures so that won't make a difference.
+</p><p>The default new creature is human, but is unclothed and unequipped. It also has a very bland default appearance. To dress the creature we'll need to create some clothing as done in the <a href="Item_tutorial.html" title="Item tutorial">Item tutorial</a>, add it to the creature's inventory, and equip it (if you cannot see your newly-created items in the inventory dialog, try checking them in first).
+</p><p><a href="File%3ATutorial_quest_giver_inventory.png.html" class="image"><img alt="Tutorial quest giver inventory.png" src="../assets/mw/images/3/31/Tutorial_quest_giver_inventory.png" width="809" height="186" /></a>
+</p><p>Next we're going to want to replace that bland default head with a different appearance. Dragon Age allows head appearance to be customized through the use of head morphs, a process with sufficient sophistication and scope that there's a separate editing tool dedicated to it. We won't cover that in this tutorial, however, and instead simply use one of the prefabricated head morphs that comes with the game.
+</p><p>Under the "Appearance" section of the object explorer is the "Head Morph" property. When you click on the ellipsis (<img alt="Ellipsis.png" src="../assets/mw/images/1/1c/Ellipsis.png" width="17" height="18" />) button you'll be presented with a file picker to choose a head morph from. Once you've selected a head morph most of the other options under Appearance will be disabled, since the head morph customizes all of those parameters in a much more fine-grained manner.
+</p><p>Since this NPC is not intended to ever enter or even respond to combat, the package and scaling is not particularly important. It can be left with the defaults.
+</p>
+<div style="float:right; background-color:#ffffcc; border:2px #ffff99 solid; padding:4px; margin:4px; width:200px;">
+<ul><li> There are several different ways to make a creature "permanent," if needed</li></ul>
+</div>
+<p>The "Special" section is relevant in this case, on the other hand. Since this NPC is going to be the source of our quest, it wouldn't do to allow even the possibility that he might get himself killed early. If you set the "Plot" flag to true the creature will be immune to damage by any hostile effect. The "Immortal" flag allows the creature to be damaged, but it will never lose its last hit point - useful if you want a creature to get involved in a fight in a realistic manner but guarantee that it will survive the encounter. "No Permanent Death" tells the game engine not to dispose of the creature's body after it's killed and is used primarily for the player's companions.
+</p><p>Here is the NPC in his final form, ready to be placed in the hut_exterior area to tell the player about the monsters inside:
+</p><p><a href="File%3ATutorial_quest_giver.png.html" class="image"><img alt="Tutorial quest giver.png" src="../assets/mw/images/a/ac/Tutorial_quest_giver.png" width="1057" height="682" /></a>
+</p>
+<h2><span class="mw-headline" id="Ambient_behaviour"><a href="Ambient_behaviour.html" title="Ambient behaviour">Ambient behaviour</a></span></h2>
+<p>If you spawn an NPC using the above technique, he/she will stand still with some idle animations. If you want the NPC to perform some ambient animations like crossing arms, or sitting at a table (these are looped, so no one-shot animations can be assigned here), then you need to do 2 things. Go into the Variables, and look for 2 locals. First you need to set is AMBIENT_SYSTEM_STATE. The default value is 0, which corresponds to disabled, so no custom ambient animations other than the idle animations will be played. Set this to 1, which enables custom ambient animations. The second local variable is called AMBIENT_ANIM_PATTERN. This needs to be an integer that corresponds to an animation ID (first column) in ambient_ai.xls. Just open the spreadsheet, look up the animation you want your NPC to have (they have very descriptive labels), and put its ID into AMBIENT_ANIM_PATTERN. Note: the toolset has no way to show you ambient animations, you will only see these in-game.
+</p><p>Note: if you set the variables in the creature editor, all instances of the creature will have the custom animations assigned to them by default. You may want to do this in the area editor for this reason where you may assign custom ambient animations to each individual creature instance in that area. 
+</p><p>Next is the <a href="Conversation_tutorial.html" title="Conversation tutorial">Conversation tutorial</a>
+</p>
+<!-- 
+NewPP limit report
+CPU time usage: 0.064 seconds
+Real time usage: 0.125 seconds
+Preprocessor visited node count: 64/1000000
+Preprocessor generated node count: 173/1000000
+Post‐expand include size: 1825/2097152 bytes
+Template argument size: 971/2097152 bytes
+Highest expansion depth: 2/40
+Expensive parser function count: 0/100
+-->
+
+<!-- 
+Transclusion expansion time report (%,ms,calls,template)
+100.00%    5.783      1 - -total
+ 87.66%    5.069      7 - Template:Sidebox
+-->
+
+<!-- Saved in parser cache with key db714099484-datoolwiki_:pcache:idhash:51-0!*!0!!en!5!* and timestamp 20260531025636 and revision id 16965
+ -->
+</div>									<div class="printfooter">
+						Retrieved from "<a dir="ltr" href="Creature_tutorial.html">https://www.datoolset.net/mw/index.php?title=Creature_tutorial&amp;oldid=16965</a>"					</div>
+													<div id='catlinks' class='catlinks'><div id="mw-normal-catlinks" class="mw-normal-catlinks"><a href="/wiki/Special:Categories" title="Special:Categories">Categories</a>: <ul><li><a href="Category%3ATutorials.html" title="Category:Tutorials">Tutorials</a></li><li><a href="Category%3ACreatures.html" title="Category:Creatures">Creatures</a></li></ul></div></div>												<div class="visualClear"></div>
+							</div>
+		</div>
+		<div id="mw-navigation">
+			<h2>Navigation menu</h2>
+
+			<div id="mw-head">
+									<div id="p-personal" role="navigation" class="" aria-labelledby="p-personal-label">
+						<h3 id="p-personal-label">Personal tools</h3>
+						<ul>
+							<li id="pt-login"><a href="/mw/index.php?title=Special:UserLogin&amp;returnto=Creature+tutorial" title="You are encouraged to log in; however, it is not mandatory [o]" accesskey="o">Log in</a></li>						</ul>
+					</div>
+									<div id="left-navigation">
+										<div id="p-namespaces" role="navigation" class="vectorTabs" aria-labelledby="p-namespaces-label">
+						<h3 id="p-namespaces-label">Namespaces</h3>
+						<ul>
+															<li  id="ca-nstab-main" class="selected"><span><a href="Creature_tutorial.html"  title="View the content page [c]" accesskey="c">Page</a></span></li>
+															<li  id="ca-talk"><span><a href="Talk%3ACreature_tutorial.html"  title="Discussion about the content page [t]" accesskey="t">Discussion</a></span></li>
+													</ul>
+					</div>
+										<div id="p-variants" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-variants-label">
+												<h3 id="p-variants-label"><span>Variants</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+									</div>
+				<div id="right-navigation">
+										<div id="p-views" role="navigation" class="vectorTabs" aria-labelledby="p-views-label">
+						<h3 id="p-views-label">Views</h3>
+						<ul>
+															<li id="ca-view" class="selected"><span><a href="Creature_tutorial.html" >Read</a></span></li>
+															<li id="ca-viewsource"><span><a href="Creature_tutorial.html"  title="This page is protected.&#10;You can view its source [e]" accesskey="e">View source</a></span></li>
+															<li id="ca-history" class="collapsible"><span><a href="Creature_tutorial.html"  title="Past revisions of this page [h]" accesskey="h">View history</a></span></li>
+													</ul>
+					</div>
+										<div id="p-cactions" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-cactions-label">
+						<h3 id="p-cactions-label"><span>More</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+										<div id="p-search" role="search">
+						<h3>
+							<label for="searchInput">Search</label>
+						</h3>
+
+						<form action="/mw/index.php" id="searchform">
+														<div id="simpleSearch">
+															<input type="search" name="search" placeholder="Search" title="Search Dragon Age Toolset Wiki [f]" accesskey="f" id="searchInput" /><input type="hidden" value="Special:Search" name="title" /><input type="submit" name="fulltext" value="Search" title="Search the pages for this text" id="mw-searchButton" class="searchButton mw-fallbackSearchButton" /><input type="submit" name="go" value="Go" title="Go to a page with this exact name if exists" id="searchButton" class="searchButton" />								</div>
+						</form>
+					</div>
+									</div>
+			</div>
+			<div id="mw-panel">
+				<div id="p-logo" role="banner"><a class="mw-wiki-logo" href="Main_Page.html"  title="Visit the main page"></a></div>
+						<div class="portal" role="navigation" id='p-navigation' aria-labelledby='p-navigation-label'>
+			<h3 id='p-navigation-label'>Navigation</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-mainpage-description"><a href="Main_Page.html" title="Visit the main page [z]" accesskey="z">Main page</a></li>
+													<li id="n-recentchanges"><a href="/wiki/Special:RecentChanges" title="A list of recent changes in the wiki [r]" accesskey="r">Recent changes</a></li>
+													<li id="n-randompage"><a href="/wiki/Special:Random" title="Load a random page [x]" accesskey="x">Random page</a></li>
+													<li id="n-help"><a href="https://www.mediawiki.org/wiki/Special:MyLanguage/Help:Contents" title="The place to find out">Help</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-Links' aria-labelledby='p-Links-label'>
+			<h3 id='p-Links-label'>Links</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-Toolset-forums"><a href="http://forum.bioware.com/forum/30-dragon-age-toolset" rel="nofollow">Toolset forums</a></li>
+													<li id="n-Legacy-forums"><a href="http://social.bioware.com/forum/1/subindex/70" rel="nofollow">Legacy forums</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-tb' aria-labelledby='p-tb-label'>
+			<h3 id='p-tb-label'>Tools</h3>
+
+			<div class="body">
+									<ul>
+													<li id="t-whatlinkshere"><a href="/wiki/Special:WhatLinksHere/Creature_tutorial" title="A list of all wiki pages that link here [j]" accesskey="j">What links here</a></li>
+													<li id="t-recentchangeslinked"><a href="/wiki/Special:RecentChangesLinked/Creature_tutorial" title="Recent changes in pages linked from this page [k]" accesskey="k">Related changes</a></li>
+													<li id="t-specialpages"><a href="/wiki/Special:SpecialPages" title="A list of all special pages [q]" accesskey="q">Special pages</a></li>
+													<li id="t-print"><a href="Creature_tutorial.html" rel="alternate" title="Printable version of this page [p]" accesskey="p">Printable version</a></li>
+													<li id="t-permalink"><a href="Creature_tutorial.html" title="Permanent link to this revision of the page">Permanent link</a></li>
+													<li id="t-info"><a href="Creature_tutorial.html" title="More information about this page">Page information</a></li>
+											</ul>
+							</div>
+		</div>
+				</div>
+		</div>
+		<div id="footer" role="contentinfo">
+							<ul id="footer-info">
+											<li id="footer-info-lastmod"> This page was last modified on 10 August 2011, at 23:37.</li>
+									</ul>
+							<ul id="footer-places">
+											<li id="footer-places-privacy"><a href="/wiki/Dragon_Age_Toolset_Wiki:Privacy_policy" title="Dragon Age Toolset Wiki:Privacy policy">Privacy policy</a></li>
+											<li id="footer-places-about"><a href="/wiki/Dragon_Age_Toolset_Wiki:About" title="Dragon Age Toolset Wiki:About">About Dragon Age Toolset Wiki</a></li>
+											<li id="footer-places-disclaimer"><a href="/wiki/Dragon_Age_Toolset_Wiki:General_disclaimer" title="Dragon Age Toolset Wiki:General disclaimer">Disclaimers</a></li>
+									</ul>
+										<ul id="footer-icons" class="noprint">
+											<li id="footer-poweredbyico">
+															<a href="//www.mediawiki.org/"><img src="../assets/mw/resources/assets/poweredby_mediawiki_88x31.png" alt="Powered by MediaWiki" srcset="../assets/mw/resources/assets/poweredby_mediawiki_132x47.png 1.5x, ../assets/mw/resources/assets/poweredby_mediawiki_176x62.png 2x" width="88" height="31" /></a>
+													</li>
+									</ul>
+						<div style="clear:both"></div>
+		</div>
+		<script>if(window.jQuery)jQuery.ready();</script><script>if(window.mw){
+mw.loader.state({"site":"loading","user":"ready","user.groups":"ready"});
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.toc","mediawiki.action.view.postEdit","mediawiki.user","mediawiki.hidpi","mediawiki.page.ready","mediawiki.searchSuggest"],null,true);
+}</script>
+<script>if(window.mw){
+document.write("\u003Cscript src=\"https://www.datoolset.net/mw/load.php?debug=false\u0026amp;lang=en\u0026amp;modules=site\u0026amp;only=scripts\u0026amp;skin=vector\u0026amp;*\"\u003E\u003C/script\u003E");
+}</script>
+<script>if(window.mw){
+mw.config.set({"wgBackendResponseTime":248});
+}</script>
+	</body>
+</html>

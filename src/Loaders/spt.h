@@ -33,3 +33,7 @@ bool initSpeedTree();
 void shutdownSpeedTree();
 bool loadSptModel(const std::string& sptPath, SptModel& outModel);
 void extractSptTextures(const std::vector<uint8_t>& rawData, SptModel& model);
+
+// Human-readable reason the last loadSptModel() call failed (engine error string,
+// "engine access violation", or a stage description). Empty on success.
+std::string getLastSptError();

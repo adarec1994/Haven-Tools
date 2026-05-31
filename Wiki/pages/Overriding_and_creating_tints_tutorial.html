@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" class="client-nojs">
+<head>
+<meta charset="UTF-8" />
+<title>Overriding and creating tints tutorial - Dragon Age Toolset Wiki</title>
+<meta name="generator" content="MediaWiki 1.25.6" />
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="search" type="application/opensearchdescription+xml" href="/mw/opensearch_desc.php" title="Dragon Age Toolset Wiki (en)" />
+<link rel="EditURI" type="application/rsd+xml" href="https://www.datoolset.net/mw/api.php?action=rsd" />
+<link rel="alternate" hreflang="x-default" href="Overriding_and_creating_tints_tutorial.html" />
+<link rel="alternate" type="application/atom+xml" title="Dragon Age Toolset Wiki Atom feed" href="/mw/index.php?title=Special:RecentChanges&amp;feed=atom" />
+<meta name="ResourceLoaderDynamicStyles" content="" />
+<style>a:lang(ar),a:lang(kk-arab),a:lang(mzn),a:lang(ps),a:lang(ur){text-decoration:none}
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-css:7:270a0dcd3ae587df0f041aebfc42e61b */</style>
+<script>if(window.mw){
+mw.config.set({"wgCanonicalNamespace":"","wgCanonicalSpecialPageName":false,"wgNamespaceNumber":0,"wgPageName":"Overriding_and_creating_tints_tutorial","wgTitle":"Overriding and creating tints tutorial","wgCurRevisionId":19999,"wgRevisionId":19999,"wgArticleId":4089,"wgIsArticle":true,"wgIsRedirect":false,"wgAction":"view","wgUserName":null,"wgUserGroups":["*"],"wgCategories":["Tutorials"],"wgBreakFrames":false,"wgPageContentLanguage":"en","wgPageContentModel":"wikitext","wgSeparatorTransformTable":["",""],"wgDigitTransformTable":["",""],"wgDefaultDateFormat":"dmy","wgMonthNames":["","January","February","March","April","May","June","July","August","September","October","November","December"],"wgMonthNamesShort":["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],"wgRelevantPageName":"Overriding_and_creating_tints_tutorial","wgRelevantArticleId":4089,"wgIsProbablyEditable":false,"wgRestrictionEdit":[],"wgRestrictionMove":[]});
+}</script><script>if(window.mw){
+mw.loader.implement("user.options",function($,jQuery){mw.user.options.set({"variant":"en"});});mw.loader.implement("user.tokens",function($,jQuery){mw.user.tokens.set({"editToken":"+\\","patrolToken":"+\\","watchToken":"+\\"});});
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-js:7:a5c52c063dc436c1ca7c9f456936a5e9 */
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.page.startup","mediawiki.legacy.wikibits","mediawiki.legacy.ajax","skins.vector.js"]);
+}</script>
+<!--[if lt IE 7]><style type="text/css">body{behavior:url("/mw/skins/Vector/csshover.min.htc")}</style><![endif]-->
+<link rel="stylesheet" href="../assets/local/wiki-static.css" />
+</head>
+<body class="mediawiki ltr sitedir-ltr ns-0 ns-subject page-Overriding_and_creating_tints_tutorial skin-vector action-view">
+		<div id="mw-page-base" class="noprint"></div>
+		<div id="mw-head-base" class="noprint"></div>
+		<div id="content" class="mw-body" role="main">
+			<a id="top"></a>
+
+						<div class="mw-indicators">
+</div>
+			<h1 id="firstHeading" class="firstHeading" lang="en">Overriding and creating tints tutorial</h1>
+						<div id="bodyContent" class="mw-body-content">
+									<div id="siteSub">From Dragon Age Toolset Wiki</div>
+								<div id="contentSub"></div>
+												<div id="jump-to-nav" class="mw-jump">
+					Jump to:					<a href="#mw-head">navigation</a>, 					<a href="#p-search">search</a>
+				</div>
+				<div id="mw-content-text" lang="en" dir="ltr" class="mw-content-ltr"><p>The <a href="Material_Tint_System.html" title="Material Tint System">tint system</a> is potentially very powerful, but its results are not always pleasing to everyone. One example in the base game that a number of people dislike is the number of armour and weapon material types (like Red Steel) that are a pinkish-red colour. The colour of a particular material is tied to its tint. What follows is a revised and enhanced version of several forum posts by DarthParametric on how to make armour and weapons more of a traditional metal colour by both replacing default tints with alternative ones that already exist in the game and using completely custom tints.
+</p>
+<div id="toc" class="toc"><div id="toctitle"><h2>Contents</h2></div>
+<ul>
+<li class="toclevel-1 tocsection-1"><a href="#How_to_Create_a_Tint"><span class="tocnumber">1</span> <span class="toctext">How to Create a Tint</span></a></li>
+<li class="toclevel-1 tocsection-2"><a href="#Basic_Override:_Replacing_One_Set_of_Tints_with_Another"><span class="tocnumber">2</span> <span class="toctext">Basic Override: Replacing One Set of Tints with Another</span></a></li>
+<li class="toclevel-1 tocsection-3"><a href="#Advanced_Tinting_101:_Overriding_with_Custom_Tints"><span class="tocnumber">3</span> <span class="toctext">Advanced Tinting 101: Overriding with Custom Tints</span></a>
+<ul>
+<li class="toclevel-2 tocsection-4"><a href="#Useful_links"><span class="tocnumber">3.1</span> <span class="toctext">Useful links</span></a></li>
+</ul>
+</li>
+</ul>
+</div>
+
+<h1><span class="mw-headline" id="How_to_Create_a_Tint">How to Create a Tint</span></h1>
+<p>Open the toolset. Extract a tint from the tints ERF, similar in format to what you want to create. (hair, skin, tattoo and so on)
+</p><p>Go to File-&gt;New-&gt;Material. This is the material editor. Right click on the Root object and choose Insert-&gt;Insert New Tint Library.
+</p><p>Right click on the new tint library and choose Insert-&gt;Insert New Tint Object.
+</p><p>Click on the new tint object and then in the Object Inspector (if it isn’t already open go to View-&gt;Other Windows-&gt;Object Inspector) look for the Import TNT File line and click the button to the right. Navigate to where you extracted the tint files and load one.
+</p><p>Change the colours to what you want. When you are done, select the tint objects, right click and 'Post Selection to Local'. You may need to change the tint's Export settings to True so it will export.
+</p><p>The tint should now have exported to one of your override folders. Rename it to match other tints of its kind. You don't have to stick to the 3 letter identify naming scheme, but it does need to have a unique name.
+</p><p>Put the tint in your override. Refresh the toolset (View&gt; Refresh) or open and close it. Then create a new morph file or item. It should show up. It will probably need a lot of tweaking to make it look like what you want, so make sure you save the matproject somewhere you can find it again.
+</p><p><br />
+</p>
+<h1><span class="mw-headline" id="Basic_Override:_Replacing_One_Set_of_Tints_with_Another">Basic Override: Replacing One Set of Tints with Another</span></h1>
+<p>The first thing is to open materialtypes.xls located in &lt;install directory&gt;&#92;tools&#92;Source&#92;2DA&#92;rules&#92; Change to the materialtypes tab. Here you’ll see all the armour and weapon material types and their associated tints. You'll want to find the entries for metal armour, metal weapons, and metal shields. For easy reference, here are the specific rows of interest (click for larger):
+</p>
+<table class="wikitable" border="1">
+
+<tr valign="top">
+<td><a href="File%3AArmTnt_2DA_Armour.jpg.html" class="image"><img alt="ArmTnt 2DA Armour.jpg" src="../assets/mw/images/9/95/ArmTnt_2DA_Armour.jpg" width="200" height="110" srcset="../assets/mw/images/9/95/ArmTnt_2DA_Armour.jpg 1.5x, ../assets/mw/images/9/95/ArmTnt_2DA_Armour.jpg 2x" /></a>
+</td>
+<td><a href="File%3AArmTnt_2DA_Weapon.jpg.html" class="image"><img alt="ArmTnt 2DA Weapon.jpg" src="../assets/mw/images/4/42/ArmTnt_2DA_Weapon.jpg" width="200" height="95" srcset="../assets/mw/images/4/42/ArmTnt_2DA_Weapon.jpg 1.5x, ../assets/mw/images/4/42/ArmTnt_2DA_Weapon.jpg 2x" /></a>
+</td>
+<td><a href="File%3AArmTnt_2DA_Shield.jpg.html" class="image"><img alt="ArmTnt 2DA Shield.jpg" src="../assets/mw/images/9/9f/ArmTnt_2DA_Shield.jpg" width="200" height="85" srcset="../assets/mw/images/9/9f/ArmTnt_2DA_Shield.jpg 1.5x, ../assets/mw/images/9/9f/ArmTnt_2DA_Shield.jpg 2x" /></a>
+</td></tr>
+<tr align="center">
+<td>Metal Armour Material Tints
+</td>
+<td>Metal Weapon Material Tints
+</td>
+<td>Metal Shield Material Tints
+</td></tr></table>
+<p>Red Steel is obviously going to be the major offender in terms of pink/red colouration, but we’ll extract them all just to be safe. In the toolset directory, run ErfEditor.exe. Go to File-&gt;Open File and navigate to &lt;install directory&gt;&#92;packages&#92;core&#92;data&#92; and select tints.erf and click Open. You’ll see all the game’s tint files. As seen in the 2DA, the tint files we want are prefaced T3_ARM_, T3_WPN_ and T3_SHD_, so scroll down until you find them all. Select (CTRL + left click) the 20 (there is no veridium shield) files we want, then right click and choose Extract Resource. In the pop-up folder browser, just choose somewhere easy to find like the Desktop and click OK.
+</p><p>Now what we are going to do is choose the tint file for one material type that looks appropriately metal-like and overwrite the others with copies of it. Before we do that though we need to see what colours each tint file has. Open the toolset. Go to File-&gt;New-&gt;Material. This is the <a href="Material_editor.html" title="Material editor">material editor</a>. Right click on the Root object and choose Insert-&gt;Insert New Tint Library. Right click on the new tint library and choose Insert-&gt;Insert New Tint Object. Click on the new tint object and then in the Object Inspector (if it isn’t already open go to View-&gt;Other Windows-&gt;Object Inspector) look for the Import <a href="TNT.html" title="TNT">TNT</a> File line and click the button to the right. Navigate to where you extracted the tint files and load one.
+</p><p>You’ll see in the Object Inspector a whole series of colours, labelled diffuse and specular for the red, green and blue channels. Diffuse is the actual base colour, and specular is the highlights. The channels it is referring to is of the <a href="Texture_Formats.html#Tint_Map" title="Texture Formats">tint map</a>. This has 4 channels (RGB plus Alpha), each of which is a greyscale image that is used to define the area its related tint colour is applied. Refer to the other relevant wiki tint and texture topics for more info.
+</p><p>If you load the tint files for all 7 different material types in turn, you’ll see a number of them have reddish colours. There are two which would be suitable replacements. The first is silverite, the second is steel. Both have bluish grey colours for the most part: 
+</p>
+<div class="thumb tnone"><div class="thumbinner" style="width:302px;"><a href="File%3AArmTnt_Tnt_Stl_Sil.jpg.html" class="image"><img alt="" src="../assets/mw/images/f/fe/ArmTnt_Tnt_Stl_Sil.jpg" width="300" height="458" class="thumbimage" srcset="../assets/mw/images/f/fe/ArmTnt_Tnt_Stl_Sil.jpg 1.5x, ../assets/mw/images/f/fe/ArmTnt_Tnt_Stl_Sil.jpg 2x" /></a>  <div class="thumbcaption"><div class="magnify"><a href="File%3AArmTnt_Tnt_Stl_Sil.jpg.html" class="internal" title="Enlarge"></a></div>Silverite and Steel Tints</div></div></div>
+<p>What you want to do is select one of those and make additional copies of the TNT file, then rename them appropriately (after deleting the originals) to replace the Iron, Grey Iron, Red Steel and Dragonbone tint files. Additionally, you may also choose to replace the Veridium tint file (for armour and weapons), which is a greenish tint, if that is not to your taste. Make sure you only replace a tint file with one of the same type, i.e. only replace armour tints with another armour tint, not a weapon or shield tint (the reason for this is detailed later). Once that is done, create a new folder in My Documents&#92;BioWare&#92;Dragon Age&#92;packages&#92;core&#92;override&#92; and call it something appropriate (Armour &amp; Weapon Tint Mod for example). Place your tint files in there. Load up the game and try out a formally pink suit of armour. You should get something like this:
+</p>
+<div class="thumb tnone"><div class="thumbinner" style="width:302px;"><a href="File%3AArmTnt_Arm_Tint_Edit.jpg.html" class="image"><img alt="" src="../assets/mw/images/2/26/ArmTnt_Arm_Tint_Edit.jpg" width="300" height="140" class="thumbimage" srcset="../assets/mw/images/2/26/ArmTnt_Arm_Tint_Edit.jpg 1.5x, ../assets/mw/images/2/26/ArmTnt_Arm_Tint_Edit.jpg 2x" /></a>  <div class="thumbcaption"><div class="magnify"><a href="File%3AArmTnt_Arm_Tint_Edit.jpg.html" class="internal" title="Enlarge"></a></div>Before and After Tint Override</div></div></div>
+<p>You can see there that Alistair has gone from the original red armour to a proper metal colour.
+</p><p>There are also some additional tints that you may want to look at. If you peruse the rest of materialtypes.xls you'll see that Templar armour uses T3_ARM_TMP.tnt and the king's armour uses T3_ARM_GLD.tnt.
+</p>
+<h1><span class="mw-headline" id="Advanced_Tinting_101:_Overriding_with_Custom_Tints">Advanced Tinting 101: Overriding with Custom Tints</span></h1>
+<p>As alluded to previously, tint files hold a series of colours that are applied to a model in a manner that is defined by a <a href="Texture_Formats.html#Tint_Map" title="Texture Formats">tint map</a>. Each channel of the tint map is used as a mask to define a specific area of the parent texture to apply the associated tint. While tint maps have four channels (RGB+A), it’s mostly only face textures and related things like tattoos that use all four. Everything else tends just to use the RGB channels.
+</p><p>As you would have seen, the metal material tints extracted previously have a pair of colours, diffuse and specular, for each of the three tint map channels (thus 6 colours in total). The diffuse is what actually colours the base texture, the specular is the “shininess” – the colour of highlights caused by light reflection. A specific type of armour generally shares a single model (well, one model per sex per race, not counting scaled <a href="Texture_Formats.html#Level_of_Detail" title="Texture Formats">LOD</a> variants). There are usually 4 (occasionally 5) texture variants, and these are diversified further into actual item variations through the use of tints, the colour of which are determined by material type. As an example, I’ll use two texture variants of male medium armour (as with faces, armour models share a common UV map across races, although armour is split into male and female variants, aside from massive armour).
+</p><p>If you haven’t previously unpacked or browsed through the armour textures, you can find them in &lt;install directory&gt;&#92;packages&#92;core&#92;textures&#92;high&#92;texturepack.erf. We’ll use variant A, pm_arm_meda_0d.dds, and variant D, pm_arm_medd_0d.dds. Notice the _0d suffix. This denotes the <a href="Texture_Formats.html#Diffuse_Map" title="Texture Formats">diffuse map</a>. You’ll see a number of associated textures with the same base filename as the diffuse maps. Those with the _0n suffix are the <a href="Texture_Formats.html#Normal_Map" title="Texture Formats">normal maps</a>, those with _0s are the <a href="Texture_Formats.html#Specular_Map" title="Texture Formats">specular maps</a>, and the ones we want, _0t, the <a href="Texture_Formats.html#Tint_Map" title="Texture Formats">tint maps</a>. Refer to the <a href="Texture_Formats.html" title="Texture Formats">texture formats</a> page for more info on texture types and filename conventions. Extract the two diffuse maps and the two tint maps to a working directory and open them with something that can handle <a href="DDS.html" title="DDS">DDS</a> files.
+</p><p>You’ll see that the diffuse maps are just standard colour textures, albeit a tad dull. The tint maps, at first impression, look to be horrible technicolour nightmares. Change to the channels tab however and you’ll see how they work. Think of each channel as a separate alpha mask. Black is 100% transparency, white is 100% opacity, and shades of grey denote values in between. If we lay out the channels of the tint map as 3 separate images and compare them to the parent diffuse map, we get the following for the two texture variants:
+</p>
+<div class="thumb tleft"><div class="thumbinner" style="width:302px;"><a href="File%3AArmTnt_Med_Arm_Tint_Example_01.jpg.html" class="image"><img alt="" src="../assets/mw/images/7/7a/ArmTnt_Med_Arm_Tint_Example_01.jpg" width="300" height="300" class="thumbimage" srcset="../assets/mw/images/7/7a/ArmTnt_Med_Arm_Tint_Example_01.jpg 1.5x, ../assets/mw/images/7/7a/ArmTnt_Med_Arm_Tint_Example_01.jpg 2x" /></a>  <div class="thumbcaption"><div class="magnify"><a href="File%3AArmTnt_Med_Arm_Tint_Example_01.jpg.html" class="internal" title="Enlarge"></a></div>Male Medium Armour Texture A Plus Tint Masks</div></div></div>  <div class="thumb tnone"><div class="thumbinner" style="width:302px;"><a href="File%3AArmTnt_Med_Arm_Tint_Example_02.jpg.html" class="image"><img alt="" src="../assets/mw/images/e/e5/ArmTnt_Med_Arm_Tint_Example_02.jpg" width="300" height="300" class="thumbimage" srcset="../assets/mw/images/e/e5/ArmTnt_Med_Arm_Tint_Example_02.jpg 1.5x, ../assets/mw/images/e/e5/ArmTnt_Med_Arm_Tint_Example_02.jpg 2x" /></a>  <div class="thumbcaption"><div class="magnify"><a href="File%3AArmTnt_Med_Arm_Tint_Example_02.jpg.html" class="internal" title="Enlarge"></a></div>Male Medium Armour Texture D Plus Tint Masks</div></div></div>
+<p><br />If you look at the first image, variant A, you’ll see that the red channel of the tint mask is confined to areas of metal banding, the green channel to other metal areas like buckles and trim, and the blue channel to areas of leather. Variant D is a similar story, the red and green channels being confined to metal, the blue to leather. Because all three classes of metal armour (medium, heavy, massive) use a universal set of tints based on material type, if you look at the other metal armour tint masks you’ll see that this is the pattern that they all more or less conform to – the red channel is the primary metal area tint, the green channel the secondary metal area tint, the blue channel the leather/cloth/misc area tint (the "misc" mostly refers to the massive armours, which don’t have much leather or cloth and mainly use the blue channel for filigree patterns and other decorative effects).
+</p><p>Now that we know what each channel of the tint mask does, we can edit our tint file appropriately. Load the tint file you want to edit into the material editor. I’ll use the dragonbone tint, T3_ARM_DRB.tnt, for this example. Creating tints in the toolset's <a href="Material_editor.html" title="Material editor">material editor</a> has already been <a href="Creating_recolors_of_existing_items_tutorial.html" title="Creating recolors of existing items tutorial">covered previously</a>, so I won't recount the process here. Instead, I'll cover editing <a href="TNT.html" title="TNT">TNT</a> files directly in the GFF editor. You can do this in the toolset (by just going to File-&gt;Open and loading the TNT file) but I prefer to use the standalone GFF editor in the toolset directory, GffEditor.exe. You may find it handy to associate this program with all GFF file types so that you can quickly edit a particular file just by double clicking on it. With the TNT file open in the GFF editor, you’ll see something like this:
+</p>
+<div class="thumb tnone"><div class="thumbinner" style="width:302px;"><a href="File%3AArmTnt_TNT_GFF_Editor.jpg.html" class="image"><img alt="" src="../assets/mw/images/7/7e/ArmTnt_TNT_GFF_Editor.jpg" width="300" height="88" class="thumbimage" srcset="../assets/mw/images/7/7e/ArmTnt_TNT_GFF_Editor.jpg 1.5x, ../assets/mw/images/7/7e/ArmTnt_TNT_GFF_Editor.jpg 2x" /></a>  <div class="thumbcaption"><div class="magnify"><a href="File%3AArmTnt_TNT_GFF_Editor.jpg.html" class="internal" title="Enlarge"></a></div>Dragonbone Tint File in GFF Editor</div></div></div>
+<p>Although it’s confusing at first, you’ll see it’s conveying the same basic information as that in the material editor, just in a more concise (and less visually intuitive) format. For a breakdown of the file structure and significance of the values, refer to the <a href="TNT.html" title="TNT">TNT</a> page.
+</p><p>Now let’s look at the tint file in the material editor. We’ll use this to tweak the colours to our liking, then copy the values across to the file in the GFF editor. If you click on each colour you’ll get a button on the right that pops up a colour picker for easy tweaking. If you are using the Dragonbone tint file from earlier, it will be using the colour values from the Silverite or Steel tints, which are bluish grey. I don’t know what colour Dragonbone is supposed to be, but for this example I’ll change it to some brownish colours, as follows:
+</p>
+<div class="thumb tnone"><div class="thumbinner" style="width:252px;"><a href="File%3AArmTnt_Tint_Col_Dragonbone.jpg.html" class="image"><img alt="" src="../assets/mw/images/f/f2/ArmTnt_Tint_Col_Dragonbone.jpg" width="250" height="800" class="thumbimage" /></a>  <div class="thumbcaption"><div class="magnify"><a href="File%3AArmTnt_Tint_Col_Dragonbone.jpg.html" class="internal" title="Enlarge"></a></div>Custom Dragonbone Tint Colours</div></div></div>
+<p>So now we have our set of colours. You’ll see next to the little colour square, the material editor gives you the RGB V4 values. We need to copy and paste these into the appropriate rows in the GFF editor, remembering to append a 1 to the end. So for example the Red channel value of 0.75,0.74,0.44 gets pasted as 0.75,0.74,0.44,1. If you try and paste just the 3 values, the editor will complain about it not being a proper V4 array. Based on our exploration of the tint masks earlier, we know that the Red and Green channels are for metal, so these get the boney colour we want along with a fairly bright colour for specular. Given that this is supposed to be bone and not metal, I probably should have used a darker colour instead which would give a flatter specular highlight, as opposed to the sharp, close to white, specular highly reflective materials like metal have. However the fact that the intensity value is being reduced to 1 (by just pasting the RGB values directly) should counteract this. The Blue channel gets a darkish brown with a dark specular, as that is for any leather and cloth. Save the TNT file and we are ready to test it in the game. Reusing the example scene from the original tint override:
+</p>
+<div class="thumb tnone"><div class="thumbinner" style="width:302px;"><a href="File%3AArmTnt_Dragonbone_Tint_Game.jpg.html" class="image"><img alt="" src="../assets/mw/images/d/d4/ArmTnt_Dragonbone_Tint_Game.jpg" width="300" height="135" class="thumbimage" srcset="../assets/mw/images/d/d4/ArmTnt_Dragonbone_Tint_Game.jpg 1.5x, ../assets/mw/images/d/d4/ArmTnt_Dragonbone_Tint_Game.jpg 2x" /></a>  <div class="thumbcaption"><div class="magnify"><a href="File%3AArmTnt_Dragonbone_Tint_Game.jpg.html" class="internal" title="Enlarge"></a></div>Custom Dragonbone Tint In-Game</div></div></div>
+<p>OK, so not exactly the most thrilling tint in the world, but hopefully it demonstrates the principle. In particular, notice the reduction in the specular highlights between the two tints as a result of dropping the intensity. If you are trying to make a shiny metal then crank the intensity up, if making cloth, leather or some other flat, dull material (bone?) then crank it down. Adjust your specular colours to suit as well. Generally you want to make it some lighter shade of your diffuse colour, but the more reflective the object and the higher the intensity, the closer to white it should be.
+</p>
+<h2><span class="mw-headline" id="Useful_links">Useful links</span></h2>
+<p><a rel="nofollow" class="external text" href="https://dragonagemods.tumblr.com/post/153227347784/tutorial-how-to-create-your-own-skin-tints-eye">How to create a tint</a>
+</p><p><a rel="nofollow" class="external text" href="https://nezroy.com/DAOTintCreator/">DAO tint creator by nezroy</a>
+</p>
+<!-- 
+NewPP limit report
+CPU time usage: 0.060 seconds
+Real time usage: 0.108 seconds
+Preprocessor visited node count: 29/1000000
+Preprocessor generated node count: 48/1000000
+Post‐expand include size: 0/2097152 bytes
+Template argument size: 0/2097152 bytes
+Highest expansion depth: 2/40
+Expensive parser function count: 0/100
+-->
+
+<!-- 
+Transclusion expansion time report (%,ms,calls,template)
+100.00%    0.000      1 - -total
+-->
+
+<!-- Saved in parser cache with key db714099484-datoolwiki_:pcache:idhash:4089-0!*!0!!en!5!* and timestamp 20260531171335 and revision id 19999
+ -->
+</div>									<div class="printfooter">
+						Retrieved from "<a dir="ltr" href="Overriding_and_creating_tints_tutorial.html">https://www.datoolset.net/mw/index.php?title=Overriding_and_creating_tints_tutorial&amp;oldid=19999</a>"					</div>
+													<div id='catlinks' class='catlinks'><div id="mw-normal-catlinks" class="mw-normal-catlinks"><a href="/wiki/Special:Categories" title="Special:Categories">Category</a>: <ul><li><a href="Category%3ATutorials.html" title="Category:Tutorials">Tutorials</a></li></ul></div></div>												<div class="visualClear"></div>
+							</div>
+		</div>
+		<div id="mw-navigation">
+			<h2>Navigation menu</h2>
+
+			<div id="mw-head">
+									<div id="p-personal" role="navigation" class="" aria-labelledby="p-personal-label">
+						<h3 id="p-personal-label">Personal tools</h3>
+						<ul>
+							<li id="pt-login"><a href="/mw/index.php?title=Special:UserLogin&amp;returnto=Overriding+and+creating+tints+tutorial" title="You are encouraged to log in; however, it is not mandatory [o]" accesskey="o">Log in</a></li>						</ul>
+					</div>
+									<div id="left-navigation">
+										<div id="p-namespaces" role="navigation" class="vectorTabs" aria-labelledby="p-namespaces-label">
+						<h3 id="p-namespaces-label">Namespaces</h3>
+						<ul>
+															<li  id="ca-nstab-main" class="selected"><span><a href="Overriding_and_creating_tints_tutorial.html"  title="View the content page [c]" accesskey="c">Page</a></span></li>
+															<li  id="ca-talk"><span><a href="Talk%3AOverriding_and_creating_tints_tutorial.html"  title="Discussion about the content page [t]" accesskey="t">Discussion</a></span></li>
+													</ul>
+					</div>
+										<div id="p-variants" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-variants-label">
+												<h3 id="p-variants-label"><span>Variants</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+									</div>
+				<div id="right-navigation">
+										<div id="p-views" role="navigation" class="vectorTabs" aria-labelledby="p-views-label">
+						<h3 id="p-views-label">Views</h3>
+						<ul>
+															<li id="ca-view" class="selected"><span><a href="Overriding_and_creating_tints_tutorial.html" >Read</a></span></li>
+															<li id="ca-viewsource"><span><a href="Overriding_and_creating_tints_tutorial.html"  title="This page is protected.&#10;You can view its source [e]" accesskey="e">View source</a></span></li>
+															<li id="ca-history" class="collapsible"><span><a href="Overriding_and_creating_tints_tutorial.html"  title="Past revisions of this page [h]" accesskey="h">View history</a></span></li>
+													</ul>
+					</div>
+										<div id="p-cactions" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-cactions-label">
+						<h3 id="p-cactions-label"><span>More</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+										<div id="p-search" role="search">
+						<h3>
+							<label for="searchInput">Search</label>
+						</h3>
+
+						<form action="/mw/index.php" id="searchform">
+														<div id="simpleSearch">
+															<input type="search" name="search" placeholder="Search" title="Search Dragon Age Toolset Wiki [f]" accesskey="f" id="searchInput" /><input type="hidden" value="Special:Search" name="title" /><input type="submit" name="fulltext" value="Search" title="Search the pages for this text" id="mw-searchButton" class="searchButton mw-fallbackSearchButton" /><input type="submit" name="go" value="Go" title="Go to a page with this exact name if exists" id="searchButton" class="searchButton" />								</div>
+						</form>
+					</div>
+									</div>
+			</div>
+			<div id="mw-panel">
+				<div id="p-logo" role="banner"><a class="mw-wiki-logo" href="Main_Page.html"  title="Visit the main page"></a></div>
+						<div class="portal" role="navigation" id='p-navigation' aria-labelledby='p-navigation-label'>
+			<h3 id='p-navigation-label'>Navigation</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-mainpage-description"><a href="Main_Page.html" title="Visit the main page [z]" accesskey="z">Main page</a></li>
+													<li id="n-recentchanges"><a href="/wiki/Special:RecentChanges" title="A list of recent changes in the wiki [r]" accesskey="r">Recent changes</a></li>
+													<li id="n-randompage"><a href="/wiki/Special:Random" title="Load a random page [x]" accesskey="x">Random page</a></li>
+													<li id="n-help"><a href="https://www.mediawiki.org/wiki/Special:MyLanguage/Help:Contents" title="The place to find out">Help</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-Links' aria-labelledby='p-Links-label'>
+			<h3 id='p-Links-label'>Links</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-Toolset-forums"><a href="http://forum.bioware.com/forum/30-dragon-age-toolset" rel="nofollow">Toolset forums</a></li>
+													<li id="n-Legacy-forums"><a href="http://social.bioware.com/forum/1/subindex/70" rel="nofollow">Legacy forums</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-tb' aria-labelledby='p-tb-label'>
+			<h3 id='p-tb-label'>Tools</h3>
+
+			<div class="body">
+									<ul>
+													<li id="t-whatlinkshere"><a href="/wiki/Special:WhatLinksHere/Overriding_and_creating_tints_tutorial" title="A list of all wiki pages that link here [j]" accesskey="j">What links here</a></li>
+													<li id="t-recentchangeslinked"><a href="/wiki/Special:RecentChangesLinked/Overriding_and_creating_tints_tutorial" title="Recent changes in pages linked from this page [k]" accesskey="k">Related changes</a></li>
+													<li id="t-specialpages"><a href="/wiki/Special:SpecialPages" title="A list of all special pages [q]" accesskey="q">Special pages</a></li>
+													<li id="t-print"><a href="Overriding_and_creating_tints_tutorial.html" rel="alternate" title="Printable version of this page [p]" accesskey="p">Printable version</a></li>
+													<li id="t-permalink"><a href="Overriding_and_creating_tints_tutorial.html" title="Permanent link to this revision of the page">Permanent link</a></li>
+													<li id="t-info"><a href="Overriding_and_creating_tints_tutorial.html" title="More information about this page">Page information</a></li>
+											</ul>
+							</div>
+		</div>
+				</div>
+		</div>
+		<div id="footer" role="contentinfo">
+							<ul id="footer-info">
+											<li id="footer-info-lastmod"> This page was last modified on 20 April 2022, at 12:17.</li>
+									</ul>
+							<ul id="footer-places">
+											<li id="footer-places-privacy"><a href="/wiki/Dragon_Age_Toolset_Wiki:Privacy_policy" title="Dragon Age Toolset Wiki:Privacy policy">Privacy policy</a></li>
+											<li id="footer-places-about"><a href="/wiki/Dragon_Age_Toolset_Wiki:About" title="Dragon Age Toolset Wiki:About">About Dragon Age Toolset Wiki</a></li>
+											<li id="footer-places-disclaimer"><a href="/wiki/Dragon_Age_Toolset_Wiki:General_disclaimer" title="Dragon Age Toolset Wiki:General disclaimer">Disclaimers</a></li>
+									</ul>
+										<ul id="footer-icons" class="noprint">
+											<li id="footer-poweredbyico">
+															<a href="//www.mediawiki.org/"><img src="../assets/mw/resources/assets/poweredby_mediawiki_88x31.png" alt="Powered by MediaWiki" srcset="../assets/mw/resources/assets/poweredby_mediawiki_132x47.png 1.5x, ../assets/mw/resources/assets/poweredby_mediawiki_176x62.png 2x" width="88" height="31" /></a>
+													</li>
+									</ul>
+						<div style="clear:both"></div>
+		</div>
+		<script>if(window.jQuery)jQuery.ready();</script><script>if(window.mw){
+mw.loader.state({"site":"loading","user":"ready","user.groups":"ready"});
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.toc","mediawiki.action.view.postEdit","mediawiki.user","mediawiki.hidpi","mediawiki.page.ready","mediawiki.searchSuggest"],null,true);
+}</script>
+<script>if(window.mw){
+document.write("\u003Cscript src=\"https://www.datoolset.net/mw/load.php?debug=false\u0026amp;lang=en\u0026amp;modules=site\u0026amp;only=scripts\u0026amp;skin=vector\u0026amp;*\"\u003E\u003C/script\u003E");
+}</script>
+<script>if(window.mw){
+mw.config.set({"wgBackendResponseTime":357});
+}</script>
+	</body>
+</html>

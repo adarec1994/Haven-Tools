@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" class="client-nojs">
+<head>
+<meta charset="UTF-8" />
+<title>Reskinning an item tutorial - Dragon Age Toolset Wiki</title>
+<meta name="generator" content="MediaWiki 1.25.6" />
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="search" type="application/opensearchdescription+xml" href="/mw/opensearch_desc.php" title="Dragon Age Toolset Wiki (en)" />
+<link rel="EditURI" type="application/rsd+xml" href="https://www.datoolset.net/mw/api.php?action=rsd" />
+<link rel="alternate" hreflang="x-default" href="Reskinning_an_item_tutorial.html" />
+<link rel="alternate" type="application/atom+xml" title="Dragon Age Toolset Wiki Atom feed" href="/mw/index.php?title=Special:RecentChanges&amp;feed=atom" />
+<meta name="ResourceLoaderDynamicStyles" content="" />
+<style>a:lang(ar),a:lang(kk-arab),a:lang(mzn),a:lang(ps),a:lang(ur){text-decoration:none}
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-css:7:270a0dcd3ae587df0f041aebfc42e61b */</style>
+<script>if(window.mw){
+mw.config.set({"wgCanonicalNamespace":"","wgCanonicalSpecialPageName":false,"wgNamespaceNumber":0,"wgPageName":"Reskinning_an_item_tutorial","wgTitle":"Reskinning an item tutorial","wgCurRevisionId":20043,"wgRevisionId":20043,"wgArticleId":3676,"wgIsArticle":true,"wgIsRedirect":false,"wgAction":"view","wgUserName":null,"wgUserGroups":["*"],"wgCategories":["Tutorials","Textures"],"wgBreakFrames":false,"wgPageContentLanguage":"en","wgPageContentModel":"wikitext","wgSeparatorTransformTable":["",""],"wgDigitTransformTable":["",""],"wgDefaultDateFormat":"dmy","wgMonthNames":["","January","February","March","April","May","June","July","August","September","October","November","December"],"wgMonthNamesShort":["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],"wgRelevantPageName":"Reskinning_an_item_tutorial","wgRelevantArticleId":3676,"wgIsProbablyEditable":false,"wgRestrictionEdit":[],"wgRestrictionMove":[]});
+}</script><script>if(window.mw){
+mw.loader.implement("user.options",function($,jQuery){mw.user.options.set({"variant":"en"});});mw.loader.implement("user.tokens",function($,jQuery){mw.user.tokens.set({"editToken":"+\\","patrolToken":"+\\","watchToken":"+\\"});});
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-js:7:a5c52c063dc436c1ca7c9f456936a5e9 */
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.page.startup","mediawiki.legacy.wikibits","mediawiki.legacy.ajax","skins.vector.js"]);
+}</script>
+<!--[if lt IE 7]><style type="text/css">body{behavior:url("/mw/skins/Vector/csshover.min.htc")}</style><![endif]-->
+<link rel="stylesheet" href="../assets/local/wiki-static.css" />
+</head>
+<body class="mediawiki ltr sitedir-ltr ns-0 ns-subject page-Reskinning_an_item_tutorial skin-vector action-view">
+		<div id="mw-page-base" class="noprint"></div>
+		<div id="mw-head-base" class="noprint"></div>
+		<div id="content" class="mw-body" role="main">
+			<a id="top"></a>
+
+						<div class="mw-indicators">
+</div>
+			<h1 id="firstHeading" class="firstHeading" lang="en">Reskinning an item tutorial</h1>
+						<div id="bodyContent" class="mw-body-content">
+									<div id="siteSub">From Dragon Age Toolset Wiki</div>
+								<div id="contentSub"></div>
+												<div id="jump-to-nav" class="mw-jump">
+					Jump to:					<a href="#mw-head">navigation</a>, 					<a href="#p-search">search</a>
+				</div>
+				<div id="mw-content-text" lang="en" dir="ltr" class="mw-content-ltr"><div id="toc" class="toc"><div id="toctitle"><h2>Contents</h2></div>
+<ul>
+<li class="toclevel-1 tocsection-1"><a href="#General_considerations"><span class="tocnumber">1</span> <span class="toctext">General considerations</span></a></li>
+<li class="toclevel-1 tocsection-2"><a href="#Locating_the_Model_Textures_the_Hard_Way"><span class="tocnumber">2</span> <span class="toctext">Locating the Model Textures the Hard Way</span></a></li>
+<li class="toclevel-1 tocsection-3"><a href="#Extracting_the_Texture_from_the_Package"><span class="tocnumber">3</span> <span class="toctext">Extracting the Texture from the Package</span></a></li>
+<li class="toclevel-1 tocsection-4"><a href="#Editing_the_Textures"><span class="tocnumber">4</span> <span class="toctext">Editing the Textures</span></a></li>
+<li class="toclevel-1 tocsection-5"><a href="#Overriding_the_Existing_Textures"><span class="tocnumber">5</span> <span class="toctext">Overriding the Existing Textures</span></a></li>
+<li class="toclevel-1 tocsection-6"><a href="#Further_Tutorials"><span class="tocnumber">6</span> <span class="toctext">Further Tutorials</span></a></li>
+<li class="toclevel-1 tocsection-7"><a href="#Related_Links"><span class="tocnumber">7</span> <span class="toctext">Related Links</span></a></li>
+</ul>
+</div>
+
+<p>This tutorial describes how to reskin, or change the default texture, of items that already exist in-game. As an example, the default textures of the human female mage's apprentice robes will be changed.
+</p><p>Tools needed are the Dragon Age Toolset, and a grafic editing Applications capable of Opening, Editing and Saving DDS Texture Files.
+</p>
+<h2><span class="mw-headline" id="General_considerations">General considerations</span></h2>
+<p>Most armor and weapons have a tint map, and if the aim is simply to recolor a model, then a custom tint should be used. In any case, recoloring a model which already has a tint applied will either not work or lead to unpredictable results. Additionally, a custom tint file has the advantage of working for both high and medium textures at all LOD. See below for further tutorials. However, there are situations where creating/modifying textures is appropriate, but in those situations it is preferable to create a new item variation and associated machinery to <b>add</b> the texture rather than overwriting an existing game resource.
+</p>
+<h2><span class="mw-headline" id="Locating_the_Model_Textures_the_Hard_Way">Locating the Model Textures the Hard Way</span></h2>
+<p>At the beginning, you only know how the <a href="Model.html" title="Model">Model</a> looks and what its called. A somewhat difficult task will be finding out which files are tied to the model so that you can edit them. 
+</p><p>First and foremost, you are looking for DDS Files. How DDS Files are referenced by an Item you see in Game is a long list of database references.
+</p><p>A quick rundown on references we need to be aware of
+</p>
+<ol><li>A DDS File is referenced by the Material Properties of a <a href="Model.html" title="Model">Model</a></li>
+<li>A <a href="Model.html" title="Model">Model</a> is then referenced by the "ItemVariation" type of files. In our example, the sub "clothing_variation.gda"</li>
+<li>The different Clothing Variations are then referenced by the Item Type made via the Toolset</li>
+<li>The Item Type is lastly referenced by the Game, when choosing which gender and race this item is worn. And then displays the final version in your game.</li></ol>
+<hr />
+<p><br />
+To track back to the DDS File, you need to run up this list in reverse. Starting up our example, the mages apprentice robe, as it is worn by human females. 
+</p>
+<ol><li>Open up the Toolset and in the Resource Palette on the upper right click on "Items" (appears as a sword icon). Now comes guessing where this piece is to be found there. These Items are pretty well sorted though, it is to be found under _global / Clothing / Mage Robes / Unique. In the following list you see the ResourceName followed by ItemName "gen_im_cth_mag_app (Apprentice Robes)". Any Item can be found in the "Item" Category.  Doubleclick that entry to look inside.</li>
+<li>In the listing of information that appears to the left of the item, note that the "Base Item Type" is "Clothing", which is branching off into the Item Variation. The robe has a "Item Variation" called "Robe, Apprentice". Variation in mind, onto the next step.</li>
+<li>Open up the "ItemVariations.xls" File located under "(dragon age install directory)/tools/Source/2da/rules". It has many pages, locate page "clothing_variation" since we know our "Base Item Type" is of "Clothing". In there, locate the Row called whatever Item Variation your Item had. "Robe, Apprentice" has Namestrings followed by "rob" "app" "a".</li>
+<li>With these 3 Strings, and Dragon Age's <a href="Naming_conventions.html" title="Naming conventions">Naming Scheme</a> you can find the <a href="Mmh.html" title="MMH">MMH</a> Main Modelfile.</li>
+<li>At the end of MMH file (extract, open and Expand All with the toolset), is the reference to the material object filename (page up two or three times from the end of the file).</li>
+<li>And inside the <a href="Mao.html" title="MAO">MAO</a> File (open with Notepad) are the references to the texture filenames.</li></ol>
+<p>Spend a little time browsing through these files, and the naming convention will become clear. The armor prefixes are a compound of a "race" letter -- h, d, e, q, k (for children) and p (for person, or humanoid) -- and a gender letter -- m, f or n. For instance, a Chest mesh (the actual model or msh file) is by necessity both race and usually gender specific, several mmh files will usually reference one msh and are prefixed similarly, while textures will map to any model with the correct UV map, so usually begin with "p" and may or may not be gender specific. Once you understand the prefixes, the textures can usually be located quickly in the relevant erf, with the part code (where applicable) coming next, followed by the item variation code, followed by the texture code.
+</p><p>(There are some anomalies: for instance Ancient Elven Armor is listed in the toolset as Medium Armor E, but is in fact heavy armor so has an item variation code of "hvye" (it also has no tint map, being a one-off piece), but such cases are not too hard to track down once you understand the overall schema.)
+</p>
+<h2><span class="mw-headline" id="Extracting_the_Texture_from_the_Package">Extracting the Texture from the Package</span></h2>
+<p>Model textures are located in two "texturepack.erf" <a href="Erf.html" title="ERF">ERF</a> packages, corresponding to high resolution and medium resolution textures. These packages can be found in the (dragon age install directory)\packages\core\textures\ folder. For example, the packages might be:
+</p>
+<pre>C:\Program Files\Dragon Age\packages\core\textures\high\texturepack.erf
+C:\Program Files\Dragon Age\packages\core\textures\medium\texturepack.erf</pre>
+<p>Drag and drop these ERF Files onto the Toolset to browse and extract their content. If you have the Name, finding the Files will be easy. The Files will be in both "high" and "medium" and the quality setting in the game will decide which to choose. To make it compatible enough, taking them all may be neccessary.
+</p><p>Incidentally, high and medium texture versions are only required for certain model types. For example, heraldry and props only have one texture, and these can be found in
+</p>
+<pre>C:\Program Files\Dragon Age\packages\core\data\textures.erf</pre>
+<p>To prepare for extracting the textures, we must create a directory mimicking the structure of the Dragon Age packages folder. To do this, create a new folder named "textures" in a convenient location (for example, on your desktop). Inside this folder, create two new folders, named "high" and "medium". The "high" folder will be where the high-resolution textures are extracted to, and the "medium" folder will be where the medium-resolution textures are extracted to.
+</p><p>For this tutorial, we are interested in the mage's robes. To locate the textures of the mage's robes, scroll down to "pf_rob_appa_0d.dds" in one of the two texturepack ERFs. In each texturepack.erf, select all of the image files prefixed with "pf_rob_appa" (from "pf_rob_appa_0d.dds" to "pf_rob_appa_0tl3.dds"). For the high-resolution texturepack.erf, extract these images to the "textures\high\" folder just created. Extract the medium-resolution textures to the "textures\medium\" folder.
+</p><p>The Suffixes for Texturefiles are describing their Formats, which is described under <a href="Textureformats.html" title="Textureformats" class="mw-redirect">Textureformats</a>.
+</p><p>To extract one of the textures, right-click on it and select "Extract Resource."
+</p>
+<h2><span class="mw-headline" id="Editing_the_Textures">Editing the Textures</span></h2>
+<p>At this stage, if we wanted to edit the existing robe textures, we could do so by changing these files. See <a href="Textureformats.html" title="Textureformats" class="mw-redirect">Textureformats</a>.
+</p><p>Once this has been done for all of the robe textures (in both the "High" and "Medium" folders), we'll be ready to override the default textures in Dragon Age.
+</p>
+<h2><span class="mw-headline" id="Overriding_the_Existing_Textures">Overriding the Existing Textures</span></h2>
+<div class="thumb tright"><div class="thumbinner" style="width:302px;"><a href="File%3ADemo-retexture.jpg.html" class="image"><img alt="" src="../assets/mw/images/a/aa/Demo-retexture.jpg" width="300" height="767" class="thumbimage" srcset="../assets/mw/images/a/aa/Demo-retexture.jpg 1.5x, ../assets/mw/images/a/aa/Demo-retexture.jpg 2x" /></a>  <div class="thumbcaption"><div class="magnify"><a href="File%3ADemo-retexture.jpg.html" class="internal" title="Enlarge"></a></div>The end result: reskinned default mage robes.</div></div></div>
+<p>Comment&#160;: this section doesn't agree with the guidance on <a href="Compatibility.html" title="Compatibility">Compatibility</a>. Surely textures should be placed in the module's texture folder?  
+</p><p>To override the existing textures, copy the "textures" folder containing the modified textures, and paste this folder into the Dragon Age override folder. The override folder is found in:
+</p>
+<ul><li>Documents\BioWare\Dragon Age\packages\core\override\</li></ul>
+<p>for Windows Vista and 7, and in a similar location on Windows XP.
+</p><p>So, after pasting in the modified textures, the structure of the override folder should look like this:
+</p>
+<ul><li>Documents\BioWare\Dragon Age\packages\core\override\
+<ul><li>textures
+<ul><li>high
+<ul><li>pf_rob_appa_0d.dds</li>
+<li>(...)</li>
+<li>pf_rob_appa_0tl3.dds</li></ul></li>
+<li>medium
+<ul><li>pf_rob_appa_0d.dds</li>
+<li>(...)</li>
+<li>pf_rob_appa_0tl3.dds</li></ul></li></ul></li></ul></li></ul>
+<h2><span class="mw-headline" id="Further_Tutorials">Further Tutorials</span></h2>
+<p><a href="Creating_recolors_of_existing_items_tutorial.html" title="Creating recolors of existing items tutorial">Creating recolors of existing items tutorial</a> - A way to change the tint of the new texture
+<a href="How_to_create_textures.html" title="How to create textures">How to create textures</a> - An overview of file formats.
+</p>
+<h2><span class="mw-headline" id="Related_Links">Related Links</span></h2>
+<p><a href="Texture_Formats.html" title="Texture Formats">Texture Formats</a> - Texture formats in detail.
+</p><p><a href="Art_Resources.html" title="Art Resources">Art Resources</a> - Broad topic of Art Resources, which textures are a part of.
+</p>
+<!-- 
+NewPP limit report
+CPU time usage: 0.028 seconds
+Real time usage: 0.039 seconds
+Preprocessor visited node count: 45/1000000
+Preprocessor generated node count: 72/1000000
+Post‐expand include size: 0/2097152 bytes
+Template argument size: 0/2097152 bytes
+Highest expansion depth: 2/40
+Expensive parser function count: 0/100
+-->
+
+<!-- 
+Transclusion expansion time report (%,ms,calls,template)
+100.00%    0.000      1 - -total
+-->
+
+<!-- Saved in parser cache with key db714099484-datoolwiki_:pcache:idhash:3676-0!*!0!!en!5!* and timestamp 20260531101609 and revision id 20043
+ -->
+</div>									<div class="printfooter">
+						Retrieved from "<a dir="ltr" href="Reskinning_an_item_tutorial.html">https://www.datoolset.net/mw/index.php?title=Reskinning_an_item_tutorial&amp;oldid=20043</a>"					</div>
+													<div id='catlinks' class='catlinks'><div id="mw-normal-catlinks" class="mw-normal-catlinks"><a href="/wiki/Special:Categories" title="Special:Categories">Categories</a>: <ul><li><a href="Category%3ATutorials.html" title="Category:Tutorials">Tutorials</a></li><li><a href="Category%3ATextures.html" title="Category:Textures">Textures</a></li></ul></div></div>												<div class="visualClear"></div>
+							</div>
+		</div>
+		<div id="mw-navigation">
+			<h2>Navigation menu</h2>
+
+			<div id="mw-head">
+									<div id="p-personal" role="navigation" class="" aria-labelledby="p-personal-label">
+						<h3 id="p-personal-label">Personal tools</h3>
+						<ul>
+							<li id="pt-login"><a href="/mw/index.php?title=Special:UserLogin&amp;returnto=Reskinning+an+item+tutorial" title="You are encouraged to log in; however, it is not mandatory [o]" accesskey="o">Log in</a></li>						</ul>
+					</div>
+									<div id="left-navigation">
+										<div id="p-namespaces" role="navigation" class="vectorTabs" aria-labelledby="p-namespaces-label">
+						<h3 id="p-namespaces-label">Namespaces</h3>
+						<ul>
+															<li  id="ca-nstab-main" class="selected"><span><a href="Reskinning_an_item_tutorial.html"  title="View the content page [c]" accesskey="c">Page</a></span></li>
+															<li  id="ca-talk"><span><a href="Talk%3AReskinning_an_item_tutorial.html"  title="Discussion about the content page [t]" accesskey="t">Discussion</a></span></li>
+													</ul>
+					</div>
+										<div id="p-variants" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-variants-label">
+												<h3 id="p-variants-label"><span>Variants</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+									</div>
+				<div id="right-navigation">
+										<div id="p-views" role="navigation" class="vectorTabs" aria-labelledby="p-views-label">
+						<h3 id="p-views-label">Views</h3>
+						<ul>
+															<li id="ca-view" class="selected"><span><a href="Reskinning_an_item_tutorial.html" >Read</a></span></li>
+															<li id="ca-viewsource"><span><a href="Reskinning_an_item_tutorial.html"  title="This page is protected.&#10;You can view its source [e]" accesskey="e">View source</a></span></li>
+															<li id="ca-history" class="collapsible"><span><a href="Reskinning_an_item_tutorial.html"  title="Past revisions of this page [h]" accesskey="h">View history</a></span></li>
+													</ul>
+					</div>
+										<div id="p-cactions" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-cactions-label">
+						<h3 id="p-cactions-label"><span>More</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+										<div id="p-search" role="search">
+						<h3>
+							<label for="searchInput">Search</label>
+						</h3>
+
+						<form action="/mw/index.php" id="searchform">
+														<div id="simpleSearch">
+															<input type="search" name="search" placeholder="Search" title="Search Dragon Age Toolset Wiki [f]" accesskey="f" id="searchInput" /><input type="hidden" value="Special:Search" name="title" /><input type="submit" name="fulltext" value="Search" title="Search the pages for this text" id="mw-searchButton" class="searchButton mw-fallbackSearchButton" /><input type="submit" name="go" value="Go" title="Go to a page with this exact name if exists" id="searchButton" class="searchButton" />								</div>
+						</form>
+					</div>
+									</div>
+			</div>
+			<div id="mw-panel">
+				<div id="p-logo" role="banner"><a class="mw-wiki-logo" href="Main_Page.html"  title="Visit the main page"></a></div>
+						<div class="portal" role="navigation" id='p-navigation' aria-labelledby='p-navigation-label'>
+			<h3 id='p-navigation-label'>Navigation</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-mainpage-description"><a href="Main_Page.html" title="Visit the main page [z]" accesskey="z">Main page</a></li>
+													<li id="n-recentchanges"><a href="/wiki/Special:RecentChanges" title="A list of recent changes in the wiki [r]" accesskey="r">Recent changes</a></li>
+													<li id="n-randompage"><a href="/wiki/Special:Random" title="Load a random page [x]" accesskey="x">Random page</a></li>
+													<li id="n-help"><a href="https://www.mediawiki.org/wiki/Special:MyLanguage/Help:Contents" title="The place to find out">Help</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-Links' aria-labelledby='p-Links-label'>
+			<h3 id='p-Links-label'>Links</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-Toolset-forums"><a href="http://forum.bioware.com/forum/30-dragon-age-toolset" rel="nofollow">Toolset forums</a></li>
+													<li id="n-Legacy-forums"><a href="http://social.bioware.com/forum/1/subindex/70" rel="nofollow">Legacy forums</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-tb' aria-labelledby='p-tb-label'>
+			<h3 id='p-tb-label'>Tools</h3>
+
+			<div class="body">
+									<ul>
+													<li id="t-whatlinkshere"><a href="/wiki/Special:WhatLinksHere/Reskinning_an_item_tutorial" title="A list of all wiki pages that link here [j]" accesskey="j">What links here</a></li>
+													<li id="t-recentchangeslinked"><a href="/wiki/Special:RecentChangesLinked/Reskinning_an_item_tutorial" title="Recent changes in pages linked from this page [k]" accesskey="k">Related changes</a></li>
+													<li id="t-specialpages"><a href="/wiki/Special:SpecialPages" title="A list of all special pages [q]" accesskey="q">Special pages</a></li>
+													<li id="t-print"><a href="Reskinning_an_item_tutorial.html" rel="alternate" title="Printable version of this page [p]" accesskey="p">Printable version</a></li>
+													<li id="t-permalink"><a href="Reskinning_an_item_tutorial.html" title="Permanent link to this revision of the page">Permanent link</a></li>
+													<li id="t-info"><a href="Reskinning_an_item_tutorial.html" title="More information about this page">Page information</a></li>
+											</ul>
+							</div>
+		</div>
+				</div>
+		</div>
+		<div id="footer" role="contentinfo">
+							<ul id="footer-info">
+											<li id="footer-info-lastmod"> This page was last modified on 18 October 2023, at 11:33.</li>
+									</ul>
+							<ul id="footer-places">
+											<li id="footer-places-privacy"><a href="/wiki/Dragon_Age_Toolset_Wiki:Privacy_policy" title="Dragon Age Toolset Wiki:Privacy policy">Privacy policy</a></li>
+											<li id="footer-places-about"><a href="/wiki/Dragon_Age_Toolset_Wiki:About" title="Dragon Age Toolset Wiki:About">About Dragon Age Toolset Wiki</a></li>
+											<li id="footer-places-disclaimer"><a href="/wiki/Dragon_Age_Toolset_Wiki:General_disclaimer" title="Dragon Age Toolset Wiki:General disclaimer">Disclaimers</a></li>
+									</ul>
+										<ul id="footer-icons" class="noprint">
+											<li id="footer-poweredbyico">
+															<a href="//www.mediawiki.org/"><img src="../assets/mw/resources/assets/poweredby_mediawiki_88x31.png" alt="Powered by MediaWiki" srcset="../assets/mw/resources/assets/poweredby_mediawiki_132x47.png 1.5x, ../assets/mw/resources/assets/poweredby_mediawiki_176x62.png 2x" width="88" height="31" /></a>
+													</li>
+									</ul>
+						<div style="clear:both"></div>
+		</div>
+		<script>if(window.jQuery)jQuery.ready();</script><script>if(window.mw){
+mw.loader.state({"site":"loading","user":"ready","user.groups":"ready"});
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.toc","mediawiki.action.view.postEdit","mediawiki.user","mediawiki.hidpi","mediawiki.page.ready","mediawiki.searchSuggest"],null,true);
+}</script>
+<script>if(window.mw){
+document.write("\u003Cscript src=\"https://www.datoolset.net/mw/load.php?debug=false\u0026amp;lang=en\u0026amp;modules=site\u0026amp;only=scripts\u0026amp;skin=vector\u0026amp;*\"\u003E\u003C/script\u003E");
+}</script>
+<script>if(window.mw){
+mw.config.set({"wgBackendResponseTime":192});
+}</script>
+	</body>
+</html>

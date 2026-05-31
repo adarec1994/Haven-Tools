@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" class="client-nojs">
+<head>
+<meta charset="UTF-8" />
+<title>Door - Dragon Age Toolset Wiki</title>
+<meta name="generator" content="MediaWiki 1.25.6" />
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="search" type="application/opensearchdescription+xml" href="/mw/opensearch_desc.php" title="Dragon Age Toolset Wiki (en)" />
+<link rel="EditURI" type="application/rsd+xml" href="https://www.datoolset.net/mw/api.php?action=rsd" />
+<link rel="alternate" hreflang="x-default" href="Door.html" />
+<link rel="alternate" type="application/atom+xml" title="Dragon Age Toolset Wiki Atom feed" href="/mw/index.php?title=Special:RecentChanges&amp;feed=atom" />
+<meta name="ResourceLoaderDynamicStyles" content="" />
+<style>a:lang(ar),a:lang(kk-arab),a:lang(mzn),a:lang(ps),a:lang(ur){text-decoration:none}
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-css:7:270a0dcd3ae587df0f041aebfc42e61b */</style>
+<script>if(window.mw){
+mw.config.set({"wgCanonicalNamespace":"","wgCanonicalSpecialPageName":false,"wgNamespaceNumber":0,"wgPageName":"Door","wgTitle":"Door","wgCurRevisionId":12800,"wgRevisionId":12800,"wgArticleId":64,"wgIsArticle":true,"wgIsRedirect":false,"wgAction":"view","wgUserName":null,"wgUserGroups":["*"],"wgCategories":["Placeables"],"wgBreakFrames":false,"wgPageContentLanguage":"en","wgPageContentModel":"wikitext","wgSeparatorTransformTable":["",""],"wgDigitTransformTable":["",""],"wgDefaultDateFormat":"dmy","wgMonthNames":["","January","February","March","April","May","June","July","August","September","October","November","December"],"wgMonthNamesShort":["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],"wgRelevantPageName":"Door","wgRelevantArticleId":64,"wgIsProbablyEditable":false,"wgRestrictionEdit":[],"wgRestrictionMove":[]});
+}</script><script>if(window.mw){
+mw.loader.implement("user.options",function($,jQuery){mw.user.options.set({"variant":"en"});});mw.loader.implement("user.tokens",function($,jQuery){mw.user.tokens.set({"editToken":"+\\","patrolToken":"+\\","watchToken":"+\\"});});
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-js:7:a5c52c063dc436c1ca7c9f456936a5e9 */
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.page.startup","mediawiki.legacy.wikibits","mediawiki.legacy.ajax","skins.vector.js"]);
+}</script>
+<!--[if lt IE 7]><style type="text/css">body{behavior:url("/mw/skins/Vector/csshover.min.htc")}</style><![endif]-->
+<link rel="stylesheet" href="../assets/local/wiki-static.css" />
+</head>
+<body class="mediawiki ltr sitedir-ltr ns-0 ns-subject page-Door skin-vector action-view">
+		<div id="mw-page-base" class="noprint"></div>
+		<div id="mw-head-base" class="noprint"></div>
+		<div id="content" class="mw-body" role="main">
+			<a id="top"></a>
+
+						<div class="mw-indicators">
+</div>
+			<h1 id="firstHeading" class="firstHeading" lang="en">Door</h1>
+						<div id="bodyContent" class="mw-body-content">
+									<div id="siteSub">From Dragon Age Toolset Wiki</div>
+								<div id="contentSub"></div>
+												<div id="jump-to-nav" class="mw-jump">
+					Jump to:					<a href="#mw-head">navigation</a>, 					<a href="#p-search">search</a>
+				</div>
+				<div id="mw-content-text" lang="en" dir="ltr" class="mw-content-ltr"><p><b>Note: Some of this is likely obsolete. For example, bashing has been largely deprecated and is used only in special-case situations now.</b>
+</p><p>Doors are a part of the <a href="Placeable.html" title="Placeable">Placeable</a> system but are more complicated than most other Interactive Objects. They are connected to door attachment points that are built into area layouts; to find door attachment points click on the blue sphere that becomes visible when a door is selected in the area editor (this is the door's 'hinge') and corresponding attachment points throughout the area will become visible.
+</p>
+<div class="center"><div class="thumb tnone"><div class="thumbinner" style="width:302px;"><a href="File%3ADoor_with_door_hook_selected.png.html" class="image"><img alt="Door with door hook selected.png" src="../assets/mw/images/8/86/Door_with_door_hook_selected.png" width="300" height="271" class="thumbimage" srcset="../assets/mw/images/8/86/Door_with_door_hook_selected.png 1.5x, ../assets/mw/images/8/86/Door_with_door_hook_selected.png 2x" /></a>  <div class="thumbcaption"><div class="magnify"><a href="File%3ADoor_with_door_hook_selected.png.html" class="internal" title="Enlarge"></a></div></div></div></div></div>
+<p>There are two types of doors: Area Transition Doors and Room-To-Room Doors
+</p><p>Any interactive object (including doors) placed in the Designer toolset does not get proper lighting. Art needs to have control over the look of these Area Transition doors.
+</p>
+<div id="toc" class="toc"><div id="toctitle"><h2>Contents</h2></div>
+<ul>
+<li class="toclevel-1 tocsection-1"><a href="#Area_Transition_Doors"><span class="tocnumber">1</span> <span class="toctext">Area Transition Doors</span></a></li>
+<li class="toclevel-1 tocsection-2"><a href="#Room-To-Room_Doors"><span class="tocnumber">2</span> <span class="toctext">Room-To-Room Doors</span></a></li>
+<li class="toclevel-1 tocsection-3"><a href="#How_doors_open_in-game"><span class="tocnumber">3</span> <span class="toctext">How doors open in-game</span></a></li>
+<li class="toclevel-1 tocsection-4"><a href="#Doors_And_Fog-Of-War.2FVisiblity.2FPerception"><span class="tocnumber">4</span> <span class="toctext">Doors And Fog-Of-War/Visiblity/Perception</span></a></li>
+<li class="toclevel-1 tocsection-5"><a href="#Door_Bashing_and_Alert_System"><span class="tocnumber">5</span> <span class="toctext">Door Bashing and Alert System</span></a></li>
+<li class="toclevel-1 tocsection-6"><a href="#Lockable_Doors_and_Unique_Keys"><span class="tocnumber">6</span> <span class="toctext">Lockable Doors and Unique Keys</span></a></li>
+</ul>
+</div>
+
+<h2><span class="mw-headline" id="Area_Transition_Doors">Area Transition Doors</span></h2>
+<p>These are placed in the ART TOOLSET. They are static. They do not animate when opened. They are both the door and the door frame as one static piece of art. These have a door hook built into them
+</p><p>User interacts with them and then are teleported into the next area. No door opening animation.
+</p><p>Design hooks a door in the design toolset to the art door by dropping the design door into the DOOR HOOK on the static door
+</p><p>There is a flag called “Invisible” for doors. Design sets this to true for this kind of door. Design can still set properties on this door (i.e., locking it). The connection between the "Art" door and the "Design" door is established by the fact that the Design-door was placed on the door-hook of the Art-door.
+</p><p>To make a door into an area transition door, the following variables must be set:
+</p>
+<ul><li>PLC_AT_DEST_AREA_TAG - tag of the destination area </li>
+<li>PLC_AT_DEST_TAG - tag of the destination waypoint within the destination area</li></ul>
+<p>If the destination waypoint is in the same area as the door, you may need a <a href="/mw/index.php?title=Bug:_Area_Transition_within_area&amp;action=edit&amp;redlink=1" class="new" title="Bug: Area Transition within area (page does not exist)"> bug fix</a>.
+</p>
+<h2><span class="mw-headline" id="Room-To-Room_Doors">Room-To-Room Doors</span></h2>
+<p>Door frames are built in two pieces. The frames will applied to each room. This is to avoid issues of knowing “who owns the door-frame” for fog-of-war and visibility purposes.
+</p><p>The See Thru Flag: If this flag is true the door DOES NOT block visibility. Design will use this for doors that look like they can be seen through (i.e., a prison door)
+</p>
+<h2><span class="mw-headline" id="How_doors_open_in-game">How doors open in-game</span></h2>
+<p>Doors in Dragon Age open by swinging on a hinge. There are no sliding doors.
+</p><p>The swinging arc will vary from door to door but will be either 90 degrees or 180 degrees (flat against opposing wall).
+</p><p>Doors open in both directions, depending on which side of the door the player is on. The door will always open away from the player. 
+</p><p>Doors cannot be blocked from opening. The tactical element of “door hogging” will be determined by creatures blocking <i>doorways</i>, not doors.
+</p><p>You can have these types of door outside but they can’t be area transitions (i.e., they can be a gate).
+</p><p>There is no closing animation when closing a door.
+</p>
+<h2><span class="mw-headline" id="Doors_And_Fog-Of-War.2FVisiblity.2FPerception">Doors And Fog-Of-War/Visiblity/Perception</span></h2>
+<h2><span class="mw-headline" id="Door_Bashing_and_Alert_System">Door Bashing and Alert System</span></h2>
+<p>The system can improve game play experience and make the open-lock skill more useful. Basically, if a player bashes down a door he would alert the creatures on the other side: they would move to strategic positions, buff themselves, and so forth. If the player picks the lock he would be rewarded by surprising the creatures on the other side. 
+</p><p>The door signals the door-bash event whenever someone attacks it. The signal is sent to any nearby creatures from the same group of the door. A creature receives the signal and reacts to it as appropriate. 
+</p><p>Most of the scripting is inside the generic scripts for doors and creatures. However, the door and the signaled creatures must be of the same group. A group can be set by the SetGroupID function or by setting the group-faction on the object. 
+</p><p>By default, the door calls the AlertGroup() function to alert all nearby creatures of the same group. This function has a parameter of distance that can be set to any maximum distance in which creatures would react to the door (default is 20m). 
+</p><p>To customize the handling of the event by the creature simply set the following variables on the on-spawn event for the creature. The function that uses these values is called inside the default creature core script. By default, the creature would face the door, draw weapons and buff himself with potions and spells. The function has the following parameters: 
+</p><p>DBASH_DISABLE: disable all door bashing behavior for this creature.
+</p><p>DBASH_EQUIP_TYPE: Tells the creature what type of weapons to equip: 
+</p>
+<ul><li>1 - melee weapons. </li>
+<li>2 - ranged weapons.</li>
+<li>0 - best weapon (either melee or ranged) </li></ul>
+<p>DBASH_RUNTO_WP: The creature would run to the specified way-point. If no wp has been specified then the creature would run to a wp with a tag of "DBASH_WP_" + (creature's tag). If no way-points have been found the creature would remain in place. 
+</p><p>DBASH_AREA_ALARM: Raise area alarm if set to TRUE. This would send a signal to the area. The area object is responsible for handling the alarm. Default value is FALSE.
+</p><p>DBASH_NOBUFF: By default, every creature would try to drink potions and cast buffing spells. Setting this var to TRUE would make the creature skip the buffing step.
+</p><p>DBASH_SCRIPT: The string stored in this variable is the name of the script to be executed when all other actions are done.
+</p>
+<h2><span class="mw-headline" id="Lockable_Doors_and_Unique_Keys">Lockable Doors and Unique Keys</span></h2>
+<p>Implementing locked doors that can be lockpicked by a rogue is a simple process. After the door has been placed within the level, simply set the door's status to Closed_Locked (or simply Locked, if the door is also an area transition) and set the desired difficult for the lock.
+</p><p>If you wish a door to only open with a specific key, then you will need to create two new resources - one for the key, and another for the door itself. The key needs to be of the Base Item Type of "Other - Key". Give the key a unique tag, as this is what the door will need to check against in order to determine it is the correct key to open the door. In the properties for the new door resource, ensure Initial State is set to Locked. Then fill in the values of the "Key" section of the resource as required. "Key Tag" will be the tag you previously entered as the tag for the key.  If "Auto Remove Key" is true, the door will remove the key from the player's inventory after the door has been opened, and "Key Required" will make it impossible for the player to lockpick the door if it is true.
+</p>
+<!-- 
+NewPP limit report
+CPU time usage: 0.032 seconds
+Real time usage: 0.049 seconds
+Preprocessor visited node count: 23/1000000
+Preprocessor generated node count: 28/1000000
+Post‐expand include size: 0/2097152 bytes
+Template argument size: 0/2097152 bytes
+Highest expansion depth: 2/40
+Expensive parser function count: 0/100
+-->
+
+<!-- 
+Transclusion expansion time report (%,ms,calls,template)
+100.00%    0.000      1 - -total
+-->
+
+<!-- Saved in parser cache with key db714099484-datoolwiki_:pcache:idhash:64-0!*!0!!en!5!* and timestamp 20260530230659 and revision id 12800
+ -->
+</div>									<div class="printfooter">
+						Retrieved from "<a dir="ltr" href="Door.html">https://www.datoolset.net/mw/index.php?title=Door&amp;oldid=12800</a>"					</div>
+													<div id='catlinks' class='catlinks'><div id="mw-normal-catlinks" class="mw-normal-catlinks"><a href="/wiki/Special:Categories" title="Special:Categories">Category</a>: <ul><li><a href="Category%3APlaceables.html" title="Category:Placeables">Placeables</a></li></ul></div></div>												<div class="visualClear"></div>
+							</div>
+		</div>
+		<div id="mw-navigation">
+			<h2>Navigation menu</h2>
+
+			<div id="mw-head">
+									<div id="p-personal" role="navigation" class="" aria-labelledby="p-personal-label">
+						<h3 id="p-personal-label">Personal tools</h3>
+						<ul>
+							<li id="pt-login"><a href="/mw/index.php?title=Special:UserLogin&amp;returnto=Door" title="You are encouraged to log in; however, it is not mandatory [o]" accesskey="o">Log in</a></li>						</ul>
+					</div>
+									<div id="left-navigation">
+										<div id="p-namespaces" role="navigation" class="vectorTabs" aria-labelledby="p-namespaces-label">
+						<h3 id="p-namespaces-label">Namespaces</h3>
+						<ul>
+															<li  id="ca-nstab-main" class="selected"><span><a href="Door.html"  title="View the content page [c]" accesskey="c">Page</a></span></li>
+															<li  id="ca-talk"><span><a href="Talk%3ADoor.html"  title="Discussion about the content page [t]" accesskey="t">Discussion</a></span></li>
+													</ul>
+					</div>
+										<div id="p-variants" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-variants-label">
+												<h3 id="p-variants-label"><span>Variants</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+									</div>
+				<div id="right-navigation">
+										<div id="p-views" role="navigation" class="vectorTabs" aria-labelledby="p-views-label">
+						<h3 id="p-views-label">Views</h3>
+						<ul>
+															<li id="ca-view" class="selected"><span><a href="Door.html" >Read</a></span></li>
+															<li id="ca-viewsource"><span><a href="Door.html"  title="This page is protected.&#10;You can view its source [e]" accesskey="e">View source</a></span></li>
+															<li id="ca-history" class="collapsible"><span><a href="Door.html"  title="Past revisions of this page [h]" accesskey="h">View history</a></span></li>
+													</ul>
+					</div>
+										<div id="p-cactions" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-cactions-label">
+						<h3 id="p-cactions-label"><span>More</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+										<div id="p-search" role="search">
+						<h3>
+							<label for="searchInput">Search</label>
+						</h3>
+
+						<form action="/mw/index.php" id="searchform">
+														<div id="simpleSearch">
+															<input type="search" name="search" placeholder="Search" title="Search Dragon Age Toolset Wiki [f]" accesskey="f" id="searchInput" /><input type="hidden" value="Special:Search" name="title" /><input type="submit" name="fulltext" value="Search" title="Search the pages for this text" id="mw-searchButton" class="searchButton mw-fallbackSearchButton" /><input type="submit" name="go" value="Go" title="Go to a page with this exact name if exists" id="searchButton" class="searchButton" />								</div>
+						</form>
+					</div>
+									</div>
+			</div>
+			<div id="mw-panel">
+				<div id="p-logo" role="banner"><a class="mw-wiki-logo" href="Main_Page.html"  title="Visit the main page"></a></div>
+						<div class="portal" role="navigation" id='p-navigation' aria-labelledby='p-navigation-label'>
+			<h3 id='p-navigation-label'>Navigation</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-mainpage-description"><a href="Main_Page.html" title="Visit the main page [z]" accesskey="z">Main page</a></li>
+													<li id="n-recentchanges"><a href="/wiki/Special:RecentChanges" title="A list of recent changes in the wiki [r]" accesskey="r">Recent changes</a></li>
+													<li id="n-randompage"><a href="/wiki/Special:Random" title="Load a random page [x]" accesskey="x">Random page</a></li>
+													<li id="n-help"><a href="https://www.mediawiki.org/wiki/Special:MyLanguage/Help:Contents" title="The place to find out">Help</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-Links' aria-labelledby='p-Links-label'>
+			<h3 id='p-Links-label'>Links</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-Toolset-forums"><a href="http://forum.bioware.com/forum/30-dragon-age-toolset" rel="nofollow">Toolset forums</a></li>
+													<li id="n-Legacy-forums"><a href="http://social.bioware.com/forum/1/subindex/70" rel="nofollow">Legacy forums</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-tb' aria-labelledby='p-tb-label'>
+			<h3 id='p-tb-label'>Tools</h3>
+
+			<div class="body">
+									<ul>
+													<li id="t-whatlinkshere"><a href="/wiki/Special:WhatLinksHere/Door" title="A list of all wiki pages that link here [j]" accesskey="j">What links here</a></li>
+													<li id="t-recentchangeslinked"><a href="/wiki/Special:RecentChangesLinked/Door" title="Recent changes in pages linked from this page [k]" accesskey="k">Related changes</a></li>
+													<li id="t-specialpages"><a href="/wiki/Special:SpecialPages" title="A list of all special pages [q]" accesskey="q">Special pages</a></li>
+													<li id="t-print"><a href="Door.html" rel="alternate" title="Printable version of this page [p]" accesskey="p">Printable version</a></li>
+													<li id="t-permalink"><a href="Door.html" title="Permanent link to this revision of the page">Permanent link</a></li>
+													<li id="t-info"><a href="Door.html" title="More information about this page">Page information</a></li>
+											</ul>
+							</div>
+		</div>
+				</div>
+		</div>
+		<div id="footer" role="contentinfo">
+							<ul id="footer-info">
+											<li id="footer-info-lastmod"> This page was last modified on 28 March 2010, at 17:43.</li>
+									</ul>
+							<ul id="footer-places">
+											<li id="footer-places-privacy"><a href="/wiki/Dragon_Age_Toolset_Wiki:Privacy_policy" title="Dragon Age Toolset Wiki:Privacy policy">Privacy policy</a></li>
+											<li id="footer-places-about"><a href="/wiki/Dragon_Age_Toolset_Wiki:About" title="Dragon Age Toolset Wiki:About">About Dragon Age Toolset Wiki</a></li>
+											<li id="footer-places-disclaimer"><a href="/wiki/Dragon_Age_Toolset_Wiki:General_disclaimer" title="Dragon Age Toolset Wiki:General disclaimer">Disclaimers</a></li>
+									</ul>
+										<ul id="footer-icons" class="noprint">
+											<li id="footer-poweredbyico">
+															<a href="//www.mediawiki.org/"><img src="../assets/mw/resources/assets/poweredby_mediawiki_88x31.png" alt="Powered by MediaWiki" srcset="../assets/mw/resources/assets/poweredby_mediawiki_132x47.png 1.5x, ../assets/mw/resources/assets/poweredby_mediawiki_176x62.png 2x" width="88" height="31" /></a>
+													</li>
+									</ul>
+						<div style="clear:both"></div>
+		</div>
+		<script>if(window.jQuery)jQuery.ready();</script><script>if(window.mw){
+mw.loader.state({"site":"loading","user":"ready","user.groups":"ready"});
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.toc","mediawiki.action.view.postEdit","mediawiki.user","mediawiki.hidpi","mediawiki.page.ready","mediawiki.searchSuggest"],null,true);
+}</script>
+<script>if(window.mw){
+document.write("\u003Cscript src=\"https://www.datoolset.net/mw/load.php?debug=false\u0026amp;lang=en\u0026amp;modules=site\u0026amp;only=scripts\u0026amp;skin=vector\u0026amp;*\"\u003E\u003C/script\u003E");
+}</script>
+<script>if(window.mw){
+mw.config.set({"wgBackendResponseTime":257});
+}</script>
+	</body>
+</html>

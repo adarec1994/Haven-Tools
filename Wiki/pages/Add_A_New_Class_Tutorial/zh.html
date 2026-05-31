@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" class="client-nojs">
+<head>
+<meta charset="UTF-8" />
+<title>Add A New Class Tutorial/zh - Dragon Age Toolset Wiki</title>
+<meta name="generator" content="MediaWiki 1.25.6" />
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="search" type="application/opensearchdescription+xml" href="/mw/opensearch_desc.php" title="Dragon Age Toolset Wiki (en)" />
+<link rel="EditURI" type="application/rsd+xml" href="https://www.datoolset.net/mw/api.php?action=rsd" />
+<link rel="alternate" hreflang="x-default" href="zh.html" />
+<link rel="alternate" type="application/atom+xml" title="Dragon Age Toolset Wiki Atom feed" href="/mw/index.php?title=Special:RecentChanges&amp;feed=atom" />
+<meta name="ResourceLoaderDynamicStyles" content="" />
+<style>a:lang(ar),a:lang(kk-arab),a:lang(mzn),a:lang(ps),a:lang(ur){text-decoration:none}
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-css:7:270a0dcd3ae587df0f041aebfc42e61b */</style>
+<script>if(window.mw){
+mw.config.set({"wgCanonicalNamespace":"","wgCanonicalSpecialPageName":false,"wgNamespaceNumber":0,"wgPageName":"Add_A_New_Class_Tutorial/zh","wgTitle":"Add A New Class Tutorial/zh","wgCurRevisionId":16270,"wgRevisionId":16270,"wgArticleId":3829,"wgIsArticle":true,"wgIsRedirect":false,"wgAction":"view","wgUserName":null,"wgUserGroups":["*"],"wgCategories":["Character generation","Tutorials"],"wgBreakFrames":false,"wgPageContentLanguage":"en","wgPageContentModel":"wikitext","wgSeparatorTransformTable":["",""],"wgDigitTransformTable":["",""],"wgDefaultDateFormat":"dmy","wgMonthNames":["","January","February","March","April","May","June","July","August","September","October","November","December"],"wgMonthNamesShort":["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],"wgRelevantPageName":"Add_A_New_Class_Tutorial/zh","wgRelevantArticleId":3829,"wgIsProbablyEditable":false,"wgRestrictionEdit":[],"wgRestrictionMove":[]});
+}</script><script>if(window.mw){
+mw.loader.implement("user.options",function($,jQuery){mw.user.options.set({"variant":"en"});});mw.loader.implement("user.tokens",function($,jQuery){mw.user.tokens.set({"editToken":"+\\","patrolToken":"+\\","watchToken":"+\\"});});
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-js:7:a5c52c063dc436c1ca7c9f456936a5e9 */
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.page.startup","mediawiki.legacy.wikibits","mediawiki.legacy.ajax","skins.vector.js"]);
+}</script>
+<!--[if lt IE 7]><style type="text/css">body{behavior:url("/mw/skins/Vector/csshover.min.htc")}</style><![endif]-->
+<link rel="stylesheet" href="../../assets/local/wiki-static.css" />
+</head>
+<body class="mediawiki ltr sitedir-ltr ns-0 ns-subject page-Add_A_New_Class_Tutorial_zh skin-vector action-view">
+		<div id="mw-page-base" class="noprint"></div>
+		<div id="mw-head-base" class="noprint"></div>
+		<div id="content" class="mw-body" role="main">
+			<a id="top"></a>
+
+						<div class="mw-indicators">
+</div>
+			<h1 id="firstHeading" class="firstHeading" lang="en">Add A New Class Tutorial/zh</h1>
+						<div id="bodyContent" class="mw-body-content">
+									<div id="siteSub">From Dragon Age Toolset Wiki</div>
+								<div id="contentSub"><span class="subpages">&lt; <a href="../Add_A_New_Class_Tutorial.html" title="Add A New Class Tutorial">Add A New Class Tutorial</a></span></div>
+												<div id="jump-to-nav" class="mw-jump">
+					Jump to:					<a href="#mw-head">navigation</a>, 					<a href="#p-search">search</a>
+				</div>
+				<div id="mw-content-text" lang="en" dir="ltr" class="mw-content-ltr"><p>建立新職業
+</p>
+<div id="toc" class="toc"><div id="toctitle"><h2>Contents</h2></div>
+<ul>
+<li class="toclevel-1 tocsection-1"><a href="#.E6.96.B0.E8.81.B7.E6.A5.AD.E9.96.8B.E5.A7.8B.E5.A5.97.E4.BB.B6"><span class="tocnumber">1</span> <span class="toctext">新職業開始套件</span></a></li>
+<li class="toclevel-1 tocsection-2"><a href="#.E7.B7.A8.E8.BC.AF2da.E6.AA.94"><span class="tocnumber">2</span> <span class="toctext">編輯2da檔</span></a>
+<ul>
+<li class="toclevel-2 tocsection-3"><a href="#.E9.96.8B.E5.95.9F_2da_base.xls"><span class="tocnumber">2.1</span> <span class="toctext">開啟 2da_base.xls</span></a></li>
+<li class="toclevel-2 tocsection-4"><a href="#.E9.96.8B.E5.95.9Fguitypes.xls"><span class="tocnumber">2.2</span> <span class="toctext">開啟guitypes.xls</span></a></li>
+<li class="toclevel-2 tocsection-5"><a href="#.E9.96.8B.E5.95.9FCLA_base.xls"><span class="tocnumber">2.3</span> <span class="toctext">開啟CLA_base.xls</span></a></li>
+<li class="toclevel-2 tocsection-6"><a href="#.E9.96.8B.E5.95.9Fbackground.xls"><span class="tocnumber">2.4</span> <span class="toctext">開啟background.xls</span></a></li>
+<li class="toclevel-2 tocsection-7"><a href="#.E9.96.8B.E5.95.9F_abi_base.xls"><span class="tocnumber">2.5</span> <span class="toctext">開啟 abi_base.xls</span></a></li>
+<li class="toclevel-2 tocsection-8"><a href="#.E9.96.8B.E5.95.9F_ALShaman_default.xls"><span class="tocnumber">2.6</span> <span class="toctext">開啟 ALShaman_default.xls</span></a></li>
+</ul>
+</li>
+<li class="toclevel-1 tocsection-9"><a href="#.E5.B0.872DA.E6.AA.94.E8.BD.89.E6.88.90GDA"><span class="tocnumber">3</span> <span class="toctext">將2DA檔轉成GDA</span></a></li>
+<li class="toclevel-1 tocsection-10"><a href="#.E5.BB.BA.E7.AB.8B.E6.A8.A1.E7.B5.84"><span class="tocnumber">4</span> <span class="toctext">建立模組</span></a></li>
+<li class="toclevel-1 tocsection-11"><a href="#.E7.B7.A8.E8.BC.AF.E8.85.B3.E6.9C.AC"><span class="tocnumber">5</span> <span class="toctext">編輯腳本</span></a>
+<ul>
+<li class="toclevel-2 tocsection-12"><a href="#.E7.B7.A8.E8.BC.AF2da_constants_h.E6.AA.94.E6.A1.88"><span class="tocnumber">5.1</span> <span class="toctext">編輯2da_constants_h檔案</span></a></li>
+<li class="toclevel-2 tocsection-13"><a href="#.E7.B7.A8.E8.BC.AF_gen00pt_class_race_gend_.E6.AA.94.E6.A1.88"><span class="tocnumber">5.2</span> <span class="toctext">編輯 gen00pt_class_race_gend 檔案</span></a></li>
+<li class="toclevel-2 tocsection-14"><a href="#.E7.B7.A8.E8.BC.AF_sys_chargen_h"><span class="tocnumber">5.3</span> <span class="toctext">編輯 sys_chargen_h</span></a></li>
+<li class="toclevel-2 tocsection-15"><a href="#.E7.B7.A8.E8.BC.AFsys_rewards_h"><span class="tocnumber">5.4</span> <span class="toctext">編輯sys_rewards_h</span></a></li>
+<li class="toclevel-2 tocsection-16"><a href="#.E7.B7.A8.E8.BC.AFsys_chargen.E6.AA.94.E6.A1.88"><span class="tocnumber">5.5</span> <span class="toctext">編輯sys_chargen檔案</span></a></li>
+</ul>
+</li>
+<li class="toclevel-1 tocsection-17"><a href="#.E8.A3.BD.E4.BD.9C_UTC_.E6.A8.A1.E6.9D.BF.28TEMPLATE.29.E6.AA.94.E6.A1.88"><span class="tocnumber">6</span> <span class="toctext">製作 UTC 模板(TEMPLATE)檔案</span></a></li>
+<li class="toclevel-1 tocsection-18"><a href="#.E5.BB.BA.E7.AB.8B.E4.B8.80.E4.BA.9B.E5.AD.97.E4.B8.B2"><span class="tocnumber">7</span> <span class="toctext">建立一些字串</span></a></li>
+<li class="toclevel-1 tocsection-19"><a href="#.E5.85.A8.E9.83.A8.E6.94.BE.E5.9C.A8.E4.B8.80.E8.B5.B7"><span class="tocnumber">8</span> <span class="toctext">全部放在一起</span></a></li>
+<li class="toclevel-1 tocsection-20"><a href="#.E6.B8.85.E9.99.A4.E5.9E.83.E5.9C.BE.E8.B3.87.E6.96.99"><span class="tocnumber">9</span> <span class="toctext">清除垃圾資料</span></a></li>
+<li class="toclevel-1 tocsection-21"><a href="#.E5.98.97.E8.A9.A6.E7.B5.90.E6.9E.9C"><span class="tocnumber">10</span> <span class="toctext">嘗試結果</span></a></li>
+<li class="toclevel-1 tocsection-22"><a href="#.E5.8D.B1.E9.9A.AA.E7.84.A6.E9.BB.9E"><span class="tocnumber">11</span> <span class="toctext">危險焦點</span></a></li>
+</ul>
+</div>
+
+<h2><span class="mw-headline" id=".E6.96.B0.E8.81.B7.E6.A5.AD.E9.96.8B.E5.A7.8B.E5.A5.97.E4.BB.B6">新職業開始套件</span></h2>
+<p>你需要一個套件內含.xls的電子表格，這樣才能製作新職業。點擊下面網址可以下載已製作完成得套件。
+（譯者注 原作者給的檔案和教學不符  建議完全照教學作）
+關於.xls的製作、轉換以及GDA等，此篇教學都有講到，只要你跟者我的腳步。
+</p><p>你仍然需要在toolkit裡編輯腳本並且建立UTC模型。
+</p><p>你仍然需要為你的模組建立GDA檔案。
+</p><p>前往 我的文件/bioware/dragonage/addins/modulename
+</p><p>將GDA檔放於 我的文件/bioware/dragonage/addins/modulename/core/override 資料夾裡
+</p><p>你可以在此網站下載 <a rel="nofollow" class="external text" href="http://www.damods.com/forums/index.php?action=downloads;sa=view;down=131">here</a> (你需要註冊)
+</p>
+<h2><span class="mw-headline" id=".E7.B7.A8.E8.BC.AF2da.E6.AA.94">編輯2da檔</span></h2>
+<p>你要編輯的2DA檔案。
+</p>
+<ul><li><a href="../2da_base.xls.html" title="2da base.xls" class="mw-redirect">2da_base.xls</a></li>
+<li><a href="../Abi_base.xls.html" title="Abi base.xls" class="mw-redirect">abi_base.xls</a></li>
+<li><a href="/mw/index.php?title=ALclassname_default.xls&amp;action=edit&amp;redlink=1" class="new" title="ALclassname default.xls (page does not exist)">ALclassname_default.xls</a>  (例  ALshaman_default.xls) 複製自 ALWizard_default.xls</li>
+<li><a href="../Background.xls.html" title="Background.xls">background.xls</a></li>
+<li><a href="../Cla_base.xls.html" title="Cla base.xls" class="mw-redirect">cla_base.xls</a></li>
+<li><a href="../Guitypes.xls.html" title="Guitypes.xls">guitypes.xls</a></li></ul>
+<h3><span class="mw-headline" id=".E9.96.8B.E5.95.9F_2da_base.xls">開啟 2da_base.xls</span></h3>
+<p>切換頁面為M2DA_base（可以使用TAB鍵切換）
+在最下面空白處添加
+</p><p>ID above 100000  ALShaman_default  ALShaman_default 
+</p><p>保存你的檔案
+</p>
+<h3><span class="mw-headline" id=".E9.96.8B.E5.95.9Fguitypes.xls">開啟guitypes.xls</span></h3>
+<p>在底部添加：
+</p><p>ID	Label		StringId	Ability	ProgressBar	CombatTraining	SpecialGraphic	TintColor	Orphanage	Flags	BlendTree
+500	Class: Shaman	8000000		5000	0		0		1		0x9B0F00	0		0	****
+</p><p>保存你的檔案
+</p>
+<h3><span class="mw-headline" id=".E9.96.8B.E5.95.9FCLA_base.xls">開啟CLA_base.xls</span></h3>
+<p>將以下資料一一填入ID為3的下一列（即ID為3的下一列統統往下移動一列，中間空出的一列放資訊）
+</p><p>4	Shaman	8000000	8000001	****	8000002	8000003	classico_spirithealer	CLASS_Shaman	2	95	1	100	5	2	2	2	2	2	0	0	0	55	50	1	5	1	3	0.3	4035	****	1	Shaman	****
+</p><p>儲存你的檔案
+</p>
+<h3><span class="mw-headline" id=".E9.96.8B.E5.95.9Fbackground.xls">開啟background.xls</span></h3>
+<p>在 backgrounds 頁面: 你必須要在Mage和Skill 1間插入一個區塊，如圖
+</p><p><a href="../File%3ABackground.jpg.html" class="image"><img alt="Background.jpg" src="../../assets/mw/images/1/1f/Background.jpg" width="910" height="164" /></a>
+</p><p><br />
+在background_defaults頁面裡有多個區域要追加，請看圖
+</p><p><a href="../File%3AClass_tut_bgdef.jpg.html" class="image"><img alt="Class tut bgdef.jpg" src="../../assets/mw/images/6/62/Class_tut_bgdef.jpg" width="1113" height="408" /></a>
+</p><p>ID是如何工作？ 1 = dwarf， 4 = shaman，5 = noble，設定是很簡單的。
+</p><p>在第12,15,17,19列你要照圖追加我推薦你直接複製然後修改。
+</p>
+<dl><dd>10 ==&gt; 12</dd>
+<dd>13 ==&gt; 15</dd>
+<dd>16 ==&gt; 17</dd>
+<dd>18 ==&gt; 19</dd></dl>
+<p>關於template string裡的deault_shaman.utc，是稍後要在toolset裡製作的基本模型。 
+至於Ability的int是遊戲裡的職業預設能力，以我為例是直接用沒有被使用過的數字。
+</p><p>在chargen_preload頁面，你必須加入一些區塊如圖：
+</p><p><a href="../File%3AClass_tut_chardef.jpg.html" class="image"><img alt="Class tut chardef.jpg" src="../../assets/mw/images/1/14/Class_tut_chardef.jpg" width="281" height="374" /></a>
+</p><p>注意 ID的數值必須必須和background_defaults頁面的數值一樣，否則會使遊戲崩潰。 
+</p><p>儲存你的檔案
+</p>
+<h3><span class="mw-headline" id=".E9.96.8B.E5.95.9F_abi_base.xls">開啟 abi_base.xls</span></h3>
+<p>在ABI_Base頁面 將以下內容添加到底部
+</p><p>有多行是重要的東西必須要瞭解
+abilitytype - 定義能力類型。 近戰，法術，技能等等---&gt; 是直接連結到abilitytype.xls
+</p><p>prereqability – 定義有此能力的必須條件。要建立新職業就必須修改已存在的職業。
+</p><p>guitypes - 職業的參考 ---&gt; 連接到guitypes.xls
+</p><p><br />
+在第119列的下一列 ==&gt; 4034 HIDDEN_DOG下方插入新列並個別輸入以下資訊
+</p>
+<pre>5000	HIDDEN_SHAMAN	0	0	380405	330716	hidden			2	0	0	0	0	0	0	0	1	0	0	12	0	0	0	0	3		1.5			0		0	0	0	0	0	0	0	0	0	0		0	0	0	1	7	0	2	33	0	0	0	0
+</pre>
+<p><br />
+將以下內容一一複製到頁面底部（總共要製作四個新列）
+</p><p><br />
+</p>
+<pre>300000	HEROIC_OFFENSE2	380003	379523	367458	379231	spl_ico_heroic_offense	2	1	0	0	0	20	0	5000	0	0	0	500	3	0	3	1	4	spell_singletarget.ncs	5	90215		244	247	0	0	2	0	0	0	0	0		0	90109	128	1	7	0	2	33	0	0	0	0
+
+300001	HEROIC_AURA2	380000	379520	367458	379214	spl_ico_heroic_aura	2	1	0	0	0	30	0	300000	0	4	15	500	3	0	3	1	4	spell_singletarget.ncs	5	90213		244	247	0	0	0	0	0	0	0	0		0	90110	128	1	7	0	2	33	0	0	0	0
+
+300002	HEROIC_DEFENSE2	380001	379521	367458	379256	spl_ico_heroic_defense	2	1	0	0	0	40	0	300001	0	4	20	500	3	0	3	1	4	spell_singletarget.ncs	10	90214		244	247	0	0	2	0	0	0	0	0		0	90111	128	1	7	0	2	33	0	0	0	0
+
+300003	HASTE2		380005	379525	398957	379229	spl_ico_agility		2	0	0	0	0	0	60	300002	0	4	30	500	1	1	18	1	2	spell_modal.ncs	30		90216		244	247	0	0	2	0	0	0	0	0		0	90112	192	1	7	0	2	33	0	0	0	10
+</pre>
+<hr />
+<p>接下來是棘手的問題，請確保接下來都遵從教學，否則你就要和你的模組說再見。
+</p><p>選擇第三列到最後一列（即第三列到最後一列反白）
+</p><p>到 DATA（資料） --&gt; SORT BY COLUMN S (guitypes)（行排序依照guitypes 以我為例是依欄位S作排序）。現在應該是依照guitype排序完畢。
+</p><p>現在我們要將mage的法術自我們新職業的法術裡分開。
+</p><p>在guitype 裡數值介在1～4的，看相對映的 prereqability數值，若為0就改成4023
+從現在開始特殊能力只有在職業為mage時出現。 (這也就意謂者我們要為新職業製作獨立的技能。)
+現在已經確保不同職業，技能不會重複。
+</p><p>選擇第三列到最後一列（即第三列到最後一列反白）
+</p><p>到 DATA（資料） --&gt; SORT BY COLUMN S (ID)（行排序依照ID 以我為例是依欄位A作排序）。
+</p>
+<hr />
+<p>現在到 passive_abilities頁面
+</p><p>在最下方的新列一一填入
+</p>
+<pre>9000	HIDDEN_SHAMAN	1	2	4	2	6	1		str +2,mag +2,con +1
+</pre>
+<p>儲存你的檔案&#160;:)
+</p>
+<h3><span class="mw-headline" id=".E9.96.8B.E5.95.9F_ALShaman_default.xls">開啟 ALShaman_default.xls</span></h3>
+<p>改成如圖
+</p><p><a href="../File%3AClass_tut_alshaman.jpg.html" class="image"><img alt="Class tut alshaman.jpg" src="../../assets/mw/images/5/58/Class_tut_alshaman.jpg" width="750" height="394" /></a>
+</p>
+<h2><span class="mw-headline" id=".E5.B0.872DA.E6.AA.94.E8.BD.89.E6.88.90GDA">將2DA檔轉成GDA</span></h2>
+<p>在C:下建立一個叫做2DA的資料夾，在裡面建立一個叫做override的資料夾。
+</p><p>在你的C:\2da 把以下檔案放進去:
+</p>
+<ul><li> <a href="../2da_base.xls.html" title="2da base.xls" class="mw-redirect">2da_base.xls</a></li>
+<li> <a href="../Abi_base.xls.html" title="Abi base.xls" class="mw-redirect">abi_base.xls</a></li>
+<li> <a href="../Background.xls.html" title="Background.xls">background.xls</a></li>
+<li> <a href="../Cla_base.xls.html" title="Cla base.xls" class="mw-redirect">cla_base.xls</a></li>
+<li> <a href="../Guitypes.xls.html" title="Guitypes.xls">guitypes.xls</a></li>
+<li> <a href="/mw/index.php?title=ALShaman_default.xls&amp;action=edit&amp;redlink=1" class="new" title="ALShaman default.xls (page does not exist)">ALShaman_default.xls</a></li></ul>
+<p>去你的toolset資料夾將 ExcelProcessor.exe也放進去 我們是靠 ExcelProcessor作轉換
+（以我為例是在遊戲目錄裡的\tools\ResourceBuild\Processors）
+</p><p>然後我們製作簡單的批次檔來轉換。
+開啟記事本，將以下代碼複製貼上去，存檔 檔名取為convert.bat 並執行convert.bat
+</p>
+<dl><dd>C:\2DA\ExcelProcessor.exe 2DA_base.xls -outdir=C:\2DA\override\ </dd>
+<dd>C:\2DA\ExcelProcessor.exe background.xls -outdir=C:\2DA\override\ </dd>
+<dd>C:\2DA\ExcelProcessor.exe CLA_base.xls -outdir=C:\2DA\override\ </dd>
+<dd>C:\2DA\ExcelProcessor.exe ALShaman_Default.xls -outdir=C:\2DA\override\ </dd>
+<dd>C:\2DA\ExcelProcessor.exe guitypes.xls -outdir=C:\2DA\override\ </dd>
+<dd>C:\2DA\ExcelProcessor.exe ABI_base.xls -outdir=C:\2DA\override\ </dd></dl>
+<p>注意：若系統為Vista或是Windows 7，請以管理者執行convert.bat（即RUN AS ADMINISTRATOR）
+</p><p>現在你為你的模組製作好GDA檔了。
+</p>
+<h2><span class="mw-headline" id=".E5.BB.BA.E7.AB.8B.E6.A8.A1.E7.B5.84">建立模組</span></h2>
+<p>現在我們要在Toolset裡編輯資料
+</p><p>建立新模組如圖
+</p><p><b>請確認你的STRING數值</b>
+是介於8,000,000 ～ 8,300,000
+如果不在此範圍，STRING就不會工作
+BIOWARE聲明這是SQL的問題 
+</p><p><a href="../File%3AClass_tut_module1.jpg.html" class="image"><img alt="Class tut module1.jpg" src="../../assets/mw/images/a/a5/Class_tut_module1.jpg" width="431" height="812" /></a>
+</p><p>模組建立後，開啟模組選擇heirarchy並檢查single player是否有打勾。
+</p><p><a href="../File%3AClass_tut_hier.jpg.html" class="image"><img alt="Class tut hier.jpg" src="../../assets/mw/images/5/5e/Class_tut_hier.jpg" width="295" height="365" /></a>
+</p><p>模組建立完畢，現在要將GDA放在適當override區域。
+</p><p>開啟我的文件/bioware/dragonage/addins/modulename
+</p><p>將GDA檔放在我的文件/bioware/dragonage/addins/modulename/core/override資料夾裡面
+</p>
+<h2><span class="mw-headline" id=".E7.B7.A8.E8.BC.AF.E8.85.B3.E6.9C.AC">編輯腳本</span></h2>
+<p>你現在必須要編輯一些腳本。
+</p>
+<h3><span class="mw-headline" id=".E7.B7.A8.E8.BC.AF2da_constants_h.E6.AA.94.E6.A1.88">編輯2da_constants_h檔案</span></h3>
+<p>在核心（Core）腳本裡找到2da_constants_h檔案
+</p><p>對2DA_CONSTANTS_H按滑鼠右鍵，選擇CHECK OUT
+</p><p>打開，依照下方代碼尋找區域並修改成一樣：
+</p>
+<div dir="ltr" class="mw-geshi mw-code mw-content-ltr"><div class="dascript source-dascript"><pre class="de1"><a href="http://www.datoolset.net/wiki/index.php?title=const keyword"><span class="kw1">const</span></a> <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> ABILITY_TALENT_HIDDEN_DUELIST <span class="sy0">=</span> <span class="nu0">4030</span>;
+<a href="http://www.datoolset.net/wiki/index.php?title=const keyword"><span class="kw1">const</span></a> <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> ABILITY_TALENT_HIDDEN_RANGER <span class="sy0">=</span> <span class="nu0">4029</span>;
+<a href="http://www.datoolset.net/wiki/index.php?title=const keyword"><span class="kw1">const</span></a> <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> ABILITY_TALENT_HIDDEN_REAVER <span class="sy0">=</span> <span class="nu0">4019</span>;
+<a href="http://www.datoolset.net/wiki/index.php?title=const keyword"><span class="kw1">const</span></a> <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> ABILITY_TALENT_HIDDEN_ROGUE <span class="sy0">=</span> <span class="nu0">4020</span>;
+<a href="http://www.datoolset.net/wiki/index.php?title=const keyword"><span class="kw1">const</span></a> <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> ABILITY_TALENT_HIDDEN_SHALE <span class="sy0">=</span> <span class="nu0">4033</span>;
+<a href="http://www.datoolset.net/wiki/index.php?title=const keyword"><span class="kw1">const</span></a> <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> ABILITY_TALENT_HIDDEN_TEMPLAR <span class="sy0">=</span> <span class="nu0">4021</span>;
+<a href="http://www.datoolset.net/wiki/index.php?title=const keyword"><span class="kw1">const</span></a> <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> ABILITY_TALENT_HIDDEN_WARRIOR <span class="sy0">=</span> <span class="nu0">4022</span>;
+<a href="http://www.datoolset.net/wiki/index.php?title=const keyword"><span class="kw1">const</span></a> <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> ABILITY_TALENT_HIDDEN_WARRIOR <span class="sy0">=</span> <span class="nu0">5000</span>;
+<a href="http://www.datoolset.net/wiki/index.php?title=const keyword"><span class="kw1">const</span></a> <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> ABILITY_TALENT_HURLOCK_PROPERTIES <span class="sy0">=</span> <span class="nu0">90080</span>;
+<a href="http://www.datoolset.net/wiki/index.php?title=const keyword"><span class="kw1">const</span></a> <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> ABILITY_TALENT_INDOMITABLE <span class="sy0">=</span> <span class="nu0">28</span>;</pre></div></div>
+<p>和
+</p>
+<div dir="ltr" class="mw-geshi mw-code mw-content-ltr"><div class="dascript source-dascript"><pre class="de1"><span class="co1">//Class Constants</span>
+<a href="http://www.datoolset.net/wiki/index.php?title=const keyword"><span class="kw1">const</span></a> <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> CLASS_WARRIOR <span class="sy0">=</span> <span class="nu0">1</span>;
+<a href="http://www.datoolset.net/wiki/index.php?title=const keyword"><span class="kw1">const</span></a> <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> CLASS_WIZARD <span class="sy0">=</span> <span class="nu0">2</span>;
+<a href="http://www.datoolset.net/wiki/index.php?title=const keyword"><span class="kw1">const</span></a> <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> CLASS_ROGUE <span class="sy0">=</span> <span class="nu0">3</span>;
+<a href="http://www.datoolset.net/wiki/index.php?title=const keyword"><span class="kw1">const</span></a> <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> CLASS_SHAMAN <span class="sy0">=</span> <span class="nu0">4</span>;
+<a href="http://www.datoolset.net/wiki/index.php?title=const keyword"><span class="kw1">const</span></a> <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> CLASS_SHAPESHIFTER <span class="sy0">=</span> <span class="nu0">5</span>;
+<a href="http://www.datoolset.net/wiki/index.php?title=const keyword"><span class="kw1">const</span></a> <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> CLASS_SPIRITHEALER <span class="sy0">=</span> <span class="nu0">6</span>;
+<a href="http://www.datoolset.net/wiki/index.php?title=const keyword"><span class="kw1">const</span></a> <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> CLASS_CHAMPION <span class="sy0">=</span> <span class="nu0">7</span>;
+<a href="http://www.datoolset.net/wiki/index.php?title=const keyword"><span class="kw1">const</span></a> <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> CLASS_TEMPLAR <span class="sy0">=</span> <span class="nu0">8</span>;
+<a href="http://www.datoolset.net/wiki/index.php?title=const keyword"><span class="kw1">const</span></a> <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> CLASS_BERSERKER <span class="sy0">=</span> <span class="nu0">9</span>;
+<a href="http://www.datoolset.net/wiki/index.php?title=const keyword"><span class="kw1">const</span></a> <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> CLASS_REAVER <span class="sy0">=</span> <span class="nu0">10</span>;
+<a href="http://www.datoolset.net/wiki/index.php?title=const keyword"><span class="kw1">const</span></a> <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> CLASS_ARCANE_WARRIOR <span class="sy0">=</span> <span class="nu0">11</span>;
+<a href="http://www.datoolset.net/wiki/index.php?title=const keyword"><span class="kw1">const</span></a> <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> CLASS_ASSASSIN <span class="sy0">=</span> <span class="nu0">12</span>;
+<a href="http://www.datoolset.net/wiki/index.php?title=const keyword"><span class="kw1">const</span></a> <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> CLASS_BLOOD_MAGE <span class="sy0">=</span> <span class="nu0">13</span>;
+<a href="http://www.datoolset.net/wiki/index.php?title=const keyword"><span class="kw1">const</span></a> <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> CLASS_BARD <span class="sy0">=</span> <span class="nu0">14</span>;
+<a href="http://www.datoolset.net/wiki/index.php?title=const keyword"><span class="kw1">const</span></a> <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> CLASS_RANGER <span class="sy0">=</span> <span class="nu0">15</span>;
+<a href="http://www.datoolset.net/wiki/index.php?title=const keyword"><span class="kw1">const</span></a> <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> CLASS_DUELIST <span class="sy0">=</span> <span class="nu0">16</span>;
+<a href="http://www.datoolset.net/wiki/index.php?title=const keyword"><span class="kw1">const</span></a> <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> CLASS_SHALE <span class="sy0">=</span> <span class="nu0">17</span>;
+<a href="http://www.datoolset.net/wiki/index.php?title=const keyword"><span class="kw1">const</span></a> <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> CLASS_DOG <span class="sy0">=</span> <span class="nu0">18</span>;
+<a href="http://www.datoolset.net/wiki/index.php?title=const keyword"><span class="kw1">const</span></a> <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> CLASS_MONSTER_ANIMAL <span class="sy0">=</span> <span class="nu0">19</span>;</pre></div></div>
+<p>編輯完畢就在頂端按滑鼠右鍵選SAVE然後點選CHECK IN
+</p><p>然後在頂端點擊"EXPORT WITHOUT DEPENDENT RESOURCES"
+</p>
+<h3><span class="mw-headline" id=".E7.B7.A8.E8.BC.AF_gen00pt_class_race_gend_.E6.AA.94.E6.A1.88">編輯 gen00pt_class_race_gend 檔案</span></h3>
+<p>在 _Global ==&gt; plot scripts 找到gen00pt_class_race_gend檔案。 
+</p><p>對gen00pt_class_race_gend按滑鼠右鍵，點擊CHECK OUT
+</p><p>打開，找到區塊並依照下列代碼修改: 
+</p>
+<div dir="ltr" class="mw-geshi mw-code mw-content-ltr"><div class="dascript source-dascript"><pre class="de1">            <a href="http://www.datoolset.net/wiki/index.php?title=case keyword"><span class="kw1">case</span></a> GEN_CLASS_MAGE<span class="sy0">:</span>
+            <span class="br0">&#123;</span>
+                nResult <span class="sy0">=</span>   <span class="br0">&#40;</span> GetCreatureCoreClass<span class="br0">&#40;</span>oListener<span class="br0">&#41;</span> <span class="sy0">==</span> CLASS_WIZARD <span class="br0">&#41;</span>;
+                <a href="http://www.datoolset.net/wiki/index.php?title=break keyword"><span class="kw1">break</span></a>;
+            <span class="br0">&#125;</span>
+            <a href="http://www.datoolset.net/wiki/index.php?title=case keyword"><span class="kw1">case</span></a> GEN_CLASS_WARRIOR<span class="sy0">:</span>
+            <span class="br0">&#123;</span>
+                <span class="co1">// DEBUG START</span>
+                nResult <span class="sy0">=</span>   <span class="br0">&#40;</span> GetCreatureCoreClass<span class="br0">&#40;</span>oListener<span class="br0">&#41;</span> <span class="sy0">==</span> CLASS_WARRIOR <span class="br0">&#41;</span>;
+                <a href="http://www.datoolset.net/wiki/index.php?title=break keyword"><span class="kw1">break</span></a>;
+            <span class="br0">&#125;</span>
+            <a href="http://www.datoolset.net/wiki/index.php?title=case keyword"><span class="kw1">case</span></a> GEN_CLASS_ROGUE<span class="sy0">:</span>
+            <span class="br0">&#123;</span>
+                nResult <span class="sy0">=</span>   <span class="br0">&#40;</span> GetCreatureCoreClass<span class="br0">&#40;</span>oListener<span class="br0">&#41;</span> <span class="sy0">==</span> CLASS_ROGUE <span class="br0">&#41;</span>;
+                <a href="http://www.datoolset.net/wiki/index.php?title=break keyword"><span class="kw1">break</span></a>;
+            <span class="br0">&#125;</span>
+            <a href="http://www.datoolset.net/wiki/index.php?title=case keyword"><span class="kw1">case</span></a> GEN_CLASS_SHAMAN<span class="sy0">:</span>
+            <span class="br0">&#123;</span>
+                nResult <span class="sy0">=</span>   <span class="br0">&#40;</span> GetCreatureCoreClass<span class="br0">&#40;</span>oListener<span class="br0">&#41;</span> <span class="sy0">==</span> CLASS_SHAMAN <span class="br0">&#41;</span>;
+                <a href="http://www.datoolset.net/wiki/index.php?title=break keyword"><span class="kw1">break</span></a>;
+            <span class="br0">&#125;</span></pre></div></div>
+<p>編輯完畢就在頂端按滑鼠右鍵選SAVE然後點選CHECK IN
+</p><p>然後在頂端點擊"EXPORT WITHOUT DEPENDENT RESOURCES"
+</p>
+<h3><span class="mw-headline" id=".E7.B7.A8.E8.BC.AF_sys_chargen_h">編輯 sys_chargen_h</span></h3>
+<p>找出sys_chargen_h檔案，位在_Systems ==&gt; _Includes
+</p><p>對sys_chargen_h按滑鼠右鍵，選CHECK OUT
+</p><p>打開，找到Starting skills區塊修改成下: 
+</p>
+<div dir="ltr" class="mw-geshi mw-code mw-content-ltr"><div class="dascript source-dascript"><pre class="de1">    <span class="co1">// -------------------------------------------------------------------------</span>
+    <span class="co1">// Starting Skills</span>
+    <span class="co1">// -------------------------------------------------------------------------</span>
+    <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a> <span class="br0">&#40;</span>nClass <span class="sy0">==</span> CLASS_WARRIOR<span class="br0">&#41;</span>
+    <span class="br0">&#123;</span>
+        _AddAbility<span class="br0">&#40;</span>oChar, <span class="nu0">100100</span><span class="br0">&#41;</span>;
+    <span class="br0">&#125;</span>
+    <a href="http://www.datoolset.net/wiki/index.php?title=else keyword"><span class="kw1">else</span></a> <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a> <span class="br0">&#40;</span>nClass <span class="sy0">==</span> CLASS_ROGUE<span class="br0">&#41;</span>
+    <span class="br0">&#123;</span>
+        _AddAbility<span class="br0">&#40;</span>oChar, ABILITY_SKILL_POISON_1<span class="br0">&#41;</span>;
+    <span class="br0">&#125;</span>
+    <a href="http://www.datoolset.net/wiki/index.php?title=else keyword"><span class="kw1">else</span></a> <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a> <span class="br0">&#40;</span>nClass <span class="sy0">==</span> CLASS_WIZARD<span class="br0">&#41;</span>
+    <span class="br0">&#123;</span>
+        _AddAbility<span class="br0">&#40;</span>oChar, ABILITY_SKILL_HERBALISM_1<span class="br0">&#41;</span>;
+    <span class="br0">&#125;</span>
+    <a href="http://www.datoolset.net/wiki/index.php?title=else keyword"><span class="kw1">else</span></a> <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a> <span class="br0">&#40;</span>nClass <span class="sy0">==</span> CLASS_SHAMAN<span class="br0">&#41;</span>
+    <span class="br0">&#123;</span>
+        _AddAbility<span class="br0">&#40;</span>oChar, ABILITY_SKILL_HERBALISM_1<span class="br0">&#41;</span>;
+    <span class="br0">&#125;</span>
+<span class="br0">&#125;</span></pre></div></div>
+<p>然後到starting ability區域並修改 
+</p>
+<div dir="ltr" class="mw-geshi mw-code mw-content-ltr"><div class="dascript source-dascript"><pre class="de1">        <span class="co1">// ---------------------------------------------------------------------</span>
+        <span class="co1">// Load the starting ability for the background</span>
+        <span class="co1">// ---------------------------------------------------------------------</span>
+        <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nAbility <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetM2DAInt"><span class="kw4">GetM2DAInt</span></a><span class="br0">&#40;</span>TABLE_STARTING_EQUIPMENT,<span class="st0">&quot;Ability&quot;</span>, nIdx<span class="br0">&#41;</span>;
+        _AddAbility<span class="br0">&#40;</span>oCreature, nAbility<span class="br0">&#41;</span>;
+&#160;
+    <span class="br0">&#125;</span>
+    <a href="http://www.datoolset.net/wiki/index.php?title=else keyword"><span class="kw1">else</span></a>
+    <span class="br0">&#123;</span>
+        <a href="http://www.datoolset.net/wiki/index.php?title=string keyword"><span class="kw2">string</span></a> sTemplate <span class="sy0">=</span> <span class="st0">&quot;default_player.utc&quot;</span>;
+        <a href="http://www.datoolset.net/wiki/index.php?title=switch keyword"><span class="kw1">switch</span></a> <span class="br0">&#40;</span>nClass<span class="br0">&#41;</span>
+        <span class="br0">&#123;</span>
+            <a href="http://www.datoolset.net/wiki/index.php?title=case keyword"><span class="kw1">case</span></a> CLASS_WARRIOR<span class="sy0">:</span> sTemplate <span class="sy0">=</span> <span class="st0">&quot;default_warrior.utc&quot;</span>;
+                <a href="http://www.datoolset.net/wiki/index.php?title=break keyword"><span class="kw1">break</span></a>;
+            <a href="http://www.datoolset.net/wiki/index.php?title=case keyword"><span class="kw1">case</span></a> CLASS_ROGUE<span class="sy0">:</span>   sTemplate <span class="sy0">=</span> <span class="st0">&quot;default_rogue.utc&quot;</span>;
+                <a href="http://www.datoolset.net/wiki/index.php?title=break keyword"><span class="kw1">break</span></a>;
+            <a href="http://www.datoolset.net/wiki/index.php?title=case keyword"><span class="kw1">case</span></a> CLASS_WIZARD<span class="sy0">:</span>  sTemplate <span class="sy0">=</span> <span class="st0">&quot;default_wizard.utc&quot;</span>;
+                <a href="http://www.datoolset.net/wiki/index.php?title=break keyword"><span class="kw1">break</span></a>;
+            <a href="http://www.datoolset.net/wiki/index.php?title=case keyword"><span class="kw1">case</span></a> CLASS_SHAMAN<span class="sy0">:</span>  sTemplate <span class="sy0">=</span> <span class="st0">&quot;default_shaman.utc&quot;</span>;
+                <a href="http://www.datoolset.net/wiki/index.php?title=break keyword"><span class="kw1">break</span></a>;
+        <span class="br0">&#125;</span>
+&#160;
+        <a href="http://www.datoolset.net/wiki/index.php?title=LoadItemsFromTemplate"><span class="kw4">LoadItemsFromTemplate</span></a><span class="br0">&#40;</span>oCreature, sTemplate, TRUE<span class="br0">&#41;</span>;
+    <span class="br0">&#125;</span>
+<span class="br0">&#125;</span></pre></div></div>
+<p>到"// Undo Class and Race selection" 區域建第四個CharGen_ClearAbilityList
+</p>
+<div dir="ltr" class="mw-geshi mw-code mw-content-ltr"><div class="dascript source-dascript"><pre class="de1">            <span class="co1">// Note: This wipes the ability list clear</span>
+            <a href="http://www.datoolset.net/wiki/index.php?title=CharGen_ClearAbilityList"><span class="kw4">CharGen_ClearAbilityList</span></a><span class="br0">&#40;</span>oChar,<span class="nu0">1</span><span class="br0">&#41;</span>;
+            <a href="http://www.datoolset.net/wiki/index.php?title=CharGen_ClearAbilityList"><span class="kw4">CharGen_ClearAbilityList</span></a><span class="br0">&#40;</span>oChar,<span class="nu0">2</span><span class="br0">&#41;</span>;
+            <a href="http://www.datoolset.net/wiki/index.php?title=CharGen_ClearAbilityList"><span class="kw4">CharGen_ClearAbilityList</span></a><span class="br0">&#40;</span>oChar,<span class="nu0">3</span><span class="br0">&#41;</span>;
+            <a href="http://www.datoolset.net/wiki/index.php?title=CharGen_ClearAbilityList"><span class="kw4">CharGen_ClearAbilityList</span></a><span class="br0">&#40;</span>oChar,<span class="nu0">4</span><span class="br0">&#41;</span>;</pre></div></div>
+<p>到 "// enabling proper tactics presets" 添加ValidForClass4部份
+</p>
+<div dir="ltr" class="mw-geshi mw-code mw-content-ltr"><div class="dascript source-dascript"><pre class="de1">            nForClass1 <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetM2DAInt"><span class="kw4">GetM2DAInt</span></a><span class="br0">&#40;</span>TABLE_TACTICS_USER_PRESETS, <span class="st0">&quot;ValidForClass1&quot;</span>, nCurrentRow<span class="br0">&#41;</span>;
+            nForClass2 <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetM2DAInt"><span class="kw4">GetM2DAInt</span></a><span class="br0">&#40;</span>TABLE_TACTICS_USER_PRESETS, <span class="st0">&quot;ValidForClass2&quot;</span>, nCurrentRow<span class="br0">&#41;</span>;
+            nForClass3 <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetM2DAInt"><span class="kw4">GetM2DAInt</span></a><span class="br0">&#40;</span>TABLE_TACTICS_USER_PRESETS, <span class="st0">&quot;ValidForClass3&quot;</span>, nCurrentRow<span class="br0">&#41;</span>;
+            nForClass4 <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetM2DAInt"><span class="kw4">GetM2DAInt</span></a><span class="br0">&#40;</span>TABLE_TACTICS_USER_PRESETS, <span class="st0">&quot;ValidForClass4&quot;</span>, nCurrentRow<span class="br0">&#41;</span>;
+            <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a><span class="br0">&#40;</span>nCoreClass <span class="sy0">==</span> nForClass1 <span class="sy0">||</span> nCoreClass <span class="sy0">==</span> nForClass2 <span class="sy0">||</span> nCoreClass <span class="sy0">==</span> nForClass3 <span class="sy0">||</span> nCoreClass <span class="sy0">==</span> nForClass4<span class="br0">&#41;</span>
+                <a href="http://www.datoolset.net/wiki/index.php?title=AddTacticPresetID"><span class="kw4">AddTacticPresetID</span></a><span class="br0">&#40;</span>oCreature, nCurrentRow<span class="br0">&#41;</span>;</pre></div></div>
+<p>編輯完畢就在頂端按滑鼠右鍵選SAVE然後點選CHECK IN
+</p><p>然後在頂端點擊"EXPORT WITHOUT DEPENDENT RESOURCES"
+</p>
+<h3><span class="mw-headline" id=".E7.B7.A8.E8.BC.AFsys_rewards_h">編輯sys_rewards_h</span></h3>
+<p>找出 sys_rewards_h檔案，在 _Systems ==&gt; _Includes
+</p><p>對sys_rewards_h按滑鼠右鍵選擇CHECK OUT
+</p><p>開啟並在代碼500附近依下方代碼修改: 
+</p>
+<div dir="ltr" class="mw-geshi mw-code mw-content-ltr"><div class="dascript source-dascript"><pre class="de1"><a href="http://www.datoolset.net/wiki/index.php?title=const keyword"><span class="kw1">const</span></a> <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> SPEC_WIZARD_SHAPESHIFTER <span class="sy0">=</span> <span class="nu0">5</span>;
+<a href="http://www.datoolset.net/wiki/index.php?title=const keyword"><span class="kw1">const</span></a> <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> SPEC_WIZARD_SPIRITHEALER <span class="sy0">=</span> <span class="nu0">6</span>;
+<a href="http://www.datoolset.net/wiki/index.php?title=const keyword"><span class="kw1">const</span></a> <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> SPEC_WIZARD_ARCANE_WARRIOR <span class="sy0">=</span> <span class="nu0">11</span>;
+<a href="http://www.datoolset.net/wiki/index.php?title=const keyword"><span class="kw1">const</span></a> <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> SPEC_WIZARD_BLOOD_MAGE     <span class="sy0">=</span> <span class="nu0">13</span>;
+&#160;
+<a href="http://www.datoolset.net/wiki/index.php?title=const keyword"><span class="kw1">const</span></a> <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> SPEC_WARRIOR_CHAMPION <span class="sy0">=</span> <span class="nu0">7</span>;
+<a href="http://www.datoolset.net/wiki/index.php?title=const keyword"><span class="kw1">const</span></a> <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> SPEC_WARRIOR_TEMPLAR <span class="sy0">=</span> <span class="nu0">8</span>;
+<a href="http://www.datoolset.net/wiki/index.php?title=const keyword"><span class="kw1">const</span></a> <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> SPEC_WARRIOR_BERSERKER <span class="sy0">=</span> <span class="nu0">9</span>;
+<a href="http://www.datoolset.net/wiki/index.php?title=const keyword"><span class="kw1">const</span></a> <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> SPEC_WARRIOR_REAVER <span class="sy0">=</span> <span class="nu0">10</span>;
+&#160;
+<a href="http://www.datoolset.net/wiki/index.php?title=const keyword"><span class="kw1">const</span></a> <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> SPEC_ROGUE_ASSASSIN <span class="sy0">=</span> <span class="nu0">12</span>;
+<a href="http://www.datoolset.net/wiki/index.php?title=const keyword"><span class="kw1">const</span></a> <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> SPEC_ROGUE_BARD <span class="sy0">=</span> <span class="nu0">14</span>;
+<a href="http://www.datoolset.net/wiki/index.php?title=const keyword"><span class="kw1">const</span></a> <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> SPEC_ROGUE_RANGER   <span class="sy0">=</span> <span class="nu0">15</span>;
+<a href="http://www.datoolset.net/wiki/index.php?title=const keyword"><span class="kw1">const</span></a> <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> SPEC_ROGUE_DUELIST  <span class="sy0">=</span> <span class="nu0">16</span>;</pre></div></div>
+<p>編輯完畢就在頂端按滑鼠右鍵選SAVE然後點選CHECK IN
+</p><p>然後在頂端點擊"EXPORT WITHOUT DEPENDENT RESOURCES"
+</p>
+<h3><span class="mw-headline" id=".E7.B7.A8.E8.BC.AFsys_chargen.E6.AA.94.E6.A1.88">編輯sys_chargen檔案</span></h3>
+<p>找出sys_chargen檔案，在_Systems裡
+</p><p>對sys_chargen按滑鼠右鍵選CHECK OUT
+</p><p>開啟，改變這一行:
+</p>
+<div dir="ltr" class="mw-geshi mw-code mw-content-ltr"><div class="dascript source-dascript"><pre class="de1"><a href="http://www.datoolset.net/wiki/index.php?title=const keyword"><span class="kw1">const</span></a> <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> MAX_CLASS_INDEX <span class="sy0">=</span> <span class="nu0">4</span>; <span class="co1">// Last index of available base classes in cla_base.</span></pre></div></div>
+<p>到special handling區塊並修改如下: 
+</p>
+<div dir="ltr" class="mw-geshi mw-code mw-content-ltr"><div class="dascript source-dascript"><pre class="de1"><span class="co1">// special handling for aluvian</span>
+                <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a> <span class="br0">&#40;</span>nQuickStart <span class="sy0">==</span> <span class="nu0">0</span> <span class="br0">&#41;</span>
+                <span class="br0">&#123;</span>
+                    Log_Trace<span class="br0">&#40;</span><span class="kw3">LOG_CHANNEL_CHARACTER</span>,<span class="st0">&quot;sys_chargen&quot;</span>,<span class="st0">&quot;Setting default values for player character&quot;</span><span class="br0">&#41;</span>;
+&#160;
+                    <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nRandClass <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=abs"><span class="kw4">abs</span></a><span class="br0">&#40;</span><span class="br0">&#40;</span><a href="http://www.datoolset.net/wiki/index.php?title=GetLowResTimer"><span class="kw4">GetLowResTimer</span></a><span class="br0">&#40;</span><span class="br0">&#41;</span><span class="sy0">%</span>3<span class="br0">&#41;</span><span class="sy0">+</span><span class="nu0">1</span><span class="br0">&#41;</span>;
+&#160;
+                    <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a><span class="br0">&#40;</span>nRandClass <span class="sy0">==</span> CLASS_ROGUE <span class="sy0">||</span> nRandClass <span class="sy0">==</span> CLASS_WARRIOR <span class="sy0">||</span> nRandClass <span class="sy0">==</span> CLASS_SHAMAN<span class="br0">&#41;</span>
+                    <span class="br0">&#123;</span>
+                        _RunChargen<span class="br0">&#40;</span>RACE_HUMAN, nRandClass, oChar, BACKGROUND_NOBLE <span class="br0">&#41;</span>;
+                        WR_SetPlotFlag<span class="br0">&#40;</span>PLT_GEN00PT_BACKGROUNDS, GEN_BACK_HUMAN_NOBLE, TRUE<span class="br0">&#41;</span>;
+                    <span class="br0">&#125;</span>
+                    <a href="http://www.datoolset.net/wiki/index.php?title=else keyword"><span class="kw1">else</span></a> <span class="co1">// mage</span>
+                    <span class="br0">&#123;</span>
+                        _RunChargen<span class="br0">&#40;</span>RACE_HUMAN, nRandClass, oChar, BACKGROUND_MAGI <span class="br0">&#41;</span>;
+                        WR_SetPlotFlag<span class="br0">&#40;</span>PLT_GEN00PT_BACKGROUNDS, GEN_BACK_CIRCLE, TRUE<span class="br0">&#41;</span>;
+                    <span class="br0">&#125;</span>
+&#160;
+&#160;
+                    Chargen_SetNumTactics<span class="br0">&#40;</span>oChar<span class="br0">&#41;</span>;
+                    <a href="http://www.datoolset.net/wiki/index.php?title=SetCanLevelUp"><span class="kw4">SetCanLevelUp</span></a><span class="br0">&#40;</span>oChar,Chargen_HasPointsToSpend<span class="br0">&#40;</span>oChar<span class="br0">&#41;</span><span class="br0">&#41;</span>;
+&#160;
+                    SendEventModuleChargenDone<span class="br0">&#40;</span><span class="st0">&quot;&quot;</span>, <span class="st0">&quot;&quot;</span><span class="br0">&#41;</span>;
+&#160;
+                <span class="br0">&#125;</span></pre></div></div>
+<p>到tactics區域依下方代碼添加: 
+</p>
+<div dir="ltr" class="mw-geshi mw-code mw-content-ltr"><div class="dascript source-dascript"><pre class="de1">                <span class="co1">// associate some tactics preset table</span>
+                <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nPresetTable;
+                <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a><span class="br0">&#40;</span>GetCreatureCoreClass<span class="br0">&#40;</span>oChar<span class="br0">&#41;</span> <span class="sy0">==</span> CLASS_WARRIOR<span class="br0">&#41;</span>
+                    nPresetTable <span class="sy0">=</span> <span class="nu0">1</span>; <span class="co1">// tank</span>
+                <a href="http://www.datoolset.net/wiki/index.php?title=else keyword"><span class="kw1">else</span></a> <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a><span class="br0">&#40;</span>GetCreatureCoreClass<span class="br0">&#40;</span>oChar<span class="br0">&#41;</span> <span class="sy0">==</span> CLASS_ROGUE<span class="br0">&#41;</span>
+                    nPresetTable <span class="sy0">=</span> <span class="nu0">2</span>; <span class="co1">// damage dealer</span>
+                <a href="http://www.datoolset.net/wiki/index.php?title=else keyword"><span class="kw1">else</span></a> <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a><span class="br0">&#40;</span>GetCreatureCoreClass<span class="br0">&#40;</span>oChar<span class="br0">&#41;</span> <span class="sy0">==</span> CLASS_SHAMAN<span class="br0">&#41;</span>
+                    nPresetTable <span class="sy0">=</span> <span class="nu0">1</span>; <span class="co1">// damage dealer</span>
+                <a href="http://www.datoolset.net/wiki/index.php?title=else keyword"><span class="kw1">else</span></a> <span class="co1">// mage</span>
+                    nPresetTable <span class="sy0">=</span> <span class="nu0">5</span>; <span class="co1">// nuker</span></pre></div></div>
+<p>編輯完畢就在頂端按滑鼠右鍵選SAVE然後點選CHECK IN
+</p><p>然後在頂端點擊"EXPORT WITHOUT DEPENDENT RESOURCES"
+</p>
+<h2><span class="mw-headline" id=".E8.A3.BD.E4.BD.9C_UTC_.E6.A8.A1.E6.9D.BF.28TEMPLATE.29.E6.AA.94.E6.A1.88">製作 UTC 模板(TEMPLATE)檔案</span></h2>
+<p>返回Toolset請跟者下方教學：
+</p><p>點擊 "creature"標籤 (紅頭圖標)（就在右方的Palette Window）
+</p><p>展開_Core_Creatures
+在展開_Do NOT TOUCH
+對default_mage按右鍵選擇duplicate 如圖製作: 
+</p><p><a href="../File%3AClass_tut_dfs1.jpg.html" class="image"><img alt="Class tut dfs1.jpg" src="../../assets/mw/images/5/5d/Class_tut_dfs1.jpg" width="377" height="215" /></a>
+</p><p>現在要編輯數值並給予基本武器和裝甲如圖：
+</p><p>Class: Shaman (from dropdown)
+Name: Default Male Shaman
+</p><p><a href="../File%3AClass_tut_dfs2.jpg.html" class="image"><img alt="Class tut dfs2.jpg" src="../../assets/mw/images/3/38/Class_tut_dfs2.jpg" width="750" height="570" /></a>
+</p><p>編輯完畢就在頂端按滑鼠右鍵選SAVE然後點選CHECK IN
+</p><p>然後在頂端點擊"EXPORT WITHOUT DEPENDENT RESOURCES"
+</p>
+<h2><span class="mw-headline" id=".E5.BB.BA.E7.AB.8B.E4.B8.80.E4.BA.9B.E5.AD.97.E4.B8.B2">建立一些字串</span></h2>
+<p>開啟String editor然後按右鍵選擇insert
+</p><p>你要設成如下
+</p>
+<dl><dd>Table = module talk base</dd>
+<dd>Owner = module name</dd>
+<dd>TYPE = GUI</dd></dl>
+<dl><dd>8000000 - Shaman</dd>
+<dd>8000001 - Shamans</dd>
+<dd>8000002 - Shamans commune with spirits to get thier other worldly powers.</dd>
+<dd>8000004 - Shaman</dd>
+<dd>8000005 - Shaman Male Name</dd>
+<dd>8000006 - Shaman Female Name</dd></dl>
+<p>完成後就關閉String editor
+</p>
+<h2><span class="mw-headline" id=".E5.85.A8.E9.83.A8.E6.94.BE.E5.9C.A8.E4.B8.80.E8.B5.B7">全部放在一起</span></h2>
+<p>點擊上方功能列的Tool-&gt;EXPORT 
+</p><p>按"EXPORT WITHOUT DEPENDENT RESOURCES"
+</p><p>按"GENERATE MODULE XML"
+</p><p>按"GENERATE MANIFEST XML"
+</p><p>按"EXPORT TALK TABLE"
+</p>
+<h2><span class="mw-headline" id=".E6.B8.85.E9.99.A4.E5.9E.83.E5.9C.BE.E8.B3.87.E6.96.99">清除垃圾資料</span></h2>
+<p>不要忽略此部份
+</p><p>到我的文件/bioware/dragonage/packages/core/override/toolset
+</p><p>將此資料夾內的東西複製到
+</p><p>我的文件/bioware/dragonage/addins/modulename/core/override/toolset
+</p><p>應該會有以下檔案：
+2da_constant_h.nss
+gen00pt_class_race_gend.nss
+sys_chargen_h.nss
+sys_rewards_h.nss 
+sys_chargen.nss
+sys_chargen.ncs
+</p><p>將我的文件/bioware/dragonage/packages/core/override/toolset裡的東西全部殺掉
+</p>
+<h2><span class="mw-headline" id=".E5.98.97.E8.A9.A6.E7.B5.90.E6.9E.9C">嘗試結果</span></h2>
+<p>開啟你的遊戲並選擇新遊戲
+</p>
+<ul><li>小心*如果出現任何錯誤訊息都將會損害遊戲本體</li></ul>
+<p>點選 MALE ==&gt; HUMAN ==&gt; SHAMAN ==&gt; MAGI
+</p><p>你可以看到你的新人物
+</p><p>如果有任何意外發生請從頭依教學檢查是否有錯誤
+</p><p>請確保你沒有遺漏 ";" 或 "{ }"，如果缺少會摧毀遊戲。
+</p>
+<h2><span class="mw-headline" id=".E5.8D.B1.E9.9A.AA.E7.84.A6.E9.BB.9E">危險焦點</span></h2>
+<p>我的法術沒有出現在創造人物的視窗裡，求助！！
+</p>
+<ul><li> 你沒有排序你修改過得ability檔案裡的ID行。如果ID有排序就會出現。</li>
+<li> 你可能沒有賦予新能力給你的新職業 "5000" 在prereqability行裡面</li></ul>
+<p>當我要點選MALE ==&gt; HUMAN ==&gt; SHAMAN ==&gt; MAGI 時，我的新職業沒有出現
+</p>
+<ul><li> 很顯然你沒有輸出你的default_shaman.utc模型</li>
+<li> 檢查background檔案，確保 template是使用default_shaman.utc</li>
+<li> 嘗試重新啟動你的電腦</li></ul>
+<p><br />
+</p>
+<table class="nmbox" style="width:100%; border:1px solid #AAAAAA; border-collapse:collapse; clear:both; font-size:85%; margin:0.25em 0;">
+<tr style="background: #CFDFEF;">
+<th style="border:none; padding:4px 1em; border-right:1px solid #AAAAAA; text-align:center; white-space:nowrap;"> <b><a href="../Dragon_Age_Toolset_Wiki%3ALanguage_policy.html" title="Dragon Age Toolset Wiki:Language policy">Language:</a></b></th>
+<td style="border:none; padding:0.25em 0.9em; width:100%; background:#DFEFFF;"><b><a href="../Add_A_New_Class_Tutorial.html" title="Add A New Class Tutorial">English</a></b> <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>&#160;&#8226;&#32;<span lang="zh"><strong class="selflink">中文</strong></span><span></span><span></span><span></span></td>
+</tr></table>
+
+<!-- 
+NewPP limit report
+CPU time usage: 0.204 seconds
+Real time usage: 0.310 seconds
+Preprocessor visited node count: 1129/1000000
+Preprocessor generated node count: 3781/1000000
+Post‐expand include size: 5548/2097152 bytes
+Template argument size: 4992/2097152 bytes
+Highest expansion depth: 8/40
+Expensive parser function count: 53/100
+-->
+
+<!-- 
+Transclusion expansion time report (%,ms,calls,template)
+100.00%  113.346      1 - Template:Languages
+100.00%  113.346      1 - -total
+ 93.99%  106.537      1 - Template:LanguagesBox
+ 70.45%   79.855     54 - Template:LanguagesLang
+ 12.72%   14.422      1 - Template:LanguagesTitle
+-->
+
+<!-- Saved in parser cache with key db714099484-datoolwiki_:pcache:idhash:3829-0!*!0!!en!5!* and timestamp 20260531035227 and revision id 16270
+ -->
+</div>									<div class="printfooter">
+						Retrieved from "<a dir="ltr" href="zh.html">https://www.datoolset.net/mw/index.php?title=Add_A_New_Class_Tutorial/zh&amp;oldid=16270</a>"					</div>
+													<div id='catlinks' class='catlinks'><div id="mw-normal-catlinks" class="mw-normal-catlinks"><a href="/wiki/Special:Categories" title="Special:Categories">Categories</a>: <ul><li><a href="../Category%3ACharacter_generation.html" title="Category:Character generation">Character generation</a></li><li><a href="../Category%3ATutorials.html" title="Category:Tutorials">Tutorials</a></li></ul></div></div>												<div class="visualClear"></div>
+							</div>
+		</div>
+		<div id="mw-navigation">
+			<h2>Navigation menu</h2>
+
+			<div id="mw-head">
+									<div id="p-personal" role="navigation" class="" aria-labelledby="p-personal-label">
+						<h3 id="p-personal-label">Personal tools</h3>
+						<ul>
+							<li id="pt-login"><a href="/mw/index.php?title=Special:UserLogin&amp;returnto=Add+A+New+Class+Tutorial%2Fzh" title="You are encouraged to log in; however, it is not mandatory [o]" accesskey="o">Log in</a></li>						</ul>
+					</div>
+									<div id="left-navigation">
+										<div id="p-namespaces" role="navigation" class="vectorTabs" aria-labelledby="p-namespaces-label">
+						<h3 id="p-namespaces-label">Namespaces</h3>
+						<ul>
+															<li  id="ca-nstab-main" class="selected"><span><a href="zh.html"  title="View the content page [c]" accesskey="c">Page</a></span></li>
+															<li  id="ca-talk" class="new"><span><a href="/mw/index.php?title=Talk:Add_A_New_Class_Tutorial/zh&amp;action=edit&amp;redlink=1"  title="Discussion about the content page [t]" accesskey="t">Discussion</a></span></li>
+													</ul>
+					</div>
+										<div id="p-variants" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-variants-label">
+												<h3 id="p-variants-label"><span>Variants</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+									</div>
+				<div id="right-navigation">
+										<div id="p-views" role="navigation" class="vectorTabs" aria-labelledby="p-views-label">
+						<h3 id="p-views-label">Views</h3>
+						<ul>
+															<li id="ca-view" class="selected"><span><a href="zh.html" >Read</a></span></li>
+															<li id="ca-viewsource"><span><a href="zh.html"  title="This page is protected.&#10;You can view its source [e]" accesskey="e">View source</a></span></li>
+															<li id="ca-history" class="collapsible"><span><a href="zh.html"  title="Past revisions of this page [h]" accesskey="h">View history</a></span></li>
+													</ul>
+					</div>
+										<div id="p-cactions" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-cactions-label">
+						<h3 id="p-cactions-label"><span>More</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+										<div id="p-search" role="search">
+						<h3>
+							<label for="searchInput">Search</label>
+						</h3>
+
+						<form action="/mw/index.php" id="searchform">
+														<div id="simpleSearch">
+															<input type="search" name="search" placeholder="Search" title="Search Dragon Age Toolset Wiki [f]" accesskey="f" id="searchInput" /><input type="hidden" value="Special:Search" name="title" /><input type="submit" name="fulltext" value="Search" title="Search the pages for this text" id="mw-searchButton" class="searchButton mw-fallbackSearchButton" /><input type="submit" name="go" value="Go" title="Go to a page with this exact name if exists" id="searchButton" class="searchButton" />								</div>
+						</form>
+					</div>
+									</div>
+			</div>
+			<div id="mw-panel">
+				<div id="p-logo" role="banner"><a class="mw-wiki-logo" href="../Main_Page.html"  title="Visit the main page"></a></div>
+						<div class="portal" role="navigation" id='p-navigation' aria-labelledby='p-navigation-label'>
+			<h3 id='p-navigation-label'>Navigation</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-mainpage-description"><a href="../Main_Page.html" title="Visit the main page [z]" accesskey="z">Main page</a></li>
+													<li id="n-recentchanges"><a href="/wiki/Special:RecentChanges" title="A list of recent changes in the wiki [r]" accesskey="r">Recent changes</a></li>
+													<li id="n-randompage"><a href="/wiki/Special:Random" title="Load a random page [x]" accesskey="x">Random page</a></li>
+													<li id="n-help"><a href="https://www.mediawiki.org/wiki/Special:MyLanguage/Help:Contents" title="The place to find out">Help</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-Links' aria-labelledby='p-Links-label'>
+			<h3 id='p-Links-label'>Links</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-Toolset-forums"><a href="http://forum.bioware.com/forum/30-dragon-age-toolset" rel="nofollow">Toolset forums</a></li>
+													<li id="n-Legacy-forums"><a href="http://social.bioware.com/forum/1/subindex/70" rel="nofollow">Legacy forums</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-tb' aria-labelledby='p-tb-label'>
+			<h3 id='p-tb-label'>Tools</h3>
+
+			<div class="body">
+									<ul>
+													<li id="t-whatlinkshere"><a href="/wiki/Special:WhatLinksHere/Add_A_New_Class_Tutorial/zh" title="A list of all wiki pages that link here [j]" accesskey="j">What links here</a></li>
+													<li id="t-recentchangeslinked"><a href="/wiki/Special:RecentChangesLinked/Add_A_New_Class_Tutorial/zh" title="Recent changes in pages linked from this page [k]" accesskey="k">Related changes</a></li>
+													<li id="t-specialpages"><a href="/wiki/Special:SpecialPages" title="A list of all special pages [q]" accesskey="q">Special pages</a></li>
+													<li id="t-print"><a href="zh.html" rel="alternate" title="Printable version of this page [p]" accesskey="p">Printable version</a></li>
+													<li id="t-permalink"><a href="zh.html" title="Permanent link to this revision of the page">Permanent link</a></li>
+													<li id="t-info"><a href="zh.html" title="More information about this page">Page information</a></li>
+											</ul>
+							</div>
+		</div>
+				</div>
+		</div>
+		<div id="footer" role="contentinfo">
+							<ul id="footer-info">
+											<li id="footer-info-lastmod"> This page was last modified on 11 June 2011, at 12:57.</li>
+									</ul>
+							<ul id="footer-places">
+											<li id="footer-places-privacy"><a href="/wiki/Dragon_Age_Toolset_Wiki:Privacy_policy" title="Dragon Age Toolset Wiki:Privacy policy">Privacy policy</a></li>
+											<li id="footer-places-about"><a href="/wiki/Dragon_Age_Toolset_Wiki:About" title="Dragon Age Toolset Wiki:About">About Dragon Age Toolset Wiki</a></li>
+											<li id="footer-places-disclaimer"><a href="/wiki/Dragon_Age_Toolset_Wiki:General_disclaimer" title="Dragon Age Toolset Wiki:General disclaimer">Disclaimers</a></li>
+									</ul>
+										<ul id="footer-icons" class="noprint">
+											<li id="footer-poweredbyico">
+															<a href="//www.mediawiki.org/"><img src="../../assets/mw/resources/assets/poweredby_mediawiki_88x31.png" alt="Powered by MediaWiki" srcset="../../assets/mw/resources/assets/poweredby_mediawiki_132x47.png 1.5x, ../../assets/mw/resources/assets/poweredby_mediawiki_176x62.png 2x" width="88" height="31" /></a>
+													</li>
+									</ul>
+						<div style="clear:both"></div>
+		</div>
+		<script>if(window.jQuery)jQuery.ready();</script><script>if(window.mw){
+mw.loader.state({"site":"loading","user":"ready","user.groups":"ready"});
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.toc","mediawiki.action.view.postEdit","mediawiki.user","mediawiki.hidpi","mediawiki.page.ready","mediawiki.searchSuggest"],null,true);
+}</script>
+<script>if(window.mw){
+document.write("\u003Cscript src=\"https://www.datoolset.net/mw/load.php?debug=false\u0026amp;lang=en\u0026amp;modules=site\u0026amp;only=scripts\u0026amp;skin=vector\u0026amp;*\"\u003E\u003C/script\u003E");
+}</script>
+<script>if(window.mw){
+mw.config.set({"wgBackendResponseTime":254});
+}</script>
+	</body>
+</html>

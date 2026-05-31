@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" class="client-nojs">
+<head>
+<meta charset="UTF-8" />
+<title>Ability - Dragon Age Toolset Wiki</title>
+<meta name="generator" content="MediaWiki 1.25.6" />
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="search" type="application/opensearchdescription+xml" href="/mw/opensearch_desc.php" title="Dragon Age Toolset Wiki (en)" />
+<link rel="EditURI" type="application/rsd+xml" href="https://www.datoolset.net/mw/api.php?action=rsd" />
+<link rel="alternate" hreflang="x-default" href="Ability.html" />
+<link rel="alternate" type="application/atom+xml" title="Dragon Age Toolset Wiki Atom feed" href="/mw/index.php?title=Special:RecentChanges&amp;feed=atom" />
+<link rel="canonical" href="Ability.html" />
+<meta name="ResourceLoaderDynamicStyles" content="" />
+<style>a:lang(ar),a:lang(kk-arab),a:lang(mzn),a:lang(ps),a:lang(ur){text-decoration:none}
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-css:7:270a0dcd3ae587df0f041aebfc42e61b */</style>
+<script>if(window.mw){
+mw.config.set({"wgCanonicalNamespace":"","wgCanonicalSpecialPageName":false,"wgNamespaceNumber":0,"wgPageName":"Ability","wgTitle":"Ability","wgCurRevisionId":19445,"wgRevisionId":19445,"wgArticleId":17,"wgIsArticle":true,"wgIsRedirect":false,"wgAction":"view","wgUserName":null,"wgUserGroups":["*"],"wgCategories":["Abilities"],"wgBreakFrames":false,"wgPageContentLanguage":"en","wgPageContentModel":"wikitext","wgSeparatorTransformTable":["",""],"wgDigitTransformTable":["",""],"wgDefaultDateFormat":"dmy","wgMonthNames":["","January","February","March","April","May","June","July","August","September","October","November","December"],"wgMonthNamesShort":["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],"wgRelevantPageName":"Ability","wgRelevantArticleId":17,"wgIsProbablyEditable":false,"wgRestrictionEdit":[],"wgRestrictionMove":[],"wgRedirectedFrom":"Abilities","wgInternalRedirectTargetUrl":"/wiki/Ability"});
+}</script><script>if(window.mw){
+mw.loader.implement("user.options",function($,jQuery){mw.user.options.set({"variant":"en"});});mw.loader.implement("user.tokens",function($,jQuery){mw.user.tokens.set({"editToken":"+\\","patrolToken":"+\\","watchToken":"+\\"});});
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-js:7:a5c52c063dc436c1ca7c9f456936a5e9 */
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.action.view.redirect","mediawiki.page.startup","mediawiki.legacy.wikibits","mediawiki.legacy.ajax","skins.vector.js"]);
+}</script>
+<!--[if lt IE 7]><style type="text/css">body{behavior:url("/mw/skins/Vector/csshover.min.htc")}</style><![endif]-->
+<link rel="stylesheet" href="../assets/local/wiki-static.css" />
+</head>
+<body class="mediawiki ltr sitedir-ltr ns-0 ns-subject page-Ability skin-vector action-view">
+		<div id="mw-page-base" class="noprint"></div>
+		<div id="mw-head-base" class="noprint"></div>
+		<div id="content" class="mw-body" role="main">
+			<a id="top"></a>
+
+						<div class="mw-indicators">
+</div>
+			<h1 id="firstHeading" class="firstHeading" lang="en">Ability</h1>
+						<div id="bodyContent" class="mw-body-content">
+									<div id="siteSub">From Dragon Age Toolset Wiki</div>
+								<div id="contentSub"><span class="mw-redirectedfrom">(Redirected from <a href="Abilities.html" title="Abilities">Abilities</a>)</span></div>
+												<div id="jump-to-nav" class="mw-jump">
+					Jump to:					<a href="#mw-head">navigation</a>, 					<a href="#p-search">search</a>
+				</div>
+				<div id="mw-content-text" lang="en" dir="ltr" class="mw-content-ltr"><table style="float:right; background-color:#eeeeee; border:2px #999999 solid; padding:4px; margin:4px; width:220px;">
+
+<tr>
+<th align="center"> <a href="Script.html" title="Script">Scripting</a>
+</th></tr>
+<tr>
+<td>
+<ul><li><a href="Scripting_overview.html" title="Scripting overview">Scripting overview</a></li>
+<li><a href="Scripting_tutorial.html" title="Scripting tutorial">Scripting tutorial</a></li>
+<li><a href="Event_keyword.html" title="Event keyword">Event</a>
+<ul><li><a href="Event_override.html" title="Event override">Event override</a></li></ul></li>
+<li><a href="Useful_Scripts.html" title="Useful Scripts">Useful Scripts</a></li>
+<li><a href="Script_error.html" title="Script error">Script errors</a></li>
+<li><a href="Rules.html" title="Rules">Rules</a>
+<ul><li> <a href="Creature_Properties.html" title="Creature Properties">Creature Properties</a>
+<ul><li> <a href="Attribute.html" title="Attribute">Attributes</a></li></ul></li>
+<li> <a href="Classes.html" title="Classes">Classes</a></li>
+<li> <a href="Combat_Rules.html" title="Combat Rules">Combat Rules</a></li>
+<li> <strong class="selflink">Abilities</strong></li></ul></li>
+<li><a href="Category%3AScripts.html" title="Category:Scripts">Scripts category</a>
+<dl><dd> <small>Contains articles on hundreds of individual functions</small></dd></dl></li></ul>
+</td></tr></table>
+<p>The Ability System is used to handle Spells, Talents, Skills, and Item Abilities in Dragon Age.
+</p>
+<div id="toc" class="toc"><div id="toctitle"><h2>Contents</h2></div>
+<ul>
+<li class="toclevel-1 tocsection-1"><a href="#Detailed_Description"><span class="tocnumber">1</span> <span class="toctext">Detailed Description</span></a>
+<ul>
+<li class="toclevel-2 tocsection-2"><a href="#Basic_Ability_Types"><span class="tocnumber">1.1</span> <span class="toctext">Basic Ability Types</span></a></li>
+<li class="toclevel-2 tocsection-3"><a href="#Targeting_Behavior"><span class="tocnumber">1.2</span> <span class="toctext">Targeting Behavior</span></a></li>
+<li class="toclevel-2 tocsection-4"><a href="#Balancing_.28Cost.2C_Cooldown.2C_etc.29"><span class="tocnumber">1.3</span> <span class="toctext">Balancing (Cost, Cooldown, etc)</span></a></li>
+</ul>
+</li>
+<li class="toclevel-1 tocsection-5"><a href="#Q.26A"><span class="tocnumber">2</span> <span class="toctext">Q&amp;A</span></a>
+<ul>
+<li class="toclevel-2 tocsection-6"><a href="#Q:_Where_do_we_find_the_exact_formula_for_abilities_.3F"><span class="tocnumber">2.1</span> <span class="toctext">Q: Where do we find the exact formula for abilities&#160;?</span></a></li>
+<li class="toclevel-2 tocsection-7"><a href="#Q:_What_is_Spellpower_and_how_does_it_interact_with_abilities"><span class="tocnumber">2.2</span> <span class="toctext">Q: What is Spellpower and how does it interact with abilities</span></a></li>
+<li class="toclevel-2 tocsection-8"><a href="#Q:_Can_we_have_the_damage_formula_for_abilities_.3F"><span class="tocnumber">2.3</span> <span class="toctext">Q: Can we have the damage formula for abilities&#160;?</span></a></li>
+<li class="toclevel-2 tocsection-9"><a href="#Q:_What_are_the_differences_between_damage_types.3F"><span class="tocnumber">2.4</span> <span class="toctext">Q: What are the differences between damage types?</span></a></li>
+<li class="toclevel-2 tocsection-10"><a href="#Q:_Are_sustained_abilities_mutually_exclusive_.3F"><span class="tocnumber">2.5</span> <span class="toctext">Q: Are sustained abilities mutually exclusive&#160;?</span></a></li>
+<li class="toclevel-2 tocsection-11"><a href="#Q:_What_are_the_rules_for_stacking_effects_and_damage_.3F"><span class="tocnumber">2.6</span> <span class="toctext">Q: What are the rules for stacking effects and damage&#160;?</span></a></li>
+<li class="toclevel-2 tocsection-12"><a href="#Q:_How_does_game_difficulty_affect_abilities_.3F"><span class="tocnumber">2.7</span> <span class="toctext">Q: How does game difficulty affect abilities&#160;?</span></a></li>
+<li class="toclevel-2 tocsection-13"><a href="#Q:_What_is_spell_affinity_.3F"><span class="tocnumber">2.8</span> <span class="toctext">Q: What is spell affinity&#160;?</span></a></li>
+<li class="toclevel-2 tocsection-14"><a href="#Q:_How_does_Rank_Based_Mitigation_Work_.3F"><span class="tocnumber">2.9</span> <span class="toctext">Q: How does Rank Based Mitigation Work&#160;?</span></a></li>
+<li class="toclevel-2 tocsection-15"><a href="#Q:_What_does_.27asymmetric_rules_system.27_mean_.3F"><span class="tocnumber">2.10</span> <span class="toctext">Q: What does 'asymmetric rules system' mean&#160;?</span></a></li>
+</ul>
+</li>
+</ul>
+</div>
+
+<h2><span class="mw-headline" id="Detailed_Description">Detailed Description</span></h2>
+<p>Spells, Talents, Skills and item abilities all use the same backend in the game, a mostly script implemented system relying heavily on two dimensional data arrays. 
+</p><p>The most important 2da file for abilities is <b><a href="Abi_base.xls.html" title="ABI base.xls">ABI_base.xls</a></b>, as it defines each ability and all aspects of execution and handling in both scripting and engine code.
+</p><p><br />
+</p>
+<table style="margin:0; background:#f5faff; border:1px solid #a3b0bf; text-align:left; color:#000; padding:0.2em 0.4em; width:100%; height:100%">
+
+<tr>
+<td><b>Ability Design Notes</b>
+<p>When creating an ability in Dragon Age: Origins, we generally stick to the following guidelines
+</p>
+<ul><li> Keep it useful. </li></ul>
+<p>Some constant benefits (such as an increase in Attack or Defense) stay useful for the duration of the game as the progression of the related properties are slow. 
+For other effects, such as damage, a constant value would mean that the ability will become progressively worse through the game as damage needed to drop enemies increases from level to level. In such cases, the ability should be tied in some fashion to a Spellpower (for spells) or another relevant trait (such as cunning for rogues) to ensure they stay useful throughout the game. 
+</p>
+<ul><li> No repetition. </li></ul>
+<p>Each ability in Dragon Age: Origins is unique. No incremental abilities such as 'fireball I, fireball II, etc.'. Skills are exempt from this rule. Remember that the Damage Types dramatically alter the actual effect of an ability (such as lightning always draining stamina alongside doing damage), so having similar damaging abilities in different trees is usually fine.
+</p>
+<ul><li> Thematic matching.</li></ul>
+<p>Abilities within the same chain should follow a common theme. 
+</p>
+<ul><li> Avoid binary abilities. Design hit heavy.</li></ul>
+<p>Avoid abilities that are hit-or-miss. Generally, abilities should hit whenever possible and use target side mitigation of effects (resistance checks, damage mitigation) instead of 'hit or miss' mechanics. Melee abilities may use the normal attack resolution routines but should always perform their attacks at a bonus. Use rank based mitigation and resistances to allow for very powerful effects that do not trivialize boss battles. 
+</p>
+<ul><li> Use meaningful effects</li></ul>
+<p>Abilities should always be worth it. Don't do minor effects (+1 attack). The player should always be able to see the effect of the ability in game (not necessarily visually, but at least through increased damage, etc.). The first ability in a chain should, whenever possible, be active. The fourth ability in a chain should always have the biggest 'bang-for-the-buck' factor. Abilities lower in the chain should have shorter cooldowns. Do not allow instant death on bosses and elite bosses.
+</p>
+<ul><li> Avoid 'zero-sum' abilities</li></ul>
+<p>When possible, avoid 'zero-sum' abilities that trade a penalty for a benefit (e.g. increase defense but decrease attack). There are a number of these abilities that are valid (such as aim), but balancing them and keeping them useful is hard and requires a lot of work. This obviously does not apply to drastic abilities such as blood magic.
+</p>
+<ul><li> No emulation of defining class capabilities</li></ul>
+<p>Never ever grant a basic class capability from one class to another class via abilities. This means no invisibility or magical unlock spells for mages, as these are defining capabilities of the rogue class. No weapon talents for mages. No magic spells or large, targeted area of effects for warriors or rogues. Items might blur this line if the cost is balanced properly (e.g. grenades).
+</p>
+</td></tr></table>
+<p><br />
+</p>
+<h3><span class="mw-headline" id="Basic_Ability_Types">Basic Ability Types</span></h3>
+<p>Abilities are divided into 4 subtypes, as defined in the 'abilitytype' column in <a href="Abi_base.xls.html" title="ABI base.xls">ABI_base.xls</a>:
+</p>
+<ul><li> Talents - Abilities used by warriors and rogues, usually non magical in nature. (abilitytype=1)</li>
+<li> Spells - Abilities used by mages, either spell or passive abilities.  (abilitytype=2)</li>
+<li> Skills - Abilities usable by all classes, such as Survival and Combat training (abilitytype=3).</li>
+<li> Items  - Abilities present on an item that are triggered when the item is used on the quickbar. (ability_type=4)</li></ul>
+<p>Note: Talents do not show up on mages and spells do not show up on rogue or warrior characters, so to create abilities that can be used by all classes, abilitytype 3 (Skill) must be used. To define under which heading an ability shows up on the character's talent/spell page, the field 'guitype' is used. It resolves against <a href="Guitype.xls.html" title="Guitype.xls">guitype.xls</a> which lists all known headings.
+</p><p><br />
+There are 3 basic ability types in the game, defined by the field 'use_type' in <a href="Abi_base.xls.html" title="ABI base.xls">ABI_base.xls</a>.
+</p><p><b>Passive Abilities</b> 
+</p><p>Passive abilities (use_type = 3) grant persistent or conditionally persistent bonuses or penalties to the creature that has the ability. 
+</p><p>A passive ability may grant up to 3 modifications to creature properties (<a href="Properties.xls.html" title="Properties.xls">properties.xls</a>). Those modifications are defined in the passive_abilities worksheet of <a href="Abi_base.xls.html" title="ABI base.xls">ABI_base.xls</a> and linked to the ability through the passive_id column in ABI_base.xls.
+</p><p>Additionally, the bonuses of an ability can be made conditional on the character's current 'wield mode' (2-handed, dual, weapon &amp; shield, or universal) through the conditional integer field on the passive_abilities worksheet.
+</p><p>Finally, a number of passive abilities do not define any property modifications in passive_abilites but instead have checks coded against their Ids directly in the combat resolution scripts (e.g. HasAbility( oCreature, ABILITY_TALENT_LETHALITY )). The mere presence of the ability on a creature causes a different code path to be taken in the scripts in those cases.
+</p><p>Note that passive_ability benefits are not limited to abilities with use_type 3. Some active abilities also grant additional property modifying benefits to the owner.
+</p><p><br />
+<b>Sustained Abilities</b>
+</p><p>Sustained abilities (use_type = 2) are turned on and off per character and, while turned on, grant effects or property modifications to the user. 
+Most 'buffs' are implemented this way.
+</p><p>Only members of the player's party are using sustained ability as the code overhead required to track them is too expensive to be used on monsters that only exist to die in an encounter with the player's party. (These creatures use duration based effects to emulate similar abilities instead).
+</p><p>Most sustained abilities follow the same pattern:
+</p>
+<ul><li> They do not have any activation cost, encouraging tactical use of buffs.</li>
+<li> They increase the users <a href="/mw/index.php?title=Fatigue&amp;action=edit&amp;redlink=1" class="new" title="Fatigue (page does not exist)">Fatigue</a> property, therefore increasing the activation cost of all other abilities.</li>
+<li> They reduce the users maximum available mana or stamina by a constant value.</li>
+<li> They use cooldown to prevent the user from being too opportunistic with their use.</li>
+<li> Some abilities shut down when the user reaches 0 mana/stamina. Very powerful abilities (such as Momentum) have an associated stamina/mana drain effect to limit their use to a short or medium period of time. Creative item / buff use can be used to increase the length such an ability can be sustained.</li></ul>
+<p>The benefits from sustained abilities are calculated when the ability is activated. So if a character levels up or otherwise changes stats that influence the magnitude of a sustained ability, they will not update until the ability is reactivated the next time.
+</p><p>Some sustained abilities (such as Flaming Weapons) are active 'party-wide' - the caster not only sustains the ability on himself but on all his party members as well. This is controlled by the 'bPartyWide' flag in <a href="Abi_base.xls.html" title="ABI base.xls">ABI_base.xls</a>. Due to implementation limitations, party members who die or otherwise enter/exit the current party will not be affected by these abilities until they are recast. (we put low cooldown times on these abilities for that very reason).
+</p>
+<table style="margin:0; background:#f5faff; border:1px solid #a3b0bf; text-align:left; color:#000; padding:0.2em 0.4em; width:100%; height:100%">
+
+<tr>
+<td><b>Gameplay Design Note</b>
+<ul><li> Unlike in games like Baldur's Gate, the system in DA: Origins is designed to encourage tactical use of buffs over strategical. We wanted to put an emphasis on the player making smart choices during an encounter vs. the player guessing which buffs might be useful ahead of time or having to employ save-die-reload to find out. </li></ul>
+<ul><li> It is generally wise to run only one or two buffs all around and activate additional buffs only when needed. </li></ul>
+</td></tr></table>
+<p><br />
+</p><p><b>Activated Abilities</b>
+</p><p>Activated abilities (use_type = 4) are abilities that instantly execute their effect (see Targeting Behavior below). Most melee talents or targeted spells fall in this category. There are several sub-types of activated abilies, such as
+</p>
+<ul><li> Targeted, single target spells and talents (such as Winter's Grasp or Flurry)</li>
+<li> Ground targeted abilities (such as Blizzard or various Glyphs)</li>
+<li> Self targeted activated abilities.</li></ul>
+<h3><span class="mw-headline" id="Targeting_Behavior">Targeting Behavior</span></h3>
+<p>An ability's targeting behavior is controlled by several settings in <a href="Abi_base.xls.html" title="ABI base.xls">ABI_base.xls</a>
+</p><p><br />
+<b>AutoTarget</b> is a boolean field that defines how the UI resolves targeting.
+</p>
+<table class="wikitable">
+
+<tr>
+<th> Value </th>
+<th> Effect
+</th></tr>
+<tr>
+<td> 0 </td>
+<td> The UI will always bring up a targeting cursor.
+</td></tr>
+<tr>
+<td> 1 </td>
+<td> The UI will only produce a targeting cursor if no suitable target is currently selected. e.g if the player currently has a hostile creature targeted and if the spells TargetType includes 0x4 (hostile), the ability will trigger immediately, not producing a targeting cursor. Most single target spells and talents use this setting.
+</td></tr></table>
+<p>Regardless of AutoTarget setting, the UI will never produce a targeting cursor if an ability is type 0x1 (self) -
+</p><p><br />
+<b>TargetType</b> is a bit mask derived from the following table and controls the behavior of the UI's targeting cursor.
+</p>
+<table class="wikitable">
+
+<tr>
+<th> Bitmask </th>
+<th> Effect
+</th></tr>
+<tr>
+<td>  0x1 </td>
+<td>  Self
+</td></tr>
+<tr>
+<td>  0x2 </td>
+<td> Friendly Creature
+</td></tr>
+<tr>
+<td>  0x4 </td>
+<td> Hostile Creature
+</td></tr>
+<tr>
+<td>  0x8 </td>
+<td> Placeable Object
+</td></tr>
+<tr>
+<td> 0x10 </td>
+<td> (deprecated) Area of Effect Object
+</td></tr>
+<tr>
+<td> 0x20 </td>
+<td> Ground
+</td></tr>
+<tr>
+<td> 0x40 </td>
+<td> (deprecated) Dead Body
+</td></tr>
+<tr>
+<td> 0x80 </td>
+<td> Party Member
+</td></tr></table>
+<p><br />
+<b>AutoDraw</b> is an integer boolean field that defines how a character's weapons are handled when the ability is triggered.
+</p>
+<table class="wikitable">
+
+<tr>
+<th> Value </th>
+<th> Effect
+</th></tr>
+<tr>
+<td> 0 </td>
+<td> The ability will not affect the player's weapon sheath status.
+</td></tr>
+<tr>
+<td> 1 </td>
+<td> The engine will force the player to draw/unsheathe his weapon before executing the ability. This is used for most bow and melee weapon abilities.
+</td></tr>
+<tr>
+<td> 2 </td>
+<td> The engine will force the player to stow away any non staff melee weapons before executing the ability. This is used to ensure that no inappropriate animations play with weapons drawn (e.g. the player conjuring with a sword clipping through his body) and to discourage switching between melee and spellcasting on the fly.
+</td></tr></table>
+<h3><span class="mw-headline" id="Balancing_.28Cost.2C_Cooldown.2C_etc.29">Balancing (Cost, Cooldown, etc)</span></h3>
+<p>Abilities in Dragon Age are balanced along several vectors, most of which boil down to simple 'use frequency'. As a general rule of thumb, the more specialized and limited the effect of an ability is, the more outrageously powerful an ability can be.
+</p><p>Use frequency of abilities can be adjusted by modifying the following field in <a href="Abi_base.xls.html" title="ABI base.xls">ABI_base.xls</a>
+</p>
+<ul><li> Cost: This is the simple mana (spells) or stamina (talents) activation cost of an ability. It is subtracted when the conjure phase of the spell has succesfully completed (e.g. no cost for spell interruptions). Without sufficient resources to cover activation cost, the UI will not allow the player to execute the ability. The value is a constant integer and is multiplied with 1+(Current Fatigue) of the caster. </li></ul>
+<ul><li> Cooldown: Cooldown is a constant float in seconds that defines how long the player has to wait after the successful activation of an ability until he can use it again. For abilities that apply duration based debuffs or effects to a target, cooldown is usually set slightly higher than the duration of the effect to avoid stacking by the same caster.</li></ul>
+<ul><li> Upkeep: Defines how much mana or stamina is removed from the casters overall pool while a sustained ability is active. This naturally limits the number of sustained abilities present on a creature and ensures that the more beneficial buffs are active on the caster, the less mana is available for immediate use.</li></ul>
+<ul><li> <a href="/mw/index.php?title=Fatigue&amp;action=edit&amp;redlink=1" class="new" title="Fatigue (page does not exist)">Fatigue</a>: Fatigue affects use frequency only indirectly, but it prevents characters from stacking too many buffs on each other, as each sustained ability active usually adds around 5-10% fatigue to the caster.</li></ul>
+<ul><li> Mana/Stamina drain: By reducing the mana/stamina regeneration rate on a creature, the duration for which a sustained ability can be used can be restricted. This mechanic is used only for the most powerful sustained abilities in the game, which are flagged to turn off when the caster sustaining them reaches 0 mana/stamina.</li></ul>
+<p><br />
+Other balancing vectors:
+</p>
+<ul><li> AoESize and AoeShape: Area of effect spells that deal friendly fire are location and situation restricted on normal+ difficulty (hard+ on the consoles). Since dropping an Inferno on your own party members is hardly a good idea in most cases, the usefulness of the spell becomes restricted to careful positioning and the earlier stages of combat. </li></ul>
+<ul><li> Threat Generation: Abilities apply threat not just by damage but often by activation. Higher activation threat of an ability can balance out outrageously powerful effects by making it harder for the player to use the spell. The prime example is the Walking Bomb kind of spells which deal excellent damage, but, on higher difficulties, also make the targets very very angry at the caster.  Using these spells effectively often requires a tactical approach by the player, thus limiting their universal usefulness and offsetting their very powerful effects.</li></ul>
+<ul><li> Threat Removal: Some abilities are designed to only provide a short term benefit (Such as 3s stun on Mindblast) but offset their weakness by removing threat from the caster, often by reinitializing the threat tables on the target, causing enemies to randomly seek new targets.</li></ul>
+<ul><li> Conjure time: Spells with a conjure time of 1+ (Speed in <a href="Abi_base.xls.html" title="ABI base.xls">ABI_base.xls</a>) can be interrupted by damage, limiting their usefulness in melee situations or when only one party member remains on the battlefield. Many of the very powerful Area of Effect type spells use this feature. Most activated spells have a conjure time of 0, making them instant cast.</li></ul>
+<ul><li> Range: Lower ranges force the ability user into potentially more dangerous situations, adding additional risk to the use of an ability.</li></ul>
+<h2><span class="mw-headline" id="Q.26A">Q&amp;A</span></h2>
+<h3><span class="mw-headline" id="Q:_Where_do_we_find_the_exact_formula_for_abilities_.3F">Q: Where do we find the exact formula for abilities&#160;?</span></h3>
+<p>A: Due to most abilities being unique, the only place to find the exact details on each spell is in the scripts. While a lot of data can be glanced from <a href="Abi_base.xls.html" title="ABI base.xls">ABI_base.xls</a>, a lot of the detailed mechanics are very different between abilities and can only be found in the appropriate spellscript. The *_constant.nss files hold some basic values, but often get further modified in the scripts. 
+</p><p>This is also one of the reasons why some elements of a talent are not displayed in the UI description in game. While we can calculate cost and cooldown based on the casting character and his fatigue and other properties (and consequently display it), we can usually not calculate damage or duration as they are mitigated on the target creature: 
+</p><p>Displaying those values results in very misleading information (e.g. while damage seems to be higher on one ability, the mitigation mechanisms and unique side effects of another ability will make it just as good or better - in certain situations) and it turned out to be better to provide the player with general guidance than the misleading information.
+</p>
+<h3><span class="mw-headline" id="Q:_What_is_Spellpower_and_how_does_it_interact_with_abilities">Q: What is Spellpower and how does it interact with abilities</span></h3>
+<p>Spellpower is probably the most important stat for a mage character (and only exists on mage characters). It is calculated as max(Magic - 10,0) and therefore increases by one point for every point a mage spends on his Magic attribute.
+</p><p>Most mage spells benefit directly from higher spellpower by increased damage, effect magnitude and duration. It also plays a role in a mages ability to overcome mental or physical resistance on a target (where applicable). The actual impact of spellpower on an ability varies from spell to spell but the most common construct equates to something like 1% increase in spell potency per point of Spellpower. Thus, items and spells that increase spellpower are very powerful as they increase the potency of every spell the mage can cast.
+</p><p>Spellpower is the only factor that causes an increase of a spells potency over time, so a level 20 mage with neglected the Magic attribute would be much less powerful than a mage that didn't neglect Magic.
+</p><p>Some examples:
+</p>
+<ul><li> The damage potential for Winter's Grasp is calculated as (100.0f + GetCreatureSpellPower(stEvent.oCaster)) * 0.36f;</li>
+<li> The healing potential for the heal spell is calculated as (100.0f + GetCreatureSpellPower(stEvent.oCaster)) * 0.40f;</li>
+<li> The damage over time component of blizzard is executed as ApplyEffectDamageOverTime(a[i], oCreator, ABILITY_SPELL_BLIZZARD,  (100.0f + GetCreatureSpellPower(oCreator)) * 0.1, (BLIZZARD_INTERVAL_DURATION - 0.5f), DAMAGE_TYPE_COLD);</li></ul>
+<p>Note that these formulas only list the raw damage potential and do not take into account the effects of damage types, difficulty, rank, resistances, magical shields and any other mitigating factors on the target or enhancing factors on the caster. This means that just comparing the numbers will not give you an idea which spell is better or worse.
+</p><p>For non-mage spells and abilities, spellpower is often substituted by an appropriate other construct (such as max(Cunning-10,0) for rogue abilities).
+</p>
+<h3><span class="mw-headline" id="Q:_Can_we_have_the_damage_formula_for_abilities_.3F">Q: Can we have the damage formula for abilities&#160;?</span></h3>
+<p>A: There is no damage formula for abilities, as mentioned before, each ability follows their own rules.
+</p><p>In general, talent damage is based on the weapon being used (e.g. Assault does 3 melee attacks that deal weapon damage with some additional bonuses) and are modified by external cirumstances such as location, critical chance and ability to deliver a backstab and are mitigated by armor on the target.
+</p><p>Spells deal damage of different damage types following a rough rule of (Constant * (Spellpower / Variable)) / [Variables] ) + Modifiers but this only tells part of the story as actual damage is dependent on the target, it's resistances, rank and a number of other factors.
+</p><p>Some additional factors affecting spell damage are:
+</p>
+<ul><li> damage resistance.</li>
+<li> magical shields.</li>
+<li> difficulty level.</li>
+<li> elemental damage bonuses from spells or items </li>
+<li> Environmental conditions (frozen targets take less damage from fire, etc.)</li></ul>
+<h3><span class="mw-headline" id="Q:_What_are_the_differences_between_damage_types.3F">Q: What are the differences between damage types?</span></h3>
+<p>A: Creatures have variable damage resistances based on their type and rank. Dragons might get 60% less damage from fire (60% fire resistance), other creatures will have different immunities. Additional effects are:
+</p>
+<ul><li> Electricity: In addition to normal damage, these also reduce the targets stamina (but not mana) by the same amount, making them very effective boss killers.</li></ul>
+<ul><li> Fire: Cancels Cold based damage over time effects and applies damage over time.</li></ul>
+<ul><li> Cold: Cancel Fire based damage over time effects and often is accompanied by slow or slipping effects.</li></ul>
+<ul><li> Spirit: There are very few ways of increasing spirit resistance in the game, so spells dealing spirit damage are universally useful...</li></ul>
+<ul><li> Nature: Rarely found on spells. Many creatures are resistant to this.</li></ul>
+<p>(This should probably go on its own wiki page)
+</p>
+<h3><span class="mw-headline" id="Q:_Are_sustained_abilities_mutually_exclusive_.3F">Q: Are sustained abilities mutually exclusive&#160;?</span></h3>
+<p>A: There is a very limited number of sustained abilities that are mutually exclusive, usually because it makes sense. Mutually exclusive abilities cancel each other upon activation.
+</p>
+<ul><li> Shield stances (Shield Wall, Shield Cover, Shield Defense) are mutually exclusive.</li>
+<li> Archery stances (Aim, Rapid Fire, Defensive Fire) are mutually exclusive.</li>
+<li> Shapeshifting forms (Sorry, no Bear-Wolfspider) are mutually exclusive.</li>
+<li> Weapon Enhancement spells are too, but only for the same caster (so two mages can run two different weapon enhancements if they want to).</li>
+<li> Bard Songs are mutually exclusive.</li>
+<li> The Death Syphon and Death Magic spells are mutually exclusive.</li></ul>
+<p>Technically, all abilities in <a href="Abi_base.xls.html" title="ABI base.xls">ABI_base.xls</a> that share the same 'condition_group' value are mutually exclusive.
+</p>
+<h3><span class="mw-headline" id="Q:_What_are_the_rules_for_stacking_effects_and_damage_.3F">Q: What are the rules for stacking effects and damage&#160;?</span></h3>
+<p>A: The general rules of stacking for abilities are:
+</p>
+<ul><li> Identical effect from different abilities stack (e.g. getting +10 attack from one ability and +10 attack from another nets +20 attack).</li>
+<li> The effects of identical abilities stack as long as they are from different caster. (Same caster usually does not apply as cooldown often exceeds duration).</li>
+<li> Weapon enhancement spells of the same type (e.g. 2 mages with flame weapons) do not stack. The sword does not get more flaming, sorry&#160;:)</li>
+<li> Animation based effects (knockdown, stun, etc.) stack, but only the one with the highest priority is played. This is defined in the priority column in <a href="Effects.xls.html" title="Effects.xls">effects.xls</a>.</li>
+<li> Glyphs do stack but there is a limit of 5 active glyphs per caster.</li>
+<li> Fire and Cold DoT effects do not stack, the spell cast last will cancel any existing spell of the opposite type.</li>
+<li> Fire and Cold AoEs cancel each other, other AoEs might interact rather violently, handle with care&#160;:)</li></ul>
+<p>For equipment and item based effects, the game usually stacks within the minumum and maximum clamp values of a property (<a href="Properties.xls.html" title="Properties.xls">properties.xls</a>). This means that you can accumulate a lot of +damage or +critical critical chance effects, but for some stat types there is a point where you are no longer gaining any benefits (e.g. speed modification - animations can only be sped up to a certain point before breaking, so stacking momentum, haste and a weapon with a speed based effect will not result in a -3.0s attack time, sorry&#160;:p)
+</p><p><br />
+For almost all effects, the total result of all property modifications on a creature are visible on the main character UI by hovering over the individual stats.
+</p>
+<h3><span class="mw-headline" id="Q:_How_does_game_difficulty_affect_abilities_.3F">Q: How does game difficulty affect abilities&#160;?</span></h3>
+<p>A: Our approach to game difficulty dictates that the effect of your chosen setting are
+</p>
+<ul><li> non punishing - You do not get less XP for chosing a lower difficulty mode, etc.</li>
+<li> challenge scaling - Higher difficulty will reward you with greater obstacles to overcome.</li>
+<li> fair - Lower difficulties grant benefits that gradually get removed. (This does not mean the rules are symmetric and is not true on nightmare at all. Nightmare is evil. And unfair.)</li>
+<li> non persistent - Difficulty changes are possible on the fly, at any time and take immediate effect.</li></ul>
+<p>The game is balanced so that Hard mode is challenging for a Baldur's gate veteran.
+</p><p>Based on these guidelines, you can expect the following ability behaviors in game:
+</p>
+<ul><li> The lower the difficulty, the longer your hostile effects such as stuns will last on enemies and the shorter they will last on you.</li>
+<li> The lower the difficulty, the more damage your abilities will do.</li>
+<li> The lower the difficulty, the less likely the enemy AI will use devastating special abilities (Note: less likely does not mean 'does not use').</li>
+<li> Casual and Normal have reduced friendly or nullified fire damage damage from area effect spells. Hard and Nightmare require careful positioning and tactical use of spells.</li>
+<li> The higher the difficulty, the more careful you need to manage threat when using spells and abilities (The AI becomes smarter about picking targets).</li></ul>
+<h3><span class="mw-headline" id="Q:_What_is_spell_affinity_.3F">Q: What is spell affinity&#160;?</span></h3>
+<p>A: Spell Affinity was a design we toyed with for a while during development but decided not to implement.
+</p>
+<h3><span class="mw-headline" id="Q:_How_does_Rank_Based_Mitigation_Work_.3F">Q: How does Rank Based Mitigation Work&#160;?</span></h3>
+<p>A: In line with Dragon Age: Origin's asymmetric approach to rules, the game uses creature ranks (instead of levels) in addition to stats and resistances to define how creatures get affected by abilities. In short: Boss monsters get affected differently by abilities and effects than Lieutenants or Critters. 
+</p><p>The rank system is the primary balancing vector for the games difficulty levels and profoundly affects all aspects of combat. The gory details of this system are defined in <a href="/mw/index.php?title=Creature_ranks.xls&amp;action=edit&amp;redlink=1" class="new" title="Creature ranks.xls (page does not exist)">creature_ranks.xls</a> and <a href="/mw/index.php?title=Difficulty.xls&amp;action=edit&amp;redlink=1" class="new" title="Difficulty.xls (page does not exist)">difficulty.xls</a>.
+</p><p>Rank mitigation affects not just damage in- and output of a creature, but also the duration that hostile effects persist on it and is different for each difficulty level of the game. Note that party members have their own rank in this system and are handled differently from other creatures in some cases. 
+</p><p>Below is the formula used for rank based effect duration mitigation: 
+</p>
+<div dir="ltr" class="mw-geshi mw-code mw-content-ltr"><div class="dascript source-dascript"><pre class="de1"><span class="co1">// sys_resistances_h</span>
+<span class="co1">// @brief Returns an effect duration scaled by rank of oCreature and game difficulty</span>
+<span class="co1">// @author Georg</span>
+<a href="http://www.datoolset.net/wiki/index.php?title=float keyword"><span class="kw2">float</span></a> GetRankAdjustedEffectDuration<span class="br0">&#40;</span><a href="http://www.datoolset.net/wiki/index.php?title=object keyword"><span class="kw2">object</span></a> oCreature, <a href="http://www.datoolset.net/wiki/index.php?title=float keyword"><span class="kw2">float</span></a> fDur<span class="br0">&#41;</span>
+<span class="br0">&#123;</span>
+&#160;
+    <span class="co1">// -------------------------------------------------------------------------</span>
+    <span class="co1">// Georg: This deserves some explanation:</span>
+    <span class="co1">//</span>
+    <span class="co1">//        One of the core issues when designing the combat system was always</span>
+    <span class="co1">//        the fact that the story called for sequences during the game in which</span>
+    <span class="co1">//        your main character acts solo.</span>
+    <span class="co1">//</span>
+    <span class="co1">//        Characters reliant on special abilities, such as rogues, would require</span>
+    <span class="co1">//        them to be very effective in order to beat enemies that a standard tank</span>
+    <span class="co1">//        can plow through. However, if these abilities would maintain the same</span>
+    <span class="co1">//        effectiveness in a full party, most encounters would turn into a stunfest.</span>
+    <span class="co1">//</span>
+    <span class="co1">//        The solution is to add 1 second flat to each detrimental effect duration</span>
+    <span class="co1">//        lasting at least 1 second for each unoccupied slot in the party - before applying</span>
+    <span class="co1">//        rank and difficulty modifiers. This also makes solo play a bit more viable.</span>
+    <span class="co1">//</span>
+    <span class="co1">//        This is in addition to the diminishing returns on quickly successive stuns.</span>
+    <span class="co1">//</span>
+    <span class="co1">// -------------------------------------------------------------------------</span>
+    <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a> <span class="br0">&#40;</span><span class="sy0">!</span>IsPartyMember<span class="br0">&#40;</span>oCreature<span class="br0">&#41;</span><span class="br0">&#41;</span>
+    <span class="br0">&#123;</span>
+        <a href="http://www.datoolset.net/wiki/index.php?title=float keyword"><span class="kw2">float</span></a> fPartySizeModifier <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=IntToFloat"><span class="kw4">IntToFloat</span></a><span class="br0">&#40;</span>Max<span class="br0">&#40;</span><span class="nu0">0</span>,<span class="nu0">4</span> <span class="sy0">-</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetArraySize"><span class="kw4">GetArraySize</span></a><span class="br0">&#40;</span><a href="http://www.datoolset.net/wiki/index.php?title=GetPartyList"><span class="kw4">GetPartyList</span></a><span class="br0">&#40;</span><span class="br0">&#41;</span><span class="br0">&#41;</span><span class="br0">&#41;</span><span class="br0">&#41;</span>;
+&#160;
+        <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a> <span class="br0">&#40;</span>fDur <span class="sy0">&gt;=</span> <span class="nu0">1.0f</span><span class="br0">&#41;</span>
+        <span class="br0">&#123;</span>
+            fDur <span class="sy0">+=</span> fPartySizeModifier;
+        <span class="br0">&#125;</span>
+    <span class="br0">&#125;</span>
+&#160;
+    <a href="http://www.datoolset.net/wiki/index.php?title=float keyword"><span class="kw2">float</span></a> fRankDurMod <span class="sy0">=</span> Diff_GetDurationModifier<span class="br0">&#40;</span>oCreature<span class="br0">&#41;</span>;
+    <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a> <span class="br0">&#40;</span>fRankDurMod <span class="sy0">&gt;</span><span class="nu0">0.0f</span><span class="br0">&#41;</span>
+    <span class="br0">&#123;</span>
+        <a href="http://www.datoolset.net/wiki/index.php?title=return keyword"><span class="kw1">return</span></a> <span class="br0">&#40;</span>fDur <span class="sy0">*</span> fRankDurMod<span class="br0">&#41;</span>;
+    <span class="br0">&#125;</span>
+    <a href="http://www.datoolset.net/wiki/index.php?title=else keyword"><span class="kw1">else</span></a>
+    <span class="br0">&#123;</span>
+     <a href="http://www.datoolset.net/wiki/index.php?title=return keyword"><span class="kw1">return</span></a> fDur;
+    <span class="br0">&#125;</span>
+<span class="br0">&#125;</span></pre></div></div>
+<h3><span class="mw-headline" id="Q:_What_does_.27asymmetric_rules_system.27_mean_.3F">Q: What does 'asymmetric rules system' mean&#160;?</span></h3>
+<p>The goal behind Dragon Age: Origin's rule system was to create a fun and challenging video game experience first and foremost. 
+</p><p>We describe the rules as 'asymmetric' because a subset of the game rules treats player controlled characters and monsters differently, which is a deviation from pen and paper rule design that often require player and opponents to be treated exactly the same. 
+</p><p>Notable Examples:
+</p>
+<ul><li> Party members never die permanently (get shattered, etc.)</li>
+<li> Differently ranked creatures (including party members) get affected for different durations by effects</li>
+<li> In limited situations in the game, we apply benefits to the player to overcome greater odds than they would usually be able to. </li>
+<li> Some abilities will work diferently when deployed against the party (although the visual results might be identical).</li>
+<li> Elimination of instant death situations (not fun!) against players but not against monsters (fun!).</li>
+<li> Sustained abilities only work for players (the overhead is not justified for monsters that won't ever reappear after they die).</li></ul>
+<p><br />
+</p>
+<table class="nmbox" style="width:100%; border:1px solid #AAAAAA; border-collapse:collapse; clear:both; font-size:85%; margin:0.25em 0;">
+<tr style="background: #CFDFEF;">
+<th style="border:none; padding:4px 1em; border-right:1px solid #AAAAAA; text-align:center; white-space:nowrap;"> <b><a href="Dragon_Age_Toolset_Wiki%3ALanguage_policy.html" title="Dragon Age Toolset Wiki:Language policy">Language:</a></b></th>
+<td style="border:none; padding:0.25em 0.9em; width:100%; background:#DFEFFF;"><b><strong class="selflink">English</strong></b> <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>&#160;&#8226;&#32;<span lang="ru"><a href="Ability/ru.html" title="Ability/ru">русский</a></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></td>
+</tr></table>
+
+<!-- 
+NewPP limit report
+CPU time usage: 0.116 seconds
+Real time usage: 0.210 seconds
+Preprocessor visited node count: 990/1000000
+Preprocessor generated node count: 3411/1000000
+Post‐expand include size: 5608/2097152 bytes
+Template argument size: 2540/2097152 bytes
+Highest expansion depth: 8/40
+Expensive parser function count: 54/100
+-->
+
+<!-- 
+Transclusion expansion time report (%,ms,calls,template)
+100.00%  186.904      1 - -total
+ 72.15%  134.845      1 - Template:Languages
+ 68.68%  128.373      1 - Template:LanguagesBox
+ 54.20%  101.303     54 - Template:LanguagesLang
+ 13.60%   25.425      1 - Template:Infobox_script
+  7.77%   14.524      1 - Template:Infobox_template
+  6.88%   12.855      1 - Template:LanguagesTitle
+-->
+
+<!-- Saved in parser cache with key db714099484-datoolwiki_:pcache:idhash:17-0!*!0!!en!*!* and timestamp 20260531101101 and revision id 19445
+ -->
+</div>									<div class="printfooter">
+						Retrieved from "<a dir="ltr" href="Ability.html">https://www.datoolset.net/mw/index.php?title=Ability&amp;oldid=19445</a>"					</div>
+													<div id='catlinks' class='catlinks'><div id="mw-normal-catlinks" class="mw-normal-catlinks"><a href="/wiki/Special:Categories" title="Special:Categories">Category</a>: <ul><li><a href="Category%3AAbilities.html" title="Category:Abilities">Abilities</a></li></ul></div></div>												<div class="visualClear"></div>
+							</div>
+		</div>
+		<div id="mw-navigation">
+			<h2>Navigation menu</h2>
+
+			<div id="mw-head">
+									<div id="p-personal" role="navigation" class="" aria-labelledby="p-personal-label">
+						<h3 id="p-personal-label">Personal tools</h3>
+						<ul>
+							<li id="pt-login"><a href="/mw/index.php?title=Special:UserLogin&amp;returnto=Ability" title="You are encouraged to log in; however, it is not mandatory [o]" accesskey="o">Log in</a></li>						</ul>
+					</div>
+									<div id="left-navigation">
+										<div id="p-namespaces" role="navigation" class="vectorTabs" aria-labelledby="p-namespaces-label">
+						<h3 id="p-namespaces-label">Namespaces</h3>
+						<ul>
+															<li  id="ca-nstab-main" class="selected"><span><a href="Ability.html"  title="View the content page [c]" accesskey="c">Page</a></span></li>
+															<li  id="ca-talk" class="new"><span><a href="/mw/index.php?title=Talk:Ability&amp;action=edit&amp;redlink=1"  title="Discussion about the content page [t]" accesskey="t">Discussion</a></span></li>
+													</ul>
+					</div>
+										<div id="p-variants" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-variants-label">
+												<h3 id="p-variants-label"><span>Variants</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+									</div>
+				<div id="right-navigation">
+										<div id="p-views" role="navigation" class="vectorTabs" aria-labelledby="p-views-label">
+						<h3 id="p-views-label">Views</h3>
+						<ul>
+															<li id="ca-view" class="selected"><span><a href="Ability.html" >Read</a></span></li>
+															<li id="ca-viewsource"><span><a href="Ability.html"  title="This page is protected.&#10;You can view its source [e]" accesskey="e">View source</a></span></li>
+															<li id="ca-history" class="collapsible"><span><a href="Ability.html"  title="Past revisions of this page [h]" accesskey="h">View history</a></span></li>
+													</ul>
+					</div>
+										<div id="p-cactions" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-cactions-label">
+						<h3 id="p-cactions-label"><span>More</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+										<div id="p-search" role="search">
+						<h3>
+							<label for="searchInput">Search</label>
+						</h3>
+
+						<form action="/mw/index.php" id="searchform">
+														<div id="simpleSearch">
+															<input type="search" name="search" placeholder="Search" title="Search Dragon Age Toolset Wiki [f]" accesskey="f" id="searchInput" /><input type="hidden" value="Special:Search" name="title" /><input type="submit" name="fulltext" value="Search" title="Search the pages for this text" id="mw-searchButton" class="searchButton mw-fallbackSearchButton" /><input type="submit" name="go" value="Go" title="Go to a page with this exact name if exists" id="searchButton" class="searchButton" />								</div>
+						</form>
+					</div>
+									</div>
+			</div>
+			<div id="mw-panel">
+				<div id="p-logo" role="banner"><a class="mw-wiki-logo" href="Main_Page.html"  title="Visit the main page"></a></div>
+						<div class="portal" role="navigation" id='p-navigation' aria-labelledby='p-navigation-label'>
+			<h3 id='p-navigation-label'>Navigation</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-mainpage-description"><a href="Main_Page.html" title="Visit the main page [z]" accesskey="z">Main page</a></li>
+													<li id="n-recentchanges"><a href="/wiki/Special:RecentChanges" title="A list of recent changes in the wiki [r]" accesskey="r">Recent changes</a></li>
+													<li id="n-randompage"><a href="/wiki/Special:Random" title="Load a random page [x]" accesskey="x">Random page</a></li>
+													<li id="n-help"><a href="https://www.mediawiki.org/wiki/Special:MyLanguage/Help:Contents" title="The place to find out">Help</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-Links' aria-labelledby='p-Links-label'>
+			<h3 id='p-Links-label'>Links</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-Toolset-forums"><a href="http://forum.bioware.com/forum/30-dragon-age-toolset" rel="nofollow">Toolset forums</a></li>
+													<li id="n-Legacy-forums"><a href="http://social.bioware.com/forum/1/subindex/70" rel="nofollow">Legacy forums</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-tb' aria-labelledby='p-tb-label'>
+			<h3 id='p-tb-label'>Tools</h3>
+
+			<div class="body">
+									<ul>
+													<li id="t-whatlinkshere"><a href="/wiki/Special:WhatLinksHere/Ability" title="A list of all wiki pages that link here [j]" accesskey="j">What links here</a></li>
+													<li id="t-recentchangeslinked"><a href="/wiki/Special:RecentChangesLinked/Ability" title="Recent changes in pages linked from this page [k]" accesskey="k">Related changes</a></li>
+													<li id="t-specialpages"><a href="/wiki/Special:SpecialPages" title="A list of all special pages [q]" accesskey="q">Special pages</a></li>
+													<li id="t-print"><a href="Ability.html" rel="alternate" title="Printable version of this page [p]" accesskey="p">Printable version</a></li>
+													<li id="t-permalink"><a href="Ability.html" title="Permanent link to this revision of the page">Permanent link</a></li>
+													<li id="t-info"><a href="Ability.html" title="More information about this page">Page information</a></li>
+											</ul>
+							</div>
+		</div>
+				</div>
+		</div>
+		<div id="footer" role="contentinfo">
+							<ul id="footer-info">
+											<li id="footer-info-lastmod"> This page was last modified on 6 April 2015, at 21:00.</li>
+									</ul>
+							<ul id="footer-places">
+											<li id="footer-places-privacy"><a href="/wiki/Dragon_Age_Toolset_Wiki:Privacy_policy" title="Dragon Age Toolset Wiki:Privacy policy">Privacy policy</a></li>
+											<li id="footer-places-about"><a href="/wiki/Dragon_Age_Toolset_Wiki:About" title="Dragon Age Toolset Wiki:About">About Dragon Age Toolset Wiki</a></li>
+											<li id="footer-places-disclaimer"><a href="/wiki/Dragon_Age_Toolset_Wiki:General_disclaimer" title="Dragon Age Toolset Wiki:General disclaimer">Disclaimers</a></li>
+									</ul>
+										<ul id="footer-icons" class="noprint">
+											<li id="footer-poweredbyico">
+															<a href="//www.mediawiki.org/"><img src="../assets/mw/resources/assets/poweredby_mediawiki_88x31.png" alt="Powered by MediaWiki" srcset="../assets/mw/resources/assets/poweredby_mediawiki_132x47.png 1.5x, ../assets/mw/resources/assets/poweredby_mediawiki_176x62.png 2x" width="88" height="31" /></a>
+													</li>
+									</ul>
+						<div style="clear:both"></div>
+		</div>
+		<script>if(window.jQuery)jQuery.ready();</script><script>if(window.mw){
+mw.loader.state({"site":"loading","user":"ready","user.groups":"ready"});
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.toc","mediawiki.action.view.postEdit","mediawiki.user","mediawiki.hidpi","mediawiki.page.ready","mediawiki.searchSuggest"],null,true);
+}</script>
+<script>if(window.mw){
+document.write("\u003Cscript src=\"https://www.datoolset.net/mw/load.php?debug=false\u0026amp;lang=en\u0026amp;modules=site\u0026amp;only=scripts\u0026amp;skin=vector\u0026amp;*\"\u003E\u003C/script\u003E");
+}</script>
+<script>if(window.mw){
+mw.config.set({"wgBackendResponseTime":304});
+}</script>
+	</body>
+</html>

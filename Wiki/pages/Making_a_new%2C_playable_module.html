@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" class="client-nojs">
+<head>
+<meta charset="UTF-8" />
+<title>Making a new, playable module - Dragon Age Toolset Wiki</title>
+<meta name="generator" content="MediaWiki 1.25.6" />
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="search" type="application/opensearchdescription+xml" href="/mw/opensearch_desc.php" title="Dragon Age Toolset Wiki (en)" />
+<link rel="EditURI" type="application/rsd+xml" href="https://www.datoolset.net/mw/api.php?action=rsd" />
+<link rel="alternate" hreflang="x-default" href="Making_a_new%2C_playable_module.html" />
+<link rel="alternate" type="application/atom+xml" title="Dragon Age Toolset Wiki Atom feed" href="/mw/index.php?title=Special:RecentChanges&amp;feed=atom" />
+<meta name="ResourceLoaderDynamicStyles" content="" />
+<style>a:lang(ar),a:lang(kk-arab),a:lang(mzn),a:lang(ps),a:lang(ur){text-decoration:none}
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-css:7:270a0dcd3ae587df0f041aebfc42e61b */</style>
+<script>if(window.mw){
+mw.config.set({"wgCanonicalNamespace":"","wgCanonicalSpecialPageName":false,"wgNamespaceNumber":0,"wgPageName":"Making_a_new,_playable_module","wgTitle":"Making a new, playable module","wgCurRevisionId":19979,"wgRevisionId":19979,"wgArticleId":4702,"wgIsArticle":true,"wgIsRedirect":false,"wgAction":"view","wgUserName":null,"wgUserGroups":["*"],"wgCategories":["Articles containing BioWare Social Network links"],"wgBreakFrames":false,"wgPageContentLanguage":"en","wgPageContentModel":"wikitext","wgSeparatorTransformTable":["",""],"wgDigitTransformTable":["",""],"wgDefaultDateFormat":"dmy","wgMonthNames":["","January","February","March","April","May","June","July","August","September","October","November","December"],"wgMonthNamesShort":["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],"wgRelevantPageName":"Making_a_new,_playable_module","wgRelevantArticleId":4702,"wgIsProbablyEditable":false,"wgRestrictionEdit":[],"wgRestrictionMove":[]});
+}</script><script>if(window.mw){
+mw.loader.implement("user.options",function($,jQuery){mw.user.options.set({"variant":"en"});});mw.loader.implement("user.tokens",function($,jQuery){mw.user.tokens.set({"editToken":"+\\","patrolToken":"+\\","watchToken":"+\\"});});
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-js:7:a5c52c063dc436c1ca7c9f456936a5e9 */
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.page.startup","mediawiki.legacy.wikibits","mediawiki.legacy.ajax","skins.vector.js"]);
+}</script>
+<!--[if lt IE 7]><style type="text/css">body{behavior:url("/mw/skins/Vector/csshover.min.htc")}</style><![endif]-->
+<link rel="stylesheet" href="../assets/local/wiki-static.css" />
+</head>
+<body class="mediawiki ltr sitedir-ltr ns-0 ns-subject page-Making_a_new_playable_module skin-vector action-view">
+		<div id="mw-page-base" class="noprint"></div>
+		<div id="mw-head-base" class="noprint"></div>
+		<div id="content" class="mw-body" role="main">
+			<a id="top"></a>
+
+						<div class="mw-indicators">
+</div>
+			<h1 id="firstHeading" class="firstHeading" lang="en">Making a new, playable module</h1>
+						<div id="bodyContent" class="mw-body-content">
+									<div id="siteSub">From Dragon Age Toolset Wiki</div>
+								<div id="contentSub"></div>
+												<div id="jump-to-nav" class="mw-jump">
+					Jump to:					<a href="#mw-head">navigation</a>, 					<a href="#p-search">search</a>
+				</div>
+				<div id="mw-content-text" lang="en" dir="ltr" class="mw-content-ltr"><div style="background:#f6f6f6; border: 1px solid #d0a5a5; padding:4px; margin-left:20%; margin-right:20%;">
+<p><b>This article contains links to the BioWare Social Network (BSN), which is now closed.</b></p>
+<p>These links should be replaced with working links where possible, and tutorials edited to remove reliance on BSN.</p>
+</div>
+<p>Anyone who cares has probably gotten the toolset up and running, but in case you were struggling like me, here are some notes to save you a little time, hair, and anguish. You can sell those back to a vendor for a few copper.
+</p>
+<div id="toc" class="toc"><div id="toctitle"><h2>Contents</h2></div>
+<ul>
+<li class="toclevel-1 tocsection-1"><a href="#Installing_the_Toolset"><span class="tocnumber">1</span> <span class="toctext">Installing the Toolset</span></a></li>
+<li class="toclevel-1 tocsection-2"><a href="#Creating_a_Module"><span class="tocnumber">2</span> <span class="toctext">Creating a Module</span></a></li>
+<li class="toclevel-1 tocsection-3"><a href="#Setting_Up_Your_New_Module"><span class="tocnumber">3</span> <span class="toctext">Setting Up Your New Module</span></a>
+<ul>
+<li class="toclevel-2 tocsection-4"><a href="#Getting_a_basic_usable_character"><span class="tocnumber">3.1</span> <span class="toctext">Getting a basic usable character</span></a></li>
+<li class="toclevel-2 tocsection-5"><a href="#Setting_up_a_basic_level"><span class="tocnumber">3.2</span> <span class="toctext">Setting up a basic level</span></a></li>
+<li class="toclevel-2 tocsection-6"><a href="#Navigating_the_Toolset"><span class="tocnumber">3.3</span> <span class="toctext">Navigating the Toolset</span></a></li>
+</ul>
+</li>
+<li class="toclevel-1 tocsection-7"><a href="#Exporting_Resources"><span class="tocnumber">4</span> <span class="toctext">Exporting Resources</span></a></li>
+</ul>
+</div>
+
+<h2><span class="mw-headline" id="Installing_the_Toolset">Installing the Toolset</span></h2>
+<p>You can find the Wiki's main installation notes at <a href="Installing_the_toolset.html" title="Installing the toolset">Installing the toolset</a>. First off, some installation notes:
+</p>
+<ul><li> Make sure you have Activepython 2.5.x.x installed (or Python 2.5.x.x with Win32 extensions). You want those in BEFORE you get your toolset installed, and it does need to be the 2.5 version.</li>
+<li> There's also an updated LightMapper script. You get the LightMapper <a rel="nofollow" class="external text" href="http://social.bioware.com/project/717/%7C">here</a>.</li></ul>
+<p>More on these later, but most likely you will get to know the LightMapper very well.
+</p>
+<h2><span class="mw-headline" id="Creating_a_Module">Creating a Module</span></h2>
+<div class="floatright"><a href="File%3AManage_modules.jpg.html" class="image"><img alt="Manage modules.jpg" src="../assets/mw/images/c/c5/Manage_modules.jpg" width="200" height="200" /></a></div>
+<p>The first thing you should do is <a href="Creating_a_module.html" title="Creating a module">create a module</a>. As you can see, you start with "Manage Modules," NOT with File-&gt; New. When you installed the Dragon Age Toolset, you were also asked to install a SQL database, and this is where many Dragon Age resources are stored. This means that if you want to point to actual folders for reference, custom level files and so forth, you should make a folder yourself and put those resources in for you to mangle, er, use. Remember that 1) it's difficult to delete your module, unless you want to trash your SQL database and 2) even though modules are all called "addins," any module can either stand alone or be used to enhance an existing module. They are simply addins of the core of the game, not of any particular campaign.
+</p><p><b>Takeaways</b>
+</p>
+<ul><li> The Toolset uses a SQL database system to store information.</li>
+<li> Remember that it's difficult to delete modules or change their names because they are stored in the database.</li>
+<li> New modules are used as both addins or standalone campaigns.</li>
+<li> Use the Manage Modules menu to control many of the basic functions of your module.</li>
+<li> Under Content Module, select Core Game Resources to use as a base for a standalone module.</li></ul>
+<h2><span class="mw-headline" id="Setting_Up_Your_New_Module">Setting Up Your New Module</span></h2>
+<p>This is the quick and dirty way to make a brand new module. We'll get into adjusting the details as we go through this series.
+</p>
+<h3><span class="mw-headline" id="Getting_a_basic_usable_character">Getting a basic usable character</span></h3>
+<p>I found it easiest to just cut and paste from Bryan Derksen's script from the Demo to start. Open up the Demo with Manage Modules and select the Script Palette in the Palette window on the right and you'll see some little gray can icons in the folder "Demo." Choose "Demo_Module" and you'll see the starting script for the Toolset Demo.
+</p>
+<ul><li> You can copy and paste the basics of that script (Thanks Bryan Derksen!) into a script of your own. Just highlight his script and CTRL-C to copy.</li>
+<li> To set up basic character creation, create a new script by going into the File menu and selecting New &gt; Script. Paste the text you just copied from the demo in, or use this more basic template:</li></ul>
+<pre>
+#include "log_h"
+#include "utility_h"
+#include "wrappers_h"
+#include "events_h"
+
+void main()
+{
+    event ev = GetCurrentEvent();
+    int nEventType = GetEventType(ev);
+    string sDebug;
+    object oPC = GetHero();
+    object oParty = GetParty(oPC);
+    int nEventHandled = FALSE;
+
+    switch(nEventType)
+    {
+        case EVENT_TYPE_MODULE_START:
+        {
+            PreloadCharGen();
+            StartCharGen(GetHero(),0);
+            break;
+        }
+    }
+    if (!nEventHandled)
+    {
+        HandleEvent(ev, RESOURCE_SCRIPT_MODULE_CORE);
+    }
+}
+</pre>
+<ul><li> Then open up Manage Modules on your own Module and select Properties.</li>
+<li> Right under the name of your module, there's a field labeled "Script" - use this to enter the starting script for your module.</li></ul>
+<p>Now you have good old fashioned Character Generation! We'll look at how to modify that a little later, as script writing is something you'll most likely get to delve deep into at some point in the future. Note that without Character Generation of this sort, you'll end up with a fairly ugly fellow named Jaden (Sorry Jaden) who has 0 for all stats and 1 HP.
+</p><p><b>Takeaways</b>
+</p>
+<ul><li> Use File &gt; New to create new resources that you will need for your module.</li>
+<li> You can look at examples from the Demo, Single Player, or any other module for guidance.</li>
+<li> You have to have a <i>script</i> to make a new character in your module.</li>
+<li> A number of fairly basic features like character generation and moving between levels are controlled by scripting.</li></ul>
+<h3><span class="mw-headline" id="Setting_up_a_basic_level">Setting up a basic level</span></h3>
+<p>There's your Character, but now he needs a place to go. You can muck with the Level Editor for custom levels, but right now it may be more pain than I want to give you, so I'll talk about it a little later. For now, we'll stick with the default areas. Here's what you do:
+</p>
+<ul><li> Go to File &gt; New &gt; Area and go through the motions of making a new area.</li>
+<li> Once you have it, go to the Area Palette. All the Palettes are on the right side of the screen, and the Area Palette is the first one - it looks like a little bed.</li>
+<li> Open up your area by double clicking on its little gray icon.</li>
+<li> The Object Inspector on the lower right shows your open resource's properties. Under your new area's properties, choose an Area Layout to make a map that you can walk around. Any layout will do, try opening them up and looking around.</li>
+<li> First things first, you need to tell the module where your character will start. On the left-hand side, you'll see "Waypoints" - right-click there and insert a new one.</li>
+<li> Edit the name and tag of your Waypoint in its properties.</li></ul>
+<p>You can also change its color to Start if that matters to you - I find  it a little easier to recognize that way. There's a starting area now and a starting Waypoint, and this means you can adjust your module to include these.
+</p>
+<ul><li> Once more, enter Manage Modules and choose Properties.</li>
+<li> Set the Starting Area to the area you just created.</li>
+<li> Set the Starting Waypoint to the Waypoint that you just made.</li></ul>
+<p><a href="File%3ALevel_ss.jpg.html" class="image"><img alt="Level ss.jpg" src="../assets/mw/images/0/01/Level_ss.jpg" width="500" height="312" /></a>
+</p><p><b>Takeaways</b>
+</p>
+<ul><li> The Palettes, in the upper right, let you manage resources for a specific aspect of the game - scripts, NPCs, plots, etc.</li>
+<li> The Object Inspector, in the lower right, lets you see and edit properties of a specific resource.</li></ul>
+<h3><span class="mw-headline" id="Navigating_the_Toolset">Navigating the Toolset</span></h3>
+<p>Here's your first taste of mouse navigation in the toolset as well - by default: you can rotate with the Middle Mouse button, zoom with Scroll Wheel, and hold CTRL+left click to pan from side to side. Sorry, I'm not sure about one-button mouse options.
+</p>
+<h2><span class="mw-headline" id="Exporting_Resources">Exporting Resources</span></h2>
+<p>There you have it, you're done! Right? Not just yet - remember this info is stored in the database. Now you need to bring it into the game.
+</p>
+<ul><li> Go to Tools &gt; Export.</li>
+<li> Choose "Export without Dependent Resources". In general, you want to export as few resources as possible.</li>
+<li> The Log Window at the bottom will show the status of your action, including where the Campaign resource gets exported and if there were errors - hopefully not.</li>
+<li> Now when you go to DA, you'll be able to go to Other Campaigns and select your custom campaign!</li></ul>
+<p><a href="File%3ACampaign_ss.jpg.html" class="image"><img alt="Campaign ss.jpg" src="../assets/mw/images/5/50/Campaign_ss.jpg" width="500" height="281" /></a>
+</p><p><b>Takeaways</b>
+</p>
+<ul><li> Use Tools &gt; Export to make actual files usable by the game for your module.</li>
+<li> You should export after making changes to any areas, so that changes you make in the toolset are reflected in your game.</li></ul>
+
+<!-- 
+NewPP limit report
+CPU time usage: 0.052 seconds
+Real time usage: 0.089 seconds
+Preprocessor visited node count: 40/1000000
+Preprocessor generated node count: 70/1000000
+Post‐expand include size: 397/2097152 bytes
+Template argument size: 0/2097152 bytes
+Highest expansion depth: 2/40
+Expensive parser function count: 0/100
+-->
+
+<!-- 
+Transclusion expansion time report (%,ms,calls,template)
+100.00%    4.143      1 - Template:BSN_link
+100.00%    4.143      1 - -total
+-->
+
+<!-- Saved in parser cache with key db714099484-datoolwiki_:pcache:idhash:4702-0!*!0!!en!5!* and timestamp 20260530214009 and revision id 19979
+ -->
+</div>									<div class="printfooter">
+						Retrieved from "<a dir="ltr" href="Making_a_new%2C_playable_module.html">https://www.datoolset.net/mw/index.php?title=Making_a_new,_playable_module&amp;oldid=19979</a>"					</div>
+													<div id='catlinks' class='catlinks'><div id="mw-normal-catlinks" class="mw-normal-catlinks"><a href="/wiki/Special:Categories" title="Special:Categories">Category</a>: <ul><li><a href="Category%3AArticles_containing_BioWare_Social_Network_links.html" title="Category:Articles containing BioWare Social Network links">Articles containing BioWare Social Network links</a></li></ul></div></div>												<div class="visualClear"></div>
+							</div>
+		</div>
+		<div id="mw-navigation">
+			<h2>Navigation menu</h2>
+
+			<div id="mw-head">
+									<div id="p-personal" role="navigation" class="" aria-labelledby="p-personal-label">
+						<h3 id="p-personal-label">Personal tools</h3>
+						<ul>
+							<li id="pt-login"><a href="/mw/index.php?title=Special:UserLogin&amp;returnto=Making+a+new%2C+playable+module" title="You are encouraged to log in; however, it is not mandatory [o]" accesskey="o">Log in</a></li>						</ul>
+					</div>
+									<div id="left-navigation">
+										<div id="p-namespaces" role="navigation" class="vectorTabs" aria-labelledby="p-namespaces-label">
+						<h3 id="p-namespaces-label">Namespaces</h3>
+						<ul>
+															<li  id="ca-nstab-main" class="selected"><span><a href="Making_a_new%2C_playable_module.html"  title="View the content page [c]" accesskey="c">Page</a></span></li>
+															<li  id="ca-talk" class="new"><span><a href="/mw/index.php?title=Talk:Making_a_new,_playable_module&amp;action=edit&amp;redlink=1"  title="Discussion about the content page [t]" accesskey="t">Discussion</a></span></li>
+													</ul>
+					</div>
+										<div id="p-variants" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-variants-label">
+												<h3 id="p-variants-label"><span>Variants</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+									</div>
+				<div id="right-navigation">
+										<div id="p-views" role="navigation" class="vectorTabs" aria-labelledby="p-views-label">
+						<h3 id="p-views-label">Views</h3>
+						<ul>
+															<li id="ca-view" class="selected"><span><a href="Making_a_new%2C_playable_module.html" >Read</a></span></li>
+															<li id="ca-viewsource"><span><a href="Making_a_new%2C_playable_module.html"  title="This page is protected.&#10;You can view its source [e]" accesskey="e">View source</a></span></li>
+															<li id="ca-history" class="collapsible"><span><a href="Making_a_new%2C_playable_module.html"  title="Past revisions of this page [h]" accesskey="h">View history</a></span></li>
+													</ul>
+					</div>
+										<div id="p-cactions" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-cactions-label">
+						<h3 id="p-cactions-label"><span>More</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+										<div id="p-search" role="search">
+						<h3>
+							<label for="searchInput">Search</label>
+						</h3>
+
+						<form action="/mw/index.php" id="searchform">
+														<div id="simpleSearch">
+															<input type="search" name="search" placeholder="Search" title="Search Dragon Age Toolset Wiki [f]" accesskey="f" id="searchInput" /><input type="hidden" value="Special:Search" name="title" /><input type="submit" name="fulltext" value="Search" title="Search the pages for this text" id="mw-searchButton" class="searchButton mw-fallbackSearchButton" /><input type="submit" name="go" value="Go" title="Go to a page with this exact name if exists" id="searchButton" class="searchButton" />								</div>
+						</form>
+					</div>
+									</div>
+			</div>
+			<div id="mw-panel">
+				<div id="p-logo" role="banner"><a class="mw-wiki-logo" href="Main_Page.html"  title="Visit the main page"></a></div>
+						<div class="portal" role="navigation" id='p-navigation' aria-labelledby='p-navigation-label'>
+			<h3 id='p-navigation-label'>Navigation</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-mainpage-description"><a href="Main_Page.html" title="Visit the main page [z]" accesskey="z">Main page</a></li>
+													<li id="n-recentchanges"><a href="/wiki/Special:RecentChanges" title="A list of recent changes in the wiki [r]" accesskey="r">Recent changes</a></li>
+													<li id="n-randompage"><a href="/wiki/Special:Random" title="Load a random page [x]" accesskey="x">Random page</a></li>
+													<li id="n-help"><a href="https://www.mediawiki.org/wiki/Special:MyLanguage/Help:Contents" title="The place to find out">Help</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-Links' aria-labelledby='p-Links-label'>
+			<h3 id='p-Links-label'>Links</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-Toolset-forums"><a href="http://forum.bioware.com/forum/30-dragon-age-toolset" rel="nofollow">Toolset forums</a></li>
+													<li id="n-Legacy-forums"><a href="http://social.bioware.com/forum/1/subindex/70" rel="nofollow">Legacy forums</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-tb' aria-labelledby='p-tb-label'>
+			<h3 id='p-tb-label'>Tools</h3>
+
+			<div class="body">
+									<ul>
+													<li id="t-whatlinkshere"><a href="/wiki/Special:WhatLinksHere/Making_a_new,_playable_module" title="A list of all wiki pages that link here [j]" accesskey="j">What links here</a></li>
+													<li id="t-recentchangeslinked"><a href="/wiki/Special:RecentChangesLinked/Making_a_new,_playable_module" title="Recent changes in pages linked from this page [k]" accesskey="k">Related changes</a></li>
+													<li id="t-specialpages"><a href="/wiki/Special:SpecialPages" title="A list of all special pages [q]" accesskey="q">Special pages</a></li>
+													<li id="t-print"><a href="Making_a_new%2C_playable_module.html" rel="alternate" title="Printable version of this page [p]" accesskey="p">Printable version</a></li>
+													<li id="t-permalink"><a href="Making_a_new%2C_playable_module.html" title="Permanent link to this revision of the page">Permanent link</a></li>
+													<li id="t-info"><a href="Making_a_new%2C_playable_module.html" title="More information about this page">Page information</a></li>
+											</ul>
+							</div>
+		</div>
+				</div>
+		</div>
+		<div id="footer" role="contentinfo">
+							<ul id="footer-info">
+											<li id="footer-info-lastmod"> This page was last modified on 1 February 2022, at 17:21.</li>
+									</ul>
+							<ul id="footer-places">
+											<li id="footer-places-privacy"><a href="/wiki/Dragon_Age_Toolset_Wiki:Privacy_policy" title="Dragon Age Toolset Wiki:Privacy policy">Privacy policy</a></li>
+											<li id="footer-places-about"><a href="/wiki/Dragon_Age_Toolset_Wiki:About" title="Dragon Age Toolset Wiki:About">About Dragon Age Toolset Wiki</a></li>
+											<li id="footer-places-disclaimer"><a href="/wiki/Dragon_Age_Toolset_Wiki:General_disclaimer" title="Dragon Age Toolset Wiki:General disclaimer">Disclaimers</a></li>
+									</ul>
+										<ul id="footer-icons" class="noprint">
+											<li id="footer-poweredbyico">
+															<a href="//www.mediawiki.org/"><img src="../assets/mw/resources/assets/poweredby_mediawiki_88x31.png" alt="Powered by MediaWiki" srcset="../assets/mw/resources/assets/poweredby_mediawiki_132x47.png 1.5x, ../assets/mw/resources/assets/poweredby_mediawiki_176x62.png 2x" width="88" height="31" /></a>
+													</li>
+									</ul>
+						<div style="clear:both"></div>
+		</div>
+		<script>if(window.jQuery)jQuery.ready();</script><script>if(window.mw){
+mw.loader.state({"site":"loading","user":"ready","user.groups":"ready"});
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.toc","mediawiki.action.view.postEdit","mediawiki.user","mediawiki.hidpi","mediawiki.page.ready","mediawiki.searchSuggest"],null,true);
+}</script>
+<script>if(window.mw){
+document.write("\u003Cscript src=\"https://www.datoolset.net/mw/load.php?debug=false\u0026amp;lang=en\u0026amp;modules=site\u0026amp;only=scripts\u0026amp;skin=vector\u0026amp;*\"\u003E\u003C/script\u003E");
+}</script>
+<script>if(window.mw){
+mw.config.set({"wgBackendResponseTime":215});
+}</script>
+	</body>
+</html>

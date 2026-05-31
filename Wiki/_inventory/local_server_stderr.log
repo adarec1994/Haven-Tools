@@ -1,0 +1,275 @@
+127.0.0.1 - - [01/Jun/2026 03:03:30] "GET /wiki/Main_Page HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:30] "HEAD /assets/mw/resources/assets/poweredby_mediawiki_88x31.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:30] "HEAD /wiki/Main_Page.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:30] "HEAD /wiki/Getting_Started.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:30] "HEAD /wiki/Getting_Started.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:30] "HEAD /wiki/Creating_an_account.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:30] "HEAD /wiki/Installing_the_toolset.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:30] "HEAD /wiki/Installation_troubleshooting.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:30] "HEAD /wiki/Overview_of_the_toolset.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:30] "HEAD /wiki/Tutorials.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:30] "HEAD /wiki/Tutorials.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:30] "HEAD /wiki/Design.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:30] "HEAD /wiki/Design.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:30] "HEAD /wiki/Art.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:30] "HEAD /wiki/Art.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:30] "HEAD /wiki/Cinematography.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:30] "HEAD /wiki/Cinematography.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:30] "HEAD /wiki/Sound_and_music.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:30] "HEAD /wiki/Sound_and_music.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:30] "HEAD /wiki/Script.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:30] "HEAD /wiki/Script.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:30] "HEAD /wiki/3rd_party_extensions.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:30] "HEAD /wiki/3rd_party_extensions.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:30] "HEAD /wiki/Technical_information.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:30] "HEAD /wiki/GeSHi_highlighting.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:30] "HEAD /wiki/Dragon_Age_Toolset_Wiki%3ALanguage_policy.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:30] "HEAD /wiki/Main_Page/ru.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:30] "HEAD /wiki/Main_Page.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:30] "HEAD /wiki/Main_Page.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:30] "HEAD /wiki/Talk%3AMain_Page.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:30] "HEAD /wiki/Main_Page.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:30] "HEAD /wiki/Main_Page.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:30] "GET /wiki/Level_editor HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:30] "HEAD /assets/mw/images/c/c2/IconArea.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:30] "HEAD /assets/mw/images/0/07/IconAreaList.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:30] "HEAD /assets/mw/images/4/45/IconCharacter.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:30] "HEAD /assets/mw/images/2/20/IconConversation.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:30] "HEAD /assets/mw/images/9/9d/IconCreature.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:30] "HEAD /assets/mw/images/5/5a/IconCutscene.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:30] "HEAD /assets/mw/images/d/d2/IconItem.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:30] "HEAD /assets/mw/images/b/b6/IconMap.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:30] "HEAD /assets/mw/images/2/24/IconMerchant.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:30] "HEAD /assets/mw/images/3/30/IconPlaceable.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:30] "HEAD /assets/mw/images/8/8e/IconPlot.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:30] "HEAD /assets/mw/images/1/1e/IconScript.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:30] "HEAD /assets/mw/images/8/83/IconClientScript.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:30] "HEAD /assets/mw/images/f/f6/IconStage.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:30] "HEAD /assets/mw/images/c/c6/IconTrigger.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:30] "HEAD /assets/mw/images/9/97/IconSound.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:30] "HEAD /assets/mw/images/e/e9/IconModel.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:30] "HEAD /assets/mw/images/a/a0/IconAll.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:30] "HEAD /assets/mw/images/e/e9/IconModel.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:30] "HEAD /assets/mw/images/c/c2/IconArea.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:30] "HEAD /assets/mw/images/0/07/IconAreaList.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:30] "HEAD /assets/mw/images/4/45/IconCharacter.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:30] "HEAD /assets/mw/images/8/83/IconClientScript.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:30] "HEAD /assets/mw/images/2/20/IconConversation.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:30] "HEAD /assets/mw/images/9/9d/IconCreature.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:30] "HEAD /assets/mw/images/5/5a/IconCutscene.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:30] "HEAD /assets/mw/images/d/d2/IconItem.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:30] "HEAD /assets/mw/images/b/b6/IconMap.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:30] "HEAD /assets/mw/images/2/24/IconMerchant.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:30] "HEAD /assets/mw/images/3/30/IconPlaceable.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:30] "HEAD /wiki/Level_editor.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:30] "HEAD /wiki/Resource_palette.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:30] "HEAD /wiki/Area.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:30] "HEAD /wiki/Area_list.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:30] "HEAD /wiki/Character.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:30] "HEAD /wiki/Conversation.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:30] "HEAD /wiki/Creature.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:30] "HEAD /wiki/Cutscene.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:30] "HEAD /wiki/Item.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:30] "HEAD /wiki/Map.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:30] "HEAD /wiki/Merchant.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:30] "HEAD /wiki/Placeable.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:31] "HEAD /wiki/Plot.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:31] "HEAD /wiki/Script.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:31] "HEAD /wiki/Client_script.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:31] "HEAD /wiki/Stage.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:31] "HEAD /wiki/Trigger.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:31] "HEAD /wiki/Sound.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:31] "HEAD /wiki/Model_Placement.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:31] "HEAD /wiki/Designer_Resources.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:31] "HEAD /wiki/Art_Resources.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:31] "HEAD /wiki/Animation_blend_tree_editor.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:31] "HEAD /wiki/Level.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:31] "HEAD /wiki/Material_editor.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:31] "HEAD /wiki/Model.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:31] "HEAD /wiki/Model_Placement.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:31] "HEAD /wiki/Morph.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:31] "HEAD /wiki/VFX_editor.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:31] "HEAD /wiki/FaceFX.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:31] "HEAD /wiki/Sound_and_music.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:31] "GET /wiki/2DA HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:31] "HEAD /assets/mw/images/5/5b/Edit-GDA-Values.jpg HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:31] "HEAD /assets/mw/resources/assets/poweredby_mediawiki_88x31.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:31] "HEAD /wiki/2da.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:31] "HEAD /wiki/2da.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:31] "HEAD /wiki/2da.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:31] "HEAD /wiki/GDA.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:31] "HEAD /wiki/Compiling_2DAs.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:31] "HEAD /wiki/Int_%282da_type%29.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:31] "HEAD /wiki/String_%282da_type%29.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:31] "HEAD /wiki/Resource_%282da_type%29.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:31] "HEAD /wiki/Float_%282da_type%29.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:31] "HEAD /wiki/Bool_%282da_type%29.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:31] "HEAD /wiki/Comment_%282da_type%29.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:31] "HEAD /wiki/2da_base.xls.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:31] "HEAD /wiki/2DA_ranges_in_use.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:31] "HEAD /wiki/Prefixes_in_use.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:31] "HEAD /wiki/ItemVariations.xls.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:31] "HEAD /wiki/Bug%3A_High_M2DA_ID_ranges_might_work_in_the_toolset%2C_but_not_in_game.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:31] "HEAD /wiki/List_of_2DA_XLS_files.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:31] "HEAD /wiki/File%3AEdit-GDA-Values.jpg.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:31] "HEAD /wiki/Compatibility.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:31] "HEAD /wiki/Dragon_Age_Toolset_Wiki%3ALanguage_policy.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:31] "HEAD /wiki/2DA/ru.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:31] "HEAD /wiki/2da.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:31] code 404, message Not found
+127.0.0.1 - - [01/Jun/2026 03:03:31] "HEAD /wiki/Special:Categories HTTP/1.1" 404 -
+127.0.0.1 - - [01/Jun/2026 03:03:31] "HEAD /wiki/Category%3AArticles_in_need_of_review.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:31] "HEAD /wiki/Category%3A2DAs.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:31] "HEAD /wiki/2da.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:31] "HEAD /wiki/Talk%3A2DA.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:31] "HEAD /wiki/2da.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:31] "HEAD /wiki/2da.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:31] "HEAD /wiki/2da.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:49] "HEAD /wiki/File:Edit-GDA-Values.jpg HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:49] "HEAD /wiki/File%3AEdit-GDA-Values.jpg.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:49] "HEAD /pages/File%3AEdit-GDA-Values.jpg.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:49] "HEAD /mw/images/0/02/Prp_statuferel_01%2C02_0.jpg HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:49] "HEAD /assets/mw/images/0/02/Prp_statuferel_01%2C02_0.jpg HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:03:49] "HEAD /mw/images/thumb/0/02/Prp_statuferel_01%2C02_0.jpg/200px-Prp_statuferel_01%2C02_0.jpg HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:05:11] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:05:11] "GET /favicon.ico HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:05:11] code 500, message Unable to read file
+127.0.0.1 - - [01/Jun/2026 03:05:11] "GET /favicon.ico HTTP/1.1" 500 -
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 59105)
+127.0.0.1 - - [01/Jun/2026 03:05:11] "GET /pages/Main_Page.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:05:11] "GET /assets/local/wiki-static.css HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:05:11] "GET /assets/mw/resources/assets/poweredby_mediawiki_88x31.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:05:11] "GET /favicon.ico HTTP/1.1" 200 -
+Traceback (most recent call last):
+  File "C:\Users\pwd12\OneDrive\Documents\GitHub\Haven-Tools\Wiki\serve.py", line 36, in _serve
+    self._send_file(path, send_body)
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\pwd12\OneDrive\Documents\GitHub\Haven-Tools\Wiki\serve.py", line 96, in _send_file
+    self.wfile.write(content)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "C:\Users\pwd12\AppData\Local\Programs\Python\Python313\Lib\socketserver.py", line 840, in write
+    self._sock.sendall(b)
+    ~~~~~~~~~~~~~~~~~~^^^
+ConnectionAbortedError: [WinError 10053] An established connection was aborted by the software in your host machine
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\pwd12\AppData\Local\Programs\Python\Python313\Lib\socketserver.py", line 692, in process_request_thread
+    self.finish_request(request, client_address)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\pwd12\AppData\Local\Programs\Python\Python313\Lib\socketserver.py", line 362, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+    ~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\pwd12\AppData\Local\Programs\Python\Python313\Lib\socketserver.py", line 761, in __init__
+    self.handle()
+    ~~~~~~~~~~~^^
+  File "C:\Users\pwd12\AppData\Local\Programs\Python\Python313\Lib\http\server.py", line 436, in handle
+    self.handle_one_request()
+    ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\pwd12\AppData\Local\Programs\Python\Python313\Lib\http\server.py", line 424, in handle_one_request
+    method()
+    ~~~~~~^^
+  File "C:\Users\pwd12\OneDrive\Documents\GitHub\Haven-Tools\Wiki\serve.py", line 25, in do_GET
+    self._serve(send_body=True)
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "C:\Users\pwd12\OneDrive\Documents\GitHub\Haven-Tools\Wiki\serve.py", line 38, in _serve
+    self.send_error(500, "Unable to read file")
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\pwd12\AppData\Local\Programs\Python\Python313\Lib\http\server.py", line 488, in send_error
+    self.end_headers()
+    ~~~~~~~~~~~~~~~~^^
+  File "C:\Users\pwd12\AppData\Local\Programs\Python\Python313\Lib\http\server.py", line 538, in end_headers
+    self.flush_headers()
+    ~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\pwd12\AppData\Local\Programs\Python\Python313\Lib\http\server.py", line 542, in flush_headers
+    self.wfile.write(b"".join(self._headers_buffer))
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\pwd12\AppData\Local\Programs\Python\Python313\Lib\socketserver.py", line 840, in write
+    self._sock.sendall(b)
+    ~~~~~~~~~~~~~~~~~~^^^
+ConnectionAbortedError: [WinError 10053] An established connection was aborted by the software in your host machine
+----------------------------------------
+127.0.0.1 - - [01/Jun/2026 03:05:17] "GET /pages/Design.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:05:17] "GET /assets/local/wiki-static.css HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:05:17] "GET /assets/mw/resources/assets/poweredby_mediawiki_88x31.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:05:17] "GET /assets/mw/images/5/59/Overview.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:05:17] "GET /favicon.ico HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:05:20] "GET /pages/Item.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:05:20] "GET /assets/local/wiki-static.css HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:05:20] "GET /assets/mw/images/0/07/IconAreaList.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:05:20] "GET /assets/mw/images/c/c2/IconArea.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:05:20] "GET /assets/mw/images/2/20/IconConversation.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:05:20] "GET /assets/mw/images/4/45/IconCharacter.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:05:20] "GET /assets/mw/images/9/9d/IconCreature.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:05:20] "GET /assets/mw/images/5/5a/IconCutscene.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:05:20] "GET /assets/mw/images/d/d2/IconItem.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:05:20] "GET /assets/mw/images/b/b6/IconMap.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:05:20] "GET /assets/mw/images/2/24/IconMerchant.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:05:20] "GET /assets/mw/images/3/30/IconPlaceable.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:05:20] "GET /assets/mw/images/8/8e/IconPlot.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:05:20] "GET /assets/mw/images/1/1e/IconScript.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:05:20] "GET /assets/mw/images/8/83/IconClientScript.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:05:20] "GET /assets/mw/images/f/f6/IconStage.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:05:20] "GET /assets/mw/images/c/c6/IconTrigger.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:05:20] "GET /assets/mw/images/9/97/IconSound.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:05:20] "GET /assets/mw/images/e/e9/IconModel.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:05:20] "GET /assets/mw/images/a/a0/IconAll.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:05:20] "GET /assets/mw/resources/assets/poweredby_mediawiki_88x31.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:05:20] "GET /favicon.ico HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:46:00] "GET /pages/Trigger.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:46:00] "GET /assets/local/wiki-static.css HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:46:00] "GET /assets/mw/images/c/c2/IconArea.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:46:00] "GET /assets/mw/images/0/07/IconAreaList.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:46:00] "GET /assets/mw/images/4/45/IconCharacter.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:46:00] "GET /assets/mw/images/2/20/IconConversation.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:46:00] "GET /assets/mw/images/9/9d/IconCreature.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:46:00] "GET /assets/mw/images/5/5a/IconCutscene.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:46:00] "GET /assets/mw/images/d/d2/IconItem.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:46:00] "GET /assets/mw/images/b/b6/IconMap.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:46:00] "GET /assets/mw/images/4/43/Area_editor_volume_object.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:46:00] "GET /assets/mw/images/1/1c/Ellipsis.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:46:00] "GET /assets/mw/images/2/24/IconMerchant.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:46:00] "GET /assets/mw/images/3/30/IconPlaceable.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:46:00] "GET /assets/mw/images/8/8e/IconPlot.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:46:00] "GET /assets/mw/images/1/1e/IconScript.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:46:00] "GET /assets/mw/images/8/83/IconClientScript.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:46:00] "GET /assets/mw/images/f/f6/IconStage.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:46:00] "GET /assets/mw/images/c/c6/IconTrigger.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:46:00] "GET /assets/mw/images/9/97/IconSound.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:46:00] "GET /assets/mw/images/e/e9/IconModel.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:46:00] "GET /assets/mw/images/a/a0/IconAll.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:46:00] "GET /assets/mw/resources/assets/poweredby_mediawiki_88x31.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:46:00] "GET /favicon.ico HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:46:02] "GET /pages/VFX_editor.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:46:02] "GET /assets/local/wiki-static.css HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:46:02] "GET /assets/mw/images/0/07/IconAreaList.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:46:02] "GET /assets/mw/images/c/c2/IconArea.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:46:02] "GET /assets/mw/images/2/20/IconConversation.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:46:02] "GET /assets/mw/images/f/f0/Fx_flamefb01_rescaled.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:46:02] "GET /assets/mw/images/6/64/VFX_editor_flame_crust.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:46:02] "GET /assets/mw/images/4/45/IconCharacter.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:46:02] "GET /assets/mw/images/9/9d/IconCreature.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:46:02] "GET /assets/mw/images/5/5a/IconCutscene.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:46:02] "GET /assets/mw/images/d/d2/IconItem.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:46:02] "GET /assets/mw/images/2/24/IconMerchant.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:46:02] "GET /assets/mw/images/b/b6/IconMap.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:46:02] "GET /assets/mw/images/8/8e/IconPlot.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:46:02] "GET /assets/mw/images/3/30/IconPlaceable.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:46:02] "GET /assets/mw/images/1/1e/IconScript.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:46:02] "GET /assets/mw/images/8/83/IconClientScript.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:46:02] "GET /assets/mw/images/f/f6/IconStage.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:46:02] "GET /assets/mw/images/c/c6/IconTrigger.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:46:02] "GET /assets/mw/images/9/97/IconSound.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:46:02] "GET /assets/mw/images/e/e9/IconModel.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:46:02] "GET /assets/mw/images/a/a0/IconAll.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:46:02] "GET /assets/mw/resources/assets/poweredby_mediawiki_88x31.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:46:02] "GET /favicon.ico HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:46:04] "GET /pages/File%3AVFX_editor_flame_crust.png.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:46:04] "GET /assets/local/wiki-static.css HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:46:04] "GET /assets/mw/images/6/64/VFX_editor_flame_crust.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:46:04] "GET /assets/mw/resources/assets/poweredby_mediawiki_88x31.png HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:46:12] "GET /pages/User%3ABryanDerksen.html HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:46:15] "GET /assets/local/wiki-static.css HTTP/1.1" 200 -
+127.0.0.1 - - [01/Jun/2026 03:46:15] "GET /assets/mw/resources/assets/poweredby_mediawiki_88x31.png HTTP/1.1" 200 -

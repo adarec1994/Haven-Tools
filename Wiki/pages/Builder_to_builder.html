@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" class="client-nojs">
+<head>
+<meta charset="UTF-8" />
+<title>Builder to builder - Dragon Age Toolset Wiki</title>
+<meta name="generator" content="MediaWiki 1.25.6" />
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="search" type="application/opensearchdescription+xml" href="/mw/opensearch_desc.php" title="Dragon Age Toolset Wiki (en)" />
+<link rel="EditURI" type="application/rsd+xml" href="https://www.datoolset.net/mw/api.php?action=rsd" />
+<link rel="alternate" hreflang="x-default" href="Builder_to_builder.html" />
+<link rel="alternate" type="application/atom+xml" title="Dragon Age Toolset Wiki Atom feed" href="/mw/index.php?title=Special:RecentChanges&amp;feed=atom" />
+<meta name="ResourceLoaderDynamicStyles" content="" />
+<style>a:lang(ar),a:lang(kk-arab),a:lang(mzn),a:lang(ps),a:lang(ur){text-decoration:none}
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-css:7:270a0dcd3ae587df0f041aebfc42e61b */</style>
+<script>if(window.mw){
+mw.config.set({"wgCanonicalNamespace":"","wgCanonicalSpecialPageName":false,"wgNamespaceNumber":0,"wgPageName":"Builder_to_builder","wgTitle":"Builder to builder","wgCurRevisionId":18133,"wgRevisionId":18133,"wgArticleId":35,"wgIsArticle":true,"wgIsRedirect":false,"wgAction":"view","wgUserName":null,"wgUserGroups":["*"],"wgCategories":["To do list for Sunjammer","Database","Modules"],"wgBreakFrames":false,"wgPageContentLanguage":"en","wgPageContentModel":"wikitext","wgSeparatorTransformTable":["",""],"wgDigitTransformTable":["",""],"wgDefaultDateFormat":"dmy","wgMonthNames":["","January","February","March","April","May","June","July","August","September","October","November","December"],"wgMonthNamesShort":["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],"wgRelevantPageName":"Builder_to_builder","wgRelevantArticleId":35,"wgIsProbablyEditable":false,"wgRestrictionEdit":[],"wgRestrictionMove":[]});
+}</script><script>if(window.mw){
+mw.loader.implement("user.options",function($,jQuery){mw.user.options.set({"variant":"en"});});mw.loader.implement("user.tokens",function($,jQuery){mw.user.tokens.set({"editToken":"+\\","patrolToken":"+\\","watchToken":"+\\"});});
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-js:7:a5c52c063dc436c1ca7c9f456936a5e9 */
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.page.startup","mediawiki.legacy.wikibits","mediawiki.legacy.ajax","skins.vector.js"]);
+}</script>
+<!--[if lt IE 7]><style type="text/css">body{behavior:url("/mw/skins/Vector/csshover.min.htc")}</style><![endif]-->
+<link rel="stylesheet" href="../assets/local/wiki-static.css" />
+</head>
+<body class="mediawiki ltr sitedir-ltr ns-0 ns-subject page-Builder_to_builder skin-vector action-view">
+		<div id="mw-page-base" class="noprint"></div>
+		<div id="mw-head-base" class="noprint"></div>
+		<div id="content" class="mw-body" role="main">
+			<a id="top"></a>
+
+						<div class="mw-indicators">
+</div>
+			<h1 id="firstHeading" class="firstHeading" lang="en">Builder to builder</h1>
+						<div id="bodyContent" class="mw-body-content">
+									<div id="siteSub">From Dragon Age Toolset Wiki</div>
+								<div id="contentSub"></div>
+												<div id="jump-to-nav" class="mw-jump">
+					Jump to:					<a href="#mw-head">navigation</a>, 					<a href="#p-search">search</a>
+				</div>
+				<div id="mw-content-text" lang="en" dir="ltr" class="mw-content-ltr"><p><br />
+</p>
+<table style="float:right; background-color:#eeeeee; border:2px #999999 solid; padding:4px; margin:4px; width:220px;">
+
+<tr>
+<th align="center"> Module topics
+</th></tr>
+<tr>
+<td>
+<ul><li><a href="Module.html" title="Module">Module</a>
+<ul><li> <a href="Creating_a_module.html" title="Creating a module">Creating a module</a></li>
+<li> <a href="Manage_modules.html" title="Manage modules">Managing modules</a></li>
+<li> <a href="Exporting_a_module.html" title="Exporting a module">Exporting a module</a></li></ul></li>
+<li><a href="Builder_to_player.html" title="Builder to player">Builder to player</a></li>
+<li><strong class="selflink">Builder to builder</strong></li></ul>
+</td></tr></table>
+<p>"Builder to builder" is a general term for the process of exchanging game resource information between builders, for example between several people who are collaborating on building a module. See <a href="Builder_to_player.html" title="Builder to player">builder to player</a> for the process of packaging up finished works to distribute to players.
+</p><p>There are three basic sorts of game resources that might need to be exchanged in this manner:
+</p>
+<ul><li>Art resources</li>
+<li><a href="2da.html" title="2DA">2DAs</a></li>
+<li>Database resources</li></ul>
+<p>Art resources are self-contained files stored in the computer's file system in the standard way, and so are straightforward to share between builders. 2DAs are generated from Excel files that are also straightforward to share, especially when the capabilities of M2DAs are taken advantage of (see the <a href="2da.html" title="2DA">2DA</a> page for more detail).
+</p><p>Database resources are trickier. Almost every computer user is familiar with how to manipulate files in their filesystem but fewer are familiar with databases, and there are many interdependencies within Dragon Age's database resources that need to be taken into account when making any edit. To simplify this process the toolset has the ability to save and load selected database resources and their dependencies into XML files, which are then bundled up into a single archive file for convenience.
+</p><p><b>Note:</b> This is a different sort of export procedure than what's needed to make resources available for use in the game itself, either for testing by yourself or for distribution to players. For information on that see <a href="Resource_palette.html" title="Resource palette">resource palette</a>.
+</p>
+<div id="toc" class="toc"><div id="toctitle"><h2>Contents</h2></div>
+<ul>
+<li class="toclevel-1 tocsection-1"><a href="#Creating_resource_files_for_transfer"><span class="tocnumber">1</span> <span class="toctext">Creating resource files for transfer</span></a></li>
+<li class="toclevel-1 tocsection-2"><a href="#Importing_database_resources"><span class="tocnumber">2</span> <span class="toctext">Importing database resources</span></a>
+<ul>
+<li class="toclevel-2 tocsection-3"><a href="#Resource_name_conflicts"><span class="tocnumber">2.1</span> <span class="toctext">Resource name conflicts</span></a></li>
+</ul>
+</li>
+<li class="toclevel-1 tocsection-4"><a href="#Copying_a_Module"><span class="tocnumber">3</span> <span class="toctext">Copying a Module</span></a></li>
+<li class="toclevel-1 tocsection-5"><a href="#Sharing_a_live_database"><span class="tocnumber">4</span> <span class="toctext">Sharing a live database</span></a></li>
+</ul>
+</div>
+
+<h2><span class="mw-headline" id="Creating_resource_files_for_transfer">Creating resource files for transfer</span></h2>
+<p>To create a resource file archive, select the resources in the resource palette and then in the right-click menu select the "builder to builder create" command:
+</p>
+<div class="center"><div class="thumb tnone"><div class="thumbinner" style="width:302px;"><a href="File%3AB2B_create_menu_command.png.html" class="image"><img alt="B2B create menu command.png" src="../assets/mw/images/c/cc/B2B_create_menu_command.png" width="300" height="327" class="thumbimage" srcset="../assets/mw/images/c/cc/B2B_create_menu_command.png 1.5x, ../assets/mw/images/c/cc/B2B_create_menu_command.png 2x" /></a>  <div class="thumbcaption"><div class="magnify"><a href="File%3AB2B_create_menu_command.png.html" class="internal" title="Enlarge"></a></div></div></div></div></div>
+<p>You'll be presented with a list of the resources to be exported:
+</p>
+<div class="center"><div class="floatnone"><a href="File%3AB2B_create_panel.png.html" class="image"><img alt="B2B create panel.png" src="../assets/mw/images/8/89/B2B_create_panel.png" width="893" height="351" /></a></div></div>
+<p>Normally, you'll restrict the selection to your own module (unless you have a specific reason for exporting core resources).
+</p><p>Once you're done reviewing your selection, click "Ok" to export. You'll be prompted for a filename to put the resources into.
+</p><p>You can select multiple resources before doing builder to builder creation and they'll all be included in the B2B package.
+</p><p>Also, you can open a builder to builder creation window with all of your available resources in it by going to the Tools menu and selecting Builder -&gt; Builder to Builder Create.
+</p>
+<div class="center"><div class="thumb tnone"><div class="thumbinner" style="width:302px;"><a href="File%3ABuilder_to_builder_create_via_tools_menu.png.html" class="image"><img alt="Builder to builder create via tools menu.png" src="../assets/mw/images/8/83/Builder_to_builder_create_via_tools_menu.png" width="300" height="219" class="thumbimage" srcset="../assets/mw/images/8/83/Builder_to_builder_create_via_tools_menu.png 1.5x, ../assets/mw/images/8/83/Builder_to_builder_create_via_tools_menu.png 2x" /></a>  <div class="thumbcaption"><div class="magnify"><a href="File%3ABuilder_to_builder_create_via_tools_menu.png.html" class="internal" title="Enlarge"></a></div></div></div></div></div>
+<p>As noted above, this only exports design resources from the database, so in addition to sharing the .dadbdata file created in this process, builders also need to exchange any simple files containing 2DAs and art resources.
+</p>
+<h2><span class="mw-headline" id="Importing_database_resources">Importing database resources</span></h2>
+<p>See also <a href="Builder_to_builder.html#Copying_a_Module" title="Builder to builder"> Copying a Module</a>. 
+</p><p>Importing resources is done via the "Builder to Builder Load" command under the "Tools" menu (there's also a B2B create command here, the same that can be reached via the palette right-click menu):
+</p>
+<div class="center"><div class="floatnone"><a href="File%3AB2B_load_menu_command.png.html" class="image"><img alt="B2B load menu command.png" src="../assets/mw/images/d/db/B2B_load_menu_command.png" width="485" height="286" /></a></div></div>
+<p>Again, note that this is a different set of commands than the main "export" commands.
+</p><p>You'll be prompted to select a database resource file generated by a previous export. When you do, you'll be presented with an options pane listing all of the resources present in the file:
+</p>
+<div class="center"><div class="floatnone"><a href="File%3AB2B_load_panel_973.png.html" class="image"><img alt="B2B load panel 973.png" src="../assets/mw/images/3/37/B2B_load_panel_973.png" width="888" height="405" /></a></div></div>
+<p>You can choose to import or not to import specific resources from this panel with the leftmost checkbox. Note that if you only import some of the files you may break dependencies. However, many of the dependencies in any significant export are likely to be core resources that you already have in your database and it's wise to avoid re-importing such resources unless you have a specific reason to.
+</p><p>You have the option to assign new string ids, or retain the original string ids, which allows you to maintain integrity of reference to the talk table. There seems to be a <a href="Bug%3A_Builder_to_Builder_Load_may_not_reproduce_resource_detail_correctly.html" title="Bug: Builder to Builder Load may not reproduce resource detail correctly"> bug</a> with "Use Theirs". See <a href="String_ID.html" title="String ID">String ID</a> for a discussion of sharing issues.   
+</p><p>ResRefID is the identifier that the resource had in the database it was exported from. ResRefIDs must be unique within any given database, so these numbers will be reassigned automatically during the import process.
+</p>
+<h3><span class="mw-headline" id="Resource_name_conflicts">Resource name conflicts</span></h3>
+<p>The "Exists/New" column indicates whether a resource with the same name already exists within the destination database. This is a good way to identify common core resources that were included as dependencies on export but that you don't want to re-import.
+</p><p>In the event that you import a resource with the same name as an existing resource within your database, the default behavior is for the old resource within your database to be overwritten by the new resource coming in from the import. The last column, "create new", allows this behavior to be overridden. If you enable "create new" for such a resource, the imported resource will be renamed with "_1" (or a higher number as needed) and the old resource will be untouched. Any other new imported resources in the file that depend on the renamed resource will have their dependencies updated to refer to the new copy of the resource.
+</p><p>Note that if use "create new" when importing a resource's dependencies and then you later re-import the same resource the importer won't know that its dependencies have been renamed in this manner. It's best to avoid this situation as hard-to-debug problems can potentially result.
+</p><p>Resources with the same name that already exist in the destination database and that are checked out by other users aren't editable, so the "checked out" column will warn you of any resources that the import process will be unable to update. This is unlikely to be a concern when only a single user (yourself) has access to your database but may become significant in a more sophisticated multi-user collaborative environment.
+</p>
+<h2><span class="mw-headline" id="Copying_a_Module">Copying a Module</span></h2>
+<p>You might want to copy a module to a new machine, a new data base, or another builder's data base.
+</p><p>Builder-to-Builder Create is a good way to backup your resources for transfer or recovery.
+</p><p>When you want to make a copy, create a new module in the target data base, entering the resource name and Name property manually.
+</p><p>If you have VO, you'll want to ensure string ids don't change during load (otherwise you'll have to rename all the VO files).
+</p><p>If you know what string range was defined for the original module, change the new module to the same range.
+</p><p>If you've lost the original module and have no independent record of the string range, you need to ensure that all the strings in the .dadbdata file are in range. Temporarily, you can set the start of the range to 1, and the end of the range to a very high value.
+</p><p>Now do the Builder-to-Builder Load, with the Use Theirs option for string ids.
+</p><p>If you have a temporary string id range, examine the new module in the String Editor to discover the lowest and highest string id values. Set the range start to the lowest, range next to one higher than the highest, and range end as high as you like.
+</p><p>Finally, change the other module properties, such as the start area / waypoint and the module script. That has to happen last, because you select from the resources you just loaded.
+</p>
+<h2><span class="mw-headline" id="Sharing_a_live_database">Sharing a live database</span></h2>
+<p>If passing bundles of files around between builders proves to be a cumbersome means of collaborating, a more advanced alternative exists: sharing a single database repository.
+</p><p>With a default installation of the toolset on a user's computer, a database is installed on that local computer for that toolset's use. Using the toolset's configuration tool, however, it is possible to tell the toolset to use some other database instead - possibly on another machine entirely, provided it's accessible over a network. This is the collaboration mechanism that was used internally at BioWare during the development of the Dragon Age single-player campaign, along with a more traditional file repository for the art resources and 2DAs, and is the principal reason why the toolset supports the concept of "checking out" database resources for editing.
+</p><p>General considerations you'll need to take into account:
+</p>
+<ul><li>Firewall and router issues - The computers of all the various collaborators will need to be able to contact the central database. This may require port forwarding and other potentially tricky configuration settings.</li>
+<li>Availability - If all work is being done on a single database, nobody will be able to do anything when that database is unavailable. It may be a good idea to set up a machine dedicated solely to running the database.</li>
+<li>Security - You'll be exposing your database to potential intrusion attempts from the outside world, so make sure you understand the risks and the steps that can be taken to ameliorate them.</li></ul>
+<p>Though this is fully possible in principle with the existing toolset, the specifics for how to accomplish this outside the BioWare intranet haven't been tested yet so we don't have documentation for it yet.
+</p><p><br />
+</p>
+<table class="nmbox" style="width:100%; border:1px solid #AAAAAA; border-collapse:collapse; clear:both; font-size:85%; margin:0.25em 0;">
+<tr style="background: #CFDFEF;">
+<th style="border:none; padding:4px 1em; border-right:1px solid #AAAAAA; text-align:center; white-space:nowrap;"> <b><a href="Dragon_Age_Toolset_Wiki%3ALanguage_policy.html" title="Dragon Age Toolset Wiki:Language policy">Language:</a></b></th>
+<td style="border:none; padding:0.25em 0.9em; width:100%; background:#DFEFFF;"><b><strong class="selflink">English</strong></b> <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>&#160;&#8226;&#32;<span lang="ru"><a href="Builder_to_builder/ru.html" title="Builder to builder/ru">русский</a></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></td>
+</tr></table>
+
+<!-- 
+NewPP limit report
+CPU time usage: 0.120 seconds
+Real time usage: 0.234 seconds
+Preprocessor visited node count: 1057/1000000
+Preprocessor generated node count: 3384/1000000
+Post‐expand include size: 6982/2097152 bytes
+Template argument size: 1236/2097152 bytes
+Highest expansion depth: 8/40
+Expensive parser function count: 54/100
+-->
+
+<!-- 
+Transclusion expansion time report (%,ms,calls,template)
+100.00%  151.885      1 - -total
+ 87.99%  133.640      1 - Template:Languages
+ 83.55%  126.895      1 - Template:LanguagesBox
+ 65.21%   99.044     54 - Template:LanguagesLang
+  9.46%   14.375      1 - Template:LanguagesTitle
+  6.52%    9.905      1 - Template:Infobox_module
+  5.14%    7.805      1 - Template:ToDoListItem
+  3.21%    4.872      1 - Template:Infobox_template
+-->
+
+<!-- Saved in parser cache with key db714099484-datoolwiki_:pcache:idhash:35-0!*!0!!en!5!* and timestamp 20260531122707 and revision id 18133
+ -->
+</div>									<div class="printfooter">
+						Retrieved from "<a dir="ltr" href="Builder_to_builder.html">https://www.datoolset.net/mw/index.php?title=Builder_to_builder&amp;oldid=18133</a>"					</div>
+													<div id='catlinks' class='catlinks'><div id="mw-normal-catlinks" class="mw-normal-catlinks"><a href="/wiki/Special:Categories" title="Special:Categories">Categories</a>: <ul><li><a href="/mw/index.php?title=Category:To_do_list_for_Sunjammer&amp;action=edit&amp;redlink=1" class="new" title="Category:To do list for Sunjammer (page does not exist)">To do list for Sunjammer</a></li><li><a href="Category%3ADatabase.html" title="Category:Database">Database</a></li><li><a href="Category%3AModules.html" title="Category:Modules">Modules</a></li></ul></div></div>												<div class="visualClear"></div>
+							</div>
+		</div>
+		<div id="mw-navigation">
+			<h2>Navigation menu</h2>
+
+			<div id="mw-head">
+									<div id="p-personal" role="navigation" class="" aria-labelledby="p-personal-label">
+						<h3 id="p-personal-label">Personal tools</h3>
+						<ul>
+							<li id="pt-login"><a href="/mw/index.php?title=Special:UserLogin&amp;returnto=Builder+to+builder" title="You are encouraged to log in; however, it is not mandatory [o]" accesskey="o">Log in</a></li>						</ul>
+					</div>
+									<div id="left-navigation">
+										<div id="p-namespaces" role="navigation" class="vectorTabs" aria-labelledby="p-namespaces-label">
+						<h3 id="p-namespaces-label">Namespaces</h3>
+						<ul>
+															<li  id="ca-nstab-main" class="selected"><span><a href="Builder_to_builder.html"  title="View the content page [c]" accesskey="c">Page</a></span></li>
+															<li  id="ca-talk" class="new"><span><a href="/mw/index.php?title=Talk:Builder_to_builder&amp;action=edit&amp;redlink=1"  title="Discussion about the content page [t]" accesskey="t">Discussion</a></span></li>
+													</ul>
+					</div>
+										<div id="p-variants" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-variants-label">
+												<h3 id="p-variants-label"><span>Variants</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+									</div>
+				<div id="right-navigation">
+										<div id="p-views" role="navigation" class="vectorTabs" aria-labelledby="p-views-label">
+						<h3 id="p-views-label">Views</h3>
+						<ul>
+															<li id="ca-view" class="selected"><span><a href="Builder_to_builder.html" >Read</a></span></li>
+															<li id="ca-viewsource"><span><a href="Builder_to_builder.html"  title="This page is protected.&#10;You can view its source [e]" accesskey="e">View source</a></span></li>
+															<li id="ca-history" class="collapsible"><span><a href="Builder_to_builder.html"  title="Past revisions of this page [h]" accesskey="h">View history</a></span></li>
+													</ul>
+					</div>
+										<div id="p-cactions" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-cactions-label">
+						<h3 id="p-cactions-label"><span>More</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+										<div id="p-search" role="search">
+						<h3>
+							<label for="searchInput">Search</label>
+						</h3>
+
+						<form action="/mw/index.php" id="searchform">
+														<div id="simpleSearch">
+															<input type="search" name="search" placeholder="Search" title="Search Dragon Age Toolset Wiki [f]" accesskey="f" id="searchInput" /><input type="hidden" value="Special:Search" name="title" /><input type="submit" name="fulltext" value="Search" title="Search the pages for this text" id="mw-searchButton" class="searchButton mw-fallbackSearchButton" /><input type="submit" name="go" value="Go" title="Go to a page with this exact name if exists" id="searchButton" class="searchButton" />								</div>
+						</form>
+					</div>
+									</div>
+			</div>
+			<div id="mw-panel">
+				<div id="p-logo" role="banner"><a class="mw-wiki-logo" href="Main_Page.html"  title="Visit the main page"></a></div>
+						<div class="portal" role="navigation" id='p-navigation' aria-labelledby='p-navigation-label'>
+			<h3 id='p-navigation-label'>Navigation</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-mainpage-description"><a href="Main_Page.html" title="Visit the main page [z]" accesskey="z">Main page</a></li>
+													<li id="n-recentchanges"><a href="/wiki/Special:RecentChanges" title="A list of recent changes in the wiki [r]" accesskey="r">Recent changes</a></li>
+													<li id="n-randompage"><a href="/wiki/Special:Random" title="Load a random page [x]" accesskey="x">Random page</a></li>
+													<li id="n-help"><a href="https://www.mediawiki.org/wiki/Special:MyLanguage/Help:Contents" title="The place to find out">Help</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-Links' aria-labelledby='p-Links-label'>
+			<h3 id='p-Links-label'>Links</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-Toolset-forums"><a href="http://forum.bioware.com/forum/30-dragon-age-toolset" rel="nofollow">Toolset forums</a></li>
+													<li id="n-Legacy-forums"><a href="http://social.bioware.com/forum/1/subindex/70" rel="nofollow">Legacy forums</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-tb' aria-labelledby='p-tb-label'>
+			<h3 id='p-tb-label'>Tools</h3>
+
+			<div class="body">
+									<ul>
+													<li id="t-whatlinkshere"><a href="/wiki/Special:WhatLinksHere/Builder_to_builder" title="A list of all wiki pages that link here [j]" accesskey="j">What links here</a></li>
+													<li id="t-recentchangeslinked"><a href="/wiki/Special:RecentChangesLinked/Builder_to_builder" title="Recent changes in pages linked from this page [k]" accesskey="k">Related changes</a></li>
+													<li id="t-specialpages"><a href="/wiki/Special:SpecialPages" title="A list of all special pages [q]" accesskey="q">Special pages</a></li>
+													<li id="t-print"><a href="Builder_to_builder.html" rel="alternate" title="Printable version of this page [p]" accesskey="p">Printable version</a></li>
+													<li id="t-permalink"><a href="Builder_to_builder.html" title="Permanent link to this revision of the page">Permanent link</a></li>
+													<li id="t-info"><a href="Builder_to_builder.html" title="More information about this page">Page information</a></li>
+											</ul>
+							</div>
+		</div>
+				</div>
+		</div>
+		<div id="footer" role="contentinfo">
+							<ul id="footer-info">
+											<li id="footer-info-lastmod"> This page was last modified on 28 December 2011, at 20:41.</li>
+									</ul>
+							<ul id="footer-places">
+											<li id="footer-places-privacy"><a href="/wiki/Dragon_Age_Toolset_Wiki:Privacy_policy" title="Dragon Age Toolset Wiki:Privacy policy">Privacy policy</a></li>
+											<li id="footer-places-about"><a href="/wiki/Dragon_Age_Toolset_Wiki:About" title="Dragon Age Toolset Wiki:About">About Dragon Age Toolset Wiki</a></li>
+											<li id="footer-places-disclaimer"><a href="/wiki/Dragon_Age_Toolset_Wiki:General_disclaimer" title="Dragon Age Toolset Wiki:General disclaimer">Disclaimers</a></li>
+									</ul>
+										<ul id="footer-icons" class="noprint">
+											<li id="footer-poweredbyico">
+															<a href="//www.mediawiki.org/"><img src="../assets/mw/resources/assets/poweredby_mediawiki_88x31.png" alt="Powered by MediaWiki" srcset="../assets/mw/resources/assets/poweredby_mediawiki_132x47.png 1.5x, ../assets/mw/resources/assets/poweredby_mediawiki_176x62.png 2x" width="88" height="31" /></a>
+													</li>
+									</ul>
+						<div style="clear:both"></div>
+		</div>
+		<script>if(window.jQuery)jQuery.ready();</script><script>if(window.mw){
+mw.loader.state({"site":"loading","user":"ready","user.groups":"ready"});
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.toc","mediawiki.action.view.postEdit","mediawiki.user","mediawiki.hidpi","mediawiki.page.ready","mediawiki.searchSuggest"],null,true);
+}</script>
+<script>if(window.mw){
+document.write("\u003Cscript src=\"https://www.datoolset.net/mw/load.php?debug=false\u0026amp;lang=en\u0026amp;modules=site\u0026amp;only=scripts\u0026amp;skin=vector\u0026amp;*\"\u003E\u003C/script\u003E");
+}</script>
+<script>if(window.mw){
+mw.config.set({"wgBackendResponseTime":260});
+}</script>
+	</body>
+</html>

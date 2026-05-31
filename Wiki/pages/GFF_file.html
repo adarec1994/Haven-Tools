@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" class="client-nojs">
+<head>
+<meta charset="UTF-8" />
+<title>GFF - Dragon Age Toolset Wiki</title>
+<meta name="generator" content="MediaWiki 1.25.6" />
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="search" type="application/opensearchdescription+xml" href="/mw/opensearch_desc.php" title="Dragon Age Toolset Wiki (en)" />
+<link rel="EditURI" type="application/rsd+xml" href="https://www.datoolset.net/mw/api.php?action=rsd" />
+<link rel="alternate" hreflang="x-default" href="GFF.html" />
+<link rel="alternate" type="application/atom+xml" title="Dragon Age Toolset Wiki Atom feed" href="/mw/index.php?title=Special:RecentChanges&amp;feed=atom" />
+<link rel="canonical" href="GFF.html" />
+<meta name="ResourceLoaderDynamicStyles" content="" />
+<style>a:lang(ar),a:lang(kk-arab),a:lang(mzn),a:lang(ps),a:lang(ur){text-decoration:none}
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-css:7:270a0dcd3ae587df0f041aebfc42e61b */</style>
+<script>if(window.mw){
+mw.config.set({"wgCanonicalNamespace":"","wgCanonicalSpecialPageName":false,"wgNamespaceNumber":0,"wgPageName":"GFF","wgTitle":"GFF","wgCurRevisionId":16922,"wgRevisionId":16922,"wgArticleId":714,"wgIsArticle":true,"wgIsRedirect":false,"wgAction":"view","wgUserName":null,"wgUserGroups":["*"],"wgCategories":["File types"],"wgBreakFrames":false,"wgPageContentLanguage":"en","wgPageContentModel":"wikitext","wgSeparatorTransformTable":["",""],"wgDigitTransformTable":["",""],"wgDefaultDateFormat":"dmy","wgMonthNames":["","January","February","March","April","May","June","July","August","September","October","November","December"],"wgMonthNamesShort":["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],"wgRelevantPageName":"GFF","wgRelevantArticleId":714,"wgIsProbablyEditable":false,"wgRestrictionEdit":[],"wgRestrictionMove":[],"wgRedirectedFrom":"GFF_file","wgInternalRedirectTargetUrl":"/wiki/GFF"});
+}</script><script>if(window.mw){
+mw.loader.implement("user.options",function($,jQuery){mw.user.options.set({"variant":"en"});});mw.loader.implement("user.tokens",function($,jQuery){mw.user.tokens.set({"editToken":"+\\","patrolToken":"+\\","watchToken":"+\\"});});
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-js:7:a5c52c063dc436c1ca7c9f456936a5e9 */
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.action.view.redirect","mediawiki.page.startup","mediawiki.legacy.wikibits","mediawiki.legacy.ajax","skins.vector.js"]);
+}</script>
+<!--[if lt IE 7]><style type="text/css">body{behavior:url("/mw/skins/Vector/csshover.min.htc")}</style><![endif]-->
+<link rel="stylesheet" href="../assets/local/wiki-static.css" />
+</head>
+<body class="mediawiki ltr sitedir-ltr ns-0 ns-subject page-GFF skin-vector action-view">
+		<div id="mw-page-base" class="noprint"></div>
+		<div id="mw-head-base" class="noprint"></div>
+		<div id="content" class="mw-body" role="main">
+			<a id="top"></a>
+
+						<div class="mw-indicators">
+</div>
+			<h1 id="firstHeading" class="firstHeading" lang="en">GFF</h1>
+						<div id="bodyContent" class="mw-body-content">
+									<div id="siteSub">From Dragon Age Toolset Wiki</div>
+								<div id="contentSub"><span class="mw-redirectedfrom">(Redirected from <a href="GFF_file.html" title="GFF file">GFF file</a>)</span></div>
+												<div id="jump-to-nav" class="mw-jump">
+					Jump to:					<a href="#mw-head">navigation</a>, 					<a href="#p-search">search</a>
+				</div>
+				<div id="mw-content-text" lang="en" dir="ltr" class="mw-content-ltr"><p>The Binary Generic File Format (GFF) is intended to be used for almost every file type in a game so it must support as many data types as are needed.
+</p><p>A <a href="GFF_editor.html" title="GFF editor">GFF editor</a> is included with the toolset.
+</p>
+<div id="toc" class="toc"><div id="toctitle"><h2>Contents</h2></div>
+<ul>
+<li class="toclevel-1 tocsection-1"><a href="#General_overview"><span class="tocnumber">1</span> <span class="toctext">General overview</span></a></li>
+<li class="toclevel-1 tocsection-2"><a href="#Differences_between_GFF_V4.0_and_GFF_V3.2"><span class="tocnumber">2</span> <span class="toctext">Differences between GFF V4.0 and GFF V3.2</span></a></li>
+<li class="toclevel-1 tocsection-3"><a href="#File_Format_Conceptual_Overview"><span class="tocnumber">3</span> <span class="toctext">File Format Conceptual Overview</span></a>
+<ul>
+<li class="toclevel-2 tocsection-4"><a href="#Field_Data_Types"><span class="tocnumber">3.1</span> <span class="toctext">Field Data Types</span></a></li>
+<li class="toclevel-2 tocsection-5"><a href="#Field_Labels"><span class="tocnumber">3.2</span> <span class="toctext">Field Labels</span></a></li>
+</ul>
+</li>
+<li class="toclevel-1 tocsection-6"><a href="#File_Format_Physical_Layout"><span class="tocnumber">4</span> <span class="toctext">File Format Physical Layout</span></a>
+<ul>
+<li class="toclevel-2 tocsection-7"><a href="#Platform_dependence"><span class="tocnumber">4.1</span> <span class="toctext">Platform dependence</span></a></li>
+<li class="toclevel-2 tocsection-8"><a href="#Overall_File_Layout"><span class="tocnumber">4.2</span> <span class="toctext">Overall File Layout</span></a>
+<ul>
+<li class="toclevel-3 tocsection-9"><a href="#Header"><span class="tocnumber">4.2.1</span> <span class="toctext">Header</span></a></li>
+<li class="toclevel-3 tocsection-10"><a href="#Struct_Array"><span class="tocnumber">4.2.2</span> <span class="toctext">Struct Array</span></a></li>
+<li class="toclevel-3 tocsection-11"><a href="#Field_Array"><span class="tocnumber">4.2.3</span> <span class="toctext">Field Array</span></a></li>
+<li class="toclevel-3 tocsection-12"><a href="#Raw_Data_Block"><span class="tocnumber">4.2.4</span> <span class="toctext">Raw Data Block</span></a></li>
+</ul>
+</li>
+<li class="toclevel-2 tocsection-13"><a href="#Lists"><span class="tocnumber">4.3</span> <span class="toctext">Lists</span></a></li>
+<li class="toclevel-2 tocsection-14"><a href="#References"><span class="tocnumber">4.4</span> <span class="toctext">References</span></a></li>
+</ul>
+</li>
+<li class="toclevel-1 tocsection-15"><a href="#Improvements_and_optimizations"><span class="tocnumber">5</span> <span class="toctext">Improvements and optimizations</span></a>
+<ul>
+<li class="toclevel-2 tocsection-16"><a href="#Field_look-up"><span class="tocnumber">5.1</span> <span class="toctext">Field look-up</span></a></li>
+<li class="toclevel-2 tocsection-17"><a href="#Binding_tables"><span class="tocnumber">5.2</span> <span class="toctext">Binding tables</span></a></li>
+<li class="toclevel-2 tocsection-18"><a href="#Direct_loads_to_memory"><span class="tocnumber">5.3</span> <span class="toctext">Direct loads to memory</span></a></li>
+</ul>
+</li>
+</ul>
+</div>
+
+<h2><span class="mw-headline" id="General_overview">General overview</span></h2>
+<p>In a GFF, data is grouped into structs, with the file level being the top level struct. Each struct can have any number of fields of any type including structs and variable size lists of any type.
+</p>
+<h2><span class="mw-headline" id="Differences_between_GFF_V4.0_and_GFF_V3.2">Differences between GFF V4.0 and GFF V3.2</span></h2>
+<p>For those familiar with GFF V3.2, here is a short list of differences between V3.2 and the new version
+</p>
+<ul><li> 4-byte numerical labels instead of 16 byte strings for faster access</li>
+<li> Supports lists of any type for convenience (instead of only structs)</li>
+<li> All struct data is stored in the data block (rather than fields) to allow for faster loads. Fields provide a mapping of where the data is stored.</li>
+<li> Supports references to mimic pointers to allow complex data structures</li>
+<li> A few fields were added to the Header
+<ul><li> File Version records the version of the file type using the GFF</li>
+<li> Target Platform records the intended platform for the resource</li></ul></li>
+<li> In general, the format has been simplified and unnecessary sections were removed (label array, field indices array and list indices array)</li></ul>
+<p>Overall, the new format should result in smaller files with faster access times.
+</p>
+<h2><span class="mw-headline" id="File_Format_Conceptual_Overview">File Format Conceptual Overview</span></h2>
+<h3><span class="mw-headline" id="Field_Data_Types">Field Data Types</span></h3>
+<p>There will be a starting list of supported types and new types can be added as needed. The file format can support as many as 65,535 different basic types.
+</p>
+<table class="wikitable">
+
+<tr>
+<th> Type </th>
+<th> Type ID </th>
+<th> Discussion
+</th></tr>
+<tr>
+<td> UINT8 </td>
+<td> 0 </td>
+<td>
+</td></tr>
+<tr>
+<td> INT8  </td>
+<td> 1 </td>
+<td>
+</td></tr>
+<tr>
+<td> UINT16 </td>
+<td> 2 </td>
+<td>
+</td></tr>
+<tr>
+<td> INT16  </td>
+<td>  3 </td>
+<td>
+</td></tr>
+<tr>
+<td> UINT32 </td>
+<td>  4 </td>
+<td>
+</td></tr>
+<tr>
+<td> INT32 </td>
+<td> 5 </td>
+<td>
+</td></tr>
+<tr>
+<td> UINT64 </td>
+<td> 6 </td>
+<td>
+</td></tr>
+<tr>
+<td> INT64  </td>
+<td> 7 </td>
+<td>
+</td></tr>
+<tr>
+<td> FLOAT32 </td>
+<td> 8 </td>
+<td>
+</td></tr>
+<tr>
+<td> FLOAT64 </td>
+<td> 9 </td>
+<td>
+</td></tr>
+<tr>
+<td> Vector3f </td>
+<td> 10 </td>
+<td>
+</td></tr>
+<tr>
+<td> Vector4f </td>
+<td> 12 </td>
+<td>
+</td></tr>
+<tr>
+<td> Quaternionf </td>
+<td> 13 </td>
+<td>
+</td></tr>
+<tr>
+<td> ECString </td>
+<td> 14 </td>
+<td> An ECString is always a reference to elsewhere in the raw data (regardless of flags).  The string is essentially a list of WCHARs.
+</td></tr>
+<tr>
+<td> Color4f  </td>
+<td> 15 </td>
+<td>
+</td></tr>
+<tr>
+<td> Matrix4x4f </td>
+<td> 16 </td>
+<td>
+</td></tr>
+<tr>
+<td> TlkString  </td>
+<td> 17 </td>
+<td> A TlkString is not actually a string, but a pair of UInt32 values.  One is the index of a string in the TLK string table.
+</td></tr></table>
+<p><br />
+Strings are stored as list of WCHARs.
+</p><p>There's also a "Generic" type that's only usable in lists (and references?), with type ID 0xFFFF
+</p>
+<h3><span class="mw-headline" id="Field_Labels">Field Labels</span></h3>
+<p>The Binary GFF uses 4-byte IDs to label each field. Within each struct, each field must have a unique ID. These IDs could be string hashes or numerical IDs. The only requirement is that the reader and writer of these files agree on the IDs. A large list of common IDs can be found by opening <i>Dragon Age\tools\plugins\EditorGff40.dll</i> with any text editor and searching for the string <i>BinaryGFFIDList.h</i>
+</p>
+<h2><span class="mw-headline" id="File_Format_Physical_Layout">File Format Physical Layout</span></h2>
+<h3><span class="mw-headline" id="Platform_dependence">Platform dependence</span></h3>
+<p>The endianness of the data is that of the target platform. For example, data files for intel processors should be little endian whereas data for power pcs should be big endian.
+</p><p>There may be other differences in the files generated for different platforms in order to achieve proper alignment or the desired in memory layout of the data.
+</p>
+<h3><span class="mw-headline" id="Overall_File_Layout">Overall File Layout</span></h3>
+<table class="wikitable" cellspacing="2" cellpadding="2" width="25%" border="1&gt;">
+
+<tr>
+<td> Header
+</td></tr>
+<tr>
+<td> Struct Array
+</td></tr>
+<tr>
+<td> Field Array
+</td></tr>
+<tr>
+<td> Raw Data Block
+</td></tr></table>
+<h4><span class="mw-headline" id="Header">Header</span></h4>
+<p>The header is located at the start of the file and contains the following values. 
+</p>
+<table class="wikitable" cellspacing="2" cellpadding="2" width="90%" border="1&gt;">
+<tr>
+<th> Value
+</th>
+<th> Description
+</th></tr>
+<tr>
+<td> GFFMagicNumber
+</td>
+<td> All GFF files will start with the hexadecimal value 0x47464620, which is the ASCII value for “GFF “.
+</td></tr>
+<tr>
+<td> GFFVersion
+</td>
+<td> 4 bytes representing the version of the underlying GFF format. This should be “V4.0” or 0x56342E30 for all files using this format.
+</td></tr>
+<tr>
+<td> TargetPlatform
+</td>
+<td> 4-byte field indicating the intended target platform for this file.
+<ul><li>“PS3 “ or 0x50533320 for the Playstation 3</li>
+<li>“X360” or 0x58333630 for the XBOX 360</li>
+<li>“PC&#160;&#160;“ or 0x50432020 for the PC</li></ul>
+<p>There will most likely be more specialized targets for the PC in the future. 
+</p>
+</td></tr>
+<tr>
+<td> FileType
+</td>
+<td> 4-byte field used to identify this file type. By convention it should be the three letter file extension followed by a space.
+</td></tr>
+<tr>
+<td> FileVersion
+</td>
+<td> 4-byte version of the FileType. By convention it should be “Vx.x” or “xx.x” where X is a digit.
+</td></tr>
+<tr>
+<td> StructCount
+</td>
+<td> 4-byte unsigned number of elements in the Struct Array.
+</td></tr>
+<tr>
+<td> Data Offset
+</td>
+<td> 4-byte unsigned offset from the beginning of the file to the Raw Data Block.
+</td></tr></table>
+<p>The first five fields are always in big endian and never byteswapped. This keeps those fields human readable on any machine.
+</p>
+<h4><span class="mw-headline" id="Struct_Array">Struct Array</span></h4>
+<p>A struct is a grouping of data. A struct definition describes which data is in a struct. Many instances of a struct type may occur in a single file but there will only be one definition for each struct type. 
+</p><p>The Struct Array starts immediately after the header. The first element in the Struct Array is the Top-Level Struct for the GFF file and it describes what the file looks like at the top level. Since the Top-Level Struct is always present, every GFF file contains at least one element in the struct array.
+</p><p>The Struct Array looks like this:
+</p>
+<table class="wikitable" cellspacing="2" cellpadding="2" width="35%" border="1&gt;">
+
+<tr>
+<td> Struct 0 (Top-Level Struct)*
+</td></tr>
+<tr>
+<td> Struct 1
+</td></tr>
+<tr>
+<td> Struct 2
+</td></tr>
+<tr>
+<td> ...
+</td></tr>
+<tr>
+<td> Struct N-1**
+</td></tr></table>
+<p>*Struct 0 is always present<br />
+**N = Header.StructCount
+</p><p>The GFF Struct contains the values listed in the table below.
+</p>
+<table class="wikitable" cellspacing="2" cellpadding="2" width="35%" border="1&gt;">
+<tr>
+<th>
+</th>
+<th> Value
+</th>
+<th> Description
+</th></tr>
+<tr>
+<td> StructType
+</td>
+<td> 4-byte programmer defined ID
+</td></tr>
+<tr>
+<td> FieldCount
+</td>
+<td> 4-byte number of fields in the struct
+</td></tr>
+<tr>
+<td> FieldOffset
+</td>
+<td> 4-byte unsigned offset from the beginning of the file to the first field in the struct
+</td></tr>
+<tr>
+<td> StructSize
+</td>
+<td> 4-byte unsigned size of the chunk of data representing the struct
+</td></tr></table>
+<p>All the fields for a struct are contiguous so knowing the address of the first one and the number of fields is enough information to access any element in the struct.
+</p>
+<h4><span class="mw-headline" id="Field_Array">Field Array</span></h4>
+<p>The Field Array starts immediately after the Struct Array. Each field entry describes a piece of data contained in a struct. Each struct’s fields must be contiguous in the array and appear in increasing order of their labels. The fields for the Top Level Struct appear first in the array.
+</p><p>The Field Array looks like this:
+</p>
+<table class="wikitable" cellspacing="2" cellpadding="2" width="35%" border="1&gt;">
+
+<tr>
+<td> Struct 0 field 0
+</td></tr>
+<tr>
+<td> Struct 0 field 1
+</td></tr>
+<tr>
+<td> Struct 0 …
+</td></tr>
+<tr>
+<td> Struct 0 field Struct.FieldCount &#8212;  1
+</td></tr>
+<tr>
+<td> Struct x field 0
+</td></tr>
+<tr>
+<td> Struct x field 1
+</td></tr>
+<tr>
+<td> Struct x …
+</td></tr>
+<tr>
+<td> Struct x field Struct.FieldCount &#8212;  1
+</td></tr>
+<tr>
+<td>...
+</td></tr></table>
+<p>Each field looks like this:
+</p>
+<table class="wikitable" cellspacing="2" cellpadding="2" width="75%" border="1&gt;">
+<tr>
+<th> Value
+</th>
+<th> Description
+</th></tr>
+<tr>
+<td> Label
+</td>
+<td> 4-byte label used to look up the field
+</td></tr>
+<tr>
+<td> FieldType
+</td>
+<td> 4-byte describing the type of the field (see below for explanation)
+</td></tr>
+<tr>
+<td> Index
+</td>
+<td> 4-byte unsigned offset to the location of the data
+</td></tr></table>
+<p>The label is just a 4-byte value used to find the correct field. They could be string hashes or some other numerical ID.
+</p><p>The index field stores the location of the data as an offset from the beginning of the struct in the data block. This can result in padding within the structs which can be garbage data for all we care (although by convention we usually start with 0xFF).  In particular this happens when trying to maintain alignment for data types such as 16 byte alignment for vectors, etc.
+</p><p>The type is broken up into two 2-byte values that describe the type of the field. 
+</p><p>The type looks like this:
+</p>
+<table class="wikitable" cellspacing="2" cellpadding="2" width="50%" border="1&gt;">
+<tr>
+<th> Value
+</th>
+<th> Description
+</th></tr>
+<tr>
+<td> TypeID
+</td>
+<td> A 2-byte unsigned number indicating the type
+</td></tr>
+<tr>
+<td> Flags
+</td>
+<td> 2-bytes of bit flags
+</td></tr></table>
+<p>The following flags are currently defined starting from the most significant bits. 
+</p>
+<table class="wikitable" cellspacing="2" cellpadding="2" width="90%" border="1&gt;">
+<tr>
+<th> Bit
+</th>
+<th> Flag Description
+</th></tr>
+<tr>
+<td> 1 (MSB)
+</td>
+<td> List Flag. If this flag is set then this type is a list of the described type.
+</td></tr>
+<tr>
+<td> 2
+</td>
+<td> Struct flag. If this flag is set then this type is a struct.
+<p>If the struct flag is not set then the BaseType indicates the type of the field by the integer id of that type. If the struct flag is set then the BaseType indicates the index of this struct’s description in the Struct Array. 
+</p>
+</td></tr>
+<tr>
+<td> 3
+</td>
+<td> Reference flag
+<p>If the reference flag is set then the data stored in the data block is actually an offset from the beginning of the data block to the location of the actual data. References can be used to mimic pointers in a GFF. 
+</p>
+</td></tr></table>
+<h4><span class="mw-headline" id="Raw_Data_Block">Raw Data Block</span></h4>
+<p>The data block is where the actual data is stored. The data for the top level struct is stored at the beginning of the block. All other data will be fields in the struct or accessed by reference.
+</p>
+<h3><span class="mw-headline" id="Lists">Lists</span></h3>
+<p>The address pointed to by a list is actually a reference to another location in the file which stores the list. The first thing in the list is a 4-byte unsigned length of the list followed by the elements.
+</p><p>This is what the list looks like: 
+</p>
+<table class="wikitable" cellspacing="2" cellpadding="2" width="20%" border="1&gt;">
+
+<tr>
+<td> Length
+</td></tr>
+<tr>
+<td> Element 0
+</td></tr>
+<tr>
+<td> Element 1
+</td></tr>
+<tr>
+<td> ...
+</td></tr>
+<tr>
+<td> Element Length - 1
+</td></tr></table>
+<p>Empty lists can just store a null reference to prevent creating another block.
+</p><p>Generic lists (the lists with FieldType set to 0xFFFF) store pairs: <i>type, reference</i> where <i>type</i> defines FieldType (with flags) of the individual element and <i>reference</i> is a standard <a href="#References">Reference</a> pointing to data of the element.  Therefore, each entry in a generic list is 8 bytes long.
+</p>
+<h3><span class="mw-headline" id="References">References</span></h3>
+<p>A reference is a 4-byte unsigned offset from the beginning of the data block to the location of the data.
+</p><p>Null references are stored as 0xFFFFFFFF.  Null references can be used in lists, as well as individual reference items.
+</p>
+<h2><span class="mw-headline" id="Improvements_and_optimizations">Improvements and optimizations</span></h2>
+<h3><span class="mw-headline" id="Field_look-up">Field look-up</span></h3>
+<p>Field look-up is faster in this version of the GFF because it requires an integer comparison instead of a string comparison. Additionally, storing fields in order allows efficient search for the specific field. Finally, knowing what the data structure should look like allows the program to make a good guess as to where the data should be. If the guess is wrong (because the file is an older version) then the program only has to start searching at the initial guess, which is still a faster search than without a good guess.
+</p>
+<h3><span class="mw-headline" id="Binding_tables">Binding tables</span></h3>
+<p>It is possible to build a binding table for a type of file that will be read in often. The binding table will allow data to be loaded from the GFF without parsing through the file each time.
+</p>
+<h3><span class="mw-headline" id="Direct_loads_to_memory">Direct loads to memory</span></h3>
+<p>Using this format it is possible to optimize specific file types by writing the GFF in exactly the way it will be written in memory. After verifying that the file type is up to date, the game can read the data block into memory and cast the pointer it directly to the in C data type. This optimization would not result in any loss of generality since the GFF will still be accessible in the usual way.
+</p>
+<!-- 
+NewPP limit report
+CPU time usage: 0.016 seconds
+Real time usage: 0.017 seconds
+Preprocessor visited node count: 91/1000000
+Preprocessor generated node count: 120/1000000
+Post‐expand include size: 0/2097152 bytes
+Template argument size: 0/2097152 bytes
+Highest expansion depth: 2/40
+Expensive parser function count: 0/100
+-->
+
+<!-- 
+Transclusion expansion time report (%,ms,calls,template)
+100.00%    0.000      1 - -total
+-->
+
+<!-- Saved in parser cache with key db714099484-datoolwiki_:pcache:idhash:714-0!*!0!!en!*!* and timestamp 20260531013438 and revision id 16922
+ -->
+</div>									<div class="printfooter">
+						Retrieved from "<a dir="ltr" href="GFF.html">https://www.datoolset.net/mw/index.php?title=GFF&amp;oldid=16922</a>"					</div>
+													<div id='catlinks' class='catlinks'><div id="mw-normal-catlinks" class="mw-normal-catlinks"><a href="/wiki/Special:Categories" title="Special:Categories">Category</a>: <ul><li><a href="Category%3AFile_types.html" title="Category:File types">File types</a></li></ul></div></div>												<div class="visualClear"></div>
+							</div>
+		</div>
+		<div id="mw-navigation">
+			<h2>Navigation menu</h2>
+
+			<div id="mw-head">
+									<div id="p-personal" role="navigation" class="" aria-labelledby="p-personal-label">
+						<h3 id="p-personal-label">Personal tools</h3>
+						<ul>
+							<li id="pt-login"><a href="/mw/index.php?title=Special:UserLogin&amp;returnto=GFF" title="You are encouraged to log in; however, it is not mandatory [o]" accesskey="o">Log in</a></li>						</ul>
+					</div>
+									<div id="left-navigation">
+										<div id="p-namespaces" role="navigation" class="vectorTabs" aria-labelledby="p-namespaces-label">
+						<h3 id="p-namespaces-label">Namespaces</h3>
+						<ul>
+															<li  id="ca-nstab-main" class="selected"><span><a href="GFF.html"  title="View the content page [c]" accesskey="c">Page</a></span></li>
+															<li  id="ca-talk"><span><a href="Talk%3AGFF.html"  title="Discussion about the content page [t]" accesskey="t">Discussion</a></span></li>
+													</ul>
+					</div>
+										<div id="p-variants" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-variants-label">
+												<h3 id="p-variants-label"><span>Variants</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+									</div>
+				<div id="right-navigation">
+										<div id="p-views" role="navigation" class="vectorTabs" aria-labelledby="p-views-label">
+						<h3 id="p-views-label">Views</h3>
+						<ul>
+															<li id="ca-view" class="selected"><span><a href="GFF.html" >Read</a></span></li>
+															<li id="ca-viewsource"><span><a href="GFF.html"  title="This page is protected.&#10;You can view its source [e]" accesskey="e">View source</a></span></li>
+															<li id="ca-history" class="collapsible"><span><a href="GFF.html"  title="Past revisions of this page [h]" accesskey="h">View history</a></span></li>
+													</ul>
+					</div>
+										<div id="p-cactions" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-cactions-label">
+						<h3 id="p-cactions-label"><span>More</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+										<div id="p-search" role="search">
+						<h3>
+							<label for="searchInput">Search</label>
+						</h3>
+
+						<form action="/mw/index.php" id="searchform">
+														<div id="simpleSearch">
+															<input type="search" name="search" placeholder="Search" title="Search Dragon Age Toolset Wiki [f]" accesskey="f" id="searchInput" /><input type="hidden" value="Special:Search" name="title" /><input type="submit" name="fulltext" value="Search" title="Search the pages for this text" id="mw-searchButton" class="searchButton mw-fallbackSearchButton" /><input type="submit" name="go" value="Go" title="Go to a page with this exact name if exists" id="searchButton" class="searchButton" />								</div>
+						</form>
+					</div>
+									</div>
+			</div>
+			<div id="mw-panel">
+				<div id="p-logo" role="banner"><a class="mw-wiki-logo" href="Main_Page.html"  title="Visit the main page"></a></div>
+						<div class="portal" role="navigation" id='p-navigation' aria-labelledby='p-navigation-label'>
+			<h3 id='p-navigation-label'>Navigation</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-mainpage-description"><a href="Main_Page.html" title="Visit the main page [z]" accesskey="z">Main page</a></li>
+													<li id="n-recentchanges"><a href="/wiki/Special:RecentChanges" title="A list of recent changes in the wiki [r]" accesskey="r">Recent changes</a></li>
+													<li id="n-randompage"><a href="/wiki/Special:Random" title="Load a random page [x]" accesskey="x">Random page</a></li>
+													<li id="n-help"><a href="https://www.mediawiki.org/wiki/Special:MyLanguage/Help:Contents" title="The place to find out">Help</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-Links' aria-labelledby='p-Links-label'>
+			<h3 id='p-Links-label'>Links</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-Toolset-forums"><a href="http://forum.bioware.com/forum/30-dragon-age-toolset" rel="nofollow">Toolset forums</a></li>
+													<li id="n-Legacy-forums"><a href="http://social.bioware.com/forum/1/subindex/70" rel="nofollow">Legacy forums</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-tb' aria-labelledby='p-tb-label'>
+			<h3 id='p-tb-label'>Tools</h3>
+
+			<div class="body">
+									<ul>
+													<li id="t-whatlinkshere"><a href="/wiki/Special:WhatLinksHere/GFF" title="A list of all wiki pages that link here [j]" accesskey="j">What links here</a></li>
+													<li id="t-recentchangeslinked"><a href="/wiki/Special:RecentChangesLinked/GFF" title="Recent changes in pages linked from this page [k]" accesskey="k">Related changes</a></li>
+													<li id="t-specialpages"><a href="/wiki/Special:SpecialPages" title="A list of all special pages [q]" accesskey="q">Special pages</a></li>
+													<li id="t-print"><a href="GFF.html" rel="alternate" title="Printable version of this page [p]" accesskey="p">Printable version</a></li>
+													<li id="t-permalink"><a href="GFF.html" title="Permanent link to this revision of the page">Permanent link</a></li>
+													<li id="t-info"><a href="GFF.html" title="More information about this page">Page information</a></li>
+											</ul>
+							</div>
+		</div>
+				</div>
+		</div>
+		<div id="footer" role="contentinfo">
+							<ul id="footer-info">
+											<li id="footer-info-lastmod"> This page was last modified on 8 August 2011, at 20:31.</li>
+									</ul>
+							<ul id="footer-places">
+											<li id="footer-places-privacy"><a href="/wiki/Dragon_Age_Toolset_Wiki:Privacy_policy" title="Dragon Age Toolset Wiki:Privacy policy">Privacy policy</a></li>
+											<li id="footer-places-about"><a href="/wiki/Dragon_Age_Toolset_Wiki:About" title="Dragon Age Toolset Wiki:About">About Dragon Age Toolset Wiki</a></li>
+											<li id="footer-places-disclaimer"><a href="/wiki/Dragon_Age_Toolset_Wiki:General_disclaimer" title="Dragon Age Toolset Wiki:General disclaimer">Disclaimers</a></li>
+									</ul>
+										<ul id="footer-icons" class="noprint">
+											<li id="footer-poweredbyico">
+															<a href="//www.mediawiki.org/"><img src="../assets/mw/resources/assets/poweredby_mediawiki_88x31.png" alt="Powered by MediaWiki" srcset="../assets/mw/resources/assets/poweredby_mediawiki_132x47.png 1.5x, ../assets/mw/resources/assets/poweredby_mediawiki_176x62.png 2x" width="88" height="31" /></a>
+													</li>
+									</ul>
+						<div style="clear:both"></div>
+		</div>
+		<script>if(window.jQuery)jQuery.ready();</script><script>if(window.mw){
+mw.loader.state({"site":"loading","user":"ready","user.groups":"ready"});
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.toc","mediawiki.action.view.postEdit","mediawiki.user","mediawiki.hidpi","mediawiki.page.ready","mediawiki.searchSuggest"],null,true);
+}</script>
+<script>if(window.mw){
+document.write("\u003Cscript src=\"https://www.datoolset.net/mw/load.php?debug=false\u0026amp;lang=en\u0026amp;modules=site\u0026amp;only=scripts\u0026amp;skin=vector\u0026amp;*\"\u003E\u003C/script\u003E");
+}</script>
+<script>if(window.mw){
+mw.config.set({"wgBackendResponseTime":224});
+}</script>
+	</body>
+</html>

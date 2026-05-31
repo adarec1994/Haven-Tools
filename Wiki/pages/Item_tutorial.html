@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" class="client-nojs">
+<head>
+<meta charset="UTF-8" />
+<title>Item tutorial - Dragon Age Toolset Wiki</title>
+<meta name="generator" content="MediaWiki 1.25.6" />
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="search" type="application/opensearchdescription+xml" href="/mw/opensearch_desc.php" title="Dragon Age Toolset Wiki (en)" />
+<link rel="EditURI" type="application/rsd+xml" href="https://www.datoolset.net/mw/api.php?action=rsd" />
+<link rel="alternate" hreflang="x-default" href="Item_tutorial.html" />
+<link rel="alternate" type="application/atom+xml" title="Dragon Age Toolset Wiki Atom feed" href="/mw/index.php?title=Special:RecentChanges&amp;feed=atom" />
+<meta name="ResourceLoaderDynamicStyles" content="" />
+<style>a:lang(ar),a:lang(kk-arab),a:lang(mzn),a:lang(ps),a:lang(ur){text-decoration:none}
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-css:7:270a0dcd3ae587df0f041aebfc42e61b */</style>
+<script>if(window.mw){
+mw.config.set({"wgCanonicalNamespace":"","wgCanonicalSpecialPageName":false,"wgNamespaceNumber":0,"wgPageName":"Item_tutorial","wgTitle":"Item tutorial","wgCurRevisionId":19975,"wgRevisionId":19975,"wgArticleId":77,"wgIsArticle":true,"wgIsRedirect":false,"wgAction":"view","wgUserName":null,"wgUserGroups":["*"],"wgCategories":["Articles containing BioWare Social Network links","Items","Tutorials"],"wgBreakFrames":false,"wgPageContentLanguage":"en","wgPageContentModel":"wikitext","wgSeparatorTransformTable":["",""],"wgDigitTransformTable":["",""],"wgDefaultDateFormat":"dmy","wgMonthNames":["","January","February","March","April","May","June","July","August","September","October","November","December"],"wgMonthNamesShort":["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],"wgRelevantPageName":"Item_tutorial","wgRelevantArticleId":77,"wgIsProbablyEditable":false,"wgRestrictionEdit":[],"wgRestrictionMove":[]});
+}</script><script>if(window.mw){
+mw.loader.implement("user.options",function($,jQuery){mw.user.options.set({"variant":"en"});});mw.loader.implement("user.tokens",function($,jQuery){mw.user.tokens.set({"editToken":"+\\","patrolToken":"+\\","watchToken":"+\\"});});
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-js:7:a5c52c063dc436c1ca7c9f456936a5e9 */
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.page.startup","mediawiki.legacy.wikibits","mediawiki.legacy.ajax","skins.vector.js"]);
+}</script>
+<!--[if lt IE 7]><style type="text/css">body{behavior:url("/mw/skins/Vector/csshover.min.htc")}</style><![endif]-->
+<link rel="stylesheet" href="../assets/local/wiki-static.css" />
+</head>
+<body class="mediawiki ltr sitedir-ltr ns-0 ns-subject page-Item_tutorial skin-vector action-view">
+		<div id="mw-page-base" class="noprint"></div>
+		<div id="mw-head-base" class="noprint"></div>
+		<div id="content" class="mw-body" role="main">
+			<a id="top"></a>
+
+						<div class="mw-indicators">
+</div>
+			<h1 id="firstHeading" class="firstHeading" lang="en">Item tutorial</h1>
+						<div id="bodyContent" class="mw-body-content">
+									<div id="siteSub">From Dragon Age Toolset Wiki</div>
+								<div id="contentSub"></div>
+												<div id="jump-to-nav" class="mw-jump">
+					Jump to:					<a href="#mw-head">navigation</a>, 					<a href="#p-search">search</a>
+				</div>
+				<div id="mw-content-text" lang="en" dir="ltr" class="mw-content-ltr"><div style="background:#f6f6f6; border: 1px solid #d0a5a5; padding:4px; margin-left:20%; margin-right:20%;">
+<p><b>This article contains links to the BioWare Social Network (BSN), which is now closed.</b></p>
+<p>These links should be replaced with working links where possible, and tutorials edited to remove reliance on BSN.</p>
+</div>
+<p><br />
+</p>
+<table style="float:right; background-color:#eeeeee; border:2px #999999 solid; padding:4px; margin:4px; width:220px;">
+
+<tr>
+<th align="center"> Item topics
+</th></tr>
+<tr>
+<td>
+<ul><li><strong class="selflink">Item tutorial</strong></li>
+<li><a href="Item.html" title="Item">Items</a></li>
+<li><a href="Item_set.html" title="Item set">Item sets</a></li>
+<li><a href="Item_properties.html" title="Item properties">Item properties</a></li>
+<li><a href="BITM_base.xls.html" title="BITM base.xls">BITM base.xls</a></li>
+<li><a href="ItemVariations.xls.html" title="ItemVariations.xls">ItemVariations.xls</a></li></ul>
+</td></tr></table>
+<p>In Dragon Age, "items" are things that a player can take into his inventory and carry around with him through the game. They are distinct and very different from placeables, which are interactive objects that are visible in the game area. Items cannot be placed directly on the area map, they can only be added to the inventory of placeables or creatures in the area. They can also be put in a player's inventory using scripting, a common occurrence for "plot" items. This tutorial doesn't cover any of that; see the tutorials on creatures, placeables, or scripting for more detail. This tutorial just covers the creation of items themselves.
+</p><p>Note that due to the large number of items the toolset has to deal with, the item list displayed while editing creature and merchant inventories is cached. If you create a new item you'll need to refresh the toolset to see them in these lists (the "refresh" option is listed under the View menu).
+</p>
+<div id="toc" class="toc"><div id="toctitle"><h2>Contents</h2></div>
+<ul>
+<li class="toclevel-1 tocsection-1"><a href="#A_longsword"><span class="tocnumber">1</span> <span class="toctext">A longsword</span></a></li>
+<li class="toclevel-1 tocsection-2"><a href="#A_shield"><span class="tocnumber">2</span> <span class="toctext">A shield</span></a></li>
+<li class="toclevel-1 tocsection-3"><a href="#A_suit_of_armor"><span class="tocnumber">3</span> <span class="toctext">A suit of armor</span></a></li>
+<li class="toclevel-1 tocsection-4"><a href="#A_potion"><span class="tocnumber">4</span> <span class="toctext">A potion</span></a></li>
+<li class="toclevel-1 tocsection-5"><a href="#Inventory_Subgroup"><span class="tocnumber">5</span> <span class="toctext"><i>Inventory Subgroup</i></span></a></li>
+</ul>
+</div>
+
+<h2><span class="mw-headline" id="A_longsword">A longsword</span></h2>
+<p>First, select the item palette from the palette menu (<a href="File%3AIconItem.png.html" class="image"><img alt="IconItem.png" src="../assets/mw/images/d/d2/IconItem.png" width="14" height="14" /></a>). Right-click on the empty item list and select "New -&gt; Item" (alternately, go to the file menu and select "New -&gt; Item" from there) and a new item resource will be created. You'll need to name it; we're going to create a sword for starters so we'll call it "longsword". This is just the internal name used by the game to keep track of the item, not the name the player will see, so you can pick whatever naming scheme makes things easiest for you.
+</p><p>The default base item type is "Weapon - Longsword", which is what we want for this particular item and so we'll leave it at that. Most of the other properties can be left as defaults, too. The ones you'll want to change right off the bat are:
+</p>
+<ul><li>Name - the name of the item that the player actually sees in-game. We'll use "Longsword".</li>
+<li>Description - a short block of text that the player can see if he "examines" the item. A basic "This is a longsword." will suffice.</li>
+<li>Icon - the small image that's displayed next to the item's entry in the inventory, and in the equipped item slot when the player has the item equipped. A set of icons is included in the core resources, all prefixed with "ico_"; we'll use "ico_longsword.dds" for this item.</li></ul>
+<p>Since not all longswords look the same, you may wish to choose from a set of alternate models for your item. The "Item Variation" field does this. Unlike Neverwinter Nights, swords cannot be customized by putting together several different parts. 
+</p><p>MaterialProgression and MaterialType are of particular significance to weapons and armor; they determine the general quality of the item (magical effects are added in other properties)
+</p><p>!! need to look up some details on materials for this&#160;!!
+</p><p><a href="File%3AItem_editing_longsword.png.html" class="image"><img alt="Item editing longsword.png" src="../assets/mw/images/5/59/Item_editing_longsword.png" width="540" height="713" /></a>
+</p><p>The "Attributes" section includes a base cost field (measured in copper pieces - silver and gold are calculated automatically), whether the item is damaged or intact, and a variety of advanced properties that can be set for magical weapons.
+</p><p>You have to set the base cost manually. As far as I can see, the base cost of official items is determined by the Item Variation. So, if we're making a sword of variation Longsword 2, have a look at the offical longswords in the Object Inspector. It turns out that gen_im_wep_mel_lsw_oth is Longsword 2, so we can copy the base cost (1500 cp). Don't worry about material or item properties - the game automatically adjusts the buy/sell cost for that (see <a href="Item.html#Item_Cost" title="Item">Item#Item_Cost</a>).
+</p><p>"Item Properties" brings up a display for adding properties that go into effect whenever the item is equipped. These are any special power, effects, or stat variations beyond the basic item attributes. There are two general classes of properties that can be added; abilities and restrictions. Abilities are properties that enhance the item's function in some way - increased damage against certain targets, bonuses to the character's attributes, and so forth. Restrictions are limitations that can be put on who can use the item - for example, only certain classes, or only characters with certain skills or talents. There are also visual effect properties. Each property also has an associated power, which determines how "strong" the property is - generally, how much of a bonus it gives.
+</p><p>An item can have up to five properties on it, including both abilities and restrictions in the total.
+</p><p><a href="File%3AItem_properties.png.html" class="image"><img alt="Item properties.png" src="../assets/mw/images/7/79/Item_properties.png" width="590" height="447" /></a>
+</p><p>You can also assign an item an "OnHit Effect".
+</p>
+<h2><span class="mw-headline" id="A_shield">A shield</span></h2>
+<h2><span class="mw-headline" id="A_suit_of_armor">A suit of armor</span></h2>
+<h2><span class="mw-headline" id="A_potion">A potion</span></h2>
+<h2><span class="mw-headline" id="Inventory_Subgroup"><i>Inventory Subgroup</i></span></h2>
+<p>The <i>Inventory Subgroup</i> (located in the item properties) is a number that designates which category the item belongs to.  For quick reference, a list of the more common items can be found <a rel="nofollow" class="external text" href="http://social.bioware.com/wiki/datoolset/index.php/Inventory">[here</a>]
+</p>
+<!-- 
+NewPP limit report
+CPU time usage: 0.056 seconds
+Real time usage: 0.082 seconds
+Preprocessor visited node count: 43/1000000
+Preprocessor generated node count: 140/1000000
+Post‐expand include size: 931/2097152 bytes
+Template argument size: 119/2097152 bytes
+Highest expansion depth: 4/40
+Expensive parser function count: 0/100
+-->
+
+<!-- 
+Transclusion expansion time report (%,ms,calls,template)
+100.00%   16.545      1 - -total
+ 72.57%   12.007      1 - Template:Infobox_items
+ 47.22%    7.812      1 - Template:Infobox_template
+ 25.97%    4.297      1 - Template:BSN_link
+-->
+
+<!-- Saved in parser cache with key db714099484-datoolwiki_:pcache:idhash:77-0!*!0!!en!5!* and timestamp 20260530190713 and revision id 19975
+ -->
+</div>									<div class="printfooter">
+						Retrieved from "<a dir="ltr" href="Item_tutorial.html">https://www.datoolset.net/mw/index.php?title=Item_tutorial&amp;oldid=19975</a>"					</div>
+													<div id='catlinks' class='catlinks'><div id="mw-normal-catlinks" class="mw-normal-catlinks"><a href="/wiki/Special:Categories" title="Special:Categories">Categories</a>: <ul><li><a href="Category%3AArticles_containing_BioWare_Social_Network_links.html" title="Category:Articles containing BioWare Social Network links">Articles containing BioWare Social Network links</a></li><li><a href="Category%3AItems.html" title="Category:Items">Items</a></li><li><a href="Category%3ATutorials.html" title="Category:Tutorials">Tutorials</a></li></ul></div></div>												<div class="visualClear"></div>
+							</div>
+		</div>
+		<div id="mw-navigation">
+			<h2>Navigation menu</h2>
+
+			<div id="mw-head">
+									<div id="p-personal" role="navigation" class="" aria-labelledby="p-personal-label">
+						<h3 id="p-personal-label">Personal tools</h3>
+						<ul>
+							<li id="pt-login"><a href="/mw/index.php?title=Special:UserLogin&amp;returnto=Item+tutorial" title="You are encouraged to log in; however, it is not mandatory [o]" accesskey="o">Log in</a></li>						</ul>
+					</div>
+									<div id="left-navigation">
+										<div id="p-namespaces" role="navigation" class="vectorTabs" aria-labelledby="p-namespaces-label">
+						<h3 id="p-namespaces-label">Namespaces</h3>
+						<ul>
+															<li  id="ca-nstab-main" class="selected"><span><a href="Item_tutorial.html"  title="View the content page [c]" accesskey="c">Page</a></span></li>
+															<li  id="ca-talk"><span><a href="Talk%3AItem_tutorial.html"  title="Discussion about the content page [t]" accesskey="t">Discussion</a></span></li>
+													</ul>
+					</div>
+										<div id="p-variants" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-variants-label">
+												<h3 id="p-variants-label"><span>Variants</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+									</div>
+				<div id="right-navigation">
+										<div id="p-views" role="navigation" class="vectorTabs" aria-labelledby="p-views-label">
+						<h3 id="p-views-label">Views</h3>
+						<ul>
+															<li id="ca-view" class="selected"><span><a href="Item_tutorial.html" >Read</a></span></li>
+															<li id="ca-viewsource"><span><a href="Item_tutorial.html"  title="This page is protected.&#10;You can view its source [e]" accesskey="e">View source</a></span></li>
+															<li id="ca-history" class="collapsible"><span><a href="Item_tutorial.html"  title="Past revisions of this page [h]" accesskey="h">View history</a></span></li>
+													</ul>
+					</div>
+										<div id="p-cactions" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-cactions-label">
+						<h3 id="p-cactions-label"><span>More</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+										<div id="p-search" role="search">
+						<h3>
+							<label for="searchInput">Search</label>
+						</h3>
+
+						<form action="/mw/index.php" id="searchform">
+														<div id="simpleSearch">
+															<input type="search" name="search" placeholder="Search" title="Search Dragon Age Toolset Wiki [f]" accesskey="f" id="searchInput" /><input type="hidden" value="Special:Search" name="title" /><input type="submit" name="fulltext" value="Search" title="Search the pages for this text" id="mw-searchButton" class="searchButton mw-fallbackSearchButton" /><input type="submit" name="go" value="Go" title="Go to a page with this exact name if exists" id="searchButton" class="searchButton" />								</div>
+						</form>
+					</div>
+									</div>
+			</div>
+			<div id="mw-panel">
+				<div id="p-logo" role="banner"><a class="mw-wiki-logo" href="Main_Page.html"  title="Visit the main page"></a></div>
+						<div class="portal" role="navigation" id='p-navigation' aria-labelledby='p-navigation-label'>
+			<h3 id='p-navigation-label'>Navigation</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-mainpage-description"><a href="Main_Page.html" title="Visit the main page [z]" accesskey="z">Main page</a></li>
+													<li id="n-recentchanges"><a href="/wiki/Special:RecentChanges" title="A list of recent changes in the wiki [r]" accesskey="r">Recent changes</a></li>
+													<li id="n-randompage"><a href="/wiki/Special:Random" title="Load a random page [x]" accesskey="x">Random page</a></li>
+													<li id="n-help"><a href="https://www.mediawiki.org/wiki/Special:MyLanguage/Help:Contents" title="The place to find out">Help</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-Links' aria-labelledby='p-Links-label'>
+			<h3 id='p-Links-label'>Links</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-Toolset-forums"><a href="http://forum.bioware.com/forum/30-dragon-age-toolset" rel="nofollow">Toolset forums</a></li>
+													<li id="n-Legacy-forums"><a href="http://social.bioware.com/forum/1/subindex/70" rel="nofollow">Legacy forums</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-tb' aria-labelledby='p-tb-label'>
+			<h3 id='p-tb-label'>Tools</h3>
+
+			<div class="body">
+									<ul>
+													<li id="t-whatlinkshere"><a href="/wiki/Special:WhatLinksHere/Item_tutorial" title="A list of all wiki pages that link here [j]" accesskey="j">What links here</a></li>
+													<li id="t-recentchangeslinked"><a href="/wiki/Special:RecentChangesLinked/Item_tutorial" title="Recent changes in pages linked from this page [k]" accesskey="k">Related changes</a></li>
+													<li id="t-specialpages"><a href="/wiki/Special:SpecialPages" title="A list of all special pages [q]" accesskey="q">Special pages</a></li>
+													<li id="t-print"><a href="Item_tutorial.html" rel="alternate" title="Printable version of this page [p]" accesskey="p">Printable version</a></li>
+													<li id="t-permalink"><a href="Item_tutorial.html" title="Permanent link to this revision of the page">Permanent link</a></li>
+													<li id="t-info"><a href="Item_tutorial.html" title="More information about this page">Page information</a></li>
+											</ul>
+							</div>
+		</div>
+				</div>
+		</div>
+		<div id="footer" role="contentinfo">
+							<ul id="footer-info">
+											<li id="footer-info-lastmod"> This page was last modified on 1 February 2022, at 17:18.</li>
+									</ul>
+							<ul id="footer-places">
+											<li id="footer-places-privacy"><a href="/wiki/Dragon_Age_Toolset_Wiki:Privacy_policy" title="Dragon Age Toolset Wiki:Privacy policy">Privacy policy</a></li>
+											<li id="footer-places-about"><a href="/wiki/Dragon_Age_Toolset_Wiki:About" title="Dragon Age Toolset Wiki:About">About Dragon Age Toolset Wiki</a></li>
+											<li id="footer-places-disclaimer"><a href="/wiki/Dragon_Age_Toolset_Wiki:General_disclaimer" title="Dragon Age Toolset Wiki:General disclaimer">Disclaimers</a></li>
+									</ul>
+										<ul id="footer-icons" class="noprint">
+											<li id="footer-poweredbyico">
+															<a href="//www.mediawiki.org/"><img src="../assets/mw/resources/assets/poweredby_mediawiki_88x31.png" alt="Powered by MediaWiki" srcset="../assets/mw/resources/assets/poweredby_mediawiki_132x47.png 1.5x, ../assets/mw/resources/assets/poweredby_mediawiki_176x62.png 2x" width="88" height="31" /></a>
+													</li>
+									</ul>
+						<div style="clear:both"></div>
+		</div>
+		<script>if(window.jQuery)jQuery.ready();</script><script>if(window.mw){
+mw.loader.state({"site":"loading","user":"ready","user.groups":"ready"});
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.toc","mediawiki.action.view.postEdit","mediawiki.user","mediawiki.hidpi","mediawiki.page.ready","mediawiki.searchSuggest"],null,true);
+}</script>
+<script>if(window.mw){
+document.write("\u003Cscript src=\"https://www.datoolset.net/mw/load.php?debug=false\u0026amp;lang=en\u0026amp;modules=site\u0026amp;only=scripts\u0026amp;skin=vector\u0026amp;*\"\u003E\u003C/script\u003E");
+}</script>
+<script>if(window.mw){
+mw.config.set({"wgBackendResponseTime":205});
+}</script>
+	</body>
+</html>

@@ -1,0 +1,26 @@
+{
+  "from": "20250101000000",
+  "to": "20251231235959",
+  "total_cdx_rows": 2360,
+  "selected_unique_urls": 9503,
+  "selected_by_kind": {
+    "asset": 54,
+    "image": 3794,
+    "page": 5609,
+    "skin": 46
+  },
+  "live_inventory_fallback_targets_added": {
+    "pages": 5317,
+    "media": 2752
+  },
+  "coverage": {
+    "live_pages": 5549,
+    "live_pages_with_exact_2025_cdx_capture": 232,
+    "live_pages_without_exact_2025_cdx_capture": 5317,
+    "live_inventory_fallback_targets_added": {
+      "pages": 5317,
+      "media": 2752
+    },
+    "missing_manifest": "_inventory/live_pages_missing_2025_capture.json"
+  }
+}

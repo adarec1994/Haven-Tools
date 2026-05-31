@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" class="client-nojs">
+<head>
+<meta charset="UTF-8" />
+<title>Curve editor - Dragon Age Toolset Wiki</title>
+<meta name="generator" content="MediaWiki 1.25.6" />
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="search" type="application/opensearchdescription+xml" href="/mw/opensearch_desc.php" title="Dragon Age Toolset Wiki (en)" />
+<link rel="EditURI" type="application/rsd+xml" href="https://www.datoolset.net/mw/api.php?action=rsd" />
+<link rel="alternate" hreflang="x-default" href="Curve_editor.html" />
+<link rel="alternate" type="application/atom+xml" title="Dragon Age Toolset Wiki Atom feed" href="/mw/index.php?title=Special:RecentChanges&amp;feed=atom" />
+<meta name="ResourceLoaderDynamicStyles" content="" />
+<style>a:lang(ar),a:lang(kk-arab),a:lang(mzn),a:lang(ps),a:lang(ur){text-decoration:none}
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-css:7:270a0dcd3ae587df0f041aebfc42e61b */</style>
+<script>if(window.mw){
+mw.config.set({"wgCanonicalNamespace":"","wgCanonicalSpecialPageName":false,"wgNamespaceNumber":0,"wgPageName":"Curve_editor","wgTitle":"Curve editor","wgCurRevisionId":18913,"wgRevisionId":18913,"wgArticleId":52,"wgIsArticle":true,"wgIsRedirect":false,"wgAction":"view","wgUserName":null,"wgUserGroups":["*"],"wgCategories":["Cutscenes"],"wgBreakFrames":false,"wgPageContentLanguage":"en","wgPageContentModel":"wikitext","wgSeparatorTransformTable":["",""],"wgDigitTransformTable":["",""],"wgDefaultDateFormat":"dmy","wgMonthNames":["","January","February","March","April","May","June","July","August","September","October","November","December"],"wgMonthNamesShort":["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],"wgRelevantPageName":"Curve_editor","wgRelevantArticleId":52,"wgIsProbablyEditable":false,"wgRestrictionEdit":[],"wgRestrictionMove":[]});
+}</script><script>if(window.mw){
+mw.loader.implement("user.options",function($,jQuery){mw.user.options.set({"variant":"en"});});mw.loader.implement("user.tokens",function($,jQuery){mw.user.tokens.set({"editToken":"+\\","patrolToken":"+\\","watchToken":"+\\"});});
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-js:7:a5c52c063dc436c1ca7c9f456936a5e9 */
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.page.startup","mediawiki.legacy.wikibits","mediawiki.legacy.ajax","skins.vector.js"]);
+}</script>
+<!--[if lt IE 7]><style type="text/css">body{behavior:url("/mw/skins/Vector/csshover.min.htc")}</style><![endif]-->
+<link rel="stylesheet" href="../assets/local/wiki-static.css" />
+</head>
+<body class="mediawiki ltr sitedir-ltr ns-0 ns-subject page-Curve_editor skin-vector action-view">
+		<div id="mw-page-base" class="noprint"></div>
+		<div id="mw-head-base" class="noprint"></div>
+		<div id="content" class="mw-body" role="main">
+			<a id="top"></a>
+
+						<div class="mw-indicators">
+</div>
+			<h1 id="firstHeading" class="firstHeading" lang="en">Curve editor</h1>
+						<div id="bodyContent" class="mw-body-content">
+									<div id="siteSub">From Dragon Age Toolset Wiki</div>
+								<div id="contentSub"></div>
+												<div id="jump-to-nav" class="mw-jump">
+					Jump to:					<a href="#mw-head">navigation</a>, 					<a href="#p-search">search</a>
+				</div>
+				<div id="mw-content-text" lang="en" dir="ltr" class="mw-content-ltr"><table style="float:right; background-color:#eeeeee; border:2px #999999 solid; padding:4px; margin:4px; width:220px;">
+
+<tr>
+<th align="center"> Cutscene topics
+</th></tr>
+<tr>
+<td>
+<ul><li><a href="Cutscene.html" title="Cutscene">Cutscene</a></li>
+<li><a href="Cutscene_tutorial.html" title="Cutscene tutorial">Cutscene tutorial</a></li>
+<li><a href="Cutscene_action.html" title="Cutscene action">Cutscene actions</a>
+<ul><li><a href="Headtracking.html" title="Headtracking">Headtracking</a></li>
+<li><a href="Play_animation.html" title="Play animation">Play animation</a>
+<ul><li><a href="Animation_list.html" title="Animation list">Animation list</a></li></ul></li></ul></li>
+<li><a href="Cutscene_effect.html" title="Cutscene effect">Cutscene effects</a></li>
+<li><a href="VFX_list.html" title="VFX list">VFX list</a></li>
+<li><strong class="selflink">Curve editor</strong></li>
+<li><a href="Cutscene_object.html" title="Cutscene object">Cutscene objects</a></li>
+<li><a href="Cutscene_capture.html" title="Cutscene capture">Cutscene capture</a></li></ul>
+</td></tr></table>
+<p>When crafting a <a href="Cutscene.html" title="Cutscene">cutscene</a> many object properties need to be continuously and smoothly varied over the course of the scene, rather than simply being discrete events or on/off characteristics. The curve editor allows the values of these properties to be changed over time with as much fine control as needed.
+</p><p>To make the curve editor visible, click the curve editor button in the toolbar (button #9 in the toolbar legend below) and select the object or specific keyed tracks containing the curves you'd like to edit.
+</p><p><a href="File%3ACutscene_toolbar.png.html" class="image"><img alt="Cutscene toolbar.png" src="../assets/mw/images/7/7c/Cutscene_toolbar.png" width="506" height="100" /></a>
+</p>
+<div id="toc" class="toc"><div id="toctitle"><h2>Contents</h2></div>
+<ul>
+<li class="toclevel-1 tocsection-1"><a href="#Keys"><span class="tocnumber">1</span> <span class="toctext">Keys</span></a></li>
+<li class="toclevel-1 tocsection-2"><a href="#Curve_types_and_tangents"><span class="tocnumber">2</span> <span class="toctext">Curve types and tangents</span></a></li>
+<li class="toclevel-1 tocsection-3"><a href="#Adding_keys"><span class="tocnumber">3</span> <span class="toctext">Adding keys</span></a></li>
+<li class="toclevel-1 tocsection-4"><a href="#Value_Axis"><span class="tocnumber">4</span> <span class="toctext">Value Axis</span></a></li>
+<li class="toclevel-1 tocsection-5"><a href="#Legend"><span class="tocnumber">5</span> <span class="toctext">Legend</span></a></li>
+<li class="toclevel-1 tocsection-6"><a href="#Curve_Editor_an_EASY_step-by-step_Intro"><span class="tocnumber">6</span> <span class="toctext">Curve Editor an EASY step-by-step Intro</span></a></li>
+<li class="toclevel-1 tocsection-7"><a href="#Curve_Types"><span class="tocnumber">7</span> <span class="toctext">Curve Types</span></a>
+<ul>
+<li class="toclevel-2 tocsection-8"><a href="#Orientation_Curves"><span class="tocnumber">7.1</span> <span class="toctext">Orientation Curves</span></a></li>
+<li class="toclevel-2 tocsection-9"><a href="#Position_Curves"><span class="tocnumber">7.2</span> <span class="toctext">Position Curves</span></a></li>
+<li class="toclevel-2 tocsection-10"><a href="#Other_curves"><span class="tocnumber">7.3</span> <span class="toctext">Other curves</span></a></li>
+</ul>
+</li>
+</ul>
+</div>
+
+<h2><span class="mw-headline" id="Keys">Keys</span></h2>
+<p>Keys are points added to the position, orientation, and other similar value-based tracks that various objects have.
+</p>
+<table cellspacing="0px" cellpadding="2px" style="background-color:transparent;">
+<tr>
+<td width="13px" style="background-color:#d4d0c8;text-align:center; border: 1px solid #d4d0c8;">&#8863;</td>
+<td width="187px" style="background-color:#d4d0c8; text-align:left; color:#aca899; border: 1px solid #d4d0c8; font-weight:bold;">General</td>
+</tr>
+<tr>
+<td style="background-color:#d4d0c8; border:1px solid #d4d0c8;"> </td>
+<td style="background-color:#ffffff; border:1px solid #d4d0c8; vertical-align:top">Tangent </td>
+<td> The tangent for this key. The tangent affects how the bezier control points behave. Can be broken, continuous, smooth, or auto. </td>
+</tr>
+<tr>
+<td style="background-color:#d4d0c8; border:1px solid #d4d0c8;"> </td>
+<td style="background-color:#ffffff; border:1px solid #d4d0c8; vertical-align:top">Time </td>
+<td> The point in time the key is located at. </td>
+</tr>
+<tr>
+<td style="background-color:#d4d0c8; border:1px solid #d4d0c8;"> </td>
+<td style="background-color:#ffffff; border:1px solid #d4d0c8; vertical-align:top">Transition Out</td>
+<td> The type of transition that follows from this key to the next key after it. Can be Bexier, Linear, or Step. </td>
+</tr>
+<tr>
+<td style="background-color:#d4d0c8; border:1px solid #d4d0c8;"> </td>
+<td style="background-color:#ffffff; border:1px solid #d4d0c8; vertical-align:top">Value</td>
+<td> The value of the key.</td>
+</tr>
+</table>
+<h2><span class="mw-headline" id="Curve_types_and_tangents">Curve types and tangents</span></h2>
+<p>When you select a key it appears in the object inspector. You can set the style of the curve here by changing the "transition out" property of the key point, which determines the shape of the curve from the selected point to the point following it. If you select multiple points (either by control-clicking or by dragging a selection box over them) you can modify the type of curve for all of them at once.
+</p><p>The default curve type depends on the curve mode, selected in the toolbar (button #18). When curve mode is enabled the default is a bezier curve, when it's not enabled the default is a stepped curve.
+</p><p>A "step" transition causes the curve to suddenly jump from the old value to the new value at the next key.
+</p><p><a href="File%3ACurve_editor_stepped_curve.png.html" class="image"><img alt="Curve editor stepped curve.png" src="../assets/mw/images/c/cf/Curve_editor_stepped_curve.png" width="598" height="305" /></a>
+</p><p>In the timeline track this is represented with square keys:
+</p><p><a href="File%3ACutscene_timeline_stepped_to_bezier_key.png.html" class="image"><img alt="Cutscene timeline stepped to bezier key.png" src="../assets/mw/images/3/30/Cutscene_timeline_stepped_to_bezier_key.png" width="269" height="22" /></a>
+</p><p>A "linear" transition causes the curve to change from the old value to the new value at a constant rate:
+</p><p><a href="File%3ACurve_editor_linear_curve.png.html" class="image"><img alt="Curve editor linear curve.png" src="../assets/mw/images/a/a2/Curve_editor_linear_curve.png" width="598" height="305" /></a>
+</p><p>In the timeline track this is represented with triangular keys:
+</p><p><a href="File%3ACutscene_timeline_linear_to_bezier_key.png.html" class="image"><img alt="Cutscene timeline linear to bezier key.png" src="../assets/mw/images/4/45/Cutscene_timeline_linear_to_bezier_key.png" width="269" height="22" /></a>
+</p><p>By default when you use bezier curves the behavior of the tangents at each key is set to "auto". 
+</p><p><a href="File%3ACurve_editor_auto_tangent.png.html" class="image"><img alt="Curve editor auto tangent.png" src="../assets/mw/images/3/3a/Curve_editor_auto_tangent.png" width="598" height="305" /></a>
+</p><p>In the timeline this is represented with rounded keys:
+</p><p><a href="File%3ACutscene_timeline_bezier_to_bezier_key.png.html" class="image"><img alt="Cutscene timeline bezier to bezier key.png" src="../assets/mw/images/c/ce/Cutscene_timeline_bezier_to_bezier_key.png" width="269" height="22" /></a>
+</p><p>Setting a key's tangent to any other setting will cause the Bezier control points to appear. The details of how you can modify these control points depends on the tangent type.
+</p><p>When you set a bezier key to a non-auto tangent the indicator on the timeline switches to an "inverted" curve, like so:
+</p><p><a href="File%3ACutscene_timeline_bezier_to_non-auto_bezier_key.png.html" class="image"><img alt="Cutscene timeline bezier to non-auto bezier key.png" src="../assets/mw/images/4/47/Cutscene_timeline_bezier_to_non-auto_bezier_key.png" width="269" height="22" /></a>
+</p><p>A "broken" tangent allows you to move the two control points around freely:
+</p><p><a href="File%3ACurve_editor_broken_tangent.png.html" class="image"><img alt="Curve editor broken tangent.png" src="../assets/mw/images/3/37/Curve_editor_broken_tangent.png" width="598" height="305" /></a>
+</p><p>A "continuous" tangent forces the two control points to be colinear, but they can have different weights:
+</p><p><a href="File%3ACurve_editor_continuous_tangent.png.html" class="image"><img alt="Curve editor continuous tangent.png" src="../assets/mw/images/3/3f/Curve_editor_continuous_tangent.png" width="598" height="305" /></a>
+</p><p>A "smooth" tangent forces the control points to be colinear and to have the same weight:
+</p><p><a href="File%3ACurve_editor_smooth_tangent.png.html" class="image"><img alt="Curve editor smooth tangent.png" src="../assets/mw/images/f/f8/Curve_editor_smooth_tangent.png" width="598" height="305" /></a>
+</p>
+<h2><span class="mw-headline" id="Adding_keys">Adding keys</span></h2>
+<p>The key nodes of the curve are represented by circles. They can be dragged back and forth to change their position in the timeline. They can also be dragged up and down which changes their value.
+</p><p>Another way to change a node’s time or value is to select it and adjust the Time or Value field in the Object Inspector.
+</p><p>New nodes can be added to any curve. Move the timeline marker to the point where the node is to be added, right-click anywhere in the curve editor and select the "Add Key" command appropriate for this curve (eg, "Add FOV Key" for a FOV curve).
+</p>
+<h2><span class="mw-headline" id="Value_Axis">Value Axis</span></h2>
+<p>The vertical axis on the left of the curve editor indicates the values of the nodes. The scale will depend on the specific unit that the curve values represent. For example, the value scale for an orientation curve is in degrees, and a position curve is in meters.
+</p>
+<h2><span class="mw-headline" id="Legend">Legend</span></h2>
+<p>The legend will show what types each curve is. There is also a checkbox —  if the checkbox is cleared the curve will be hidden from view. This is very useful for orientation curves where two or three curves may be overlapping. Hiding one or two or them can allow better access to the curve that needs to be adjusted.
+</p>
+<h2><span class="mw-headline" id="Curve_Editor_an_EASY_step-by-step_Intro">Curve Editor an EASY step-by-step Intro</span></h2>
+<p>The following intro should help you familiarize yourself with the way the Curve Editor is used in the Cutscene editor. 
+</p>
+<ul><li>1. Assuming you already know how to <a rel="nofollow" class="external text" href="http://social.bioware.com/wiki/datoolset/index.php/Cutscene_tutorial#Adding_an_animation_to_an_actor/">add animations</a> to your scene, use an actor and insert the following animation: </li></ul>
+<p>cs_male.f_mouth_open
+</p>
+<ul><li>1a. Stretch the animation bar out so you have more time to work with. </li></ul>
+<ul><li>2. Move the animation slightly to the right of the timeline marker, hit "play", and use the viewport to view its effects</li></ul>
+<p>You will notice the actor's mouth "Snaps" open to monstrous size. 
+The object here is to open the actor's mouth slowly and to a natural expression (as if he were about to say something) then close it naturally.
+</p>
+<ul><li>3. Select the animation, and in the top menu click the <a rel="nofollow" class="external text" href="http://social.bioware.com/wiki/datoolset/index.php/Curve_editor/">Curve Editor</a> button. (#9 in the link)</li></ul>
+<ul><li>4. You should now see a new editor on the bottom. Expand it. </li></ul>
+<ul><li>5. Place your timeline marker slightly *after* the beginning of the animation in the main timeline window</li></ul>
+<p>You will see "Weight" on the bottom right side. This is your animation "Intensity"
+</p><p>Note: If you cannot see a red line, middle (mousewheel) click and drag the
+editor up and down/ use the mousewheel to expand and contract until you do.
+</p><p>You should be between 0 and 100 on the left. 
+</p>
+<ul><li>6. Right click on your Curve Editor timeline marker and select "Key selection"</li></ul>
+<p>This will add a new key
+</p>
+<ul><li>7. Move the timeline marker to the right and create another key. </li></ul>
+<p>You should now see two circles with a red line in between. 
+</p>
+<ul><li>8. Select them both. In the object inspector&gt;transition out select "bezier" </li></ul>
+<ul><li>9. Deselect the two and reselect the first key you made. </li></ul>
+<ul><li>10. Drag the first key down to 0. (Zero weight/intensity)</li></ul>
+<p>You will see the mouth now opening more gradually, but still too quickly. 
+</p>
+<ul><li>11. Move the second key to the right to slow down it's opening rate.</li></ul>
+<pre>(press play to preview the effects)
+</pre>
+<ul><li>12. Now move the second key down to 50 to make the actors mouth open *less*. </li></ul>
+<ul><li>13. Place the timeline marker at the end of the animation </li></ul>
+<p>(make sure it is still selected in the main timeline window)
+</p>
+<ul><li>14. Middle click and drag the curve editor the the left until you see the timeline marker again. </li></ul>
+<ul><li>15. Create two more keys in the same way and move your last key down to zero. </li></ul>
+<ul><li>16. Play around with this to get different results. </li></ul>
+<p>Congratulations!&#160;:D You can now use the Curve Editor for various
+different applications. Have fun experimenting!
+<a rel="nofollow" class="external text" href="http://social.bioware.com/group/2718/discussion/12094/">Source</a> (Dahlialynn)
+</p>
+<h2><span class="mw-headline" id="Curve_Types">Curve Types</span></h2>
+<h3><span class="mw-headline" id="Orientation_Curves">Orientation Curves</span></h3>
+<p>Orientation curves are actually three different curves —  one curve each for Yaw, Pitch, and Roll. When an orientation key is created three nodes will appear for it in the curve editor.
+</p>
+<h3><span class="mw-headline" id="Position_Curves">Position Curves</span></h3>
+<p>As with orientation curves, a position curve has three component curves - one each for the object's X, Y and Z coordinates.
+</p><p>The speed with which an object moves from point to point can be seen in the slope of the curve between those points. Fast-moving objects have steep slopes, slow-moving ones have shallow slopes.
+</p>
+<h3><span class="mw-headline" id="Other_curves">Other curves</span></h3>
+<p>Some types of objects can have other special curves defined for them.
+</p><p>The following special curves are defined for the following objects:
+</p>
+<ul><li>Light objects
+<ul><li> Color
+<ul><li> Red</li>
+<li> Green</li>
+<li> Blue</li></ul></li>
+<li> Radius</li>
+<li> Intensity</li></ul></li></ul>
+<ul><li>Sound object events:
+<ul><li>SoundParam1</li>
+<li>SoundParam2</li>
+<li>SoundParam3</li>
+<li>SoundParam4</li>
+<li>SoundParam5</li></ul></li></ul>
+<p>(These are custom-defined parameters that can be created for any given sound in <a href="FMOD.html" title="FMOD">FMOD</a>, and if they're defined their names will replace these. If they're not defined, changing the "SoundParam" values has no effect.)
+</p>
+<ul><li>Animation actions
+<ul><li> Animation weight</li></ul></li></ul>
+<ul><li>Shake (Orientation) actions
+<ul><li>YawStrength</li>
+<li>PitchStrength</li>
+<li>RollStrength</li></ul></li></ul>
+<ul><li>Shake (Position) actions
+<ul><li>XStrength</li>
+<li>YStrength</li>
+<li>ZStrength</li></ul></li></ul>
+<ul><li>Bloom effects
+<ul><li>Brightness</li>
+<li>Contrast</li>
+<li>Glow intensity</li>
+<li>Horizontal blur width</li>
+<li>Vertical blur width</li></ul></li></ul>
+<ul><li>Depth of Field effects
+<ul><li>Far fade</li>
+<li>Focal radius</li>
+<li>Focus distance</li>
+<li>Max blur</li>
+<li>Near fade</li>
+<li>Weight blur</li></ul></li></ul>
+<ul><li>HSV matrix effects
+<ul><li>Brightness</li>
+<li>Contrast</li>
+<li>Hue</li>
+<li>Saturation</li></ul></li></ul>
+<ul><li>Motion blur effects
+<ul><li>Blend</li></ul></li></ul>
+<ul><li>Simple Depth of Field effects
+<ul><li>Scene blur</li>
+<li>Weight blur</li>
+<li>Focal blend</li>
+<li>Focal length</li>
+<li>Focus</li>
+<li>Fstop</li>
+<li>Max blend</li></ul></li></ul>
+<ul><li>Sound objects can have up to 5 custom parameters established when they're created in <a href="FMOD.html" title="FMOD">FMOD</a>, all five can be set using the curve editor.</li></ul>
+
+<!-- 
+NewPP limit report
+CPU time usage: 0.080 seconds
+Real time usage: 0.186 seconds
+Preprocessor visited node count: 115/1000000
+Preprocessor generated node count: 369/1000000
+Post‐expand include size: 2170/2097152 bytes
+Template argument size: 574/2097152 bytes
+Highest expansion depth: 4/40
+Expensive parser function count: 0/100
+-->
+
+<!-- 
+Transclusion expansion time report (%,ms,calls,template)
+100.00%   44.834      1 - -total
+ 30.61%   13.724      1 - Template:Infobox_cutscenes
+ 25.72%   11.531      1 - Template:Inspector_end
+ 21.95%    9.841      4 - Template:Inspector_row
+ 14.13%    6.333      1 - Template:Infobox_template
+  9.90%    4.437      1 - Template:Inspector_start
+  8.47%    3.798      1 - Template:Inspector_section
+-->
+
+<!-- Saved in parser cache with key db714099484-datoolwiki_:pcache:idhash:52-0!*!0!!en!5!* and timestamp 20260531002007 and revision id 18913
+ -->
+</div>									<div class="printfooter">
+						Retrieved from "<a dir="ltr" href="Curve_editor.html">https://www.datoolset.net/mw/index.php?title=Curve_editor&amp;oldid=18913</a>"					</div>
+													<div id='catlinks' class='catlinks'><div id="mw-normal-catlinks" class="mw-normal-catlinks"><a href="/wiki/Special:Categories" title="Special:Categories">Category</a>: <ul><li><a href="Category%3ACutscenes.html" title="Category:Cutscenes">Cutscenes</a></li></ul></div></div>												<div class="visualClear"></div>
+							</div>
+		</div>
+		<div id="mw-navigation">
+			<h2>Navigation menu</h2>
+
+			<div id="mw-head">
+									<div id="p-personal" role="navigation" class="" aria-labelledby="p-personal-label">
+						<h3 id="p-personal-label">Personal tools</h3>
+						<ul>
+							<li id="pt-login"><a href="/mw/index.php?title=Special:UserLogin&amp;returnto=Curve+editor" title="You are encouraged to log in; however, it is not mandatory [o]" accesskey="o">Log in</a></li>						</ul>
+					</div>
+									<div id="left-navigation">
+										<div id="p-namespaces" role="navigation" class="vectorTabs" aria-labelledby="p-namespaces-label">
+						<h3 id="p-namespaces-label">Namespaces</h3>
+						<ul>
+															<li  id="ca-nstab-main" class="selected"><span><a href="Curve_editor.html"  title="View the content page [c]" accesskey="c">Page</a></span></li>
+															<li  id="ca-talk" class="new"><span><a href="/mw/index.php?title=Talk:Curve_editor&amp;action=edit&amp;redlink=1"  title="Discussion about the content page [t]" accesskey="t">Discussion</a></span></li>
+													</ul>
+					</div>
+										<div id="p-variants" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-variants-label">
+												<h3 id="p-variants-label"><span>Variants</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+									</div>
+				<div id="right-navigation">
+										<div id="p-views" role="navigation" class="vectorTabs" aria-labelledby="p-views-label">
+						<h3 id="p-views-label">Views</h3>
+						<ul>
+															<li id="ca-view" class="selected"><span><a href="Curve_editor.html" >Read</a></span></li>
+															<li id="ca-viewsource"><span><a href="Curve_editor.html"  title="This page is protected.&#10;You can view its source [e]" accesskey="e">View source</a></span></li>
+															<li id="ca-history" class="collapsible"><span><a href="Curve_editor.html"  title="Past revisions of this page [h]" accesskey="h">View history</a></span></li>
+													</ul>
+					</div>
+										<div id="p-cactions" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-cactions-label">
+						<h3 id="p-cactions-label"><span>More</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+										<div id="p-search" role="search">
+						<h3>
+							<label for="searchInput">Search</label>
+						</h3>
+
+						<form action="/mw/index.php" id="searchform">
+														<div id="simpleSearch">
+															<input type="search" name="search" placeholder="Search" title="Search Dragon Age Toolset Wiki [f]" accesskey="f" id="searchInput" /><input type="hidden" value="Special:Search" name="title" /><input type="submit" name="fulltext" value="Search" title="Search the pages for this text" id="mw-searchButton" class="searchButton mw-fallbackSearchButton" /><input type="submit" name="go" value="Go" title="Go to a page with this exact name if exists" id="searchButton" class="searchButton" />								</div>
+						</form>
+					</div>
+									</div>
+			</div>
+			<div id="mw-panel">
+				<div id="p-logo" role="banner"><a class="mw-wiki-logo" href="Main_Page.html"  title="Visit the main page"></a></div>
+						<div class="portal" role="navigation" id='p-navigation' aria-labelledby='p-navigation-label'>
+			<h3 id='p-navigation-label'>Navigation</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-mainpage-description"><a href="Main_Page.html" title="Visit the main page [z]" accesskey="z">Main page</a></li>
+													<li id="n-recentchanges"><a href="/wiki/Special:RecentChanges" title="A list of recent changes in the wiki [r]" accesskey="r">Recent changes</a></li>
+													<li id="n-randompage"><a href="/wiki/Special:Random" title="Load a random page [x]" accesskey="x">Random page</a></li>
+													<li id="n-help"><a href="https://www.mediawiki.org/wiki/Special:MyLanguage/Help:Contents" title="The place to find out">Help</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-Links' aria-labelledby='p-Links-label'>
+			<h3 id='p-Links-label'>Links</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-Toolset-forums"><a href="http://forum.bioware.com/forum/30-dragon-age-toolset" rel="nofollow">Toolset forums</a></li>
+													<li id="n-Legacy-forums"><a href="http://social.bioware.com/forum/1/subindex/70" rel="nofollow">Legacy forums</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-tb' aria-labelledby='p-tb-label'>
+			<h3 id='p-tb-label'>Tools</h3>
+
+			<div class="body">
+									<ul>
+													<li id="t-whatlinkshere"><a href="/wiki/Special:WhatLinksHere/Curve_editor" title="A list of all wiki pages that link here [j]" accesskey="j">What links here</a></li>
+													<li id="t-recentchangeslinked"><a href="/wiki/Special:RecentChangesLinked/Curve_editor" title="Recent changes in pages linked from this page [k]" accesskey="k">Related changes</a></li>
+													<li id="t-specialpages"><a href="/wiki/Special:SpecialPages" title="A list of all special pages [q]" accesskey="q">Special pages</a></li>
+													<li id="t-print"><a href="Curve_editor.html" rel="alternate" title="Printable version of this page [p]" accesskey="p">Printable version</a></li>
+													<li id="t-permalink"><a href="Curve_editor.html" title="Permanent link to this revision of the page">Permanent link</a></li>
+													<li id="t-info"><a href="Curve_editor.html" title="More information about this page">Page information</a></li>
+											</ul>
+							</div>
+		</div>
+				</div>
+		</div>
+		<div id="footer" role="contentinfo">
+							<ul id="footer-info">
+											<li id="footer-info-lastmod"> This page was last modified on 15 October 2012, at 21:57.</li>
+									</ul>
+							<ul id="footer-places">
+											<li id="footer-places-privacy"><a href="/wiki/Dragon_Age_Toolset_Wiki:Privacy_policy" title="Dragon Age Toolset Wiki:Privacy policy">Privacy policy</a></li>
+											<li id="footer-places-about"><a href="/wiki/Dragon_Age_Toolset_Wiki:About" title="Dragon Age Toolset Wiki:About">About Dragon Age Toolset Wiki</a></li>
+											<li id="footer-places-disclaimer"><a href="/wiki/Dragon_Age_Toolset_Wiki:General_disclaimer" title="Dragon Age Toolset Wiki:General disclaimer">Disclaimers</a></li>
+									</ul>
+										<ul id="footer-icons" class="noprint">
+											<li id="footer-poweredbyico">
+															<a href="//www.mediawiki.org/"><img src="../assets/mw/resources/assets/poweredby_mediawiki_88x31.png" alt="Powered by MediaWiki" srcset="../assets/mw/resources/assets/poweredby_mediawiki_132x47.png 1.5x, ../assets/mw/resources/assets/poweredby_mediawiki_176x62.png 2x" width="88" height="31" /></a>
+													</li>
+									</ul>
+						<div style="clear:both"></div>
+		</div>
+		<script>if(window.jQuery)jQuery.ready();</script><script>if(window.mw){
+mw.loader.state({"site":"loading","user":"ready","user.groups":"ready"});
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.toc","mediawiki.action.view.postEdit","mediawiki.user","mediawiki.hidpi","mediawiki.page.ready","mediawiki.searchSuggest"],null,true);
+}</script>
+<script>if(window.mw){
+document.write("\u003Cscript src=\"https://www.datoolset.net/mw/load.php?debug=false\u0026amp;lang=en\u0026amp;modules=site\u0026amp;only=scripts\u0026amp;skin=vector\u0026amp;*\"\u003E\u003C/script\u003E");
+}</script>
+<script>if(window.mw){
+mw.config.set({"wgBackendResponseTime":253});
+}</script>
+	</body>
+</html>

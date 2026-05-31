@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" class="client-nojs">
+<head>
+<meta charset="UTF-8" />
+<title>Cutscene tutorial - Dragon Age Toolset Wiki</title>
+<meta name="generator" content="MediaWiki 1.25.6" />
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="search" type="application/opensearchdescription+xml" href="/mw/opensearch_desc.php" title="Dragon Age Toolset Wiki (en)" />
+<link rel="EditURI" type="application/rsd+xml" href="https://www.datoolset.net/mw/api.php?action=rsd" />
+<link rel="alternate" hreflang="x-default" href="Cutscene_tutorial.html" />
+<link rel="alternate" type="application/atom+xml" title="Dragon Age Toolset Wiki Atom feed" href="/mw/index.php?title=Special:RecentChanges&amp;feed=atom" />
+<meta name="ResourceLoaderDynamicStyles" content="" />
+<style>a:lang(ar),a:lang(kk-arab),a:lang(mzn),a:lang(ps),a:lang(ur){text-decoration:none}
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-css:7:270a0dcd3ae587df0f041aebfc42e61b */</style>
+<script>if(window.mw){
+mw.config.set({"wgCanonicalNamespace":"","wgCanonicalSpecialPageName":false,"wgNamespaceNumber":0,"wgPageName":"Cutscene_tutorial","wgTitle":"Cutscene tutorial","wgCurRevisionId":19161,"wgRevisionId":19161,"wgArticleId":58,"wgIsArticle":true,"wgIsRedirect":false,"wgAction":"view","wgUserName":null,"wgUserGroups":["*"],"wgCategories":["Tutorials","Cutscenes"],"wgBreakFrames":false,"wgPageContentLanguage":"en","wgPageContentModel":"wikitext","wgSeparatorTransformTable":["",""],"wgDigitTransformTable":["",""],"wgDefaultDateFormat":"dmy","wgMonthNames":["","January","February","March","April","May","June","July","August","September","October","November","December"],"wgMonthNamesShort":["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],"wgRelevantPageName":"Cutscene_tutorial","wgRelevantArticleId":58,"wgIsProbablyEditable":false,"wgRestrictionEdit":[],"wgRestrictionMove":[]});
+}</script><script>if(window.mw){
+mw.loader.implement("user.options",function($,jQuery){mw.user.options.set({"variant":"en"});});mw.loader.implement("user.tokens",function($,jQuery){mw.user.tokens.set({"editToken":"+\\","patrolToken":"+\\","watchToken":"+\\"});});
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-js:7:a5c52c063dc436c1ca7c9f456936a5e9 */
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.page.startup","mediawiki.legacy.wikibits","mediawiki.legacy.ajax","skins.vector.js"]);
+}</script>
+<!--[if lt IE 7]><style type="text/css">body{behavior:url("/mw/skins/Vector/csshover.min.htc")}</style><![endif]-->
+<link rel="stylesheet" href="../assets/local/wiki-static.css" />
+</head>
+<body class="mediawiki ltr sitedir-ltr ns-0 ns-subject page-Cutscene_tutorial skin-vector action-view">
+		<div id="mw-page-base" class="noprint"></div>
+		<div id="mw-head-base" class="noprint"></div>
+		<div id="content" class="mw-body" role="main">
+			<a id="top"></a>
+
+						<div class="mw-indicators">
+</div>
+			<h1 id="firstHeading" class="firstHeading" lang="en">Cutscene tutorial</h1>
+						<div id="bodyContent" class="mw-body-content">
+									<div id="siteSub">From Dragon Age Toolset Wiki</div>
+								<div id="contentSub"></div>
+												<div id="jump-to-nav" class="mw-jump">
+					Jump to:					<a href="#mw-head">navigation</a>, 					<a href="#p-search">search</a>
+				</div>
+				<div id="mw-content-text" lang="en" dir="ltr" class="mw-content-ltr"><table style="float:right; background-color:#eeeeee; border:2px #999999 solid; padding:4px; margin:4px; width:220px;">
+
+<tr>
+<th align="center"> Cutscene topics
+</th></tr>
+<tr>
+<td>
+<ul><li><a href="Cutscene.html" title="Cutscene">Cutscene</a></li>
+<li><strong class="selflink">Cutscene tutorial</strong></li>
+<li><a href="Cutscene_action.html" title="Cutscene action">Cutscene actions</a>
+<ul><li><a href="Headtracking.html" title="Headtracking">Headtracking</a></li>
+<li><a href="Play_animation.html" title="Play animation">Play animation</a>
+<ul><li><a href="Animation_list.html" title="Animation list">Animation list</a></li></ul></li></ul></li>
+<li><a href="Cutscene_effect.html" title="Cutscene effect">Cutscene effects</a></li>
+<li><a href="VFX_list.html" title="VFX list">VFX list</a></li>
+<li><a href="Curve_editor.html" title="Curve editor">Curve editor</a></li>
+<li><a href="Cutscene_object.html" title="Cutscene object">Cutscene objects</a></li>
+<li><a href="Cutscene_capture.html" title="Cutscene capture">Cutscene capture</a></li></ul>
+</td></tr></table>
+<p><a href="Cutscene.html" title="Cutscene">Cutscenes</a> can be stand-alone cinematic sequences that are triggered by scripts in the course of the game, or they can be inserted into <a href="Conversation.html" title="Conversation">conversations</a> in place of the simplified cinematics that conversations can automatically generate.
+</p><p>Our example situation in this tutorial will serve as the beginning of a conversation between the player and two NPCs. The player has just arrived at the campsite where these two NPCs are staying. He walks up to the fire. One of the NPCs is happy to see the player and greets him, but the other is distrustful. The two share a brief exchange to establish this before the interactive part of the conversation begins.
+</p>
+<div id="toc" class="toc"><div id="toctitle"><h2>Contents</h2></div>
+<ul>
+<li class="toclevel-1 tocsection-1"><a href="#Creating_a_new_cutscene"><span class="tocnumber">1</span> <span class="toctext">Creating a new cutscene</span></a>
+<ul>
+<li class="toclevel-2 tocsection-2"><a href="#Viewports"><span class="tocnumber">1.1</span> <span class="toctext">Viewports</span></a></li>
+<li class="toclevel-2 tocsection-3"><a href="#Timeline"><span class="tocnumber">1.2</span> <span class="toctext">Timeline</span></a></li>
+</ul>
+</li>
+<li class="toclevel-1 tocsection-4"><a href="#The_setting_of_the_cutscene"><span class="tocnumber">2</span> <span class="toctext">The setting of the cutscene</span></a>
+<ul>
+<li class="toclevel-2 tocsection-5"><a href="#Adding_objects_and_creatures"><span class="tocnumber">2.1</span> <span class="toctext">Adding objects and creatures</span></a></li>
+<li class="toclevel-2 tocsection-6"><a href="#Adding_the_player"><span class="tocnumber">2.2</span> <span class="toctext">Adding the player</span></a></li>
+<li class="toclevel-2 tocsection-7"><a href="#Adding_cameras"><span class="tocnumber">2.3</span> <span class="toctext">Adding cameras</span></a></li>
+</ul>
+</li>
+<li class="toclevel-1 tocsection-8"><a href="#Adding_an_animation_to_an_actor"><span class="tocnumber">3</span> <span class="toctext">Adding an animation to an actor</span></a></li>
+<li class="toclevel-1 tocsection-9"><a href="#Moving_an_actor"><span class="tocnumber">4</span> <span class="toctext">Moving an actor</span></a>
+<ul>
+<li class="toclevel-2 tocsection-10"><a href="#Position_and_orientation_keys"><span class="tocnumber">4.1</span> <span class="toctext">Position and orientation keys</span></a></li>
+<li class="toclevel-2 tocsection-11"><a href="#Using_GAD"><span class="tocnumber">4.2</span> <span class="toctext">Using GAD</span></a></li>
+</ul>
+</li>
+<li class="toclevel-1 tocsection-12"><a href="#Moving_a_camera"><span class="tocnumber">5</span> <span class="toctext">Moving a camera</span></a></li>
+<li class="toclevel-1 tocsection-13"><a href="#Switching_cameras"><span class="tocnumber">6</span> <span class="toctext">Switching cameras</span></a></li>
+<li class="toclevel-1 tocsection-14"><a href="#Adding_dialogue"><span class="tocnumber">7</span> <span class="toctext">Adding dialogue</span></a></li>
+<li class="toclevel-1 tocsection-15"><a href="#Adding_other_details"><span class="tocnumber">8</span> <span class="toctext">Adding other details</span></a></li>
+<li class="toclevel-1 tocsection-16"><a href="#Cutscene_Tips_and_Tricks"><span class="tocnumber">9</span> <span class="toctext">Cutscene Tips and Tricks</span></a></li>
+</ul>
+</div>
+
+<h2><span class="mw-headline" id="Creating_a_new_cutscene">Creating a new cutscene</span></h2>
+<p>To create a brand new blank cutscene resource, create a new resource in the usual way:
+</p><p><a href="File%3ANew_resource.png.html" class="image"><img alt="New resource.png" src="../assets/mw/images/0/0a/New_resource.png" width="392" height="615" class="thumbborder" /></a>
+</p><p>The result is opened in the cutscene editor.
+</p><p><a href="File%3ACutscene_new.png.html" class="image"><img alt="Cutscene new.png" src="../assets/mw/images/6/63/Cutscene_new.png" width="1060" height="655" class="thumbborder" /></a>
+</p><p>There are two basic sections to the cutscene editor; the viewports (top) and the timeline (bottom).
+</p>
+<h3><span class="mw-headline" id="Viewports">Viewports</span></h3>
+<div style="float:right; background-color:#ffffcc; border:2px #ffff99 solid; padding:4px; margin:4px; width:200px;">
+<ul><li> Viewports can be attached to various cameras to preview what they can see</li>
+<li> Add a "Safe Frame" to camera viewports to ensure the correct aspect ratio</li>
+<li> Set a viewport to "User" to see where cameras are positioned from another perspective. This can be done by selecting "Detach From Camera" in the viewport's right-click menu in the title bar</li></ul>
+</div>
+<p>The camera viewports in the cutscene editor work similarly to the viewports in the stage editor. You can set the number and layout of viewports under the "View" menu:
+</p><p><a href="File%3ACutscene_tutorial_viewport_layout.png.html" class="image"><img alt="Cutscene tutorial viewport layout.png" src="../assets/mw/images/3/38/Cutscene_tutorial_viewport_layout.png" width="396" height="288" class="thumbborder" /></a>
+</p><p>And for each individual viewport you can select which camera it's showing and set other display options by right-clicking on the title bar of the viewport:
+</p><p><a href="File%3ACutscene_tutorial_viewport_properties.png.html" class="image"><img alt="Cutscene tutorial viewport properties.png" src="../assets/mw/images/b/b4/Cutscene_tutorial_viewport_properties.png" width="214" height="300" class="thumbborder" /></a>
+</p><p>When you set a viewport to show the view through one of the cutscene's cameras, it's a good idea to turn on that viewport's "Safe Frame" option as well. This will put a border on the viewport showing what will be visible when the cutscene plays.
+</p><p>Note that when you play the cutscene in the cutscene editor, only the currently selected viewport (the one with the blue title bar) will show the cutscene "live" - the others won't update the view displayed in them until they're selected. To preview the cutscene as the player would see it in the game, you will need to set one of the viewports to "Active Camera" and ensure that this viewport is selected when you play the cutscene in the editor. If the "Active Camera" viewport turns gray, try setting the cutscene property "Enable Level Effects" to false.
+</p>
+<h3><span class="mw-headline" id="Timeline">Timeline</span></h3>
+<div style="float:right; background-color:#ffffcc; border:2px #ffff99 solid; padding:4px; margin:4px; width:200px;">
+<ul><li> There is always exactly one MASTER object in a cutscene.</li>
+<li> Each active object is listed on the timeline, with multiple "tracks" for each.</li>
+<li> All objects have position tracks (divided into X, Y and Z tracks). Some objects have additional built-in tracks.</li>
+<li> Other actions and effects can be added to generic tracks. Objects can have as many generic tracks as you want.</li></ul>
+</div>
+<p>Below the viewport is the timeline. Along the top of the timeline is a time scale; it can be set to show in frames (at 30 frames per second) or milliseconds by changing the "Time Scale" property of the cutscene in the object inspector.  A marker indicates what point in the timeline the viewports are currently showing.
+</p><p>Below is a set of rows containing the various actors, cameras, and other objects active in the cutscene. This is where most of the editing is going to take place. Each object will have a number of "tracks", which will contain commands that are sent to the actors at particular times in the course of the cutscene.
+</p><p><a href="File%3ACutscene_tutorial_timeline.png.html" class="image"><img alt="Cutscene tutorial timeline.png" src="../assets/mw/images/5/51/Cutscene_tutorial_timeline.png" width="841" height="341" class="thumbborder" /></a>
+</p><p>The first object in the track list is the "MASTER" object. This is a special object that every cutscene has exactly one of. The MASTER object is the cutscene equivalent to the root node of a conversation tree, a repository for global settings and effects. For example, the MASTER object contains the track that determines which camera is active at any given time. The MASTER object cannot be deleted. By default, a MASTER object appears in the cutscene editor as a small greenish sphere; you can change the MASTER object's appearance in the cutscene option settings.
+</p><p>A new cutscene also has a camera, called Camera 1. This camera can be deleted or renamed if you like; we can add new cameras as needed later on.
+</p><p>Every object has "Position" and "Orientation" tracks that control their locations in space. Cameras also have a FOV (field of view) track.
+</p><p>Objects can have other "generic" tracks added by the editor as needed. These generic tracks contain all the other commands and directions we can give.
+</p>
+<h2><span class="mw-headline" id="The_setting_of_the_cutscene">The setting of the cutscene</span></h2>
+<div style="float:right; background-color:#ffffcc; border:2px #ffff99 solid; padding:4px; margin:4px; width:200px;">
+<ul><li> The MASTER object should be moved somewhere near the center of your cutscene.</li>
+<li> You can optionally set a stage for your cutscene, enabling stage-related actions for objects.</li></ul>
+</div>
+<p>Establishing the setting of a cutscene is done in the object inspector in the group of properties labeled "Setting". The most important of these is the "Area" property, which allows you to set the cutscene in an existing <a href="Area.html" title="Area">area</a>. We already have a suitable area that was created in an earlier tutorial; the area "great_outdoors".
+</p><p>By default the MASTER object and Camera 1 will be located at the coordinates 0,0,0 in the area. You'll want to move the camera to the appropriate location within the area using standard <a href="3D_control.html" title="3D control" class="mw-redirect">3D controls</a> for movement and view management. The MASTER object is invisible when the cutscene is played in-game so it usually doesn't matter where you put it. However, there are some settings that depend on the MASTER object's location - for example, you can set level-of-detail for models so that the model's LOD varies depending on how close it is to the MASTER object - so it's probably a good idea to put MASTER somewhere near the middle of where you'll be having the cutscene's action take place.
+</p><p>You can also set a stage for the cutscene. This is optional, but setting a stage enables "Jump to Stage Place" and "Jump to Stage Camera" actions that could help make setting the cutscene up easier if you already have a good stage defined in the area.
+</p>
+<h3><span class="mw-headline" id="Adding_objects_and_creatures">Adding objects and creatures</span></h3>
+<div style="float:right; background-color:#ffffcc; border:2px #ffff99 solid; padding:4px; margin:4px; width:200px;">
+<ul><li> Objects already present in the area the cutscene is set in are inactive by default. You need to activate them to control them.</li>
+<li> Other objects can be added from the resource palette as normal.</li></ul>
+</div>
+<p>All of the objects that are normally present in the area (such as creatures and placeables) will be visible in the cutscene editor, but they'll all initially be marked as "inactive". This means that, although they'll be visible in the cutscene when it plays, they won't be controllable; they'll just do whatever ambient activities they would be doing normally. In the case of our campsite area there are two creatures that were placed here in the area editor; the happy camper, named camp_happy, and the angry camper, named camp_angry. We need to seize control of them to make them active participants in the cutscene's activities. To make them active, right-click on them and select "activate objects":
+</p><p><a href="File%3ACutscene_activate_object.png.html" class="image"><img alt="Cutscene activate object.png" src="../assets/mw/images/f/f3/Cutscene_activate_object.png" width="524" height="337" class="thumbborder" /></a>
+</p><p>The object will then become an active object in the cutscene, getting its own entry in the timeline that will allow you to control its actions.
+</p><p><a href="File%3ACutscene_object_activated.png.html" class="image"><img alt="Cutscene object activated.png" src="../assets/mw/images/e/e5/Cutscene_object_activated.png" width="524" height="608" class="thumbborder" /></a>
+</p><p>We'll activate both of these campers since they'll both be taking part in the cutscene's dialogue.
+</p><p>You can also add objects that aren't normally a part of the area. Simply open the object palette, select the creature or placeable you wish to use in the cutscene, and then click in the viewport to add the object to that location. It will automatically be made active and get an entry in the timeline. The player won't see these objects during regular play, since they're not a part of the area - they're only in the cutscene.
+</p><p>If you want to make an area object disappear during the cutscene you'll need to activate it (allowing you to control it) and then add a track with an action that makes it invisible in the first frame. It will go back to normal again when the cutscene ends and the game resumes, cutscenes are run entirely separate from the main action of the game and have no direct effects on it.
+</p>
+<h3><span class="mw-headline" id="Adding_the_player">Adding the player</span></h3>
+<div style="float:right; background-color:#ffffcc; border:2px #ffff99 solid; padding:4px; margin:4px; width:200px;">
+<ul><li> Use the "Mapping Tag" property on an actor to make the game replace it with another object (such as PLAYER) at run-time.</li></ul>
+</div>
+<p>Normally we don't have to worry about placing the player in an area since the player controls his own movements and actions. But when we're doing a cutscene we can control the player just like any other actor, so we'll need a way to insert the player as an active object. Furthermore, since we'll have no idea what the player is going to look like at any given moment, we'll need to have a way to insert the player as he appears in the game when the cutscene begins.
+</p><p>This is done by inserting a "dummy" virtual actor and then setting the actor's "Mapping Tag" property to the special "PLAYER" tag. 
+</p><p><a href="File%3ACutscene_dummy_player.png.html" class="image"><img alt="Cutscene dummy player.png" src="../assets/mw/images/3/35/Cutscene_dummy_player.png" width="1280" height="672" class="thumbborder" /></a>
+</p><p>It doesn't matter what the dummy actor looks like now, it will be replaced with the player's character later on, so we'll just use a default male human model to make it both simple and obvious.
+</p><p>There are ways to tweak the way the cutscene plays based on other characteristics of the player, for example by modifying the position of the camera to account for the player's height or by adding additional dummies to represent followers. We won't go into these more advanced topics in this tutorial.
+</p>
+<h3><span class="mw-headline" id="Adding_cameras">Adding cameras</span></h3>
+<div style="float:right; background-color:#ffffcc; border:2px #ffff99 solid; padding:4px; margin:4px; width:200px;">
+<ul><li> Remember to enable Safe Frame when attaching a viewport to a camera.</li>
+<li> Use an "Active Camera" viewport to preview the cutscene.</li>
+<li> Use a "User" viewport to see camera positions from the outside. This can be done by selecting "Detach From Camera" in the viewport's right-click menu in the title bar.</li></ul>
+</div>
+<p>We could film a cutscene entirely from one camera if we liked, either as a single static shot or by moving the camera around to new positions as needed. It's easier and more convenient in most cases just to add several different cameras, however, and use the "Active Camera" track on the MASTER object to switch between them.
+</p><p>For our cutscene we're going to want three different cameras; one camera that's a wide shot showing the player arriving at the campfire, one camera focused on the angry camper, and one focused on the happy camper. We could add more than just these three to make the scene even more dynamic but for simplicity we'll stick to just those for now. We can add more later.
+</p><p>Cameras are added by right-clicking in the viewport and selecting "Insert &#8594; Camera".
+</p><p><a href="File%3ACutscene_insert_camera.png.html" class="image"><img alt="Cutscene insert camera.png" src="../assets/mw/images/b/be/Cutscene_insert_camera.png" width="276" height="125" class="thumbborder" /></a>
+</p><p>You can then position them using standard <a href="3D_control.html" title="3D control" class="mw-redirect">3D controls</a>. To make it easier to get the camera set up with the correct view, a good technique is to set one of the viewports to display the camera's feed; you can then reorient and reposition the camera using that viewport's camera controls while getting immediate feedback as to what the camera will see in its new state.
+</p><p>We're also going to rename the three cameras at this point with names intended to remind us of what their purposes are. We'll name them "Arrival Camera", "Happy Camera", and "Angry Camera". We'll want "Arrival Camera" to be active initially, so we may as well use the original camera for this role; it's already set active by default. We'll see how to switch which camera is active later in this tutorial.
+</p><p>We now have all the basic props we need to get the cutscene going.
+</p>
+<h2><span class="mw-headline" id="Adding_an_animation_to_an_actor">Adding an animation to an actor</span></h2>
+<div style="float:right; background-color:#ffffcc; border:2px #ffff99 solid; padding:4px; margin:4px; width:200px;">
+<ul><li> Set the "Pose" property for actors to make them breathe and fidget naturally when not doing other animations.</li>
+<li> Other animations are set by adding "Play Animation" actions to a generic track.</li>
+<li> Animation filenames are often arcane and hard to find.</li></ul>
+</div>
+<p>If you play the cutscene now the first thing you'll probably notice is that the actors are all standing perfectly motionless. Normally someone who's standing still isn't really standing <i>perfectly</i> still; they breathe, they shift their weight from foot to foot, and so forth. Since almost every actor we use is going to need to do this we don't want to have to spend a lot of effort setting it up, and fortunately we don't have to. Every actor has a "Pose" property in the object inspector. Simply set this pose to "Standing Neutral" and the actors will display this default subtle movement whenever no other animations are being explicitly imposed on them.
+</p><p><a href="File%3ACutscene_set_pose.png.html" class="image"><img alt="Cutscene set pose.png" src="../assets/mw/images/6/60/Cutscene_set_pose.png" width="216" height="211" class="thumbborder" /></a>
+</p><p>Our next task is somewhat less trivial; we want to show the player walking up to the fire. We're going to have to add a walking animation to the player's actor that runs for a short period of time and then stops.
+</p><p>To do this we'll need to add a new track to the actor's timeline. Right-click on the actor's entry in the timeline and select "Add Track" from the resulting menu:
+</p><p><a href="File%3ACutscene_add_track.png.html" class="image"><img alt="Cutscene add track.png" src="../assets/mw/images/b/b2/Cutscene_add_track.png" width="289" height="381" class="thumbborder" /></a>
+</p><p>The new track will be named "New Track" by default and will start out empty. Actors in cutscenes will sometimes have dozens of tracks directing their actions so we'll want to rename the track to something a little more informative. In this case we'll name it "Walk to fire". To have it actually cause the player's actor to walk to the fire we'll need to add a "<a href="Play_animation.html" title="Play animation">Play animation</a>" action to it. Right-click on the track and select "Add Action" to get the menu to select this.
+</p><p><a href="File%3ACutscene_add_action.png.html" class="image"><img alt="Cutscene add action.png" src="../assets/mw/images/7/7f/Cutscene_add_action.png" width="507" height="473" class="thumbborder" /></a>
+</p><p>The action will be added starting at the point you're currently viewing in the timeline, so you may wish to move the timeline's time slider back to the beginning before adding this animation. You can reposition an action along the timeline simply by dragging it with the mouse.
+</p><p>Initially the action has no animation associated with it. To set the animation, select the action in the timeline and then in the Object Inspector go to the "Animation" property and click on the ellipsis (<img alt="Ellipsis.png" src="../assets/mw/images/1/1c/Ellipsis.png" width="17" height="18" />) button.
+</p><p>Unfortunately this is where things turn a bit arcane since the names of the various animation files are often very unclear and not all will appear in the default list. You may need to resort to trial and error to find one you like, but there are many hundreds of animations available in the game's resources so this could take some time. See <a href="Animation_list.html" title="Animation list">animation list</a> and <a rel="nofollow" class="external text" href="http://social.bioware.com/project/30/#files">Beerfish Excel Utilities</a> for a list of many of them.
+</p><p>Note that only a single animation can play at any time on a given track. However, it is possible to have multiple animations for a character, each of which must be on a different track. This is essential in order to be able to blend animations together as detailed in <a href="Play_animation.html#Blending_Animations" title="Play animation">Play_animation#Blending_Animations</a>. Animation blending is necessary in order to have your characters transition seamlessly from one animation to another, which is essential to making character movement look natural.
+</p><p>In this case the animation we want, "mh.dg_f_5p" ("male human dialog forward five paces"), doesn't appear in the default list of animations available in the animation picker. You'll need to click the ellipsis button next to the "Custom Animation" field and find it in the complete list of all animation resources.
+</p><p><a href="File%3ACutscene_finding_an_animation.png.html" class="image"><img alt="Cutscene finding an animation.png" src="../assets/mw/images/2/22/Cutscene_finding_an_animation.png" width="1122" height="501" class="thumbborder" /></a>
+</p><p>If you try playing the cutscene now you'll see that the player's actor will spend a little over five seconds walking and then come to a natural stop - about as long as we needed. But the actor will be animated in place, his legs taking steps but not actually moving him anywhere. This is where position keys and GAD comes in.
+</p>
+<h2><span class="mw-headline" id="Moving_an_actor">Moving an actor</span></h2>
+<h3><span class="mw-headline" id="Position_and_orientation_keys">Position and orientation keys</span></h3>
+<div style="float:right; background-color:#ffffcc; border:2px #ffff99 solid; padding:4px; margin:4px; width:200px;">
+<ul><li> Objects can be moved over time by setting "key frames" on their position and orientation tracks.</li>
+<li> Intermediate frames are interpolated between key frames.</li>
+<li> You can set the curve type between key frames with the "transition out" property for each key.</li></ul>
+</div>
+<p>Every object in a cutscene has a pre-defined "Position" track with three sub-tracks for its X, Y and Z coordinates. Most objects also have a pre-defined "Orientation" track with three subtracks for roll, pitch, and yaw. These tracks can be used to cause an object to move around within the area over the course of the cutscene.
+</p><p>Movement is handled by setting the position and orientation of objects at specific points in time, called key frames, and then interpolating intermediate positions and orientations. To set a key frame, right-click on the actor's entry in the timeline and select "key position". This will set a key for the current position and orientation at the current time in the timeline. You can set position and orientation keys separately if you like. Since this operation is so common there's a very convenient shortcut for it; "k" inserts a key for the currently selected object's position and orientation, "p" inserts a key for its position, and "o" inserts a key for its orientation. Alternately, select the object and click the key command in the toolbar: <img alt="IconKey.png" src="../assets/mw/images/4/49/IconKey.png" width="16" height="9" />
+</p><p><a href="File%3ACutscene_key_selection.png.html" class="image"><img alt="Cutscene key selection.png" src="../assets/mw/images/9/93/Cutscene_key_selection.png" width="288" height="403" class="thumbborder" /></a>
+</p><p>For our purposes right now all we'll need to do is set a key frame at the beginning of the timeline. Move the pointer to the beginning, select the player actor, and set a key. Small boxes will appear on the position and orientation tracks to mark the key frame.
+</p><p><a href="File%3ACutscene_key_marker.png.html" class="image"><img alt="Cutscene key marker.png" src="../assets/mw/images/b/b6/Cutscene_key_marker.png" width="231" height="87" class="thumbborder" /></a>
+</p><p>These markers essentially mean "at this particular point in time, dummy_player will be in this particular place and facing in this particular direction." 
+</p><p>To get an actor to move over time you could set two key frames - one at the beginning of the movement, with the actor in his starting position, and one at the end of the movement, with the actor at his end position. You can set how the cutscene engine interpolates between the two positions by setting the "Transition Out" property of the starting keyframe to either Bezier (a smooth curve), Linear (a straight line), or Step (a sudden jump from the starting position to the end position). See the <a href="Curve_editor.html" title="Curve editor">curve editor</a> page for more detail.
+</p><p>We're not going to actually do this in this case, however; we'll try it at a later point in this tutorial to move a camera around. For this particular actor it would be difficult to manually match the actor's walking action with his motion over the ground. If the animation and the movement don't match the actor's feet will "skate" unrealistically along the surface.
+</p><p>There's an easier way to match an animation such as this one with movement through the scene; a mechanism called GAD.
+</p>
+<h3><span class="mw-headline" id="Using_GAD">Using GAD</span></h3>
+<div style="float:right; background-color:#ffffcc; border:2px #ffff99 solid; padding:4px; margin:4px; width:200px;">
+<ul><li> GAD is a mechanism by which an animation applies a built-in displacement to the object it's animating.</li>
+<li> You need to set at least one key frame for an object to use GAD, even if you don't otherwise use key frames to move it.</li></ul>
+</div>
+<p>GAD is a displacement that is automatically added to the actor's current position as the animation plays. Each animation has its own GAD information built into it, custom-designed to make the actor move in a manner appropriate to its actions. If we enable it the actor will be moved forward as the animation plays.
+</p><p>Not all animations have GAD associated with them. For example, having an actor wave his hand wouldn't displace him, so there would be no GAD associated with that animation. We only need to worry about GAD in cases like this one where the animation should accompany movement.
+</p><p>To enable GAD select the animation action and set "Play Gad" to true in the object inspector. If no key frames have been defined for the actor the cutscene editor will pop up a warning at this point suggesting that we add position and orientation keys before we add GAD:
+</p><p><a href="File%3ACutscene_gad_warning.png.html" class="image"><img alt="Cutscene gad warning.png" src="../assets/mw/images/5/5a/Cutscene_gad_warning.png" width="1013" height="170" class="thumbborder" /></a>
+</p><p>It's important to set at least one set of keys for an object using GAD. The animation's GAD may seem to work correctly without it at first, but unexpected and unpredictable errors could occur later that will send the actor careening off into the distance.
+</p><p>Once we've set a key frame and have set the action's "Play Gad" option to true you'll see that the actor now moves forward as he walks. This is good, but since we started him off in the position he's meant to end in it results in the actor walking straight through the campfire. You'll need to move the actor back so that he starts farther away from the fire.
+</p><p>Note: If you have already set a keyframe as described in the previous section, you will need to set an additional one for the actor's new location (or alternately set the "update keys" mode with the <img alt="IconUpdateKeys.png" src="../assets/mw/images/7/7b/IconUpdateKeys.png" width="16" height="16" /> tool), otherwise the moment the animation starts, the actor will instantly jump back to the place he was before when you set the first keyframe. Once you set a keyframe for an actor, moving the actor around in the cutscene editor does not really change the actor's position unless you re-set the keyframe to the new position that your actor is in. Keyframes and the curves interpolating between them always take precedence. 
+</p>
+<div style="float:right; background-color:#ffffcc; border:2px #ffff99 solid; padding:4px; margin:4px; width:200px;">
+<ul><li> An animation's "Extend Gad Beyond Action" property makes Gad's displacement persist after the animation ends.</li></ul>
+</div>
+<p>The other GAD properties are set to the most appropriate defaults automatically when you select an animation but one particular property bears mention here in case you run into trouble with it later on; the "Extend Gad Beyond Action" property. In the case of this walking animation it defaults to true. That means that once the animation ends, the displacement that the actor has undergone as a result of it will remain in effect - he will stay in the final position he walked to. If this were set to false, once the animation ended all of the displacement the actor had gained as a result would be undone and he'd instantly jump back to where he started walking from again. If at some point in the future you find your actors doing this, this property is the first place to look for the answer.
+</p><p>There's one final detail we'll tweak here. The walking animation begins with the player starting from a standstill, which is not the impression we want to convey; the player has supposedly been walking for some time before the camera started rolling. We could set the animation to begin playing partway through by changing the animation action's "Start Offset" property, but since this is happening at the beginning of the cutscene's timeline an easier approach is to simply select the animation action and drag it so that it begins a half second before the cutscene does. The cutscene will only begin displaying at the 0 mark and anything that falls before this point in time will never be shown so the initial half second of the actor's walk animation will go unseen.
+</p>
+<h2><span class="mw-headline" id="Moving_a_camera">Moving a camera</span></h2>
+<p>The scene now has some of the dynamic action we wanted, showing the player walking up to the campfire and stopping at its edge. But it's still a rather dull introduction and we can do better. Instead of a static camera shot we can set the camera so that it pans across the scene to follow the player's arrival.
+</p><p>Select the Arrival Camera and open up its track list. It has Position and Orientation tracks just like the other actors, and can have keyframes set just the same. With the time marker set to 0, move the Arrival Camera so that its view shows how you want the shot framed at the beginning of the cutscene. In our example we're going to set it so that it shows the player in the center of the frame. With the camera still selected, press "k" to set a key frame for the camera.
+</p><p><a href="File%3ACutscene_camera_start_position.png.html" class="image"><img alt="Cutscene camera start position.png" src="../assets/mw/images/f/f2/Cutscene_camera_start_position.png" width="1053" height="476" class="thumbborder" /></a>
+</p><p>(You may notice that the Field of View (FOV) track also gets a key marker. We won't be changing the camera's FOV so you can ignore that.)
+</p><p>Next move the timeline scrubber to the end of the walking animation at the 5 second mark. The player's actor will now be at the final position where he'll be standing for the conversation. Change the camera's orientation, panning to the right so that all of the actors can be seen in its field of view. In our case the camera's too close to encompass everyone so we'll also move its position to allow it to see them all.
+</p><p>Once you have the shot lined up correctly, press "k" to set a second keyframe.
+</p><p><a href="File%3ACutscene_camera_end_position.png.html" class="image"><img alt="Cutscene camera end position.png" src="../assets/mw/images/b/b5/Cutscene_camera_end_position.png" width="1053" height="476" class="thumbborder" /></a>
+</p><p>You may notice that the User viewports now show a red line tracing out the selected object's trajectory through space (if not, you may need to click the "show trajectories" <img alt="IconShowTrajectory.png" src="../assets/mw/images/e/ef/IconShowTrajectory.png" width="16" height="15" /> button in the toolbar). As the first five seconds of the cutscene plays, the Arrival Camera should slide smoothly along the red line and rotate smoothly on its axes to transition from the first keyframe to the second keyframe (If it suddenly jumps from one position to the other instead you may need to click the "default curve mode" tool <img alt="IconDefaultCurveMode.png" src="../assets/mw/images/7/7a/IconDefaultCurveMode.png" width="16" height="13" /> and try setting the keys again, or change the "transition out" property of the keyframe to Bezier).
+</p><p>You can fine-tune the trajectory of the camera by adding additional keyframes between the starting and ending ones. In our case we see that when the time marker is set to the middle of the camera's movement the player slips slightly out of frame.
+</p><p><a href="File%3ACutscene_camera_middle_position_unadjusted.png.html" class="image"><img alt="Cutscene camera middle position unadjusted.png" src="../assets/mw/images/b/b0/Cutscene_camera_middle_position_unadjusted.png" width="1053" height="476" class="thumbborder" /></a>
+</p><p>We can fix this by changing the camera's position and orientation as needed, and then adding a new keyframe with "k". In this case we'll pull the camera back slightly so that its motion through space becomes a curve instead of a straight line.
+</p><p><a href="File%3ACutscene_camera_middle_position_adjusted.png.html" class="image"><img alt="Cutscene camera middle position adjusted.png" src="../assets/mw/images/e/e1/Cutscene_camera_middle_position_adjusted.png" width="1052" height="476" class="thumbborder" /></a>
+</p><p>We now have a nice, dynamic establishing shot. The scene begins with the player alone and in the center of the camera's shot, and as he walks toward the fire the camera moves and pans around him to show him arriving in the presence of our two campers.
+</p>
+<h2><span class="mw-headline" id="Switching_cameras">Switching cameras</span></h2>
+<div style="float:right; background-color:#ffffcc; border:2px #ffff99 solid; padding:4px; margin:4px; width:200px;">
+<ul><li> A track on the MASTER object defines which camera is currently "active."</li></ul>
+</div>
+<p>Once the player arrives he is going to be greeted by the camper who is happy to see him. To give a clear shot of who's doing the talking, we'll want to switch the active camera from Arrival Camera to Happy Camera.
+</p><p>The track where the active camera gets changed is attached to the MASTER object. Move the timeline's time indicator to the point in time where you wish to switch active cameras, in this case 5.5 seconds (giving the scene a half-second view of the player after he's come to a halt). Right-click on the Active Camera track and select Add Action. The only option available for this track is the "Switch Camera" action so go ahead and add one. In the new Switch Camera action's properties set it to switch the active camera to Happy Camera.
+</p><p>Now when the cutscene is played we'll get an establishing shot showing the player walking up to the fire and then switch to a closeup of the happy camper so that he can deliver his greeting.
+</p><p><a href="File%3ACutscene_switch_active_camera.png.html" class="image"><img alt="Cutscene switch active camera.png" src="../assets/mw/images/c/cd/Cutscene_switch_active_camera.png" width="1277" height="521" class="thumbborder" /></a>
+</p>
+<h2><span class="mw-headline" id="Adding_dialogue">Adding dialogue</span></h2>
+<div style="float:right; background-color:#ffffcc; border:2px #ffff99 solid; padding:4px; margin:4px; width:200px;">
+<ul><li> Lines of dialog can be inserted from an existing <a href="Conversation.html" title="Conversation">conversation</a> resource. For convenience, create a new conversation to hold the dialog for a cutscene.</li>
+<li> Caption text, voice over, and facial performance are all included with each line.</li>
+<li> If you edit the conversation later, the changes will be reflected in the cutscene. Remember to generate new VO and FaceFX in the conversation editor.</li></ul>
+</div>
+<p>There are three major components to dialog in Dragon Age; the text of the line being spoken (which is displayed as a caption at the top of the screen), the voice-over for the line being spoken, and the facial performance that makes the virtual actor lip-synch and display appropriate emotions.
+</p><p>There's already a tool in the toolset that is designed for handling all of these things; the conversation editor. Actors in a cutscene can be given "Speak Line" actions that cause them to deliver lines from an existing dialog, with all three components added together into the actor's performance automatically.
+</p><p>Here we are going to add dialogue to a cutscene (though sometimes it is better to take a <a href="Conversation.html#Conversation-centred_approach" title="Conversation"> conversation-centred approach</a>).
+</p><p>To create the dialog for this cutscene we'll now create a new conversation resource. This conversation is not going to be used in the game directly so we'll be able to ignore many of the more advanced features and settings covered in the conversation tutorial; its only purpose is to serve as a repository of dialog lines for use in this cutscene.
+</p><p>The following screenshot shows our intended conversation. The only things that we need to define for it is the text of the dialog and optionally the emotion settings for RoboBrad to use when generating facial performance. As with our previous conversation we'll generate synthesized placeholder voice-over and generate FaceFX based on that; when we record real voice over later on we can simply update this conversation with it and the cutscene's performance will change to match.
+</p><p><a href="File%3ACutscene_conversation.png.html" class="image"><img alt="Cutscene conversation.png" src="../assets/mw/images/7/79/Cutscene_conversation.png" width="800" height="297" class="thumbborder" /></a>
+</p><p>To help keep track of which lines are spoken by which actors you could also optionally set the speaker tag on each line to identify who's doing the talking. This particular conversation has only two speakers so we won't bother with that. The cutscene engine won't need speaker tags, we'll be explicitly telling it who is saying each line. You'll only need to set those things if you wish to preview the conversation before using its lines in the cutscene.
+</p><p>Once you've created your dialogue go back to the cutscene editor and add a new track to the camp_happy actor. Rename it to something informative, such as "Dialogue". Move the timeline marker to the spot where you want the actor to start speaking and add a new "Speak Line" action.
+</p><p>In the Speak Line action's properties, set the "Source Conversation" property to the conversation resource we just created. Then, select the specific line you want the actor to speak in the "Source Line" property (it will have a drop-down menu with all of the lines from the source conversation in it).
+</p><p>That's all you need to do to get the actors to talk. You may wish to add one other detail at this point; head tracking. This is the action that causes actors to turn their heads toward a specific target, usually the person they're talking to or who is talking to them. It's added as its own action, so create another track and add a headtracking action to it with the player as the target. In this case we want the happy camper to turn his head toward the player right before he starts speaking.
+</p>
+<h2><span class="mw-headline" id="Adding_other_details">Adding other details</span></h2>
+<div style="float:right; background-color:#ffffcc; border:2px #ffff99 solid; padding:4px; margin:4px; width:200px;">
+<ul><li> Headtracking actions make actors look at other objects in the cutscene.</li>
+<li> You can have more than one action on a track provided they don't overlap.</li></ul>
+</div>
+<p>We've now gone through all the basics, so we'll just finish fleshing out the conversation with a few other details that are done the same way as the examples above.
+</p><p>To add a little more animation to the scene, we add another track for camp_happy with an animation action (mh.dg_hnd_salute_01, a salute) to play during his spoken line. This animation is simpler to deal with than the walking animation because it doesn't displace the actor; there's no need to define position keys or worry about enabling GAD.
+</p><p>We'll set camp_angry's headlook so that she turns toward camp_happy while he's speaking; when we subsequently switch cameras to show her line of dialog she'll already be looking in his direction.
+</p><p>For camp_happy's next line, however, we'll make the headtracking change visible during his shot so the player will see how his attention has switched to camp_angry. Note that we can reuse the existing "Dialogue" and "Headtracking" tracks for this actor; we don't need to create a new track for every single action that an actor performs. So long as the durations of the actions on a track don't overlap they can coexist peacefully.
+</p><p>Finally, after camp_angry's last line we'll set her headtracking to look back toward the player. He's going to get the next word in when we integrate this cutscene into a conversation so this is a good way to indicate that the conversation's focus has gone to the player now.
+</p><p>Once we've finished crafting the cutscene we now know how long its duration needs to be. You can now go to the conversation's properties in the Object Inspector and set the cutscene's duration to the desired length.
+</p><p>The finished timeline of our cutscene:
+</p><p><a href="File%3ACutscene_finished_timeline.png.html" class="image"><img alt="Cutscene finished timeline.png" src="../assets/mw/images/f/f6/Cutscene_finished_timeline.png" width="1256" height="559" class="thumbborder" /></a>
+</p><p><br />
+</p>
+<h2><span class="mw-headline" id="Cutscene_Tips_and_Tricks">Cutscene Tips and Tricks</span></h2>
+<p>Here are a few tips and tricks that might save the cutscene creator some time and effort:
+</p>
+<ul><li> Head tracking is often used to look at another actor or a visible item in the cutscene. However you can further manipulate the head of the actor by having the actor look at invisible objects. You can have the actor look from one invisible object to another or move the invisible object around in the cutscene to get the actor to look at things independent of visible actors or items.</li></ul>
+<ul><li> You may find it useful to give meaningful names to your cameras if you are using more than one or two. (You might name a camera after the actor or placeable that it follows or name one camera ‘close-up’ and another ‘wide-angle’ for example.)</li></ul>
+<ul><li> If you are panning a camera around a room following a series of actors or placeables and you find that the camera suddenly decides to rotate in the other direction you can force it to stay moving in the direction you desire by adding or subtracting 360 degrees from the position/orientation you are using to move the camera.</li></ul>
+<ul><li> Feel free to experiment with animations. Try using animations that are not normally meant for your actor type, you might find some interesting or bizarre movements for your actor.</li></ul>
+<ul><li> You can put multiple actions along one track as long as they do not overlap rather than using many different tracks.</li></ul>
+<ul><li> Pay attention to what your key frames ‘transition out’ are set to when moving your cameras. Step will jump the camera from position to position while Bezier and Linear will move the camera in a smoother motion. If you are not getting the desired effect when moving cameras check what your key frames ‘transition out’ are set to.</li></ul>
+<ul><li> If you have a longer more detailed cutscene you can keep the number of cameras you use to a reasonable number by just moving one (or more) around while another camera is the ‘active’ camera.</li></ul>
+<ul><li> For testing purposes change the length of the cutscene in the cutscenes properties to a smaller value and enlarge that number as you add on to the cutscene. In this way you won’t need to wait for a long period of time for the cutscene to end.</li></ul>
+<ul><li> After placing an animation on a track you can speed up the animation by left clicking on the small circular arrows on one end and dragging it shorter or make the animation play slower by dragging the animation longer on the track.</li></ul>
+<ul><li> You can make the content of your scene seem to change by placing invisible objects in the cutsence, using an fx to obscure the view and making the object visible while the fx is playing. (For example you might have some invisible rock debris. Use a cave in fx with clouds of dust to obscure the screen. While the fx is playing make the debris visible. When the fx is finished your debris will be in place.)</li></ul>
+<ul><li> If you find that your actor is walking across surfaces (such as water for instance) when they should be following the ground you can set ‘items follow surface’ in the area that your cutscene is based on. The actor should then walk on the ground and thus wade into the water. Conversely if you want a character or placeable to not follow the surface of the ground (for instance if you want a placeable or actor to be near or on the surface of water) move the actor or placeable higher by adjusting the Z axis of the boat or actor. (An example of using a placeable partly submerged in water might be something like a boat.)</li></ul>
+<ul><li> In a cutscene you can only activate things that are unique. As in if you plopped down three identical chests in an area, when trying to activate them all in a cutscene it will not allow this and gives you a warning message. In the example above you would have to make three different chests (though they could look the same) to be able to activate them all in the cutscene.</li></ul>
+<p><br />
+</p>
+<table class="nmbox" style="width:100%; border:1px solid #AAAAAA; border-collapse:collapse; clear:both; font-size:85%; margin:0.25em 0;">
+<tr style="background: #CFDFEF;">
+<th style="border:none; padding:4px 1em; border-right:1px solid #AAAAAA; text-align:center; white-space:nowrap;"> <b><a href="Dragon_Age_Toolset_Wiki%3ALanguage_policy.html" title="Dragon Age Toolset Wiki:Language policy">Language:</a></b></th>
+<td style="border:none; padding:0.25em 0.9em; width:100%; background:#DFEFFF;"><b><strong class="selflink">English</strong></b> <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>&#160;&#8226;&#32;<span lang="ru"><a href="Cutscene_tutorial/ru.html" title="Cutscene tutorial/ru">русский</a></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></td>
+</tr></table>
+
+<!-- 
+NewPP limit report
+CPU time usage: 0.200 seconds
+Real time usage: 0.679 seconds
+Preprocessor visited node count: 1182/1000000
+Preprocessor generated node count: 3634/1000000
+Post‐expand include size: 11479/2097152 bytes
+Template argument size: 4259/2097152 bytes
+Highest expansion depth: 8/40
+Expensive parser function count: 54/100
+-->
+
+<!-- 
+Transclusion expansion time report (%,ms,calls,template)
+100.00%  294.724      1 - -total
+ 93.06%  274.280      1 - Template:Languages
+ 90.64%  267.126      1 - Template:LanguagesBox
+ 79.57%  234.498     54 - Template:LanguagesLang
+  4.92%   14.504      1 - Template:LanguagesTitle
+  4.04%   11.898      1 - Template:Infobox_cutscenes
+  2.29%    6.735      1 - Template:Infobox_template
+  2.23%    6.574     13 - Template:Sidebox
+-->
+
+<!-- Saved in parser cache with key db714099484-datoolwiki_:pcache:idhash:58-0!*!0!!en!5!* and timestamp 20260531165140 and revision id 19161
+ -->
+</div>									<div class="printfooter">
+						Retrieved from "<a dir="ltr" href="Cutscene_tutorial.html">https://www.datoolset.net/mw/index.php?title=Cutscene_tutorial&amp;oldid=19161</a>"					</div>
+													<div id='catlinks' class='catlinks'><div id="mw-normal-catlinks" class="mw-normal-catlinks"><a href="/wiki/Special:Categories" title="Special:Categories">Categories</a>: <ul><li><a href="Category%3ATutorials.html" title="Category:Tutorials">Tutorials</a></li><li><a href="Category%3ACutscenes.html" title="Category:Cutscenes">Cutscenes</a></li></ul></div></div>												<div class="visualClear"></div>
+							</div>
+		</div>
+		<div id="mw-navigation">
+			<h2>Navigation menu</h2>
+
+			<div id="mw-head">
+									<div id="p-personal" role="navigation" class="" aria-labelledby="p-personal-label">
+						<h3 id="p-personal-label">Personal tools</h3>
+						<ul>
+							<li id="pt-login"><a href="/mw/index.php?title=Special:UserLogin&amp;returnto=Cutscene+tutorial" title="You are encouraged to log in; however, it is not mandatory [o]" accesskey="o">Log in</a></li>						</ul>
+					</div>
+									<div id="left-navigation">
+										<div id="p-namespaces" role="navigation" class="vectorTabs" aria-labelledby="p-namespaces-label">
+						<h3 id="p-namespaces-label">Namespaces</h3>
+						<ul>
+															<li  id="ca-nstab-main" class="selected"><span><a href="Cutscene_tutorial.html"  title="View the content page [c]" accesskey="c">Page</a></span></li>
+															<li  id="ca-talk"><span><a href="Talk%3ACutscene_tutorial.html"  title="Discussion about the content page [t]" accesskey="t">Discussion</a></span></li>
+													</ul>
+					</div>
+										<div id="p-variants" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-variants-label">
+												<h3 id="p-variants-label"><span>Variants</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+									</div>
+				<div id="right-navigation">
+										<div id="p-views" role="navigation" class="vectorTabs" aria-labelledby="p-views-label">
+						<h3 id="p-views-label">Views</h3>
+						<ul>
+															<li id="ca-view" class="selected"><span><a href="Cutscene_tutorial.html" >Read</a></span></li>
+															<li id="ca-viewsource"><span><a href="Cutscene_tutorial.html"  title="This page is protected.&#10;You can view its source [e]" accesskey="e">View source</a></span></li>
+															<li id="ca-history" class="collapsible"><span><a href="Cutscene_tutorial.html"  title="Past revisions of this page [h]" accesskey="h">View history</a></span></li>
+													</ul>
+					</div>
+										<div id="p-cactions" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-cactions-label">
+						<h3 id="p-cactions-label"><span>More</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+										<div id="p-search" role="search">
+						<h3>
+							<label for="searchInput">Search</label>
+						</h3>
+
+						<form action="/mw/index.php" id="searchform">
+														<div id="simpleSearch">
+															<input type="search" name="search" placeholder="Search" title="Search Dragon Age Toolset Wiki [f]" accesskey="f" id="searchInput" /><input type="hidden" value="Special:Search" name="title" /><input type="submit" name="fulltext" value="Search" title="Search the pages for this text" id="mw-searchButton" class="searchButton mw-fallbackSearchButton" /><input type="submit" name="go" value="Go" title="Go to a page with this exact name if exists" id="searchButton" class="searchButton" />								</div>
+						</form>
+					</div>
+									</div>
+			</div>
+			<div id="mw-panel">
+				<div id="p-logo" role="banner"><a class="mw-wiki-logo" href="Main_Page.html"  title="Visit the main page"></a></div>
+						<div class="portal" role="navigation" id='p-navigation' aria-labelledby='p-navigation-label'>
+			<h3 id='p-navigation-label'>Navigation</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-mainpage-description"><a href="Main_Page.html" title="Visit the main page [z]" accesskey="z">Main page</a></li>
+													<li id="n-recentchanges"><a href="/wiki/Special:RecentChanges" title="A list of recent changes in the wiki [r]" accesskey="r">Recent changes</a></li>
+													<li id="n-randompage"><a href="/wiki/Special:Random" title="Load a random page [x]" accesskey="x">Random page</a></li>
+													<li id="n-help"><a href="https://www.mediawiki.org/wiki/Special:MyLanguage/Help:Contents" title="The place to find out">Help</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-Links' aria-labelledby='p-Links-label'>
+			<h3 id='p-Links-label'>Links</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-Toolset-forums"><a href="http://forum.bioware.com/forum/30-dragon-age-toolset" rel="nofollow">Toolset forums</a></li>
+													<li id="n-Legacy-forums"><a href="http://social.bioware.com/forum/1/subindex/70" rel="nofollow">Legacy forums</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-tb' aria-labelledby='p-tb-label'>
+			<h3 id='p-tb-label'>Tools</h3>
+
+			<div class="body">
+									<ul>
+													<li id="t-whatlinkshere"><a href="/wiki/Special:WhatLinksHere/Cutscene_tutorial" title="A list of all wiki pages that link here [j]" accesskey="j">What links here</a></li>
+													<li id="t-recentchangeslinked"><a href="/wiki/Special:RecentChangesLinked/Cutscene_tutorial" title="Recent changes in pages linked from this page [k]" accesskey="k">Related changes</a></li>
+													<li id="t-specialpages"><a href="/wiki/Special:SpecialPages" title="A list of all special pages [q]" accesskey="q">Special pages</a></li>
+													<li id="t-print"><a href="Cutscene_tutorial.html" rel="alternate" title="Printable version of this page [p]" accesskey="p">Printable version</a></li>
+													<li id="t-permalink"><a href="Cutscene_tutorial.html" title="Permanent link to this revision of the page">Permanent link</a></li>
+													<li id="t-info"><a href="Cutscene_tutorial.html" title="More information about this page">Page information</a></li>
+											</ul>
+							</div>
+		</div>
+				</div>
+		</div>
+		<div id="footer" role="contentinfo">
+							<ul id="footer-info">
+											<li id="footer-info-lastmod"> This page was last modified on 21 December 2013, at 14:51.</li>
+									</ul>
+							<ul id="footer-places">
+											<li id="footer-places-privacy"><a href="/wiki/Dragon_Age_Toolset_Wiki:Privacy_policy" title="Dragon Age Toolset Wiki:Privacy policy">Privacy policy</a></li>
+											<li id="footer-places-about"><a href="/wiki/Dragon_Age_Toolset_Wiki:About" title="Dragon Age Toolset Wiki:About">About Dragon Age Toolset Wiki</a></li>
+											<li id="footer-places-disclaimer"><a href="/wiki/Dragon_Age_Toolset_Wiki:General_disclaimer" title="Dragon Age Toolset Wiki:General disclaimer">Disclaimers</a></li>
+									</ul>
+										<ul id="footer-icons" class="noprint">
+											<li id="footer-poweredbyico">
+															<a href="//www.mediawiki.org/"><img src="../assets/mw/resources/assets/poweredby_mediawiki_88x31.png" alt="Powered by MediaWiki" srcset="../assets/mw/resources/assets/poweredby_mediawiki_132x47.png 1.5x, ../assets/mw/resources/assets/poweredby_mediawiki_176x62.png 2x" width="88" height="31" /></a>
+													</li>
+									</ul>
+						<div style="clear:both"></div>
+		</div>
+		<script>if(window.jQuery)jQuery.ready();</script><script>if(window.mw){
+mw.loader.state({"site":"loading","user":"ready","user.groups":"ready"});
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.toc","mediawiki.action.view.postEdit","mediawiki.user","mediawiki.hidpi","mediawiki.page.ready","mediawiki.searchSuggest"],null,true);
+}</script>
+<script>if(window.mw){
+document.write("\u003Cscript src=\"https://www.datoolset.net/mw/load.php?debug=false\u0026amp;lang=en\u0026amp;modules=site\u0026amp;only=scripts\u0026amp;skin=vector\u0026amp;*\"\u003E\u003C/script\u003E");
+}</script>
+<script>if(window.mw){
+mw.config.set({"wgBackendResponseTime":260});
+}</script>
+	</body>
+</html>

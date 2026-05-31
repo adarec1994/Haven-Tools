@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" class="client-nojs">
+<head>
+<meta charset="UTF-8" />
+<title>Character generation - Dragon Age Toolset Wiki</title>
+<meta name="generator" content="MediaWiki 1.25.6" />
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="search" type="application/opensearchdescription+xml" href="/mw/opensearch_desc.php" title="Dragon Age Toolset Wiki (en)" />
+<link rel="EditURI" type="application/rsd+xml" href="https://www.datoolset.net/mw/api.php?action=rsd" />
+<link rel="alternate" hreflang="x-default" href="Character_generation.html" />
+<link rel="alternate" type="application/atom+xml" title="Dragon Age Toolset Wiki Atom feed" href="/mw/index.php?title=Special:RecentChanges&amp;feed=atom" />
+<meta name="ResourceLoaderDynamicStyles" content="" />
+<style>a:lang(ar),a:lang(kk-arab),a:lang(mzn),a:lang(ps),a:lang(ur){text-decoration:none}
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-css:7:270a0dcd3ae587df0f041aebfc42e61b */</style>
+<script>if(window.mw){
+mw.config.set({"wgCanonicalNamespace":"","wgCanonicalSpecialPageName":false,"wgNamespaceNumber":0,"wgPageName":"Character_generation","wgTitle":"Character generation","wgCurRevisionId":18499,"wgRevisionId":18499,"wgArticleId":985,"wgIsArticle":true,"wgIsRedirect":false,"wgAction":"view","wgUserName":null,"wgUserGroups":["*"],"wgCategories":["Character generation"],"wgBreakFrames":false,"wgPageContentLanguage":"en","wgPageContentModel":"wikitext","wgSeparatorTransformTable":["",""],"wgDigitTransformTable":["",""],"wgDefaultDateFormat":"dmy","wgMonthNames":["","January","February","March","April","May","June","July","August","September","October","November","December"],"wgMonthNamesShort":["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],"wgRelevantPageName":"Character_generation","wgRelevantArticleId":985,"wgIsProbablyEditable":false,"wgRestrictionEdit":[],"wgRestrictionMove":[]});
+}</script><script>if(window.mw){
+mw.loader.implement("user.options",function($,jQuery){mw.user.options.set({"variant":"en"});});mw.loader.implement("user.tokens",function($,jQuery){mw.user.tokens.set({"editToken":"+\\","patrolToken":"+\\","watchToken":"+\\"});});
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-js:7:a5c52c063dc436c1ca7c9f456936a5e9 */
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.page.startup","mediawiki.legacy.wikibits","mediawiki.legacy.ajax","skins.vector.js"]);
+}</script>
+<!--[if lt IE 7]><style type="text/css">body{behavior:url("/mw/skins/Vector/csshover.min.htc")}</style><![endif]-->
+<link rel="stylesheet" href="../assets/local/wiki-static.css" />
+</head>
+<body class="mediawiki ltr sitedir-ltr ns-0 ns-subject page-Character_generation skin-vector action-view">
+		<div id="mw-page-base" class="noprint"></div>
+		<div id="mw-head-base" class="noprint"></div>
+		<div id="content" class="mw-body" role="main">
+			<a id="top"></a>
+
+						<div class="mw-indicators">
+</div>
+			<h1 id="firstHeading" class="firstHeading" lang="en">Character generation</h1>
+						<div id="bodyContent" class="mw-body-content">
+									<div id="siteSub">From Dragon Age Toolset Wiki</div>
+								<div id="contentSub"></div>
+												<div id="jump-to-nav" class="mw-jump">
+					Jump to:					<a href="#mw-head">navigation</a>, 					<a href="#p-search">search</a>
+				</div>
+				<div id="mw-content-text" lang="en" dir="ltr" class="mw-content-ltr"><div id="toc" class="toc"><div id="toctitle"><h2>Contents</h2></div>
+<ul>
+<li class="toclevel-1 tocsection-1"><a href="#Basics"><span class="tocnumber">1</span> <span class="toctext">Basics</span></a></li>
+<li class="toclevel-1 tocsection-2"><a href="#Skipping_Character_Generation"><span class="tocnumber">2</span> <span class="toctext">Skipping Character Generation</span></a></li>
+<li class="toclevel-1 tocsection-3"><a href="#Initial_levelup_or_other_modifications"><span class="tocnumber">3</span> <span class="toctext">Initial levelup or other modifications</span></a></li>
+<li class="toclevel-1 tocsection-4"><a href="#Importing_a_character_from_a_saved_game"><span class="tocnumber">4</span> <span class="toctext">Importing a character from a saved game</span></a>
+<ul>
+<li class="toclevel-2 tocsection-5"><a href="#Imported_Plots_.26_Codex"><span class="tocnumber">4.1</span> <span class="toctext">Imported Plots &amp; Codex</span></a></li>
+</ul>
+</li>
+<li class="toclevel-1 tocsection-6"><a href="#Modifying_the_morph-generating_step_of_character_generation"><span class="tocnumber">5</span> <span class="toctext">Modifying the morph-generating step of character generation</span></a></li>
+</ul>
+</div>
+
+<h2><span class="mw-headline" id="Basics">Basics</span></h2>
+<p>A <a href="Module.html" title="Module">module</a> with no event script will start the player without going through character generation, which will leave the player with an almost unusable character to play with. To send the player through a basic character generation UI use the below script as the module event script. This is done by first creating the below script, and saving it, then opening your module properties (file &gt; manage modules &gt; properties), and changing the "script" field to be whatever you named your script (hit the ellipsis and browse for it).
+</p>
+<div dir="ltr" class="mw-geshi mw-code mw-content-ltr"><div class="dascript source-dascript"><pre class="de1"><span class="co2">#include &quot;events_h&quot;</span>
+<span class="co2">#include &quot;global_objects_h&quot;</span>
+&#160;
+<a href="http://www.datoolset.net/wiki/index.php?title=void keyword"><span class="kw2">void</span></a> main<span class="br0">&#40;</span><span class="br0">&#41;</span>
+<span class="br0">&#123;</span>
+    <span class="co1">// keep track of whether the event has been handled</span>
+    <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nEventHandled <span class="sy0">=</span> FALSE; 
+&#160;
+    <a href="http://www.datoolset.net/wiki/index.php?title=event keyword"><span class="kw2">event</span></a> ev <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetCurrentEvent"><span class="kw4">GetCurrentEvent</span></a><span class="br0">&#40;</span><span class="br0">&#41;</span>;
+    <a href="http://www.datoolset.net/wiki/index.php?title=switch keyword"><span class="kw1">switch</span></a><span class="br0">&#40;</span><a href="http://www.datoolset.net/wiki/index.php?title=GetEventType"><span class="kw4">GetEventType</span></a><span class="br0">&#40;</span>ev<span class="br0">&#41;</span><span class="br0">&#41;</span>
+    <span class="br0">&#123;</span>
+         <a href="http://www.datoolset.net/wiki/index.php?title=case keyword"><span class="kw1">case</span></a> <span class="kw3">EVENT_TYPE_MODULE_START</span><span class="sy0">:</span>
+         <span class="br0">&#123;</span>
+            <span class="co1">// preloads resources needed for character generation</span>
+            <a href="http://www.datoolset.net/wiki/index.php?title=PreloadCharGen"><span class="kw4">PreloadCharGen</span></a><span class="br0">&#40;</span><span class="br0">&#41;</span>; 
+&#160;
+            <span class="co1">// initiates character generation</span>
+            <a href="http://www.datoolset.net/wiki/index.php?title=StartCharGen"><span class="kw4">StartCharGen</span></a><span class="br0">&#40;</span><a href="http://www.datoolset.net/wiki/index.php?title=GetHero"><span class="kw4">GetHero</span></a><span class="br0">&#40;</span><span class="br0">&#41;</span>,<span class="nu0">0</span><span class="br0">&#41;</span>; 
+&#160;
+            <a href="http://www.datoolset.net/wiki/index.php?title=break keyword"><span class="kw1">break</span></a>;
+         <span class="br0">&#125;</span>
+    <span class="br0">&#125;</span>
+&#160;
+    <span class="co1">// if this event wasn't handled by this script fall through to the core script</span>
+    <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a><span class="br0">&#40;</span><span class="sy0">!</span>nEventHandled<span class="br0">&#41;</span>
+    <span class="br0">&#123;</span>
+        <a href="http://www.datoolset.net/wiki/index.php?title=HandleEvent"><span class="kw4">HandleEvent</span></a><span class="br0">&#40;</span>ev, RESOURCE_SCRIPT_MODULE_CORE<span class="br0">&#41;</span>;
+    <span class="br0">&#125;</span>
+<span class="br0">&#125;</span></pre></div></div>
+<h2><span class="mw-headline" id="Skipping_Character_Generation">Skipping Character Generation</span></h2>
+<p>A basic script that skips the character generation interface:
+</p>
+<div dir="ltr" class="mw-geshi mw-code mw-content-ltr"><div class="dascript source-dascript"><pre class="de1"><span class="co2">#include &quot;sys_chargen_h&quot;</span>
+<span class="co2">#include &quot;utility_h&quot; </span>
+&#160;
+<a href="http://www.datoolset.net/wiki/index.php?title=void keyword"><span class="kw2">void</span></a> main<span class="br0">&#40;</span><span class="br0">&#41;</span>
+<span class="br0">&#123;</span>
+    <span class="co1">// keep track of whether the event has been handled</span>
+    <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nEventHandled <span class="sy0">=</span> FALSE; 
+&#160;
+    <a href="http://www.datoolset.net/wiki/index.php?title=event keyword"><span class="kw2">event</span></a> ev <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetCurrentEvent"><span class="kw4">GetCurrentEvent</span></a><span class="br0">&#40;</span><span class="br0">&#41;</span>;
+    <a href="http://www.datoolset.net/wiki/index.php?title=switch keyword"><span class="kw1">switch</span></a><span class="br0">&#40;</span><a href="http://www.datoolset.net/wiki/index.php?title=GetEventType"><span class="kw4">GetEventType</span></a><span class="br0">&#40;</span>ev<span class="br0">&#41;</span><span class="br0">&#41;</span>
+    <span class="br0">&#123;</span>
+        <a href="http://www.datoolset.net/wiki/index.php?title=case keyword"><span class="kw1">case</span></a> <span class="kw3">EVENT_TYPE_MODULE_START</span><span class="sy0">:</span>
+        <span class="br0">&#123;</span>
+            <a href="http://www.datoolset.net/wiki/index.php?title=object keyword"><span class="kw2">object</span></a> oHero <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetHero"><span class="kw4">GetHero</span></a><span class="br0">&#40;</span><span class="br0">&#41;</span>;
+&#160;
+            <span class="co1">// skip character generation</span>
+            Chargen_InitializeCharacter<span class="br0">&#40;</span>oHero<span class="br0">&#41;</span>;
+            Chargen_SelectGender<span class="br0">&#40;</span>oHero, <span class="kw3">GENDER_MALE</span><span class="br0">&#41;</span>;
+            Chargen_SelectRace<span class="br0">&#40;</span>oHero, RACE_HUMAN<span class="br0">&#41;</span>;
+            Chargen_SelectCoreClass<span class="br0">&#40;</span>oHero, CLASS_WARRIOR<span class="br0">&#41;</span>;
+            Chargen_SelectBackground<span class="br0">&#40;</span>oHero, BACKGROUND_NOBLE<span class="br0">&#41;</span>;
+&#160;
+            <span class="co1">// give the player some equipment</span>
+            <a href="http://www.datoolset.net/wiki/index.php?title=EquipItem"><span class="kw4">EquipItem</span></a><span class="br0">&#40;</span>oHero, UT_AddItemToInventory<span class="br0">&#40;</span>R<span class="st0">&quot;gen_im_arm_cht_lgt_rlr.uti&quot;</span><span class="br0">&#41;</span><span class="br0">&#41;</span>;
+            <a href="http://www.datoolset.net/wiki/index.php?title=EquipItem"><span class="kw4">EquipItem</span></a><span class="br0">&#40;</span>oHero, UT_AddItemToInventory<span class="br0">&#40;</span>R<span class="st0">&quot;gen_im_arm_bot_lgt_rlr.uti&quot;</span><span class="br0">&#41;</span><span class="br0">&#41;</span>;
+            <a href="http://www.datoolset.net/wiki/index.php?title=EquipItem"><span class="kw4">EquipItem</span></a><span class="br0">&#40;</span>oHero, UT_AddItemToInventory<span class="br0">&#40;</span>R<span class="st0">&quot;gen_im_arm_glv_lgt_rlr.uti&quot;</span><span class="br0">&#41;</span><span class="br0">&#41;</span>;
+            <a href="http://www.datoolset.net/wiki/index.php?title=EquipItem"><span class="kw4">EquipItem</span></a><span class="br0">&#40;</span>oHero, UT_AddItemToInventory<span class="br0">&#40;</span>R<span class="st0">&quot;gen_im_arm_shd_sml_wdn.uti&quot;</span><span class="br0">&#41;</span><span class="br0">&#41;</span>;
+            <a href="http://www.datoolset.net/wiki/index.php?title=EquipItem"><span class="kw4">EquipItem</span></a><span class="br0">&#40;</span>oHero, UT_AddItemToInventory<span class="br0">&#40;</span>R<span class="st0">&quot;gen_im_wep_mel_lsw_lsw.uti&quot;</span><span class="br0">&#41;</span><span class="br0">&#41;</span>;
+&#160;
+            <a href="http://www.datoolset.net/wiki/index.php?title=break keyword"><span class="kw1">break</span></a>;
+        <span class="br0">&#125;</span>
+    <span class="br0">&#125;</span>
+&#160;
+    <span class="co1">// if this event wasn't handled by this script fall through to the core script</span>
+    <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a><span class="br0">&#40;</span><span class="sy0">!</span>nEventHandled<span class="br0">&#41;</span>
+    <span class="br0">&#123;</span>
+        <a href="http://www.datoolset.net/wiki/index.php?title=HandleEvent"><span class="kw4">HandleEvent</span></a><span class="br0">&#40;</span>ev, RESOURCE_SCRIPT_MODULE_CORE<span class="br0">&#41;</span>;
+    <span class="br0">&#125;</span>
+<span class="br0">&#125;</span></pre></div></div>
+<p>Another alternative is to create a template creature with the appropriate starting equipment and then call <a href="LoadItemsFromTemplate.html" title="LoadItemsFromTemplate">LoadItemsFromTemplate</a> to copy it to the player:
+</p>
+<div dir="ltr" class="mw-geshi mw-code mw-content-ltr"><div class="dascript source-dascript"><pre class="de1">         <a href="http://www.datoolset.net/wiki/index.php?title=case keyword"><span class="kw1">case</span></a> <span class="kw3">EVENT_TYPE_MODULE_START</span><span class="sy0">:</span>
+         <span class="br0">&#123;</span>
+            <a href="http://www.datoolset.net/wiki/index.php?title=object keyword"><span class="kw2">object</span></a> oHero <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetHero"><span class="kw4">GetHero</span></a><span class="br0">&#40;</span><span class="br0">&#41;</span>;
+&#160;
+            <span class="co1">// skip character generation</span>
+            Chargen_InitializeCharacter<span class="br0">&#40;</span>oHero<span class="br0">&#41;</span>;
+            Chargen_SelectRace<span class="br0">&#40;</span>oHero, RACE_HUMAN<span class="br0">&#41;</span>;
+            Chargen_SelectCoreClass<span class="br0">&#40;</span>oHero, CLASS_WARRIOR<span class="br0">&#41;</span>;
+            Chargen_SelectBackground<span class="br0">&#40;</span>oHero, BACKGROUND_NOBLE<span class="br0">&#41;</span>;
+&#160;
+            <span class="co1">// give the player some equipment</span>
+            <a href="http://www.datoolset.net/wiki/index.php?title=LoadItemsFromTemplate"><span class="kw4">LoadItemsFromTemplate</span></a><span class="br0">&#40;</span>oHero, <span class="st0">&quot;gcd_hero.utc&quot;</span>, TRUE<span class="br0">&#41;</span>;
+&#160;
+            <a href="http://www.datoolset.net/wiki/index.php?title=break keyword"><span class="kw1">break</span></a>;
+         <span class="br0">&#125;</span></pre></div></div>
+<p>It should be noted that, by skipping the internal character generation process that way, the character will have the correct stats but will be featureless and bald. Unfortunately there is no function to change the head morph via script.
+</p>
+<h2><span class="mw-headline" id="Initial_levelup_or_other_modifications">Initial levelup or other modifications</span></h2>
+<p>If you want to increase the starting level a basic script can be created by merging one of the above with the following template:
+</p>
+<div dir="ltr" class="mw-geshi mw-code mw-content-ltr"><div class="dascript source-dascript"><pre class="de1"><span class="co1">// [additional includes goes here]</span>
+<span class="co2">#include &quot;sys_rewards_h&quot;</span>
+&#160;
+<a href="http://www.datoolset.net/wiki/index.php?title=const keyword"><span class="kw1">const</span></a> <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> FORCE_AUTOLEVEL <span class="sy0">=</span> <span class="nu0">2</span>;
+&#160;
+<a href="http://www.datoolset.net/wiki/index.php?title=void keyword"><span class="kw2">void</span></a> main<span class="br0">&#40;</span><span class="br0">&#41;</span>
+<span class="br0">&#123;</span>
+    <span class="co1">// keep track of whether the event has been handled</span>
+    <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nEventHandled <span class="sy0">=</span> FALSE; 
+&#160;
+    <a href="http://www.datoolset.net/wiki/index.php?title=event keyword"><span class="kw2">event</span></a> ev <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetCurrentEvent"><span class="kw4">GetCurrentEvent</span></a><span class="br0">&#40;</span><span class="br0">&#41;</span>;
+    <a href="http://www.datoolset.net/wiki/index.php?title=switch keyword"><span class="kw1">switch</span></a><span class="br0">&#40;</span><a href="http://www.datoolset.net/wiki/index.php?title=GetEventType"><span class="kw4">GetEventType</span></a><span class="br0">&#40;</span>ev<span class="br0">&#41;</span><span class="br0">&#41;</span>
+    <span class="br0">&#123;</span>
+         <a href="http://www.datoolset.net/wiki/index.php?title=case keyword"><span class="kw1">case</span></a> <span class="kw3">EVENT_TYPE_MODULE_START</span><span class="sy0">:</span>
+         <span class="br0">&#123;</span>
+            <a href="http://www.datoolset.net/wiki/index.php?title=object keyword"><span class="kw2">object</span></a> oHero <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetHero"><span class="kw4">GetHero</span></a><span class="br0">&#40;</span><span class="br0">&#41;</span>;
+&#160;
+            <span class="co1">// [chargen code goes here]</span>
+&#160;
+            <span class="co1">// auto-level the player to level 10</span>
+            RewardXP<span class="br0">&#40;</span>oHero, RW_GetXPNeededForLevel<span class="br0">&#40;</span><span class="nu0">10</span><span class="br0">&#41;</span>, FALSE, FALSE<span class="br0">&#41;</span>;
+            <a href="http://www.datoolset.net/wiki/index.php?title=SetAutoLevelUp"><span class="kw4">SetAutoLevelUp</span></a><span class="br0">&#40;</span>oHero, FORCE_AUTOLEVEL<span class="br0">&#41;</span>;
+&#160;
+            <a href="http://www.datoolset.net/wiki/index.php?title=break keyword"><span class="kw1">break</span></a>;
+         <span class="br0">&#125;</span>
+    <span class="br0">&#125;</span>
+&#160;
+    <span class="co1">// if this event wasn't handled by this script fall through to the core script</span>
+    <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a><span class="br0">&#40;</span><span class="sy0">!</span>nEventHandled<span class="br0">&#41;</span>
+    <span class="br0">&#123;</span>
+        <a href="http://www.datoolset.net/wiki/index.php?title=HandleEvent"><span class="kw4">HandleEvent</span></a><span class="br0">&#40;</span>ev, RESOURCE_SCRIPT_MODULE_CORE<span class="br0">&#41;</span>;
+    <span class="br0">&#125;</span>
+<span class="br0">&#125;</span></pre></div></div>
+<p>A more sophisticated script could include other set-up code, for example triggering an introductory cinematic to inform the player of the game's plot.
+</p>
+<h2><span class="mw-headline" id="Importing_a_character_from_a_saved_game">Importing a character from a saved game</span></h2>
+<p>We saw earlier how to invoke the basic chargen UI.
+</p><p>If the nImportEnabled parameter of StartCharGen is set, it enables importing a character from a saved game. This also disables using a character made with the standalone Character Creator (which can crash if the campaign has custom backgrounds).
+</p>
+<div dir="ltr" class="mw-geshi mw-code mw-content-ltr"><div class="dascript source-dascript"><pre class="de1">  <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nImportEnabled <span class="sy0">=</span> TRUE;
+&#160;
+  <a href="http://www.datoolset.net/wiki/index.php?title=StartCharGen"><span class="kw4">StartCharGen</span></a><span class="br0">&#40;</span><a href="http://www.datoolset.net/wiki/index.php?title=GetHero"><span class="kw4">GetHero</span></a><span class="br0">&#40;</span><span class="br0">&#41;</span>, <span class="nu0">0</span>, nImportEnabled<span class="br0">&#41;</span>;</pre></div></div>
+<p>The player still has the option to make a new character from scratch in the UI.
+</p><p>When the player decides to import from a saved game, the CHARGEN_IMPORT_HERO event can be intercepted in the module script, so the imported character can be modified.
+</p><p>By default, the character might be very high level, with a powerful inventory and lots of gold. In the following example, we revert to level 1, remove all possessions, and load the default inventory. 
+</p><p>The example also assumes that the campaign has a custom background, for which an integer constant BACKGROUND_FOUNDLING has been defined.  
+</p>
+<div dir="ltr" class="mw-geshi mw-code mw-content-ltr"><div class="dascript source-dascript"><pre class="de1"><a href="http://www.datoolset.net/wiki/index.php?title=case keyword"><span class="kw1">case</span></a> <span class="kw3">EVENT_TYPE_CHARGEN_IMPORT_HERO</span><span class="sy0">:</span>
+  <span class="br0">&#123;</span>
+    <a href="http://www.datoolset.net/wiki/index.php?title=object keyword"><span class="kw2">object</span></a> oHero <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetHero"><span class="kw4">GetHero</span></a><span class="br0">&#40;</span><span class="br0">&#41;</span>; 
+    <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nGender <span class="sy0">=</span> GetCreatureGender<span class="br0">&#40;</span>oHero<span class="br0">&#41;</span>; 
+    <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nRace <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetCreatureRacialType"><span class="kw4">GetCreatureRacialType</span></a><span class="br0">&#40;</span>oHero<span class="br0">&#41;</span>;
+    <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nclass <span class="sy0">=</span> GetCreatureCoreclass<span class="br0">&#40;</span>oHero<span class="br0">&#41;</span>;
+    <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nBackground <span class="sy0">=</span> BACKGROUND_FOUNDLING;
+    <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nEquipIndex <span class="sy0">=</span> Chargen_GetEquipIndex<span class="br0">&#40;</span>nRace, nclass, nBackground<span class="br0">&#41;</span>;
+&#160;
+    <span class="co1">// Reset to level 1</span>
+&#160;
+    Chargen_InitializeCharacter<span class="br0">&#40;</span>oHero<span class="br0">&#41;</span>;
+    Chargen_SelectGender <span class="br0">&#40;</span>oHero, nGender<span class="br0">&#41;</span>;
+    Chargen_SelectRace <span class="br0">&#40;</span>oHero, nRace<span class="br0">&#41;</span>;
+    Chargen_SelectCoreclass <span class="br0">&#40;</span>oHero, nclass<span class="br0">&#41;</span>; 
+    Chargen_SelectBackground<span class="br0">&#40;</span>oHero, nBackground<span class="br0">&#41;</span>; 
+&#160;
+    <span class="co1">// Reset inventory and gold</span>
+&#160;
+    Chargen_InitInventory <span class="br0">&#40;</span>oHero, nclass, nEquipIndex<span class="br0">&#41;</span>;
+    <a href="http://www.datoolset.net/wiki/index.php?title=SetCreatureMoney"><span class="kw4">SetCreatureMoney</span></a><span class="br0">&#40;</span><span class="nu0">0</span>, oHero<span class="br0">&#41;</span>;
+&#160;
+    <span class="co1">// Allow the player to finesse the character build using Level Up</span>
+&#160;
+    <a href="http://www.datoolset.net/wiki/index.php?title=SetCanLevelUp"><span class="kw4">SetCanLevelUp</span></a><span class="br0">&#40;</span>oHero, TRUE<span class="br0">&#41;</span>;
+  <span class="br0">&#125;</span></pre></div></div>
+<p>Since there is only one custom background in this example, it is simply assigned. 
+</p><p>If regression to level 1 is not required, or there are multiple custom backgrounds, the builder will probably need to examine Chargen_SelectBackground, with a view to making a custom function that doesn't change abilities etc. Background selection from a list might be achieved in conversation at the start of gameplay.
+</p>
+<h3><span class="mw-headline" id="Imported_Plots_.26_Codex">Imported Plots &amp; Codex</span></h3>
+<p>An imported character retains plot flag settings from the previous campaign.
+</p><p>This probably isn't an issue, because none of the old plots appear in the journal. Codex slots only appear for codex plots which are used in the new campaign.
+</p><p>The risk of a duplicate plot GUID is presumably negligible.
+</p><p>Of course, creature codex entries will be unlocked for creatures encountered in the old campaign. If that's inappropriate, change or delete the Codex Plot entry in the APR_base 2DA for the creatures in question.
+</p>
+<h2><span class="mw-headline" id="Modifying_the_morph-generating_step_of_character_generation">Modifying the morph-generating step of character generation</span></h2>
+<p>See <a href="Chargenmorphcfg.xml.html" title="Chargenmorphcfg.xml">Chargenmorphcfg.xml</a> for information about how to modify this step of character generation.
+</p>
+<!-- 
+NewPP limit report
+CPU time usage: 0.036 seconds
+Real time usage: 0.039 seconds
+Preprocessor visited node count: 100/1000000
+Preprocessor generated node count: 292/1000000
+Post‐expand include size: 0/2097152 bytes
+Template argument size: 0/2097152 bytes
+Highest expansion depth: 3/40
+Expensive parser function count: 0/100
+-->
+
+<!-- 
+Transclusion expansion time report (%,ms,calls,template)
+100.00%    0.000      1 - -total
+-->
+
+<!-- Saved in parser cache with key db714099484-datoolwiki_:pcache:idhash:985-0!*!0!!en!*!* and timestamp 20260531033038 and revision id 18499
+ -->
+</div>									<div class="printfooter">
+						Retrieved from "<a dir="ltr" href="Character_generation.html">https://www.datoolset.net/mw/index.php?title=Character_generation&amp;oldid=18499</a>"					</div>
+													<div id='catlinks' class='catlinks'><div id="mw-normal-catlinks" class="mw-normal-catlinks"><a href="/wiki/Special:Categories" title="Special:Categories">Category</a>: <ul><li><a href="Category%3ACharacter_generation.html" title="Category:Character generation">Character generation</a></li></ul></div></div>												<div class="visualClear"></div>
+							</div>
+		</div>
+		<div id="mw-navigation">
+			<h2>Navigation menu</h2>
+
+			<div id="mw-head">
+									<div id="p-personal" role="navigation" class="" aria-labelledby="p-personal-label">
+						<h3 id="p-personal-label">Personal tools</h3>
+						<ul>
+							<li id="pt-login"><a href="/mw/index.php?title=Special:UserLogin&amp;returnto=Character+generation" title="You are encouraged to log in; however, it is not mandatory [o]" accesskey="o">Log in</a></li>						</ul>
+					</div>
+									<div id="left-navigation">
+										<div id="p-namespaces" role="navigation" class="vectorTabs" aria-labelledby="p-namespaces-label">
+						<h3 id="p-namespaces-label">Namespaces</h3>
+						<ul>
+															<li  id="ca-nstab-main" class="selected"><span><a href="Character_generation.html"  title="View the content page [c]" accesskey="c">Page</a></span></li>
+															<li  id="ca-talk"><span><a href="Talk%3ACharacter_generation.html"  title="Discussion about the content page [t]" accesskey="t">Discussion</a></span></li>
+													</ul>
+					</div>
+										<div id="p-variants" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-variants-label">
+												<h3 id="p-variants-label"><span>Variants</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+									</div>
+				<div id="right-navigation">
+										<div id="p-views" role="navigation" class="vectorTabs" aria-labelledby="p-views-label">
+						<h3 id="p-views-label">Views</h3>
+						<ul>
+															<li id="ca-view" class="selected"><span><a href="Character_generation.html" >Read</a></span></li>
+															<li id="ca-viewsource"><span><a href="Character_generation.html"  title="This page is protected.&#10;You can view its source [e]" accesskey="e">View source</a></span></li>
+															<li id="ca-history" class="collapsible"><span><a href="Character_generation.html"  title="Past revisions of this page [h]" accesskey="h">View history</a></span></li>
+													</ul>
+					</div>
+										<div id="p-cactions" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-cactions-label">
+						<h3 id="p-cactions-label"><span>More</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+										<div id="p-search" role="search">
+						<h3>
+							<label for="searchInput">Search</label>
+						</h3>
+
+						<form action="/mw/index.php" id="searchform">
+														<div id="simpleSearch">
+															<input type="search" name="search" placeholder="Search" title="Search Dragon Age Toolset Wiki [f]" accesskey="f" id="searchInput" /><input type="hidden" value="Special:Search" name="title" /><input type="submit" name="fulltext" value="Search" title="Search the pages for this text" id="mw-searchButton" class="searchButton mw-fallbackSearchButton" /><input type="submit" name="go" value="Go" title="Go to a page with this exact name if exists" id="searchButton" class="searchButton" />								</div>
+						</form>
+					</div>
+									</div>
+			</div>
+			<div id="mw-panel">
+				<div id="p-logo" role="banner"><a class="mw-wiki-logo" href="Main_Page.html"  title="Visit the main page"></a></div>
+						<div class="portal" role="navigation" id='p-navigation' aria-labelledby='p-navigation-label'>
+			<h3 id='p-navigation-label'>Navigation</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-mainpage-description"><a href="Main_Page.html" title="Visit the main page [z]" accesskey="z">Main page</a></li>
+													<li id="n-recentchanges"><a href="/wiki/Special:RecentChanges" title="A list of recent changes in the wiki [r]" accesskey="r">Recent changes</a></li>
+													<li id="n-randompage"><a href="/wiki/Special:Random" title="Load a random page [x]" accesskey="x">Random page</a></li>
+													<li id="n-help"><a href="https://www.mediawiki.org/wiki/Special:MyLanguage/Help:Contents" title="The place to find out">Help</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-Links' aria-labelledby='p-Links-label'>
+			<h3 id='p-Links-label'>Links</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-Toolset-forums"><a href="http://forum.bioware.com/forum/30-dragon-age-toolset" rel="nofollow">Toolset forums</a></li>
+													<li id="n-Legacy-forums"><a href="http://social.bioware.com/forum/1/subindex/70" rel="nofollow">Legacy forums</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-tb' aria-labelledby='p-tb-label'>
+			<h3 id='p-tb-label'>Tools</h3>
+
+			<div class="body">
+									<ul>
+													<li id="t-whatlinkshere"><a href="/wiki/Special:WhatLinksHere/Character_generation" title="A list of all wiki pages that link here [j]" accesskey="j">What links here</a></li>
+													<li id="t-recentchangeslinked"><a href="/wiki/Special:RecentChangesLinked/Character_generation" title="Recent changes in pages linked from this page [k]" accesskey="k">Related changes</a></li>
+													<li id="t-specialpages"><a href="/wiki/Special:SpecialPages" title="A list of all special pages [q]" accesskey="q">Special pages</a></li>
+													<li id="t-print"><a href="Character_generation.html" rel="alternate" title="Printable version of this page [p]" accesskey="p">Printable version</a></li>
+													<li id="t-permalink"><a href="Character_generation.html" title="Permanent link to this revision of the page">Permanent link</a></li>
+													<li id="t-info"><a href="Character_generation.html" title="More information about this page">Page information</a></li>
+											</ul>
+							</div>
+		</div>
+				</div>
+		</div>
+		<div id="footer" role="contentinfo">
+							<ul id="footer-info">
+											<li id="footer-info-lastmod"> This page was last modified on 12 March 2012, at 14:01.</li>
+									</ul>
+							<ul id="footer-places">
+											<li id="footer-places-privacy"><a href="/wiki/Dragon_Age_Toolset_Wiki:Privacy_policy" title="Dragon Age Toolset Wiki:Privacy policy">Privacy policy</a></li>
+											<li id="footer-places-about"><a href="/wiki/Dragon_Age_Toolset_Wiki:About" title="Dragon Age Toolset Wiki:About">About Dragon Age Toolset Wiki</a></li>
+											<li id="footer-places-disclaimer"><a href="/wiki/Dragon_Age_Toolset_Wiki:General_disclaimer" title="Dragon Age Toolset Wiki:General disclaimer">Disclaimers</a></li>
+									</ul>
+										<ul id="footer-icons" class="noprint">
+											<li id="footer-poweredbyico">
+															<a href="//www.mediawiki.org/"><img src="../assets/mw/resources/assets/poweredby_mediawiki_88x31.png" alt="Powered by MediaWiki" srcset="../assets/mw/resources/assets/poweredby_mediawiki_132x47.png 1.5x, ../assets/mw/resources/assets/poweredby_mediawiki_176x62.png 2x" width="88" height="31" /></a>
+													</li>
+									</ul>
+						<div style="clear:both"></div>
+		</div>
+		<script>if(window.jQuery)jQuery.ready();</script><script>if(window.mw){
+mw.loader.state({"site":"loading","user":"ready","user.groups":"ready"});
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.toc","mediawiki.action.view.postEdit","mediawiki.user","mediawiki.hidpi","mediawiki.page.ready","mediawiki.searchSuggest"],null,true);
+}</script>
+<script>if(window.mw){
+document.write("\u003Cscript src=\"https://www.datoolset.net/mw/load.php?debug=false\u0026amp;lang=en\u0026amp;modules=site\u0026amp;only=scripts\u0026amp;skin=vector\u0026amp;*\"\u003E\u003C/script\u003E");
+}</script>
+<script>if(window.mw){
+mw.config.set({"wgBackendResponseTime":269});
+}</script>
+	</body>
+</html>

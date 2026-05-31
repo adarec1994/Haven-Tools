@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" class="client-nojs">
+<head>
+<meta charset="UTF-8" />
+<title>Compatibility - Dragon Age Toolset Wiki</title>
+<meta name="generator" content="MediaWiki 1.25.6" />
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="search" type="application/opensearchdescription+xml" href="/mw/opensearch_desc.php" title="Dragon Age Toolset Wiki (en)" />
+<link rel="EditURI" type="application/rsd+xml" href="https://www.datoolset.net/mw/api.php?action=rsd" />
+<link rel="alternate" hreflang="x-default" href="Compatibility.html" />
+<link rel="alternate" type="application/atom+xml" title="Dragon Age Toolset Wiki Atom feed" href="/mw/index.php?title=Special:RecentChanges&amp;feed=atom" />
+<meta name="ResourceLoaderDynamicStyles" content="" />
+<style>a:lang(ar),a:lang(kk-arab),a:lang(mzn),a:lang(ps),a:lang(ur){text-decoration:none}
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-css:7:270a0dcd3ae587df0f041aebfc42e61b */</style>
+<script>if(window.mw){
+mw.config.set({"wgCanonicalNamespace":"","wgCanonicalSpecialPageName":false,"wgNamespaceNumber":0,"wgPageName":"Compatibility","wgTitle":"Compatibility","wgCurRevisionId":17683,"wgRevisionId":17683,"wgArticleId":4517,"wgIsArticle":true,"wgIsRedirect":false,"wgAction":"view","wgUserName":null,"wgUserGroups":["*"],"wgCategories":[],"wgBreakFrames":false,"wgPageContentLanguage":"en","wgPageContentModel":"wikitext","wgSeparatorTransformTable":["",""],"wgDigitTransformTable":["",""],"wgDefaultDateFormat":"dmy","wgMonthNames":["","January","February","March","April","May","June","July","August","September","October","November","December"],"wgMonthNamesShort":["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],"wgRelevantPageName":"Compatibility","wgRelevantArticleId":4517,"wgIsProbablyEditable":false,"wgRestrictionEdit":[],"wgRestrictionMove":[]});
+}</script><script>if(window.mw){
+mw.loader.implement("user.options",function($,jQuery){mw.user.options.set({"variant":"en"});});mw.loader.implement("user.tokens",function($,jQuery){mw.user.tokens.set({"editToken":"+\\","patrolToken":"+\\","watchToken":"+\\"});});
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-js:7:a5c52c063dc436c1ca7c9f456936a5e9 */
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.page.startup","mediawiki.legacy.wikibits","mediawiki.legacy.ajax","skins.vector.js"]);
+}</script>
+<!--[if lt IE 7]><style type="text/css">body{behavior:url("/mw/skins/Vector/csshover.min.htc")}</style><![endif]-->
+<link rel="stylesheet" href="../assets/local/wiki-static.css" />
+</head>
+<body class="mediawiki ltr sitedir-ltr ns-0 ns-subject page-Compatibility skin-vector action-view">
+		<div id="mw-page-base" class="noprint"></div>
+		<div id="mw-head-base" class="noprint"></div>
+		<div id="content" class="mw-body" role="main">
+			<a id="top"></a>
+
+						<div class="mw-indicators">
+</div>
+			<h1 id="firstHeading" class="firstHeading" lang="en">Compatibility</h1>
+						<div id="bodyContent" class="mw-body-content">
+									<div id="siteSub">From Dragon Age Toolset Wiki</div>
+								<div id="contentSub"></div>
+												<div id="jump-to-nav" class="mw-jump">
+					Jump to:					<a href="#mw-head">navigation</a>, 					<a href="#p-search">search</a>
+				</div>
+				<div id="mw-content-text" lang="en" dir="ltr" class="mw-content-ltr"><p>DAO has an active modding community. Over time, players will accumulate many new campaigns and game mods. So, as a courtesy to players and other builders, it's helpful to try to make our mods mutually compatible. 
+</p><p>From time to time, Bioware may well issue new releases, so it's good to reduce the risk of conflict in that respect, too. 
+</p><p>Since we can't be sure that all authors will respect compatibility considerations, the emphasis here is on techniques that reduce the risk of conflict, regardless of what other people do (though not all are foolproof).
+</p><p>Obviously, there are some conflicts with no win-win (hurlocks can't be both green and purple at the same time), but that doesn't stop us trying to avoid unnecessary win-lose or corruption.
+</p><p>We begin with a concrete example - a tutorial on script conflict in OC mods, which is one of the most common problems to avoid. The remainder of the page is a more systematic discussion, which applies to both OC mods and custom campaigns.    
+</p>
+<div id="toc" class="toc"><div id="toctitle"><h2>Contents</h2></div>
+<ul>
+<li class="toclevel-1 tocsection-1"><a href="#Tutorial_to_ensure_your_Awakening_mod_will_not_break_Origins_and_vice_versa.21.21.21_.28includes_screenshots_and_script_code.29"><span class="tocnumber">1</span> <span class="toctext">Tutorial to ensure your Awakening mod will not break Origins and vice versa!!! (includes screenshots and script code)</span></a></li>
+<li class="toclevel-1 tocsection-2"><a href="#Disable_Add-Ins_:_Suggested_Disclaimer"><span class="tocnumber">2</span> <span class="toctext">Disable Add-Ins&#160;: Suggested Disclaimer</span></a></li>
+<li class="toclevel-1 tocsection-3"><a href="#Module_Scope"><span class="tocnumber">3</span> <span class="toctext">Module Scope</span></a></li>
+<li class="toclevel-1 tocsection-4"><a href="#Resource_Scope"><span class="tocnumber">4</span> <span class="toctext">Resource Scope</span></a></li>
+<li class="toclevel-1 tocsection-5"><a href="#Resource_Conflict"><span class="tocnumber">5</span> <span class="toctext">Resource Conflict</span></a></li>
+<li class="toclevel-1 tocsection-6"><a href="#Existing_Content_Modification"><span class="tocnumber">6</span> <span class="toctext">Existing Content Modification</span></a></li>
+<li class="toclevel-1 tocsection-7"><a href="#2DA_Conflict"><span class="tocnumber">7</span> <span class="toctext">2DA Conflict</span></a></li>
+<li class="toclevel-1 tocsection-8"><a href="#String_Conflict"><span class="tocnumber">8</span> <span class="toctext">String Conflict</span></a></li>
+<li class="toclevel-1 tocsection-9"><a href="#Event_Handling_Conflict"><span class="tocnumber">9</span> <span class="toctext">Event Handling Conflict</span></a></li>
+<li class="toclevel-1 tocsection-10"><a href="#Plot_Property"><span class="tocnumber">10</span> <span class="toctext">Plot Property</span></a></li>
+<li class="toclevel-1 tocsection-11"><a href="#Open_Source"><span class="tocnumber">11</span> <span class="toctext">Open Source</span></a></li>
+<li class="toclevel-1 tocsection-12"><a href="#Official_DLC_conflicts"><span class="tocnumber">12</span> <span class="toctext">Official DLC conflicts</span></a></li>
+<li class="toclevel-1 tocsection-13"><a href="#FAQ"><span class="tocnumber">13</span> <span class="toctext">FAQ</span></a>
+<ul>
+<li class="toclevel-2 tocsection-14"><a href="#What_if_my_mod_extends_both_Single_Player_and_Awakening.3F"><span class="tocnumber">13.1</span> <span class="toctext">What if my mod extends both Single Player and Awakening?</span></a></li>
+<li class="toclevel-2 tocsection-15"><a href="#How_can_I_import_an_item_with_my_existing_character_to_a_new_campaign.3F"><span class="tocnumber">13.2</span> <span class="toctext">How can I import an item with my existing character to a new campaign?</span></a></li>
+<li class="toclevel-2 tocsection-16"><a href="#How_can_I_stop_items_being_imported_into_my_campaign.3F"><span class="tocnumber">13.3</span> <span class="toctext">How can I stop items being imported into my campaign?</span></a></li>
+</ul>
+</li>
+</ul>
+</div>
+
+<h2><span class="mw-headline" id="Tutorial_to_ensure_your_Awakening_mod_will_not_break_Origins_and_vice_versa.21.21.21_.28includes_screenshots_and_script_code.29">Tutorial to ensure your Awakening mod will not break Origins and vice versa!!! (includes screenshots and script code)</span></h2>
+<p>I'm hoping to save my modding friends some time. (Tutorial by Immortality)
+</p><p><b>Remember: IT'S YOUR RESPONSIBILITY TO ENSURE YOUR MOD DOES NOT BREAK THE GAME, THE EXPANSION, DLCS, OR OTHER MODS!!</b>
+</p><p><br />
+</p><p><i><b>The problem:</b></i>
+</p><p>- While working in my Origins mod, and then on my Awakening mod, I realized that my Origins mod was breaking Awakening (scripts were not triggering, and even objects were moving around!).
+</p><p>- In the same way, my mod for Awakening was interfeering in Origins, breaking it (wrong scripts triggering, destroying the party recruiting).
+</p><p><br />
+</p><p><i><b>The objective:</b></i>
+</p><p>- Prevent the Origins mod to interfere with Awakening. If your mod is for Origins, it should only work in Origins.
+</p><p>- Prevent the Awakening mod to interfere with Origins. If your mod is for Awakening, it should only work in Awakening.
+</p><p>- If you have one mod for both, to ensure that the Origins part triggers in Origins and Awakening part in Awakening.
+</p><p><br />
+</p><p><i><b>Procedure:</b></i>
+</p><p><br />
+<b>1- Ensure your Origins mod is for Origins only!</b>
+</p><p>NEVER EVER EVER set your core scripts or handling scripts as Core Game Resources. NEVER!
+</p><p>There's absolutely no need for your scripts (especially your module core) to be a core game resource.
+</p><p>This means that whenever you create a mod for origins you should always set the properties of your major handling scripts as "Module: your module", and "Owner Module: your module". NEVER as a core game resource. Otherwise they will interfere with awakening and will break it (make no mistake, they will).
+</p><p>Example:
+</p><p>This is how you set your Origins module: <a href="File%3AOriginshierarchy.jpg.html" class="image"><img alt="Originshierarchy.jpg" src="../assets/mw/images/f/f8/Originshierarchy.jpg" width="615" height="383" /></a>
+</p><p>This is how you set all your script's properties: <a href="File%3AOriginsproperties.jpg.html" class="image"><img alt="Originsproperties.jpg" src="../assets/mw/images/2/26/Originsproperties.jpg" width="657" height="576" /></a> 
+</p><p><br />
+<b>2- Ensure your Awakening mod is for Awakening only!</b>
+</p><p>Things are different for Awakening because you DO have to set all your materials' properties as "Module: Core Game Resources", and "Owner Module: your module". (read the tutorial if you need to know more: <a rel="nofollow" class="external free" href="http://social.bioware.com/53295/blog/10858/">http://social.bioware.com/53295/blog/10858/</a> )
+</p><p>This means that your Awakening mod will interfere with Origins and will break the game.
+</p><p>Use IsUsingEP1Resources() [returns TRUE or FALSE] as the preferred method of ensuring your scripts apply to the correct campaign. Origins code itself has a lot of code that was written for Awakening and in all cases, Bioware uses this function to check if Awakening is being used or not.
+</p><p><b>Addendum:</b> If you have copy-pasted scripts, for example your follower join script, it can still mess your Origins mod, even with the checks implemented!!!
+</p><p>In order to avoid this, you can rename your functions.
+For example, if your Origins script has the function "SetFollowerInParty", then rename the function in your Awakening script to "SetFollowerInParty_awakening", and etc.
+</p>
+<h2><span class="mw-headline" id="Disable_Add-Ins_:_Suggested_Disclaimer">Disable Add-Ins&#160;: Suggested Disclaimer</span></h2>
+<p>If the player disables all other add-ins on the in game DLC screen, no conflict should occur between them. Tedious, but effective.
+</p><p>This should rarely be necessary if the compatibility guidelines listed here are observed.
+</p><p>Exception&#160;: there is a <a href="Bug%3A_export_creates_unnecessary_core_override.html" title="Bug: export creates unnecessary core override"> toolset bug</a> which produces content that persists in game, even when the add-in is disabled, unless the builder cleans it out before making the Builder-to-Player file. The same problem can occur if a builder has intentionally placed content in the packages\override folder (which should normally be avoided, as it is very rarely necessary).
+</p><p>Mod authors can work together to set player expectations in this respect. For example, the installation instructions might say 
+</p>
+<div dir="ltr" class="mw-geshi mw-code mw-content-ltr"><div class="dascript source-dascript"><pre class="de1">Reasonable steps have been taken to make this mod compatible. 
+<span class="me1">Obviously</span>, the author has no control over the quality of other mods you may have installed. 
+<span class="me1">So</span>, to reduce the risk of conflict, you are are strongly advised to move all files out of your 
+packages\override folders, and consider disabling unnecessary community mods on your in<span class="sy0">-</span>game 
+DLC screen, before playing.</pre></div></div>
+<h2><span class="mw-headline" id="Module_Scope">Module Scope</span></h2>
+<p>Setting the Extended Module in Module properties to "Core Game Resources" means that the add-in will change every campaign in game. If that's not intended, select the campaign you're trying to extend e.g. Single Player for the official campaign, (None) for a new standalone campaign.
+</p><p><a href="Compatibility.html#What_if_my_mod_extends_both_Single_Player_and_Awakening.3F" title="Compatibility"> What if my mod extends both Single Player and Awakening?</a>
+</p>
+<h2><span class="mw-headline" id="Resource_Scope">Resource Scope</span></h2>
+<p>By default, the toolset exports design resources to your addin's module override folder. That's a good thing, because it ensures that the scope of the resources is confined to your addin (and any that extend it). There's less risk of corrupting other people's work that way.
+</p><p>Never put resources in the packages folder, because that impacts every campaign. Also, once a player has installed resources there, they persist, even when your add-in is disabled. There are currently no resources known which need to be in the packages folder in order to work.
+</p><p>Normally, it's not a good idea to make new core resources. It's easy to make a new core resource accidentally when duplicating an official core resource, because the Owner Module defaults to core. This isn't obvious, but the resource will export to your addin's core override folder. Exception&#160;: items cannot be imported to a new campaign with the player character unless the template is included in both campaigns. One way of doing that is to make it a core resource.   
+</p><p>Art resources posted to local are always sent to the module's core override folder. Fortunately, the core override folder only affects the campaign extended (if any), the addin and any that extend it. Most of those resources can, and should be, moved to the module folder and still work. The only exceptions are resources intended to overwrite a core game resouce.
+</p><p>There are a large number of mods available that use the packages folder, creating headaches for other modders and players since such overwrites cannot be turned off in the game GUI. This technique is deprecated - mods should be distributed in the approved .dazip format without using the packages folder. See also <a href="#Disable_Add-Ins_:_Suggested_Disclaimer"> Suggested Disclaimer</a>.
+</p>
+<h2><span class="mw-headline" id="Resource_Conflict">Resource Conflict</span></h2>
+<p>Resource names need to be unique within type. For example, genpt_party.plt and genpt_party.nss are different resources, becasue the type is different. However, if two modules both have resources called genpt_party.plt, only one will load in game, following the <a href="Source_directory_priorities.html" title="Source directory priorities">Source directory priorities</a>. 
+</p><p>Within the toolset database, duplicate resource names are forbidden, but there's nothing to stop different builders making resources which accidentally conflict, so it's wise to choose a unique range of names. Each builder can register the prefix they require. See <a href="Naming_conventions.html#Resource_Naming_Convention" title="Naming conventions"> Resource Naming Convention</a> and especially <a href="Prefixes_in_use.html" title="Prefixes in use">Prefixes in use</a>.
+</p><p>It is possible to override a core resource intentionally, by editing a copy, exporting it, and renaming it in the export folder to the same name as the original. However, almost invariably there is a cleaner way of doing this - for example, by changing the 2DA which identifies which resource to use.
+</p>
+<h2><span class="mw-headline" id="Existing_Content_Modification">Existing Content Modification</span></h2>
+<p>When adding new content or content hooks to existing areas, do not modify the area directly and deploy the modified area as an override with your mod. This is incompatible with other mods trying to edit the same area since only one modified version of the area will "win", and changes made by other mods to that area will not be available. Instead, use the <a href="PRCSCR.html" title="PRCSCR">PRCSCR</a> system to add new content to existing areas.
+</p>
+<h2><span class="mw-headline" id="2DA_Conflict">2DA Conflict</span></h2>
+<p>Conflict between 2DA mods can be reduced using the <a href="2da.html#Extending_the_game_via_M2DAs" title="2DA"> M2DA</a> mechanism and <a href="2da.html#Reserved_ID_Ranges_and_overriding_existing_rows" title="2DA"> reserving ID ranges</a>.
+</p><p>2DA mods should normally be placed in the add-in's module folder. Exception&#160;: if they are meant to be universally applied to all campaigns, they should be in the addin/core/override folder. The packages override folder should normally be avoided (because that removes control from the player, by forcing the 2DA to load even if the player has disabled the add-in).
+</p>
+<h2><span class="mw-headline" id="String_Conflict">String Conflict</span></h2>
+<p>When a new module is created, its properties include a <a href="String_ID.html" title="String ID">String ID</a> range which starts at a very large random number. This makes it very unlikely that text created by one add-in will override another.
+</p><p>See <a href="String_ID.html" title="String ID">String ID</a> main article for a discussion of how this impacts sharing between Builders.
+</p><p>The <a href="String_editor.html" title="String editor">String editor</a> article discusses techniques for editing strings which are outside of the module's normal range. It is not normally necessary to customise core strings directly, but if there is no alternative, change the Owner Module to the current module, and the Table to the current module's talk table. Otherwise, the custom string will override all campaigns.
+</p>
+<h2><span class="mw-headline" id="Event_Handling_Conflict">Event Handling Conflict</span></h2>
+<p>Bear in mind that an add-in which impacts all campaigns could have undesirable consequences if it changes scripts or event-handling, given that custom campaigns may well have made changes of their own. If in doubt, consider modding the Single Player campaign only.
+</p><p>See <a href="Event_override.html" title="Event override"> event override</a> for recommended methods of intercepting events.
+</p><p>Note that script resources are never overwritten in these methods. Conceptually, the event is intercepted by a custom script, then passed on (unless the event has been handled successfully and further processing would be harmful). In this way, mods try not to interfere unnecessarily with other scripts.
+</p><p>Given the variety of actions that can be taken in a script, and that fact that one mod can't know what other mods are trying to do, we can't guarantee that this approach will be entirely free of logical problems, but the Perfect is the enemy of the Good. 
+</p><p>The simplest and safest method is to assign a custom event script to a resource. This is likely to be used by custom campaigns, and also by Single Player mods to specific resources, as it is the approach that Bioware devs have often recommended.  
+</p><p>Mods which aim to impact all campaigns globally are better advised to use the second method, i.e. overriding <a href="Event_%28dascript_type%29.html" title="Event (dascript type)" class="mw-redirect"> event</a> handling using an Events M2DA. As illustrated in the example script, if possible the event should be passed on to the default handler of the event's target object (which might be a custom event script). In this way, a global mod can be compatible with custom campaigns and specific resource mods. 
+</p><p>Unfortunately, if two mods simply try to override the same event with an M2DA, they will be incompatible.
+</p><p>The best solution to override, partially override, or just listen for events via M2DA at this point would be to use a system such as <a rel="nofollow" class="external text" href="http://social.bioware.com/project/1907/#details">Event Manager</a>, though to ensure compatibility all modules overriding or listening for events should also be using the same system.
+</p><p>In the case of modules trying to totally override an event, only one module that does so will ultimately "win" (no such modules can ever truly be compatible with one another short of merging their functionality into one unified module as possible), but utilizing a system such as Event Manager will allow modules to partially override an event (i.e. only handle the event in certain situations), and will allow any module to listen for an event (without handling it) before or after the event is handled.
+</p>
+<h2><span class="mw-headline" id="Plot_Property">Plot Property</span></h2>
+<p>Scripts that impact all campaigns should respect the plot property on resources. For example, if a campaign author has flagged an NPC as plot, it might not be helpful to change the creature AI.
+</p>
+<h2><span class="mw-headline" id="Open_Source">Open Source</span></h2>
+<p>If mod authors choose to publish their source code, with no restrictions on re-deployment, other builders can work around any residual incompatibilities (either by understanding the conflict more clearly, or by integrating the mod into their own work).
+</p><p>This technical wiki is not the place to discuss any legal or ethical considerations.
+</p>
+<h2><span class="mw-headline" id="Official_DLC_conflicts">Official DLC conflicts</span></h2>
+<p>There is a <a href="Bug%3A_DLC_conflicts_with_standalone_campaigns.html" title="Bug: DLC conflicts with standalone campaigns">bug report</a> which gives the latest information on known conflicts between official DLC and standalone campaigns.
+</p>
+<h2><span class="mw-headline" id="FAQ">FAQ</span></h2>
+<h3><span class="mw-headline" id="What_if_my_mod_extends_both_Single_Player_and_Awakening.3F">What if my mod extends both Single Player and Awakening?</span></h3>
+<p>Just create two dazips for your module. Name one yourprefix_yourmodule_version and the other yourprefix_yourmodule_EP1_version.
+</p><p>Edit the Manifest.xml file inside  yourprefix_yourmodule_EP_1_version.dazip.
+Change the line
+</p><p>&lt;AddInItem UID="yourprefix_yourmodule" Name="Your Module Name" ExtendedModuleUID="Single Player" Priority="100" Enabled="1" State="2" Format="1"&gt; to
+</p><p>&lt;AddInItem UID="yourprefix_yourmodule_EP_1" Name="Your Module Name" ExtendedModuleUID="DAO_PRC_EP_1" Priority="200" Enabled="1" State="2" Format="1"&gt;
+</p><p>See also <a href="Talk%3ACompatibility.html" title="Talk:Compatibility"> Discussion</a>
+</p>
+<h3><span class="mw-headline" id="How_can_I_import_an_item_with_my_existing_character_to_a_new_campaign.3F">How can I import an item with my existing character to a new campaign?</span></h3>
+<p>The Awakening expansion allows an existing character to be imported from one campaign to another.
+</p><p>There are two methods of ensuring that an item in the player's inventory is imported successfully:
+</p>
+<ul><li> Make the item a core resource</li>
+<li> Include the item template in separate add-ins to both campaigns (see Awakening example above)</li></ul>
+<h3><span class="mw-headline" id="How_can_I_stop_items_being_imported_into_my_campaign.3F">How can I stop items being imported into my campaign?</span></h3>
+<p>Assuming your campaign allows existing characters to be imported during Character Generation, you might want to clear the player's inventory before adding your starting equipment. Imported equipment might upset the balance of your campaign.
+</p><p>If you decide to do this, it's a good idea to warn players, so that they understand what's happening.
+</p>
+<!-- 
+NewPP limit report
+CPU time usage: 0.056 seconds
+Real time usage: 0.070 seconds
+Preprocessor visited node count: 76/1000000
+Preprocessor generated node count: 112/1000000
+Post‐expand include size: 0/2097152 bytes
+Template argument size: 0/2097152 bytes
+Highest expansion depth: 3/40
+Expensive parser function count: 0/100
+-->
+
+<!-- 
+Transclusion expansion time report (%,ms,calls,template)
+100.00%    0.000      1 - -total
+-->
+
+<!-- Saved in parser cache with key db714099484-datoolwiki_:pcache:idhash:4517-0!*!0!!en!5!* and timestamp 20260531162732 and revision id 17683
+ -->
+</div>									<div class="printfooter">
+						Retrieved from "<a dir="ltr" href="Compatibility.html">https://www.datoolset.net/mw/index.php?title=Compatibility&amp;oldid=17683</a>"					</div>
+													<div id='catlinks' class='catlinks catlinks-allhidden'></div>												<div class="visualClear"></div>
+							</div>
+		</div>
+		<div id="mw-navigation">
+			<h2>Navigation menu</h2>
+
+			<div id="mw-head">
+									<div id="p-personal" role="navigation" class="" aria-labelledby="p-personal-label">
+						<h3 id="p-personal-label">Personal tools</h3>
+						<ul>
+							<li id="pt-login"><a href="/mw/index.php?title=Special:UserLogin&amp;returnto=Compatibility" title="You are encouraged to log in; however, it is not mandatory [o]" accesskey="o">Log in</a></li>						</ul>
+					</div>
+									<div id="left-navigation">
+										<div id="p-namespaces" role="navigation" class="vectorTabs" aria-labelledby="p-namespaces-label">
+						<h3 id="p-namespaces-label">Namespaces</h3>
+						<ul>
+															<li  id="ca-nstab-main" class="selected"><span><a href="Compatibility.html"  title="View the content page [c]" accesskey="c">Page</a></span></li>
+															<li  id="ca-talk"><span><a href="Talk%3ACompatibility.html"  title="Discussion about the content page [t]" accesskey="t">Discussion</a></span></li>
+													</ul>
+					</div>
+										<div id="p-variants" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-variants-label">
+												<h3 id="p-variants-label"><span>Variants</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+									</div>
+				<div id="right-navigation">
+										<div id="p-views" role="navigation" class="vectorTabs" aria-labelledby="p-views-label">
+						<h3 id="p-views-label">Views</h3>
+						<ul>
+															<li id="ca-view" class="selected"><span><a href="Compatibility.html" >Read</a></span></li>
+															<li id="ca-viewsource"><span><a href="Compatibility.html"  title="This page is protected.&#10;You can view its source [e]" accesskey="e">View source</a></span></li>
+															<li id="ca-history" class="collapsible"><span><a href="Compatibility.html"  title="Past revisions of this page [h]" accesskey="h">View history</a></span></li>
+													</ul>
+					</div>
+										<div id="p-cactions" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-cactions-label">
+						<h3 id="p-cactions-label"><span>More</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+										<div id="p-search" role="search">
+						<h3>
+							<label for="searchInput">Search</label>
+						</h3>
+
+						<form action="/mw/index.php" id="searchform">
+														<div id="simpleSearch">
+															<input type="search" name="search" placeholder="Search" title="Search Dragon Age Toolset Wiki [f]" accesskey="f" id="searchInput" /><input type="hidden" value="Special:Search" name="title" /><input type="submit" name="fulltext" value="Search" title="Search the pages for this text" id="mw-searchButton" class="searchButton mw-fallbackSearchButton" /><input type="submit" name="go" value="Go" title="Go to a page with this exact name if exists" id="searchButton" class="searchButton" />								</div>
+						</form>
+					</div>
+									</div>
+			</div>
+			<div id="mw-panel">
+				<div id="p-logo" role="banner"><a class="mw-wiki-logo" href="Main_Page.html"  title="Visit the main page"></a></div>
+						<div class="portal" role="navigation" id='p-navigation' aria-labelledby='p-navigation-label'>
+			<h3 id='p-navigation-label'>Navigation</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-mainpage-description"><a href="Main_Page.html" title="Visit the main page [z]" accesskey="z">Main page</a></li>
+													<li id="n-recentchanges"><a href="/wiki/Special:RecentChanges" title="A list of recent changes in the wiki [r]" accesskey="r">Recent changes</a></li>
+													<li id="n-randompage"><a href="/wiki/Special:Random" title="Load a random page [x]" accesskey="x">Random page</a></li>
+													<li id="n-help"><a href="https://www.mediawiki.org/wiki/Special:MyLanguage/Help:Contents" title="The place to find out">Help</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-Links' aria-labelledby='p-Links-label'>
+			<h3 id='p-Links-label'>Links</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-Toolset-forums"><a href="http://forum.bioware.com/forum/30-dragon-age-toolset" rel="nofollow">Toolset forums</a></li>
+													<li id="n-Legacy-forums"><a href="http://social.bioware.com/forum/1/subindex/70" rel="nofollow">Legacy forums</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-tb' aria-labelledby='p-tb-label'>
+			<h3 id='p-tb-label'>Tools</h3>
+
+			<div class="body">
+									<ul>
+													<li id="t-whatlinkshere"><a href="/wiki/Special:WhatLinksHere/Compatibility" title="A list of all wiki pages that link here [j]" accesskey="j">What links here</a></li>
+													<li id="t-recentchangeslinked"><a href="/wiki/Special:RecentChangesLinked/Compatibility" title="Recent changes in pages linked from this page [k]" accesskey="k">Related changes</a></li>
+													<li id="t-specialpages"><a href="/wiki/Special:SpecialPages" title="A list of all special pages [q]" accesskey="q">Special pages</a></li>
+													<li id="t-print"><a href="Compatibility.html" rel="alternate" title="Printable version of this page [p]" accesskey="p">Printable version</a></li>
+													<li id="t-permalink"><a href="Compatibility.html" title="Permanent link to this revision of the page">Permanent link</a></li>
+													<li id="t-info"><a href="Compatibility.html" title="More information about this page">Page information</a></li>
+											</ul>
+							</div>
+		</div>
+				</div>
+		</div>
+		<div id="footer" role="contentinfo">
+							<ul id="footer-info">
+											<li id="footer-info-lastmod"> This page was last modified on 23 October 2011, at 13:26.</li>
+									</ul>
+							<ul id="footer-places">
+											<li id="footer-places-privacy"><a href="/wiki/Dragon_Age_Toolset_Wiki:Privacy_policy" title="Dragon Age Toolset Wiki:Privacy policy">Privacy policy</a></li>
+											<li id="footer-places-about"><a href="/wiki/Dragon_Age_Toolset_Wiki:About" title="Dragon Age Toolset Wiki:About">About Dragon Age Toolset Wiki</a></li>
+											<li id="footer-places-disclaimer"><a href="/wiki/Dragon_Age_Toolset_Wiki:General_disclaimer" title="Dragon Age Toolset Wiki:General disclaimer">Disclaimers</a></li>
+									</ul>
+										<ul id="footer-icons" class="noprint">
+											<li id="footer-poweredbyico">
+															<a href="//www.mediawiki.org/"><img src="../assets/mw/resources/assets/poweredby_mediawiki_88x31.png" alt="Powered by MediaWiki" srcset="../assets/mw/resources/assets/poweredby_mediawiki_132x47.png 1.5x, ../assets/mw/resources/assets/poweredby_mediawiki_176x62.png 2x" width="88" height="31" /></a>
+													</li>
+									</ul>
+						<div style="clear:both"></div>
+		</div>
+		<script>if(window.jQuery)jQuery.ready();</script><script>if(window.mw){
+mw.loader.state({"site":"loading","user":"ready","user.groups":"ready"});
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.toc","mediawiki.action.view.postEdit","mediawiki.user","mediawiki.hidpi","mediawiki.page.ready","mediawiki.searchSuggest"],null,true);
+}</script>
+<script>if(window.mw){
+document.write("\u003Cscript src=\"https://www.datoolset.net/mw/load.php?debug=false\u0026amp;lang=en\u0026amp;modules=site\u0026amp;only=scripts\u0026amp;skin=vector\u0026amp;*\"\u003E\u003C/script\u003E");
+}</script>
+<script>if(window.mw){
+mw.config.set({"wgBackendResponseTime":211});
+}</script>
+	</body>
+</html>

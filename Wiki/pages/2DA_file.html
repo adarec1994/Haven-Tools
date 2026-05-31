@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" class="client-nojs">
+<head>
+<meta charset="UTF-8" />
+<title>2DA - Dragon Age Toolset Wiki</title>
+<meta name="generator" content="MediaWiki 1.25.6" />
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="search" type="application/opensearchdescription+xml" href="/mw/opensearch_desc.php" title="Dragon Age Toolset Wiki (en)" />
+<link rel="EditURI" type="application/rsd+xml" href="https://www.datoolset.net/mw/api.php?action=rsd" />
+<link rel="alternate" hreflang="x-default" href="2da.html" />
+<link rel="alternate" type="application/atom+xml" title="Dragon Age Toolset Wiki Atom feed" href="/mw/index.php?title=Special:RecentChanges&amp;feed=atom" />
+<link rel="canonical" href="2da.html" />
+<meta name="ResourceLoaderDynamicStyles" content="" />
+<style>a:lang(ar),a:lang(kk-arab),a:lang(mzn),a:lang(ps),a:lang(ur){text-decoration:none}
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-css:7:270a0dcd3ae587df0f041aebfc42e61b */</style>
+<script>if(window.mw){
+mw.config.set({"wgCanonicalNamespace":"","wgCanonicalSpecialPageName":false,"wgNamespaceNumber":0,"wgPageName":"2DA","wgTitle":"2DA","wgCurRevisionId":19061,"wgRevisionId":19061,"wgArticleId":15,"wgIsArticle":true,"wgIsRedirect":false,"wgAction":"view","wgUserName":null,"wgUserGroups":["*"],"wgCategories":["Articles in need of review","2DAs"],"wgBreakFrames":false,"wgPageContentLanguage":"en","wgPageContentModel":"wikitext","wgSeparatorTransformTable":["",""],"wgDigitTransformTable":["",""],"wgDefaultDateFormat":"dmy","wgMonthNames":["","January","February","March","April","May","June","July","August","September","October","November","December"],"wgMonthNamesShort":["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],"wgRelevantPageName":"2DA","wgRelevantArticleId":15,"wgIsProbablyEditable":false,"wgRestrictionEdit":[],"wgRestrictionMove":[],"wgRedirectedFrom":"2DA_file","wgInternalRedirectTargetUrl":"/wiki/2DA"});
+}</script><script>if(window.mw){
+mw.loader.implement("user.options",function($,jQuery){mw.user.options.set({"variant":"en"});});mw.loader.implement("user.tokens",function($,jQuery){mw.user.tokens.set({"editToken":"+\\","patrolToken":"+\\","watchToken":"+\\"});});
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-js:7:a5c52c063dc436c1ca7c9f456936a5e9 */
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.action.view.redirect","mediawiki.page.startup","mediawiki.legacy.wikibits","mediawiki.legacy.ajax","skins.vector.js"]);
+}</script>
+<!--[if lt IE 7]><style type="text/css">body{behavior:url("/mw/skins/Vector/csshover.min.htc")}</style><![endif]-->
+<link rel="stylesheet" href="../assets/local/wiki-static.css" />
+</head>
+<body class="mediawiki ltr sitedir-ltr ns-0 ns-subject page-2DA skin-vector action-view">
+		<div id="mw-page-base" class="noprint"></div>
+		<div id="mw-head-base" class="noprint"></div>
+		<div id="content" class="mw-body" role="main">
+			<a id="top"></a>
+
+						<div class="mw-indicators">
+</div>
+			<h1 id="firstHeading" class="firstHeading" lang="en">2DA</h1>
+						<div id="bodyContent" class="mw-body-content">
+									<div id="siteSub">From Dragon Age Toolset Wiki</div>
+								<div id="contentSub"><span class="mw-redirectedfrom">(Redirected from <a href="2DA_file.html" title="2DA file">2DA file</a>)</span></div>
+												<div id="jump-to-nav" class="mw-jump">
+					Jump to:					<a href="#mw-head">navigation</a>, 					<a href="#p-search">search</a>
+				</div>
+				<div id="mw-content-text" lang="en" dir="ltr" class="mw-content-ltr"><p>Many of the properties of objects in the toolset make reference to 2DAs (two-dimensional arrays). These are read-only arrays containing various data used by scripting and the game engine. Each 2DA is simply an organized collection of strings and numbers. The specific function of each 2DA depends on how it is used by other systems in the game.
+</p>
+<div id="toc" class="toc"><div id="toctitle"><h2>Contents</h2></div>
+<ul>
+<li class="toclevel-1 tocsection-1"><a href="#Overview_-_what_is_a_2DA.3F"><span class="tocnumber">1</span> <span class="toctext">Overview - what is a 2DA?</span></a></li>
+<li class="toclevel-1 tocsection-2"><a href="#Excel_file_formatting"><span class="tocnumber">2</span> <span class="toctext">Excel file formatting</span></a>
+<ul>
+<li class="toclevel-2 tocsection-3"><a href="#Guidelines"><span class="tocnumber">2.1</span> <span class="toctext">Guidelines</span></a></li>
+</ul>
+</li>
+<li class="toclevel-1 tocsection-4"><a href="#Extending_the_game_via_M2DAs"><span class="tocnumber">3</span> <span class="toctext">Extending the game via M2DAs</span></a>
+<ul>
+<li class="toclevel-2 tocsection-5"><a href="#Reserved_ID_Ranges_and_overriding_existing_rows"><span class="tocnumber">3.1</span> <span class="toctext">Reserved ID Ranges and overriding existing rows</span></a></li>
+<li class="toclevel-2 tocsection-6"><a href="#Bug_with_M2DA"><span class="tocnumber">3.2</span> <span class="toctext">Bug with M2DA</span></a></li>
+</ul>
+</li>
+<li class="toclevel-1 tocsection-7"><a href="#2DA_XLS_files_used_in_Dragon_Age"><span class="tocnumber">4</span> <span class="toctext">2DA XLS files used in Dragon Age</span></a></li>
+<li class="toclevel-1 tocsection-8"><a href="#Users_of_Open_Office"><span class="tocnumber">5</span> <span class="toctext">Users of Open Office</span></a></li>
+<li class="toclevel-1 tocsection-9"><a href="#Adding_Strings"><span class="tocnumber">6</span> <span class="toctext">Adding Strings</span></a></li>
+<li class="toclevel-1 tocsection-10"><a href="#Using_a_custom_2DA_in_the_toolset"><span class="tocnumber">7</span> <span class="toctext">Using a custom 2DA in the toolset</span></a></li>
+<li class="toclevel-1 tocsection-11"><a href="#See_Also"><span class="tocnumber">8</span> <span class="toctext">See Also</span></a></li>
+</ul>
+</div>
+
+<h2><span class="mw-headline" id="Overview_-_what_is_a_2DA.3F">Overview - what is a 2DA?</span></h2>
+<p>A 2DA contains a set of columns, with each column having a fixed label and a fixed data type. For example, the ABI_Base 2DA has a column that is labeled "namestrref" and has the data type "int". This means that the data stored in this column must be an integer and that the data stored in this column can be retrieved by referring to the label "namestrref". The number and types of columns in a 2DA does not usually ever change. The columns provide the structure of the 2DA that allows it to be referred to and used in a consistent manner. The first column of every 2DA is always labeled "ID" and is always of type "integer". This column is used to uniquely identify the rows in the 2DA.
+</p><p>A 2DA's rows are what contain the data being stored in it. Each row's columns have the same set of labels and data types (as defined at the top of the 2DA) but the data contained within them can be different. Adding new rows to a 2DA is common and easy; you just need to give it a new ID number in the "ID" column and then fill in the rest of the cells with whatever information you need. Once you've given a row an ID number it generally never changes. The game also has a mechanism called "M2DAs" that allow rows to be added to existing 2DAs without having to edit the original file, see below for more detail.
+</p><p>Some 2DAs reference rows in other 2DAs. For example the ABI_Base 2DA has an integer column named "projectile", and each row can have an integer in that column that identifies a row in the PRJ_Base 2DA. These relationships are generally only defined in the scripts that use the 2DAs and are not inherent to the 2DAs themselves so you'll have to keep track of these things yourself.
+</p>
+<h2><span class="mw-headline" id="Excel_file_formatting">Excel file formatting</span></h2>
+<p>The source files for 2DAs are Microsoft Excel worksheets. This allows a wide variety of sophisticated techniques to be used to generate the values of the 2DA fields, such as macros and formulas. It also makes editing much easier since the columns can be annotated and formatted in helpful ways, and multiple related worksheets can be grouped into one file. 
+</p><p>The official campaign source files are in the folder (Program Files)\Dragon Age\tools\Source\2DA, where (Program Files) is the folder in which Dragon Age was installed.
+</p><p>Before they can be used by the toolset or the game, 2DAs must be converted from Excel files into a more efficient form. Processed 2DAs are stored in files with the .<a href="GDA.html" title="GDA">GDA</a> extension.
+</p><p><i>See: <a href="Compiling_2DAs.html" title="Compiling 2DAs">compiling 2DAs</a></i> - for several methods of how to perform this conversion, and where to put 2DAs.
+</p>
+<table border="2" cellpadding="5" cellspacing="0" width="700pt">
+<caption> <b>Example Worksheet "Monsters"</b>
+</caption>
+<tr>
+<td width="30pt" style="background-color:#808080"><b>ID</b>
+</td>
+<td width="30pt" style="background-color:#AFAFAF"><b>Label</b>
+</td>
+<td width="50pt" style="background-color:#AFAFAF"><b>Strenght</b>
+</td>
+<td width="50pt" style="background-color:#AFAFAF"><b>Name</b>
+</td>
+<td width="50pt" style="background-color:#AFAFAF"><b>ResourceExample</b>
+</td>
+<td width="50pt" style="background-color:#AFAFAF"><b>Scale</b>
+</td>
+<td width="50pt" style="background-color:#AFAFAF"><b>disabled</b>
+</td>
+<td width="50pt" style="background-color:#AFAFAF"><b>Commentexample</b>
+</td></tr>
+<tr>
+<td style="background-color:#AFAFAF"><i><b>int</b></i>
+</td>
+<td style="background-color:#AFAFAF"><i><b>string</b></i>
+</td>
+<td style="background-color:#AFAFAF"><i><b>int</b></i>
+</td>
+<td style="background-color:#AFAFAF"><i><b>string</b></i>
+</td>
+<td style="background-color:#AFAFAF"><i><b>resource</b></i>
+</td>
+<td style="background-color:#AFAFAF"><i><b>float</b></i>
+</td>
+<td style="background-color:#AFAFAF"><i><b>bool</b></i>
+</td>
+<td style="background-color:#AFAFAF"><i><b>comment</b></i>
+</td></tr>
+<tr>
+<td style="background-color:#AFAFAF">0
+</td>
+<td>INVALID
+</td>
+<td>****
+</td>
+<td>sometimes
+</td>
+<td>bioware said
+</td>
+<td>****
+</td>
+<td>****
+</td>
+<td>i stay unused
+</td></tr>
+<tr>
+<td style="background-color:#AFAFAF">1
+</td>
+<td>Evilmonster1
+</td>
+<td>23
+</td>
+<td>Abomination
+</td>
+<td>prp_barrel01
+</td>
+<td>1,0
+</td>
+<td>0
+</td>
+<td>totally evil
+</td></tr>
+<tr>
+<td style="background-color:#AFAFAF">2
+</td>
+<td>Evilmonster2
+</td>
+<td>34
+</td>
+<td>Shriek
+</td>
+<td>prp_bucket_01
+</td>
+<td>1,0
+</td>
+<td>1
+</td>
+<td>very bad
+</td></tr></table>
+<p>Data in a 2DA is identified by a row number, with the first row (using ID zero) usually being reserved for internal use (undefined value, etc.) by convention. Each row has an arbitrary number of columns identified by strings. The grey fields in this example table are very specific to the 2DA, the white fields are arbitrary data which the Gameengine identifies for that 2DA.
+</p><p>The ID of a Row is the reference for the Game to access and link to them. As such they are unique across the 2DA, and any M2DA that extends it. The contents of each column is specific to the 2DA given, and arbitrary. When extending a 2DA, new ID's have to be given, and Columns have to be exactly the same.
+</p>
+<h3><span class="mw-headline" id="Guidelines">Guidelines</span></h3>
+<ul><li>Cell A1 will contain "ID". This is checked by the processor and the worksheet will fail if this is not the case.</li>
+<li>Column A starting at line 3 will contain an integer row ID number that is unique to that row across all files (unless creating an M2DA override). Row IDs will be listed from smallest to highest within the same file and do not need to be consecutive.</li>
+<li>A blank row or column will determine the dimension of the spreadsheet in that direction. Everything past that point is ignored by the binarizer.</li>
+<li>Column names are case sensitive. This is because of the CRC32 algorithm used to generate the hash key. Changing the case of a column name after it is in use will break the game. White space before and after a column name will be removed before hashing.</li>
+<li>Row 2 will be a "types" row. Each is a single word: <a href="Int_%282da_type%29.html" title="Int (2da type)">int</a>, <a href="String_%282da_type%29.html" title="String (2da type)">string</a> (single chars as well), <a href="Resource_%282da_type%29.html" title="Resource (2da type)">resource</a>, <a href="Float_%282da_type%29.html" title="Float (2da type)">float</a> or <a href="Bool_%282da_type%29.html" title="Bool (2da type)">bool</a>. A special type "<a href="Comment_%282da_type%29.html" title="Comment (2da type)">comment</a>" can be used to exclude a column from export.</li>
+<li>Any column with string data that refers to files should have a type of "resource" and not "string". This is because the "resource" type is used to determine dependencies for the 2DA file.</li>
+<li>'bool' type may be one of: a zero or non-zero number, Yes or No (case insensitive), or words beginning with T or F (such as True! and False!). NOTE: You cannot use TRUE and FALSE because Excel converts those to a special keyword the binarizer can't parse properly at this time. <b>Note:</b> the scripting language doesn't have a function for retrieving boolean values from a 2DA, and the behavior of Get2DAInt when retrieving a boolean is untested. It is probably safer to just use an integer for scripting purposes.</li>
+<li>If you wish to leave a cell unfilled, the string "****" (four asterisks) can be inserted instead of a value.</li>
+<li>Any worksheets that are not exportable 2DA data will have an underscore prepended to their name - the resource builder will subsequently ignore them.</li>
+<li>Worksheets need to have unique names among all excel files, duplicates will overwrite each other as each worksheet is exported as a file</li>
+<li>You cannot have the workbook open in Excel at the same time as running the binarizer on it.</li>
+<li>Strings have a maximum length of 768 characters. Anything longer will be truncated.</li>
+<li>ExcelProcessor.exe constrains the name length of a worksheet to 27 characters.</li></ul>
+<h2><span class="mw-headline" id="Extending_the_game_via_M2DAs">Extending the game via M2DAs</span></h2>
+<table border="2" cellpadding="5" cellspacing="0" width="700pt">
+<caption> <b>Example Worksheet "MonstersCustom"</b>
+</caption>
+<tr>
+<td width="30pt" style="background-color:#808080"><b>ID</b>
+</td>
+<td width="30pt" style="background-color:#AFAFAF"><b>Label</b>
+</td>
+<td width="50pt" style="background-color:#AFAFAF"><b>Strenght</b>
+</td>
+<td width="50pt" style="background-color:#AFAFAF"><b>Name</b>
+</td>
+<td width="50pt" style="background-color:#AFAFAF"><b>ResourceExample</b>
+</td>
+<td width="50pt" style="background-color:#AFAFAF"><b>Scale</b>
+</td>
+<td width="50pt" style="background-color:#AFAFAF"><b>disabled</b>
+</td>
+<td width="50pt" style="background-color:#AFAFAF"><b>Commentexample</b>
+</td></tr>
+<tr>
+<td style="background-color:#AFAFAF"><i><b>int</b></i>
+</td>
+<td style="background-color:#AFAFAF"><i><b>string</b></i>
+</td>
+<td style="background-color:#AFAFAF"><i><b>int</b></i>
+</td>
+<td style="background-color:#AFAFAF"><i><b>string</b></i>
+</td>
+<td style="background-color:#AFAFAF"><i><b>resource</b></i>
+</td>
+<td style="background-color:#AFAFAF"><i><b>float</b></i>
+</td>
+<td style="background-color:#AFAFAF"><i><b>bool</b></i>
+</td>
+<td style="background-color:#AFAFAF"><i><b>comment</b></i>
+</td></tr>
+<tr>
+<td style="background-color:#AFAFAF">2300000
+</td>
+<td>Evilmonster3
+</td>
+<td>32
+</td>
+<td>Wolf
+</td>
+<td>c_wolfa
+</td>
+<td>1,0
+</td>
+<td>0
+</td>
+<td>New Monster
+</td></tr></table>
+<p>An "M2DA" is a "Multiple 2DA" that stacks a number of 2DAs into one larger table. They work much like single 2DA files except they can be patched or expanded later by adding another 2DA. These are useful for any table that lists other resources, such as appearance tables, so that new resources can be added later without having to modify a monolithic table. 2DAs are merged row by row, keyed on the ID column.
+</p><p>This is especially important for third-party modders, since BioWare might release an update to a core table at a later date that would overwrite any changes third parties had made to it. By using an M2DA with a unique name, and by using a range of ID numbers significantly separated from those already in use, you can ensure that your additions won't conflict with other portions of the M2DA.
+</p><p>Every M2DA used by the game is listed in M2DA_base (<a href="2da_base.xls.html" title="2DA base.xls">2DA_base.xls</a>) and is treated as a M2DA, except for those with an ID between 10000 and 10999, which are handled as regular 2DAs. Each M2DA has a label that describes the subject covered by the M2DA and a worksheet prefix that all components of that M2DA must start with, as the name is actually a prefix to the file. The system reads this prefix and then searches through all the 2DAs for the ones starting with this prefix and merges them together as one 2DA. For example: M2DA ID 0 is "ANIM_". The system looks through its list of 2DAs and finds "ANIM_base", "ANIM_combat" and "ANIM_walk". It will read and merge all 3 2DAs into an M2DA called "ANIM_".
+</p><p>Note that M2DA_base is itself an M2DA file and can be extended in the same manner.
+</p>
+<ul><li><i>This example 2DA "MonstersCustom" would be merged into the original 2DA "Monsters", if "Monsters" were one of the worksheets listed in the M2DA_base. </i></li></ul>
+<h3><span class="mw-headline" id="Reserved_ID_Ranges_and_overriding_existing_rows">Reserved ID Ranges and overriding existing rows</span></h3>
+<p>While M2DA files avoid some of the problems associated with ordinary 2DA files, the IDs in each row of the final M2DA must still be unique across all 2DAs associated with it. If you use an existing row ID in your M2DA you can override the existing row with new data. Note that this can be a useful mechanism in some situations, for example allowing you to override existing content without having to edit the original 2DAs directly. 
+</p><p>To help ensure compatibility between authors' custom content, you should make sure that the ranges you choose don't conflict with ones already in use: <a href="2DA_ranges_in_use.html" title="2DA ranges in use">2DA_ranges_in_use</a>.
+</p><p>To ensure that the M2DA suffix is unique, you might like to register and use a code for your module - see <a href="Prefixes_in_use.html" title="Prefixes in use">Prefixes in use</a>.
+</p><p><i>See: <a href="Compiling_2DAs.html#Afterwards" title="Compiling 2DAs">compiling 2DAs</a></i> - for Information on where to place M2DA files to achieve the desired effect.
+</p>
+<h3><span class="mw-headline" id="Bug_with_M2DA">Bug with M2DA</span></h3>
+<p>It should be noted, that currently there is a bug with certain M2DA's, which prevents new ID's above 255 to work in the game. It is unclear which are affected, but most certainly it is <a href="ItemVariations.xls.html" title="ItemVariations.xls">ItemVariations.xls</a> related. See <a href="Bug%3A_High_M2DA_ID_ranges_might_work_in_the_toolset%2C_but_not_in_game.html" title="Bug: High M2DA ID ranges might work in the toolset, but not in game">Bug report</a>.
+</p>
+<h2><span class="mw-headline" id="2DA_XLS_files_used_in_Dragon_Age">2DA XLS files used in Dragon Age</span></h2>
+<p><a href="List_of_2DA_XLS_files.html" title="List of 2DA XLS files">List of 2DA XLS files</a>
+</p><p>The source files for the 2DAs that came with the installed game can be found under the toolsets directory 
+</p>
+<pre>&lt;Installdir&gt;\Dragon Age\tools\Source\2DA\</pre>
+<h2><span class="mw-headline" id="Users_of_Open_Office">Users of Open Office</span></h2>
+<ul><li> Users of Open Office may find that no .gda file is created when they use ExcelProcessor.exe - one workaround is to copy a worksheet from an existing .xls file (such as placeable_types from placeables.xls), process the file, then remove the extraneous .gda file (e.g. placeable_types.gda). </li>
+<li> When editing existing xls files, it also works to leave the format as standard while saving the file. Open Office asks to change the file to its own spreatsheet format when saving a format other then its own, don't change the format and it should work. [Edit- And yet it doesn't seem to.]</li></ul>
+<h2><span class="mw-headline" id="Adding_Strings">Adding Strings</span></h2>
+<div style="background:#f6f6f6; border: 1px solid #d0a5a5; padding:4px; margin-left:20%; margin-right:20%;">
+<p>The documentation on this page is incomplete, obsolete, or otherwise in need of a thorough review. The current content may provide a good starting point for this, but do not rely on its accuracy when using it to design content.
+</p>
+</div>
+<p>When adding strings to a 2DA, you have two options.  The simplest is to enter **** for the StringID column.  In that case, the name column will be used in the game.
+</p><p>The other approach is to use the toolset's string editor to create a new string.  When that happens, you'll get a new StringID. Next enter that number into the StringID column in the 2DA.
+</p><p>The second approach works better when translating your module, at the cost of portability.  If someone else wanted to reuse your 2DA, they'd have to generate their own strings, then update the StringID number based on these IDs.
+</p><p><b>Attention:</b>
+</p>
+<ul><li> The current version of the "ExelProcessor"-App is buggy as it can't hanlde INT values above 8388607! Many thanks to elys for figuring that out.</li>
+<li> Also note that the original toolset (v1.0) core-talktable contains wrong ids as well - don't forget to delete it from the "packages\core\override\toolsetexport" directory if you are still using that version.</li></ul>
+<p><b>Workaround:</b>
+</p>
+<ul><li> Create and export your talktable, delete the core-talktable override.</li>
+<li> Create your M2DA File that you want to refer to your talk-table strings. Never Mind using the real IDs at this stage.</li>
+<li> Use the "Exelprocessor" to create the GDA file.</li>
+<li> Open the GDA-File with the toolset or elys's GDA-Editor App (<a rel="nofollow" class="external free" href="http://social.bioware.com/project/755/">http://social.bioware.com/project/755/</a>)</li></ul>
+<p><a href="File%3AEdit-GDA-Values.jpg.html" class="image"><img alt="Edit-GDA-Values.jpg" src="../assets/mw/images/5/5b/Edit-GDA-Values.jpg" width="800" height="564" /></a>
+</p>
+<ul><li> Change the StringIDs to the StringIDs in your talktable.</li></ul>
+<p><b>Remark:</b> 
+</p><p>The previous Version stated: <i>Take that StringID and add 16777216 to the number.</i> this appears to be wrong and is likely a holdover from NWN.
+</p>
+<h2><span class="mw-headline" id="Using_a_custom_2DA_in_the_toolset">Using a custom 2DA in the toolset</span></h2>
+<p>Some 2DA tables are used by the toolset itself - for example, appearances for creatures and rewards for plots.
+</p><p>Once a custom GDA is in the export folder for your module, the next time the toolset is started, it will use your custom table.
+</p>
+<h2><span class="mw-headline" id="See_Also">See Also</span></h2>
+<ul><li><a href="Compatibility.html" title="Compatibility">Compatibility</a></li></ul>
+<p><br />
+</p>
+<table class="nmbox" style="width:100%; border:1px solid #AAAAAA; border-collapse:collapse; clear:both; font-size:85%; margin:0.25em 0;">
+<tr style="background: #CFDFEF;">
+<th style="border:none; padding:4px 1em; border-right:1px solid #AAAAAA; text-align:center; white-space:nowrap;"> <b><a href="Dragon_Age_Toolset_Wiki%3ALanguage_policy.html" title="Dragon Age Toolset Wiki:Language policy">Language:</a></b></th>
+<td style="border:none; padding:0.25em 0.9em; width:100%; background:#DFEFFF;"><b><strong class="selflink">English</strong></b> <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>&#160;&#8226;&#32;<span lang="ru"><a href="2DA/ru.html" title="2DA/ru">русский</a></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></td>
+</tr></table>
+
+<!-- 
+NewPP limit report
+CPU time usage: 0.100 seconds
+Real time usage: 0.192 seconds
+Preprocessor visited node count: 1066/1000000
+Preprocessor generated node count: 3281/1000000
+Post‐expand include size: 4880/2097152 bytes
+Template argument size: 1003/2097152 bytes
+Highest expansion depth: 8/40
+Expensive parser function count: 54/100
+-->
+
+<!-- 
+Transclusion expansion time report (%,ms,calls,template)
+100.00%  138.295      1 - -total
+ 96.75%  133.801      1 - Template:Languages
+ 92.84%  128.399      1 - Template:LanguagesBox
+ 74.32%  102.777     54 - Template:LanguagesLang
+  9.08%   12.563      1 - Template:LanguagesTitle
+  3.07%    4.245      1 - Template:Needs_review
+-->
+
+<!-- Saved in parser cache with key db714099484-datoolwiki_:pcache:idhash:15-0!*!0!!en!5!* and timestamp 20260531010855 and revision id 19061
+ -->
+</div>									<div class="printfooter">
+						Retrieved from "<a dir="ltr" href="2da.html">https://www.datoolset.net/mw/index.php?title=2DA&amp;oldid=19061</a>"					</div>
+													<div id='catlinks' class='catlinks'><div id="mw-normal-catlinks" class="mw-normal-catlinks"><a href="/wiki/Special:Categories" title="Special:Categories">Categories</a>: <ul><li><a href="Category%3AArticles_in_need_of_review.html" title="Category:Articles in need of review">Articles in need of review</a></li><li><a href="Category%3A2DAs.html" title="Category:2DAs">2DAs</a></li></ul></div></div>												<div class="visualClear"></div>
+							</div>
+		</div>
+		<div id="mw-navigation">
+			<h2>Navigation menu</h2>
+
+			<div id="mw-head">
+									<div id="p-personal" role="navigation" class="" aria-labelledby="p-personal-label">
+						<h3 id="p-personal-label">Personal tools</h3>
+						<ul>
+							<li id="pt-login"><a href="/mw/index.php?title=Special:UserLogin&amp;returnto=2DA" title="You are encouraged to log in; however, it is not mandatory [o]" accesskey="o">Log in</a></li>						</ul>
+					</div>
+									<div id="left-navigation">
+										<div id="p-namespaces" role="navigation" class="vectorTabs" aria-labelledby="p-namespaces-label">
+						<h3 id="p-namespaces-label">Namespaces</h3>
+						<ul>
+															<li  id="ca-nstab-main" class="selected"><span><a href="2da.html"  title="View the content page [c]" accesskey="c">Page</a></span></li>
+															<li  id="ca-talk"><span><a href="Talk%3A2DA.html"  title="Discussion about the content page [t]" accesskey="t">Discussion</a></span></li>
+													</ul>
+					</div>
+										<div id="p-variants" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-variants-label">
+												<h3 id="p-variants-label"><span>Variants</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+									</div>
+				<div id="right-navigation">
+										<div id="p-views" role="navigation" class="vectorTabs" aria-labelledby="p-views-label">
+						<h3 id="p-views-label">Views</h3>
+						<ul>
+															<li id="ca-view" class="selected"><span><a href="2da.html" >Read</a></span></li>
+															<li id="ca-viewsource"><span><a href="2da.html"  title="This page is protected.&#10;You can view its source [e]" accesskey="e">View source</a></span></li>
+															<li id="ca-history" class="collapsible"><span><a href="2da.html"  title="Past revisions of this page [h]" accesskey="h">View history</a></span></li>
+													</ul>
+					</div>
+										<div id="p-cactions" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-cactions-label">
+						<h3 id="p-cactions-label"><span>More</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+										<div id="p-search" role="search">
+						<h3>
+							<label for="searchInput">Search</label>
+						</h3>
+
+						<form action="/mw/index.php" id="searchform">
+														<div id="simpleSearch">
+															<input type="search" name="search" placeholder="Search" title="Search Dragon Age Toolset Wiki [f]" accesskey="f" id="searchInput" /><input type="hidden" value="Special:Search" name="title" /><input type="submit" name="fulltext" value="Search" title="Search the pages for this text" id="mw-searchButton" class="searchButton mw-fallbackSearchButton" /><input type="submit" name="go" value="Go" title="Go to a page with this exact name if exists" id="searchButton" class="searchButton" />								</div>
+						</form>
+					</div>
+									</div>
+			</div>
+			<div id="mw-panel">
+				<div id="p-logo" role="banner"><a class="mw-wiki-logo" href="Main_Page.html"  title="Visit the main page"></a></div>
+						<div class="portal" role="navigation" id='p-navigation' aria-labelledby='p-navigation-label'>
+			<h3 id='p-navigation-label'>Navigation</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-mainpage-description"><a href="Main_Page.html" title="Visit the main page [z]" accesskey="z">Main page</a></li>
+													<li id="n-recentchanges"><a href="/wiki/Special:RecentChanges" title="A list of recent changes in the wiki [r]" accesskey="r">Recent changes</a></li>
+													<li id="n-randompage"><a href="/wiki/Special:Random" title="Load a random page [x]" accesskey="x">Random page</a></li>
+													<li id="n-help"><a href="https://www.mediawiki.org/wiki/Special:MyLanguage/Help:Contents" title="The place to find out">Help</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-Links' aria-labelledby='p-Links-label'>
+			<h3 id='p-Links-label'>Links</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-Toolset-forums"><a href="http://forum.bioware.com/forum/30-dragon-age-toolset" rel="nofollow">Toolset forums</a></li>
+													<li id="n-Legacy-forums"><a href="http://social.bioware.com/forum/1/subindex/70" rel="nofollow">Legacy forums</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-tb' aria-labelledby='p-tb-label'>
+			<h3 id='p-tb-label'>Tools</h3>
+
+			<div class="body">
+									<ul>
+													<li id="t-whatlinkshere"><a href="/wiki/Special:WhatLinksHere/2DA" title="A list of all wiki pages that link here [j]" accesskey="j">What links here</a></li>
+													<li id="t-recentchangeslinked"><a href="/wiki/Special:RecentChangesLinked/2DA" title="Recent changes in pages linked from this page [k]" accesskey="k">Related changes</a></li>
+													<li id="t-specialpages"><a href="/wiki/Special:SpecialPages" title="A list of all special pages [q]" accesskey="q">Special pages</a></li>
+													<li id="t-print"><a href="2da.html" rel="alternate" title="Printable version of this page [p]" accesskey="p">Printable version</a></li>
+													<li id="t-permalink"><a href="2da.html" title="Permanent link to this revision of the page">Permanent link</a></li>
+													<li id="t-info"><a href="2da.html" title="More information about this page">Page information</a></li>
+											</ul>
+							</div>
+		</div>
+				</div>
+		</div>
+		<div id="footer" role="contentinfo">
+							<ul id="footer-info">
+											<li id="footer-info-lastmod"> This page was last modified on 2 August 2013, at 19:15.</li>
+									</ul>
+							<ul id="footer-places">
+											<li id="footer-places-privacy"><a href="/wiki/Dragon_Age_Toolset_Wiki:Privacy_policy" title="Dragon Age Toolset Wiki:Privacy policy">Privacy policy</a></li>
+											<li id="footer-places-about"><a href="/wiki/Dragon_Age_Toolset_Wiki:About" title="Dragon Age Toolset Wiki:About">About Dragon Age Toolset Wiki</a></li>
+											<li id="footer-places-disclaimer"><a href="/wiki/Dragon_Age_Toolset_Wiki:General_disclaimer" title="Dragon Age Toolset Wiki:General disclaimer">Disclaimers</a></li>
+									</ul>
+										<ul id="footer-icons" class="noprint">
+											<li id="footer-poweredbyico">
+															<a href="//www.mediawiki.org/"><img src="../assets/mw/resources/assets/poweredby_mediawiki_88x31.png" alt="Powered by MediaWiki" srcset="../assets/mw/resources/assets/poweredby_mediawiki_132x47.png 1.5x, ../assets/mw/resources/assets/poweredby_mediawiki_176x62.png 2x" width="88" height="31" /></a>
+													</li>
+									</ul>
+						<div style="clear:both"></div>
+		</div>
+		<script>if(window.jQuery)jQuery.ready();</script><script>if(window.mw){
+mw.loader.state({"site":"loading","user":"ready","user.groups":"ready"});
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.toc","mediawiki.action.view.postEdit","mediawiki.user","mediawiki.hidpi","mediawiki.page.ready","mediawiki.searchSuggest"],null,true);
+}</script>
+<script>if(window.mw){
+document.write("\u003Cscript src=\"https://www.datoolset.net/mw/load.php?debug=false\u0026amp;lang=en\u0026amp;modules=site\u0026amp;only=scripts\u0026amp;skin=vector\u0026amp;*\"\u003E\u003C/script\u003E");
+}</script>
+<script>if(window.mw){
+mw.config.set({"wgBackendResponseTime":362});
+}</script>
+	</body>
+</html>

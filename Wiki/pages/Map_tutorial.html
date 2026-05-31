@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" class="client-nojs">
+<head>
+<meta charset="UTF-8" />
+<title>Map tutorial - Dragon Age Toolset Wiki</title>
+<meta name="generator" content="MediaWiki 1.25.6" />
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="search" type="application/opensearchdescription+xml" href="/mw/opensearch_desc.php" title="Dragon Age Toolset Wiki (en)" />
+<link rel="EditURI" type="application/rsd+xml" href="https://www.datoolset.net/mw/api.php?action=rsd" />
+<link rel="alternate" hreflang="x-default" href="Map_tutorial.html" />
+<link rel="alternate" type="application/atom+xml" title="Dragon Age Toolset Wiki Atom feed" href="/mw/index.php?title=Special:RecentChanges&amp;feed=atom" />
+<meta name="ResourceLoaderDynamicStyles" content="" />
+<style>a:lang(ar),a:lang(kk-arab),a:lang(mzn),a:lang(ps),a:lang(ur){text-decoration:none}
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-css:7:270a0dcd3ae587df0f041aebfc42e61b */</style>
+<script>if(window.mw){
+mw.config.set({"wgCanonicalNamespace":"","wgCanonicalSpecialPageName":false,"wgNamespaceNumber":0,"wgPageName":"Map_tutorial","wgTitle":"Map tutorial","wgCurRevisionId":13164,"wgRevisionId":13164,"wgArticleId":83,"wgIsArticle":true,"wgIsRedirect":false,"wgAction":"view","wgUserName":null,"wgUserGroups":["*"],"wgCategories":["Maps","Tutorials"],"wgBreakFrames":false,"wgPageContentLanguage":"en","wgPageContentModel":"wikitext","wgSeparatorTransformTable":["",""],"wgDigitTransformTable":["",""],"wgDefaultDateFormat":"dmy","wgMonthNames":["","January","February","March","April","May","June","July","August","September","October","November","December"],"wgMonthNamesShort":["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],"wgRelevantPageName":"Map_tutorial","wgRelevantArticleId":83,"wgIsProbablyEditable":false,"wgRestrictionEdit":[],"wgRestrictionMove":[]});
+}</script><script>if(window.mw){
+mw.loader.implement("user.options",function($,jQuery){mw.user.options.set({"variant":"en"});});mw.loader.implement("user.tokens",function($,jQuery){mw.user.tokens.set({"editToken":"+\\","patrolToken":"+\\","watchToken":"+\\"});});
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-js:7:a5c52c063dc436c1ca7c9f456936a5e9 */
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.page.startup","mediawiki.legacy.wikibits","mediawiki.legacy.ajax","skins.vector.js"]);
+}</script>
+<!--[if lt IE 7]><style type="text/css">body{behavior:url("/mw/skins/Vector/csshover.min.htc")}</style><![endif]-->
+<link rel="stylesheet" href="../assets/local/wiki-static.css" />
+</head>
+<body class="mediawiki ltr sitedir-ltr ns-0 ns-subject page-Map_tutorial skin-vector action-view">
+		<div id="mw-page-base" class="noprint"></div>
+		<div id="mw-head-base" class="noprint"></div>
+		<div id="content" class="mw-body" role="main">
+			<a id="top"></a>
+
+						<div class="mw-indicators">
+</div>
+			<h1 id="firstHeading" class="firstHeading" lang="en">Map tutorial</h1>
+						<div id="bodyContent" class="mw-body-content">
+									<div id="siteSub">From Dragon Age Toolset Wiki</div>
+								<div id="contentSub"></div>
+												<div id="jump-to-nav" class="mw-jump">
+					Jump to:					<a href="#mw-head">navigation</a>, 					<a href="#p-search">search</a>
+				</div>
+				<div id="mw-content-text" lang="en" dir="ltr" class="mw-content-ltr"><p>Map objects are a way to allow the player to travel from area to area without having to follow a rigid path from one exit to the next. They're useful for representing large expanses of wide-open countryside, for example, or a city with various districts that the player can travel between freely but is too large to conveniently fit in a single area. Maps allow a world to be large without having to detail every little irrelevant place in it.
+</p><p>If you start by creating a new map resource within the designer toolkit, you'll quickly find that there is only a very limited pre-defined list of map images that are available for use. That's because map layouts are defined in a 2DA ("two-dimensional array"), a binary table of data that is used by the toolset to provide definitions but that is not itself editable from it. You may have encountered references to 2DAs when working with other objects. For example, the list of variables that an object's scripts can refer to is stored in a 2DA. This tutorial is going to assume that you've never worked with 2DAs themselves before. In a sense, this tutorial is as much a 2DA tutorial as it is a map tutorial.
+</p>
+<div id="toc" class="toc"><div id="toctitle"><h2>Contents</h2></div>
+<ul>
+<li class="toclevel-1 tocsection-1"><a href="#Terminology"><span class="tocnumber">1</span> <span class="toctext">Terminology</span></a></li>
+<li class="toclevel-1 tocsection-2"><a href="#The_worldmaps.xls_spreadsheet"><span class="tocnumber">2</span> <span class="toctext">The worldmaps.xls spreadsheet</span></a></li>
+<li class="toclevel-1 tocsection-3"><a href="#Using_M2DAs_to_extend_the_game"><span class="tocnumber">3</span> <span class="toctext">Using M2DAs to extend the game</span></a></li>
+<li class="toclevel-1 tocsection-4"><a href="#Converting_XLS_files_into_GDA_files"><span class="tocnumber">4</span> <span class="toctext">Converting XLS files into GDA files</span></a></li>
+<li class="toclevel-1 tocsection-5"><a href="#Creating_a_map_and_adding_pins"><span class="tocnumber">5</span> <span class="toctext">Creating a map and adding pins</span></a></li>
+<li class="toclevel-1 tocsection-6"><a href="#Showing_the_player_the_map"><span class="tocnumber">6</span> <span class="toctext">Showing the player the map</span></a>
+<ul>
+<li class="toclevel-2 tocsection-7"><a href="#Sending_the_player_to_the_world_map_via_an_area_transition"><span class="tocnumber">6.1</span> <span class="toctext">Sending the player to the world map via an area transition</span></a></li>
+</ul>
+</li>
+<li class="toclevel-1 tocsection-8"><a href="#Activating_and_deactivating_map_pins"><span class="tocnumber">7</span> <span class="toctext">Activating and deactivating map pins</span></a></li>
+<li class="toclevel-1 tocsection-9"><a href="#Handling_the_player.27s_map_usage"><span class="tocnumber">8</span> <span class="toctext">Handling the player's map usage</span></a>
+<ul>
+<li class="toclevel-2 tocsection-10"><a href="#Other_map-related_events"><span class="tocnumber">8.1</span> <span class="toctext">Other map-related events</span></a></li>
+</ul>
+</li>
+<li class="toclevel-1 tocsection-11"><a href="#Custom_Maps"><span class="tocnumber">9</span> <span class="toctext">Custom Maps</span></a>
+<ul>
+<li class="toclevel-2 tocsection-12"><a href="#Creating_maps_in_photoshop_to_use_in-game"><span class="tocnumber">9.1</span> <span class="toctext">Creating maps in photoshop to use in-game</span></a></li>
+<li class="toclevel-2 tocsection-13"><a href="#Putting_your_map_into_the_toolset"><span class="tocnumber">9.2</span> <span class="toctext">Putting your map into the toolset</span></a></li>
+</ul>
+</li>
+</ul>
+</div>
+
+<h2><span class="mw-headline" id="Terminology">Terminology</span></h2>
+<p>This tutorial makes use of a number of different three-letter acronyms and specific terms that may be troublesome to keep track of at first. Before we dive straight in, here's a cheat sheet that may prove useful:
+</p>
+<ul><li>2DA - "two-dimensional array", the table of data we'll be editing. Note that a 2DA can be stored in a human-readable or machine-readable format, each of which has their own names. "2DA" is used to refer to the table as an abstract concept.</li>
+<li>XLS - the file extension for an Excel spreadsheet.</li>
+<li>Worksheet - tabbed panes within an Excel spreadsheet. Each Excel spreadsheet can contain multiple worksheets and each worksheet can represent one 2DA, so one spreadsheet can contain multiple 2DAs.</li></ul>
+<div class="center"><div class="thumb tnone"><div class="thumbinner" style="width:799px;"><a href="File%3AWorksheet_tabs.png.html" class="image"><img alt="" src="../assets/mw/images/3/3d/Worksheet_tabs.png" width="797" height="57" class="thumbimage" /></a>  <div class="thumbcaption">Worksheet tabs along the bottom of an Excel spreadsheet</div></div></div></div>
+<ul><li>GDA - The file extension for a binary file usable by the game. 2DAs that have been processed by the resource exporter will be stored in this form.</li>
+<li>TGA - Targa graphics file extension. TGA graphic files are used to define the underlying appearance of the map itself.</li>
+<li>M2DA - "Multiple 2DA". Previous BioWare games have made use of 2DAs, but the 2DAs used in Dragon Age use this new format instead. It allows several different 2DAs to be combined together and treated as a single 2DA by the game, which is very useful for adding new content to an existing 2DA.</li></ul>
+<h2><span class="mw-headline" id="The_worldmaps.xls_spreadsheet">The worldmaps.xls spreadsheet</span></h2>
+<p>See also <a href="Worldmaps.xls.html" title="Worldmaps.xls">worldmaps.xls</a>.
+</p><p>If we're creating maps for a brand new module we could in theory start with a blank Excel spreadsheet and build the required 2DAs from scratch. It's much easier, however, to start with an existing copy of the relevant spreadsheet from another module and replace the values within it with our own.
+</p><p>The spreadsheet that contains all the 2DAs relevant to world maps is <code>worldmaps.xls</code>. Open it in Excel and you'll find that it contains, among other worksheets, the "worldmaps" worksheet.
+</p>
+<div class="center"><div class="floatnone"><a href="File%3AWorldmaps_worksheet.png.html" class="image"><img alt="Worldmaps worksheet.png" src="../assets/mw/images/3/3e/Worldmaps_worksheet.png" width="891" height="159" /></a></div></div>
+<p>This is the core 2DA that defines what maps are available in the Designer Toolset's "Map" dropdown menu.
+</p><p>First, some standard features that all 2DA worksheets will have:
+</p>
+<ul><li>The first row of the worksheet contains the labels of the columns. Don't change the names of columns or the game won't be able to recognize them.</li>
+<li>The second row contains a keyword describing the data type of that column. Again, don't change this or the game will become confused by what it's seeing.</li>
+<li>The first column contains ID numbers. Each row needs to have a unique ID number.</li></ul>
+<p>In the case of the worldmaps worksheet there are four columns that contain the data defining the map layout.
+</p>
+<ul><li> Label - The name that this map layout will be known by in the Designer Toolkit's dropdown menu. It's not seen by the player.</li>
+<li> NameStrRef - a string reference for the name of the table. See <a href="String_editor.html" title="String editor">string editor</a> for how to add strings to your module's talk table. This is the name that may be seen by players.</li>
+<li> MAP - The filename of the .tga that defines the map's appearance, without the .tga extension. Also supported is the .dds file format.</li>
+<li> TargetWpTable - The names of 2DAs that contains information about what waypoints the player appears at within areas accessible from the map. This is discussed in greater detail below.</li>
+<li> TargetWpTableID - a row ID in the <a href="M2DA_Base.html" title="M2DA Base" class="mw-redirect">M2DA_Base</a> 2DA that references the same 2DA in the TargetWpTable column. This speeds up lookup of the 2DA by the game.</li>
+<li> TripsCounterTable - A table showing which trips should have random encounters. We won't be going into detail about this in this tutorial.</li></ul>
+<p>NOTE: The 'MAP' column specifies the filename you need for the map to appear in the toolset. For the map to appear in game, you must include language specific copies (they don't need to be translated, of course, but the files need to exist). You need to have a copy of your map with each of the below suffixes. For example, if you put 'mymap' in the MAP column, you'd have mymap.tga to get it to appear in the toolset and mymap_en-us.tga to get it to appear in the English game client.
+</p><p>_cs-cz
+_de-de
+_en-us
+_es-es
+_fr-fr
+_hu-hu
+_it-it
+_pl-pl
+_ru-ru
+</p><p>We'll need to add a new row to this table to describe the map area that we want to use in the toolset. For this example we have a map of a region named "Epona's Realm", in a file named <code>epona.tga</code>. We'll need to assign a unique number ID, which we'll arbitrarily set to 700 (using a high number like this makes it less likely to interfere with other people's additions in the future.). We'll call the target waypoint table "target_wps_epona" to fit with the naming convention of the other maps.
+</p><p><a href="File%3AWorldmaps_worksheet_with_epona_added.png.html" class="image"><img alt="Worldmaps worksheet with epona added.png" src="../assets/mw/images/0/0c/Worldmaps_worksheet_with_epona_added.png" width="892" height="184" /></a>
+</p><p>In our hypothetical game module we've got three different cities that the player can reach via the world map; Dunland, Agrabia, and Serepta. They'll be represented by the areas dunland_main, agrabia_main, and serepta_main. The next thing we might want to do is create a 2DA that defines which waypoints you wind up in when you travel to each of these areas from each of the possible origin points. This isn't strictly necessary but can be used to make travel around the worldmap seem more realistic by having the player arrive at different waypoints depending on which direction they're arriving in an area from.
+</p><p>Again, a convenient starting place is an existing 2DA. This 2DA is another worksheet in <code>worldmaps.xls</code> that shows the target waypoints for a group of areas accessible from a city map in the game's single-player campaign:
+</p><p><a href="File%3AWorldmaps_worksheet_target_wps_example.png.html" class="image"><img alt="Worldmaps worksheet target wps example.png" src="../assets/mw/images/3/30/Worldmaps_worksheet_target_wps_example.png" width="923" height="172" /></a>
+</p><p>All of the source areas are listed in the second column, and then each column after that corresponds to a destination area for that source. Every source needs a destination column, so there should always be a number of columns equal to the number of sources plus two (the "ID" and "SourceLocation" columns). In this example, if you're in the "markets" area and then use the map to go to the "elven_alienage" area, you'll be placed at the waypoint "wmw_alienage_from_market". Since you can never travel from an area to that same area via the map the diagonal entries are left blank.
+</p><p>To repurpose this 2DA for Epona's Realm, first copy the worksheet and then rename it to "target_wps_epona". We'll only need three rows and three destination columns so delete the extras.
+</p><p>The geometry of these three cities is quite simple, they lie in an east-west row with Serepta to the west, Agrabia in the center, and Dunland to the east. We'll place waypoints in the eastern and western ends of agrabia_main's area layout to represent the player arriving from each of those directions.
+</p><p>So, the final version of the target_wps_epona worksheet will look like:
+</p><p><a href="File%3AWorldmaps_worksheet_target_wps_epona.png.html" class="image"><img alt="Worldmaps worksheet target wps epona.png" src="../assets/mw/images/e/ef/Worldmaps_worksheet_target_wps_epona.png" width="663" height="116" /></a>
+</p>
+<h2><span class="mw-headline" id="Using_M2DAs_to_extend_the_game">Using M2DAs to extend the game</span></h2>
+<p>There's one remaining complication to be addressed now. When you generate <code>worldmaps.GDA</code> it will include our new map ID 700, but it also includes the old maps with the IDs 1-5. Since the file is in the override directory, these rows override the existing maps with those ID numbers in the single player campaign. This isn't a problem right now since the data is identical but it could be a problem in the future; if BioWare releases an update that needs to change those original five maps, or if some other modder wants to add some maps of his own, only one version will "win" and the result could be a mess.
+</p><p>This can be overcome by splitting up a 2DA into different files that all get loaded by the game and are combined into one 2DA internally. These multi-part 2DA files are known as M2DAs, which stands for "multiple 2DA". The identity of M2DA files is kept track of via their "prefix", a string of text that all M2DAs being with. In the case of the worldmaps 2DA, the prefix is "worldmaps" (ie, the <code>worldmaps.GDA</code> file has the "worldmaps" prefix and no suffix, so it belongs to the "worldmaps" 2DA).
+</p><p>What we'll do now is split out the data relating to our "Epona's Realm" map into a separate M2DA file named <code>worldmaps_epona.GDA</code>. Simply rename the worksheet to "worldmaps_epona" and delete the first five rows of data entirely, leaving us with this:
+</p><p><a href="File%3AWorldmaps_epona_worksheet.png.html" class="image"><img alt="Worldmaps epona worksheet.png" src="../assets/mw/images/b/b9/Worldmaps_epona_worksheet.png" width="892" height="82" /></a>
+</p><p>Now when the game encounters this 2DA in the override directory it will keep the data from the original worldmaps 2DA in memory and add the data from worldmaps_epona to it. If in the future some other modder builds on top of your work they can add further worldmap M2DAs, and if a patch comes out that updates the contents of the original 2DA your mod will incorporate it without needing to be updated.
+</p>
+<h2><span class="mw-headline" id="Converting_XLS_files_into_GDA_files">Converting XLS files into GDA files</span></h2>
+<p>The game can't use Excel files directly, the 2DAs must first be converted into a "binarized" form called a GDA. This is done by a command-line utility called <code>ExcelProcessor.exe</code>. Command-line utilities are not very user-friendly, so there are a number of different ways you might use this to make the process easier. 
+</p><p>Note that there will be a separate GDA file for each worksheet in the XLS file, named after the worksheets in the XLS file. We only need to use two of them; <code>worldmaps_epona.GDA</code> and <code>target_wps_epona.GDA</code>. Copy these files into your game's override directory along with <code>epona.tga</code> and "Epona's Realm" will become available in the toolset's dropdown menu.
+</p>
+<dl><dd><i>See <a href="Compiling_2DAs.html" title="Compiling 2DAs">Compiling 2DAs</a></i></dd></dl>
+<h2><span class="mw-headline" id="Creating_a_map_and_adding_pins">Creating a map and adding pins</span></h2>
+<p>Now we can at last see the map as an option in the drop-down menus of the toolset. Create a map and set the "Map" property to Epona's Realm, and the map should appear.
+</p><p><a href="File%3AWorldmaps_selecting_Epona.png.html" class="image"><img alt="Worldmaps selecting Epona.png" src="../assets/mw/images/b/bf/Worldmaps_selecting_Epona.png" width="529" height="370" /></a>
+</p><p>There's not much to the map itself - its only configurable properties are Parent Map, Tag, and Map. To make the map useful beyond simply displaying a graphic we'll need to add map pins (icons representing destinations). You can also add "trails", which are a series of icons that you can make appear between different pins to mark the player's passage, but these are of lesser importance and can be left for later or omitted entirely.
+</p><p>To insert a pin, right-click on the map and select "insert pin" from the drop-down menu. The pointer will turn into a crosshair that you can click anywhere on the map to place a pin (pins can also be dragged around after creation so don't worry if you miss slightly). The pin will be added to the tree view to the left of the map and, when selected, you can view its properties in the object inspector.
+</p><p><a href="File%3AWorldmaps_placing_a_pin.png.html" class="image"><img alt="Worldmaps placing a pin.png" src="../assets/mw/images/2/26/Worldmaps_placing_a_pin.png" width="600" height="375" srcset="../assets/mw/images/2/26/Worldmaps_placing_a_pin.png 1.5x, ../assets/mw/images/2/26/Worldmaps_placing_a_pin.png 2x" /></a>
+</p><p>The most important properties to set here are:
+</p>
+<ul><li> AreaTag - tells the game which area to take the player to when he clicks on this pin. Our Dunland pin will have this set to dunland_main.</li>
+<li> Initial State - tells the game whether to display the pin and whether to make it clickable; you will often want to have pins on the map that only become available to the player at some point later in the game. We'll set Dunland to "grayed out" right now, since we'll want the player to know about its existence but not be able to go there right away.</li>
+<li> Name - This name is shown to the player.</li>
+<li>Pin Type - A list of icons that can be used for the pin. The list of appearances available can be added to in <code>worldmaps.xls</code>, you may have noticed the <code>map_pin_images</code> worksheet when you were editing it earlier.</li></ul>
+<p>Other properties you may wish to set include "Tooltip" (a longer description that will be shown to the player if he hovers the mouse pointer over the pin) and "Waypoint Override", which designates which waypoint in the pin's target area to send the player to when he clicks on it. This waypoint overrides the one set in target_wps_epona but has less fine-grained control available; it can be useful for testing purposes.
+</p><p>The "TerrainType" property is used to determine which group of random encounters to draw from. Setting up random encounters is a more advanced topic that we won't cover in this tutorial.
+</p><p><a href="File%3AWorldmaps_pins_placed.png.html" class="image"><img alt="Worldmaps pins placed.png" src="../assets/mw/images/9/9b/Worldmaps_pins_placed.png" width="600" height="375" srcset="../assets/mw/images/9/9b/Worldmaps_pins_placed.png 1.5x, ../assets/mw/images/9/9b/Worldmaps_pins_placed.png 2x" /></a>
+</p>
+<h2><span class="mw-headline" id="Showing_the_player_the_map">Showing the player the map</span></h2>
+<p>Once you've got a map built for your module you'll need to tell the game how to use it. There are a number of wrapper functions in wrappers_h that you'll find useful for this:
+</p>
+<div dir="ltr" class="mw-geshi mw-code mw-content-ltr"><div class="dascript source-dascript"><pre class="de1"><a href="http://www.datoolset.net/wiki/index.php?title=void keyword"><span class="kw2">void</span></a> WR_SetWorldMapPrimary<span class="br0">&#40;</span><a href="http://www.datoolset.net/wiki/index.php?title=object keyword"><span class="kw2">object</span></a> oMapId<span class="br0">&#41;</span></pre></div></div>
+<p>This function tells the game what the current default "world map" is. You'll want to set this to your default world map as part of the initial setup of your module, and if you have multiple different maps you'll need to call this function again later in the game to switch which one is active (for example in a plot script that triggers when the player completes a certain task or moves to a certain area).
+</p>
+<div dir="ltr" class="mw-geshi mw-code mw-content-ltr"><div class="dascript source-dascript"><pre class="de1"><a href="http://www.datoolset.net/wiki/index.php?title=void keyword"><span class="kw2">void</span></a> WR_SetWorldMapSecondary<span class="br0">&#40;</span><a href="http://www.datoolset.net/wiki/index.php?title=object keyword"><span class="kw2">object</span></a> oMapId<span class="br0">&#41;</span></pre></div></div>
+<p>!!Need to find out more about this one.!!
+</p>
+<div dir="ltr" class="mw-geshi mw-code mw-content-ltr"><div class="dascript source-dascript"><pre class="de1"><a href="http://www.datoolset.net/wiki/index.php?title=void keyword"><span class="kw2">void</span></a> WR_SetWorldMapLocationStatus<span class="br0">&#40;</span><a href="http://www.datoolset.net/wiki/index.php?title=object keyword"><span class="kw2">object</span></a> oLocation, <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> nStatusId, <a href="http://www.datoolset.net/wiki/index.php?title=int keyword"><span class="kw2">int</span></a> bSuppressActiveFlash <span class="sy0">=</span> FALSE<span class="br0">&#41;</span></pre></div></div>
+<p>oLocation is a map pin, nStatusId is an integer identifier for one of the status states (such as active, grayed out, destroyed), and the optional bSuppressActiveFlash flag tells the game to omit the visual highlighting that is usually shown around map pins that have had their status changed since the last time the player looked at the map.
+</p>
+<div dir="ltr" class="mw-geshi mw-code mw-content-ltr"><div class="dascript source-dascript"><pre class="de1"><a href="http://www.datoolset.net/wiki/index.php?title=void keyword"><span class="kw2">void</span></a> WR_SetWorldMapPlayerLocation<span class="br0">&#40;</span><a href="http://www.datoolset.net/wiki/index.php?title=object keyword"><span class="kw2">object</span></a> oMap, <a href="http://www.datoolset.net/wiki/index.php?title=object keyword"><span class="kw2">object</span></a> oLocation<span class="br0">&#41;</span></pre></div></div>
+<p>This marks the player's current location on the map.
+</p>
+<h3><span class="mw-headline" id="Sending_the_player_to_the_world_map_via_an_area_transition">Sending the player to the world map via an area transition</span></h3>
+<p>To set up an area transition placeable (such as a door) to send the player to the world map when an area transition is performed, set the placeable's PLC_AT_DEST_AREA_TAG variable to the string "world_map". This is a special string that's used to signal the placeable_core script's area-transition-handling code that it needs to show a map instead. When the placeable is triggered it will send an EVENT_TYPE_TRANSITION_TO_WORLD_MAP event to the module's event script.
+</p><p>The default module_core script doesn't handle this event so you'll need to add your own module event script to override this behavior. The module's event script should call the following core script functions:
+</p>
+<div dir="ltr" class="mw-geshi mw-code mw-content-ltr"><div class="dascript source-dascript"><pre class="de1"> <a href="http://www.datoolset.net/wiki/index.php?title=SetWorldMapGuiStatus"><span class="kw4">SetWorldMapGuiStatus</span></a><span class="br0">&#40;</span><span class="kw3">WM_GUI_STATUS_USE</span><span class="br0">&#41;</span>;
+ <a href="http://www.datoolset.net/wiki/index.php?title=OpenPrimaryWorldMap"><span class="kw4">OpenPrimaryWorldMap</span></a><span class="br0">&#40;</span><span class="br0">&#41;</span>;</pre></div></div>
+<p>This displays the map to the player.
+</p>
+<h2><span class="mw-headline" id="Activating_and_deactivating_map_pins">Activating and deactivating map pins</span></h2>
+<p>This can be done via scripting.
+</p><p>First get the world map pin object:
+</p>
+<div dir="ltr" class="mw-geshi mw-code mw-content-ltr"><div class="dascript source-dascript"><pre class="de1"><a href="http://www.datoolset.net/wiki/index.php?title=object keyword"><span class="kw2">object</span></a> oVillage <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetObjectByTag"><span class="kw4">GetObjectByTag</span></a><span class="br0">&#40;</span>WML_WOW_VILLAGE<span class="br0">&#41;</span>;</pre></div></div>
+<p>Then call the following to activate the pin:
+</p>
+<div dir="ltr" class="mw-geshi mw-code mw-content-ltr"><div class="dascript source-dascript"><pre class="de1">WR_SetWorldMapLocationStatus<span class="br0">&#40;</span>oVillage, <span class="kw3">WM_LOCATION_ACTIVE</span><span class="br0">&#41;</span>;</pre></div></div>
+<p>Area transitions using the default area transition core script can also automatically enable certain map pins when the player travels through them. The names of these pins are set in the area transition's variables.
+</p>
+<h2><span class="mw-headline" id="Handling_the_player.27s_map_usage">Handling the player's map usage</span></h2>
+<p>If the proper destination areas and waypoints have been set in the map pins (and optionally the target_wps 2DA) the player's movement from one location to another should be handled automatically. However, the game does provide some hooks that allows further customization or non-standard actions to be performed.
+</p><p>When a player clicks on a map pin, the <a href="EVENT_TYPE_BEGIN_TRAVEL.html" title="EVENT TYPE BEGIN TRAVEL">EVENT_TYPE_BEGIN_TRAVEL</a> event is sent to the module script.
+</p><p>This event has the following parameters:
+</p>
+<ul><li> string sSource = GetEventString(ev, 0); // area tag for the source location (the area the player's leaving)</li>
+<li> string sTarget = GetEventString(ev, 1); // area tag for the target location (the area the player's travelling to)</li>
+<li> string sWPOverride = GetEventString(ev, 2); // the tag for the target waypoint override (the waypoint in the destination area that the player will appear at)</li>
+<li> int nSourceTerrain = GetEventInteger(ev, 0); //The terrain type of the source location</li>
+<li> int nTargetTerrain = GetEventInteger(ev, 1); //The terrain type of the target location - these two parameters are used in the main campaign's code for determining what sort of random encounters to generate, but that's handled entirely in scripting so you can use them for other purposes or ignore them completely if you prefer.</li>
+<li> int nWorldMap = GetEventInteger(ev, 2);</li>
+<li> object oSourceLocation = GetEventObject(ev, 0); // the map pin object representing the source location.</li></ul>
+<p>In the main Dragon Age campaign's module script, a large amount of complex code is triggered by the EVENT_TYPE_BEGIN_TRAVEL event. This code takes into account a lot of special-case situations that are relevant only to the particular plot and structure of the Dragon Age main campaign. But it is important to note one thing that is <i>not</i> done in the EVENT_TYPE_BEGIN_TRAVEL event; the actual call to <a href="UT_DoAreaTransition.html" title="UT DoAreaTransition">UT_DoAreaTransition</a>().
+</p><p>Instead, once you have finished doing whatever special-case coding and random encounter tests you choose to implement, you will need to store the destination that you're sending the player to in the module's variable table. Then call the WorldMapStartTravelling(); function to begin the map trail animation (the WorldMapStartTravelling function has optional parameters to insert a random encounter partway through the trip and to override the map pin the trail starts at).
+</p><p>The engine will send the <a href="EVENT_TYPE_WORLDMAP_PRETRANSITION.html" title="EVENT TYPE WORLDMAP PRETRANSITION">EVENT_TYPE_WORLDMAP_PRETRANSITION</a> event as it begins the map trail animation. This is where you want to call UT_DoAreaTransition(); the level will begin loading in the background as the map trail animation plays.
+</p><p>The following code is the most basic amount that you should need to put in your module script in order to implement area transitions via the world map:
+</p>
+<div dir="ltr" class="mw-geshi mw-code mw-content-ltr"><div class="dascript source-dascript"><pre class="de1"><a href="http://www.datoolset.net/wiki/index.php?title=case keyword"><span class="kw1">case</span></a> <span class="kw3">EVENT_TYPE_BEGIN_TRAVEL</span><span class="sy0">:</span>
+<span class="br0">&#123;</span>
+    <a href="http://www.datoolset.net/wiki/index.php?title=string keyword"><span class="kw2">string</span></a> sTarget <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetEventString"><span class="kw4">GetEventString</span></a><span class="br0">&#40;</span>ev, <span class="nu0">1</span><span class="br0">&#41;</span>; <span class="co1">// area tag target location</span>
+    <a href="http://www.datoolset.net/wiki/index.php?title=string keyword"><span class="kw2">string</span></a> sWPOverride <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetEventString"><span class="kw4">GetEventString</span></a><span class="br0">&#40;</span>ev, <span class="nu0">2</span><span class="br0">&#41;</span>; <span class="co1">// waypoint tag override</span>
+    <span class="co1">//if you want to do any special-case code or random encounter handling, insert it here</span>
+    <a href="http://www.datoolset.net/wiki/index.php?title=SetLocalString"><span class="kw4">SetLocalString</span></a><span class="br0">&#40;</span><a href="http://www.datoolset.net/wiki/index.php?title=GetModule"><span class="kw4">GetModule</span></a><span class="br0">&#40;</span><span class="br0">&#41;</span>, <span class="st0">&quot;WM_STORED_AREA&quot;</span>, sTarget<span class="br0">&#41;</span>; <span class="co1">//store target area's tag to a local module variable</span>
+    <a href="http://www.datoolset.net/wiki/index.php?title=SetLocalString"><span class="kw4">SetLocalString</span></a><span class="br0">&#40;</span><a href="http://www.datoolset.net/wiki/index.php?title=GetModule"><span class="kw4">GetModule</span></a><span class="br0">&#40;</span><span class="br0">&#41;</span>, <span class="st0">&quot;WM_STORED_WP&quot;</span>, sWPOverride<span class="br0">&#41;</span>; <span class="co1">//store target waypoint tag</span>
+    <a href="http://www.datoolset.net/wiki/index.php?title=WorldMapStartTravelling"><span class="kw4">WorldMapStartTravelling</span></a><span class="br0">&#40;</span><span class="br0">&#41;</span>; <span class="co1">//initiate the map's travelling animation. The engine will send EVENT_TYPE_WORLDMAP_PRETRANSITION once it's started. </span>
+<span class="br0">&#125;</span>
+&#160;
+<a href="http://www.datoolset.net/wiki/index.php?title=case keyword"><span class="kw1">case</span></a> <span class="kw3">EVENT_TYPE_WORLDMAP_PRETRANSITION</span><span class="sy0">:</span>
+<span class="br0">&#123;</span>
+    <a href="http://www.datoolset.net/wiki/index.php?title=string keyword"><span class="kw2">string</span></a> sArea <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetLocalString"><span class="kw4">GetLocalString</span></a><span class="br0">&#40;</span><a href="http://www.datoolset.net/wiki/index.php?title=GetModule"><span class="kw4">GetModule</span></a><span class="br0">&#40;</span><span class="br0">&#41;</span>, <span class="st0">&quot;WM_STORED_AREA&quot;</span><span class="br0">&#41;</span>; <span class="co1">//retrieve the target area tag stored in EVENT_TYPE_BEGIN_TRAVEL</span>
+    <a href="http://www.datoolset.net/wiki/index.php?title=string keyword"><span class="kw2">string</span></a> sWP <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetLocalString"><span class="kw4">GetLocalString</span></a><span class="br0">&#40;</span><a href="http://www.datoolset.net/wiki/index.php?title=GetModule"><span class="kw4">GetModule</span></a><span class="br0">&#40;</span><span class="br0">&#41;</span>, <span class="st0">&quot;WM_STORED_WP&quot;</span><span class="br0">&#41;</span>; <span class="co1">//retrieve the target waypoint tag</span>
+    UT_DoAreaTransition<span class="br0">&#40;</span>sArea, sWP<span class="br0">&#41;</span>; <span class="co1">//execute the area transition to that target.</span>
+    <a href="http://www.datoolset.net/wiki/index.php?title=break keyword"><span class="kw1">break</span></a>;
+<span class="br0">&#125;</span></pre></div></div>
+<p>There is also a <a href="EVENT_TYPE_WORLDMAP_POSTTRANSITION.html" title="EVENT TYPE WORLDMAP POSTTRANSITION">EVENT_TYPE_WORLDMAP_POSTTRANSITION</a> event. In the Dragon Age main campaign it is used to trigger certain cutscenes that play as a result of world travel.
+</p><p><br />
+</p>
+<h3><span class="mw-headline" id="Other_map-related_events">Other map-related events</span></h3>
+<p>The <a href="EVENT_TYPE_WORLD_MAP_CLOSED.html" title="EVENT TYPE WORLD MAP CLOSED">EVENT_TYPE_WORLD_MAP_CLOSED</a> is sent to the module script when the world map is closed. It has only one parameter, an integer flag that indicates whether the map was closed due to cancel being selected or due to the player traveling to a new destination.
+</p>
+<h2><span class="mw-headline" id="Custom_Maps">Custom Maps</span></h2>
+<h3><span class="mw-headline" id="Creating_maps_in_photoshop_to_use_in-game">Creating maps in photoshop to use in-game</span></h3>
+<p>Here are some tutorials that can be used to make yourself a map in Photoshop.
+</p>
+<ul class="gallery mw-gallery-traditional">
+		<li class="gallerybox" style="width: 155px"><div style="width: 155px">
+			<div class="thumb" style="width: 150px;"><div style="margin:15px auto;"><a href="File%3AMap01_thumb.jpg.html" class="image"><img alt="" src="../assets/mw/images/6/61/Map01_thumb.jpg" width="78" height="120" srcset="../assets/mw/images/6/61/Map01_thumb.jpg 1.5x, ../assets/mw/images/6/61/Map01_thumb.jpg 2x" /></a></div></div>
+			<div class="gallerytext">
+<p>Basic Map tutorial - required as it is the basic stepping stone to make any map [Difficulty = Basic]
+</p>
+			</div>
+		</div></li>
+		<li class="gallerybox" style="width: 155px"><div style="width: 155px">
+			<div class="thumb" style="width: 150px;"><div style="margin:15px auto;"><a href="File%3AMap02_thumb.jpg.html" class="image"><img alt="" src="../assets/mw/images/b/b6/Map02_thumb.jpg" width="78" height="120" srcset="../assets/mw/images/b/b6/Map02_thumb.jpg 1.5x, ../assets/mw/images/b/b6/Map02_thumb.jpg 2x" /></a></div></div>
+			<div class="gallerytext">
+<p>Paper style/aged Map tutorial Style #1 [Difficulty = Beginner]
+</p>
+			</div>
+		</div></li>
+		<li class="gallerybox" style="width: 155px"><div style="width: 155px">
+			<div class="thumb" style="width: 150px;"><div style="margin:15px auto;"><a href="File%3AMap04_thumb.jpg.html" class="image"><img alt="" src="../assets/mw/images/f/f1/Map04_thumb.jpg" width="78" height="120" srcset="../assets/mw/images/f/f1/Map04_thumb.jpg 1.5x, ../assets/mw/images/f/f1/Map04_thumb.jpg 2x" /></a></div></div>
+			<div class="gallerytext">
+<p>Colored 2D Map Tutorial Style #2 [Difficulty = Beginner/Intermediate]
+</p>
+			</div>
+		</div></li>
+		<li class="gallerybox" style="width: 155px"><div style="width: 155px">
+			<div class="thumb" style="width: 150px;"><div style="margin:15px auto;"><a href="File%3AMap05_thumb.jpg.html" class="image"><img alt="" src="../assets/mw/images/7/7e/Map05_thumb.jpg" width="78" height="120" srcset="../assets/mw/images/7/7e/Map05_thumb.jpg 1.5x, ../assets/mw/images/7/7e/Map05_thumb.jpg 2x" /></a></div></div>
+			<div class="gallerytext">
+<p>Pseudo 3D Map Tutorial Style #3  [Difficulty = Intermeditate/Advanced]
+</p>
+			</div>
+		</div></li>
+</ul>
+<p><br />
+Be sure to save the map as a .tga or .dds so the 2da will read it
+</p><p><br />
+<i>All map making tutorials above are done by Jeremy Elford and are available for download at <a rel="nofollow" class="external text" href="http://www.jezelf.co.uk/index.html">www.Jezelf.co.uk</a> under the tutorials tab</i>
+</p><p><b>Other Valuable Map Making Resources</b>
+</p><p><a rel="nofollow" class="external text" href="http://www.profantasy.com/">Cartographer 3 + Addons -$</a> Simple easy to use map maker for those who don't have photoshop or the skills/knowledge to work it.
+</p><p><a rel="nofollow" class="external text" href="http://cartographersguild.com/">Cartographers Guild Map Making Community  -Free</a> Great website if you are seeking other tutorials, inspiration, help, possibility of hiring someone to make you a map, and more!
+</p><p><a rel="nofollow" class="external text" href="http://www.youtube.com/ZombieNirvana#p/u/18/KO4XZfaSAoA">Youtube Tut series by ZombieNirvana -Free</a> Great Series of tutorials on youtube
+</p>
+<h3><span class="mw-headline" id="Putting_your_map_into_the_toolset">Putting your map into the toolset</span></h3>
+<p>Now that we've created our own map, we need to find away for the game to see it. In the previous parts of this tutorial we covered .xls files that contain 2da data. For this part we are going to modify the 2da so that it will use our newly created map instead of the one that shipped with Dragon Age.
+</p><p>Step 1:
+</p><p>Browse to your Dragon Age folder &gt; tools &gt; Source &gt; 2DA and find the worldmaps.xls
+</p><p><a href="File%3AStep_1.jpg.html" class="image"><img alt="Step 1.jpg" src="../assets/mw/images/e/e1/Step_1.jpg" width="600" height="398" srcset="../assets/mw/images/e/e1/Step_1.jpg 1.5x, ../assets/mw/images/e/e1/Step_1.jpg 2x" /></a>
+</p><p>Step 2: 
+</p><p>Create a folder, somewhere on your hard drive, such as "C:\Dragon_Age\test_mod\" (do not allow any of the folders to have space)
+</p><p><a href="File%3AStep_2_map.jpg.html" class="image"><img alt="Step 2 map.jpg" src="../assets/mw/images/d/d4/Step_2_map.jpg" width="600" height="402" srcset="../assets/mw/images/d/d4/Step_2_map.jpg 1.5x, ../assets/mw/images/d/d4/Step_2_map.jpg 2x" /></a>
+</p><p>Step 3:
+</p><p>Go back to your window with the Dragon Age&gt;Tools&gt;source&gt;2da and copy the worldmaps.xls to your newly created folder.
+</p><p>Step 4: 
+</p><p>open up your copied over worldmaps.xls and it should be on the first tab. You will notice that there are multiple tabs on the bottom, which make up the 2da.
+</p><p>Step 5: 
+</p><p>After you have opened up the .xls you will see 
+</p>
+<pre>1	Wide Open World	396061	Worldmap	target_wps_wow	1012	enc_trips_sp
+</pre>
+<p><a href="File%3AStep_3_map.jpg.html" class="image"><img alt="Step 3 map.jpg" src="../assets/mw/images/7/77/Step_3_map.jpg" width="600" height="353" srcset="../assets/mw/images/7/77/Step_3_map.jpg 1.5x, ../assets/mw/images/7/77/Step_3_map.jpg 2x" /></a>
+</p><p>Step 6:
+</p><p>This step is rather simple, in Column D Row 4, you will notice that it says world map. This is the part of the .2da that point's to the image file. After you've taken a sec to get the feel of how it works, replace the "worldmap" txt with the name of the image file you are going to use, but leave out the file extension. As you can see in the image of step5 I have replaced "worldmap" with "Genalor_DA_BL_MAP" leaving out the .tga extension.
+</p><p>Step 7:
+</p><p>Download <a rel="nofollow" class="external text" href="http://combustiblestudios.comze.com/files/converter.rar">Converter.rar</a> this .rar contains the convert.bat and excelprocessor.exe needed to convert your newly changed worldmaps.xls into a GDA for you to use in your mod.
+</p><p>Step 8:
+</p><p>Once downloaded extract it to your folder that you copied and edited your worldmaps.xls in. When it is finished copying over, right click the covert.bat and select edit. It should pop up a window using notepad.exe that should look like this.
+</p><p><a href="File%3AStep_4_map.jpg.html" class="image"><img alt="Step 4 map.jpg" src="../assets/mw/images/e/ef/Step_4_map.jpg" width="600" height="351" srcset="../assets/mw/images/e/ef/Step_4_map.jpg 1.5x, ../assets/mw/images/e/ef/Step_4_map.jpg 2x" /></a>
+</p><p>Step 9:
+</p><p>You will see in the opened Covert.bat that will say
+</p>
+<pre>
+C:\Combustable_Studios\Dragon_Age_Files\XLS\test_mod\ExcelProcessor.exe worldmaps.xls -outdir=C:\Combustable_Studios\Dragon_Age_Files\XLS\test_mod\convert\
+</pre>
+<p>For this part you want to change
+</p>
+ <pre>C:\Combustable_Studios\Dragon_Age_Files\XLS\test_mod\ExcelProcessor.exe</pre>
+<p>to
+</p>
+ <pre>Your Directory where the stuff you need to convert is located\Excelprocessor.exe</pre>
+<p>and
+</p>
+ <pre>-Outdir=C:\Combustable_Studios\Dragon_Age_Files\XLS\test_mod\convert\</pre>
+<p>to
+</p>
+ <pre>-Outdir=Your Directory where the stuff you need to convert is located\convert\</pre>
+<p>After you have changed those batch to point to your folder and file save and close it. Once it is saved and has been close run it, if all goes well it should create a folder called convert and it will contain the following GDA's.
+</p>
+<pre>
+Location_states.GDA
+Map_pin_images.GDA
+State_image_suffixes.GDA
+target_wps_climax_denerim.GDA
+target_wps_denerim.GDA
+target_wps_fade.GDA
+target_wps_underground.GDA
+target_wps_wow.GDA
+terrain_types.GDA
+worldmaps.GDA
+</pre>
+<p>step 10: Copy those files then navigate to your BioWare\Dragon Age\AddIns\mod_name\core\override and paste them into the folder. Then go get your .tga map you created in what ever program you used and place it into that folder to. 
+</p><p>After step 10 you may jump back up to Creating a map and adding pins tutorial, and where your map will have replaced the original world map.
+</p><p>"Once you get a feel with what you are doing you may be able to do more, but I would not recommend such a thing for those who are new to this kinda stuff"--<a href="/mw/index.php?title=User:Arixsus&amp;action=edit&amp;redlink=1" class="new" title="User:Arixsus (page does not exist)">-Arixsus</a> 05:05, 28 November 2009 (UTC)
+</p>
+<!-- 
+NewPP limit report
+CPU time usage: 0.152 seconds
+Real time usage: 0.212 seconds
+Preprocessor visited node count: 186/1000000
+Preprocessor generated node count: 564/1000000
+Post‐expand include size: 0/2097152 bytes
+Template argument size: 0/2097152 bytes
+Highest expansion depth: 3/40
+Expensive parser function count: 0/100
+-->
+
+<!-- 
+Transclusion expansion time report (%,ms,calls,template)
+100.00%    0.000      1 - -total
+-->
+
+<!-- Saved in parser cache with key db714099484-datoolwiki_:pcache:idhash:83-0!*!0!!en!5!* and timestamp 20260531092033 and revision id 13164
+ -->
+</div>									<div class="printfooter">
+						Retrieved from "<a dir="ltr" href="Map_tutorial.html">https://www.datoolset.net/mw/index.php?title=Map_tutorial&amp;oldid=13164</a>"					</div>
+													<div id='catlinks' class='catlinks'><div id="mw-normal-catlinks" class="mw-normal-catlinks"><a href="/wiki/Special:Categories" title="Special:Categories">Categories</a>: <ul><li><a href="Category%3AMaps.html" title="Category:Maps">Maps</a></li><li><a href="Category%3ATutorials.html" title="Category:Tutorials">Tutorials</a></li></ul></div></div>												<div class="visualClear"></div>
+							</div>
+		</div>
+		<div id="mw-navigation">
+			<h2>Navigation menu</h2>
+
+			<div id="mw-head">
+									<div id="p-personal" role="navigation" class="" aria-labelledby="p-personal-label">
+						<h3 id="p-personal-label">Personal tools</h3>
+						<ul>
+							<li id="pt-login"><a href="/mw/index.php?title=Special:UserLogin&amp;returnto=Map+tutorial" title="You are encouraged to log in; however, it is not mandatory [o]" accesskey="o">Log in</a></li>						</ul>
+					</div>
+									<div id="left-navigation">
+										<div id="p-namespaces" role="navigation" class="vectorTabs" aria-labelledby="p-namespaces-label">
+						<h3 id="p-namespaces-label">Namespaces</h3>
+						<ul>
+															<li  id="ca-nstab-main" class="selected"><span><a href="Map_tutorial.html"  title="View the content page [c]" accesskey="c">Page</a></span></li>
+															<li  id="ca-talk"><span><a href="Talk%3AMap_tutorial.html"  title="Discussion about the content page [t]" accesskey="t">Discussion</a></span></li>
+													</ul>
+					</div>
+										<div id="p-variants" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-variants-label">
+												<h3 id="p-variants-label"><span>Variants</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+									</div>
+				<div id="right-navigation">
+										<div id="p-views" role="navigation" class="vectorTabs" aria-labelledby="p-views-label">
+						<h3 id="p-views-label">Views</h3>
+						<ul>
+															<li id="ca-view" class="selected"><span><a href="Map_tutorial.html" >Read</a></span></li>
+															<li id="ca-viewsource"><span><a href="Map_tutorial.html"  title="This page is protected.&#10;You can view its source [e]" accesskey="e">View source</a></span></li>
+															<li id="ca-history" class="collapsible"><span><a href="Map_tutorial.html"  title="Past revisions of this page [h]" accesskey="h">View history</a></span></li>
+													</ul>
+					</div>
+										<div id="p-cactions" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-cactions-label">
+						<h3 id="p-cactions-label"><span>More</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+										<div id="p-search" role="search">
+						<h3>
+							<label for="searchInput">Search</label>
+						</h3>
+
+						<form action="/mw/index.php" id="searchform">
+														<div id="simpleSearch">
+															<input type="search" name="search" placeholder="Search" title="Search Dragon Age Toolset Wiki [f]" accesskey="f" id="searchInput" /><input type="hidden" value="Special:Search" name="title" /><input type="submit" name="fulltext" value="Search" title="Search the pages for this text" id="mw-searchButton" class="searchButton mw-fallbackSearchButton" /><input type="submit" name="go" value="Go" title="Go to a page with this exact name if exists" id="searchButton" class="searchButton" />								</div>
+						</form>
+					</div>
+									</div>
+			</div>
+			<div id="mw-panel">
+				<div id="p-logo" role="banner"><a class="mw-wiki-logo" href="Main_Page.html"  title="Visit the main page"></a></div>
+						<div class="portal" role="navigation" id='p-navigation' aria-labelledby='p-navigation-label'>
+			<h3 id='p-navigation-label'>Navigation</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-mainpage-description"><a href="Main_Page.html" title="Visit the main page [z]" accesskey="z">Main page</a></li>
+													<li id="n-recentchanges"><a href="/wiki/Special:RecentChanges" title="A list of recent changes in the wiki [r]" accesskey="r">Recent changes</a></li>
+													<li id="n-randompage"><a href="/wiki/Special:Random" title="Load a random page [x]" accesskey="x">Random page</a></li>
+													<li id="n-help"><a href="https://www.mediawiki.org/wiki/Special:MyLanguage/Help:Contents" title="The place to find out">Help</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-Links' aria-labelledby='p-Links-label'>
+			<h3 id='p-Links-label'>Links</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-Toolset-forums"><a href="http://forum.bioware.com/forum/30-dragon-age-toolset" rel="nofollow">Toolset forums</a></li>
+													<li id="n-Legacy-forums"><a href="http://social.bioware.com/forum/1/subindex/70" rel="nofollow">Legacy forums</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-tb' aria-labelledby='p-tb-label'>
+			<h3 id='p-tb-label'>Tools</h3>
+
+			<div class="body">
+									<ul>
+													<li id="t-whatlinkshere"><a href="/wiki/Special:WhatLinksHere/Map_tutorial" title="A list of all wiki pages that link here [j]" accesskey="j">What links here</a></li>
+													<li id="t-recentchangeslinked"><a href="/wiki/Special:RecentChangesLinked/Map_tutorial" title="Recent changes in pages linked from this page [k]" accesskey="k">Related changes</a></li>
+													<li id="t-specialpages"><a href="/wiki/Special:SpecialPages" title="A list of all special pages [q]" accesskey="q">Special pages</a></li>
+													<li id="t-print"><a href="Map_tutorial.html" rel="alternate" title="Printable version of this page [p]" accesskey="p">Printable version</a></li>
+													<li id="t-permalink"><a href="Map_tutorial.html" title="Permanent link to this revision of the page">Permanent link</a></li>
+													<li id="t-info"><a href="Map_tutorial.html" title="More information about this page">Page information</a></li>
+											</ul>
+							</div>
+		</div>
+				</div>
+		</div>
+		<div id="footer" role="contentinfo">
+							<ul id="footer-info">
+											<li id="footer-info-lastmod"> This page was last modified on 5 July 2010, at 22:14.</li>
+									</ul>
+							<ul id="footer-places">
+											<li id="footer-places-privacy"><a href="/wiki/Dragon_Age_Toolset_Wiki:Privacy_policy" title="Dragon Age Toolset Wiki:Privacy policy">Privacy policy</a></li>
+											<li id="footer-places-about"><a href="/wiki/Dragon_Age_Toolset_Wiki:About" title="Dragon Age Toolset Wiki:About">About Dragon Age Toolset Wiki</a></li>
+											<li id="footer-places-disclaimer"><a href="/wiki/Dragon_Age_Toolset_Wiki:General_disclaimer" title="Dragon Age Toolset Wiki:General disclaimer">Disclaimers</a></li>
+									</ul>
+										<ul id="footer-icons" class="noprint">
+											<li id="footer-poweredbyico">
+															<a href="//www.mediawiki.org/"><img src="../assets/mw/resources/assets/poweredby_mediawiki_88x31.png" alt="Powered by MediaWiki" srcset="../assets/mw/resources/assets/poweredby_mediawiki_132x47.png 1.5x, ../assets/mw/resources/assets/poweredby_mediawiki_176x62.png 2x" width="88" height="31" /></a>
+													</li>
+									</ul>
+						<div style="clear:both"></div>
+		</div>
+		<script>if(window.jQuery)jQuery.ready();</script><script>if(window.mw){
+mw.loader.state({"site":"loading","user":"ready","user.groups":"ready"});
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.toc","mediawiki.action.view.postEdit","mediawiki.user","mediawiki.hidpi","mediawiki.page.ready","mediawiki.searchSuggest"],null,true);
+}</script>
+<script>if(window.mw){
+document.write("\u003Cscript src=\"https://www.datoolset.net/mw/load.php?debug=false\u0026amp;lang=en\u0026amp;modules=site\u0026amp;only=scripts\u0026amp;skin=vector\u0026amp;*\"\u003E\u003C/script\u003E");
+}</script>
+<script>if(window.mw){
+mw.config.set({"wgBackendResponseTime":223});
+}</script>
+	</body>
+</html>

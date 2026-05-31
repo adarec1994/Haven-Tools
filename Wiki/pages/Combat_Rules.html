@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" class="client-nojs">
+<head>
+<meta charset="UTF-8" />
+<title>Combat Rules - Dragon Age Toolset Wiki</title>
+<meta name="generator" content="MediaWiki 1.25.6" />
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="search" type="application/opensearchdescription+xml" href="/mw/opensearch_desc.php" title="Dragon Age Toolset Wiki (en)" />
+<link rel="EditURI" type="application/rsd+xml" href="https://www.datoolset.net/mw/api.php?action=rsd" />
+<link rel="alternate" hreflang="x-default" href="Combat_Rules.html" />
+<link rel="alternate" type="application/atom+xml" title="Dragon Age Toolset Wiki Atom feed" href="/mw/index.php?title=Special:RecentChanges&amp;feed=atom" />
+<meta name="ResourceLoaderDynamicStyles" content="" />
+<style>a:lang(ar),a:lang(kk-arab),a:lang(mzn),a:lang(ps),a:lang(ur){text-decoration:none}
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-css:7:270a0dcd3ae587df0f041aebfc42e61b */</style>
+<script>if(window.mw){
+mw.config.set({"wgCanonicalNamespace":"","wgCanonicalSpecialPageName":false,"wgNamespaceNumber":0,"wgPageName":"Combat_Rules","wgTitle":"Combat Rules","wgCurRevisionId":19437,"wgRevisionId":19437,"wgArticleId":3574,"wgIsArticle":true,"wgIsRedirect":false,"wgAction":"view","wgUserName":null,"wgUserGroups":["*"],"wgCategories":["Scripts"],"wgBreakFrames":false,"wgPageContentLanguage":"en","wgPageContentModel":"wikitext","wgSeparatorTransformTable":["",""],"wgDigitTransformTable":["",""],"wgDefaultDateFormat":"dmy","wgMonthNames":["","January","February","March","April","May","June","July","August","September","October","November","December"],"wgMonthNamesShort":["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],"wgRelevantPageName":"Combat_Rules","wgRelevantArticleId":3574,"wgIsProbablyEditable":false,"wgRestrictionEdit":[],"wgRestrictionMove":[]});
+}</script><script>if(window.mw){
+mw.loader.implement("user.options",function($,jQuery){mw.user.options.set({"variant":"en"});});mw.loader.implement("user.tokens",function($,jQuery){mw.user.tokens.set({"editToken":"+\\","patrolToken":"+\\","watchToken":"+\\"});});
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-js:7:a5c52c063dc436c1ca7c9f456936a5e9 */
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.page.startup","mediawiki.legacy.wikibits","mediawiki.legacy.ajax","skins.vector.js"]);
+}</script>
+<!--[if lt IE 7]><style type="text/css">body{behavior:url("/mw/skins/Vector/csshover.min.htc")}</style><![endif]-->
+<link rel="stylesheet" href="../assets/local/wiki-static.css" />
+</head>
+<body class="mediawiki ltr sitedir-ltr ns-0 ns-subject page-Combat_Rules skin-vector action-view">
+		<div id="mw-page-base" class="noprint"></div>
+		<div id="mw-head-base" class="noprint"></div>
+		<div id="content" class="mw-body" role="main">
+			<a id="top"></a>
+
+						<div class="mw-indicators">
+</div>
+			<h1 id="firstHeading" class="firstHeading" lang="en">Combat Rules</h1>
+						<div id="bodyContent" class="mw-body-content">
+									<div id="siteSub">From Dragon Age Toolset Wiki</div>
+								<div id="contentSub"></div>
+												<div id="jump-to-nav" class="mw-jump">
+					Jump to:					<a href="#mw-head">navigation</a>, 					<a href="#p-search">search</a>
+				</div>
+				<div id="mw-content-text" lang="en" dir="ltr" class="mw-content-ltr"><table style="float:right; background-color:#eeeeee; border:2px #999999 solid; padding:4px; margin:4px; width:220px;">
+
+<tr>
+<th align="center"> <a href="Script.html" title="Script">Scripting</a>
+</th></tr>
+<tr>
+<td>
+<ul><li><a href="Scripting_overview.html" title="Scripting overview">Scripting overview</a></li>
+<li><a href="Scripting_tutorial.html" title="Scripting tutorial">Scripting tutorial</a></li>
+<li><a href="Event_keyword.html" title="Event keyword">Event</a>
+<ul><li><a href="Event_override.html" title="Event override">Event override</a></li></ul></li>
+<li><a href="Useful_Scripts.html" title="Useful Scripts">Useful Scripts</a></li>
+<li><a href="Script_error.html" title="Script error">Script errors</a></li>
+<li><a href="Rules.html" title="Rules">Rules</a>
+<ul><li> <a href="Creature_Properties.html" title="Creature Properties">Creature Properties</a>
+<ul><li> <a href="Attribute.html" title="Attribute">Attributes</a></li></ul></li>
+<li> <a href="Classes.html" title="Classes">Classes</a></li>
+<li> <strong class="selflink">Combat Rules</strong></li>
+<li> <a href="Ability.html" title="Ability">Abilities</a></li></ul></li>
+<li><a href="Category%3AScripts.html" title="Category:Scripts">Scripts category</a>
+<dl><dd> <small>Contains articles on hundreds of individual functions</small></dd></dl></li></ul>
+</td></tr></table>
+<p><b>This page is work in progress</b>
+</p><p>This page describes the technical implementation and flow of combat logic in the game scripts.
+It deals mostly with weapon based combat, for spells and abilities, please see <a href="Ability.html" title="Ability">Abilities</a>.
+</p><p>Note: The term 'property' used on this page refers to <a href="Creature_Properties.html" title="Creature Properties">Creature Properties</a>.
+</p>
+<div id="toc" class="toc"><div id="toctitle"><h2>Contents</h2></div>
+<ul>
+<li class="toclevel-1 tocsection-1"><a href="#Detailed_Description"><span class="tocnumber">1</span> <span class="toctext">Detailed Description</span></a>
+<ul>
+<li class="toclevel-2 tocsection-2"><a href="#Hit_Resolution"><span class="tocnumber">1.1</span> <span class="toctext">Hit Resolution</span></a>
+<ul>
+<li class="toclevel-3 tocsection-3"><a href="#Attack_Rating"><span class="tocnumber">1.1.1</span> <span class="toctext">Attack Rating</span></a></li>
+<li class="toclevel-3 tocsection-4"><a href="#Defense_Rating"><span class="tocnumber">1.1.2</span> <span class="toctext">Defense Rating</span></a></li>
+<li class="toclevel-3 tocsection-5"><a href="#Flanking_Bonus_Determination"><span class="tocnumber">1.1.3</span> <span class="toctext">Flanking Bonus Determination</span></a></li>
+<li class="toclevel-3 tocsection-6"><a href="#Backstab_Determination"><span class="tocnumber">1.1.4</span> <span class="toctext">Backstab Determination</span></a></li>
+<li class="toclevel-3 tocsection-7"><a href="#Critical_Hit_Determination"><span class="tocnumber">1.1.5</span> <span class="toctext">Critical Hit Determination</span></a></li>
+</ul>
+</li>
+<li class="toclevel-2 tocsection-8"><a href="#Damage_Resolution"><span class="tocnumber">1.2</span> <span class="toctext">Damage Resolution</span></a>
+<ul>
+<li class="toclevel-3 tocsection-9"><a href="#Critical_Hit_Damage_Modification"><span class="tocnumber">1.2.1</span> <span class="toctext">Critical Hit Damage Modification</span></a></li>
+<li class="toclevel-3 tocsection-10"><a href="#Backstab_Damage_Modification"><span class="tocnumber">1.2.2</span> <span class="toctext">Backstab Damage Modification</span></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+
+<h2><span class="mw-headline" id="Detailed_Description">Detailed Description</span></h2>
+<p>Combat in Dragon Age: Origin is handled mainly through scripts - the game engine itself has little knowledge of rule concepts such as 'Strength', 'Damage Modifier' or 'Armor Penetration'.
+</p>
+<h3><span class="mw-headline" id="Hit_Resolution">Hit Resolution</span></h3>
+<p>Hit resolution is implemented in the function <a href="Combat_h.nss.html#Combat_GetAttackResult" title="Combat h.nss">Combat_GetAttackResult</a> in the script library <a href="Combat_h.nss.html" title="Combat h.nss">combat_h.nss</a>, which is invoked from the <a href="/mw/index.php?title=Creature_core.nss&amp;action=edit&amp;redlink=1" class="new" title="Creature core.nss (page does not exist)">creature_core.nss</a> script whenever an attack event is received. The function returns one of several <a href="COMBAT_RESULT_%2A.html" title="COMBAT RESULT *">COMBAT_RESULT_*</a> constants and handles messaging to the game engine which animation to play.
+</p><p>Overall, Dragon Age: Origin's combat system is 'hit heavy' as a target's armor does not modify its chance of getting hit.
+</p><p>The simplified decision tree for to hit resolution is as follows:
+</p>
+<div dir="ltr" class="mw-geshi mw-code mw-content-ltr"><div class="dascript source-dascript"><pre class="de1"><a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a> Target Is Placeable Object
+  <a href="http://www.datoolset.net/wiki/index.php?title=return keyword"><span class="kw1">return</span></a> <span class="kw3">COMBAT_RESULT_HIT</span>
+&#160;
+<a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a> Target Displacement<span class="sy0">/</span>Dodge <span class="sy0">&lt;</span> RandomF<span class="br0">&#40;</span><span class="nu0">100.0</span><span class="br0">&#41;</span>
+  <a href="http://www.datoolset.net/wiki/index.php?title=return keyword"><span class="kw1">return</span></a> <span class="kw3">COMBAT_RESULT_MISS</span>  
+&#160;
+<a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a> Attacker Is Using BASE_ITEM_TYPE_STAFF
+  <a href="http://www.datoolset.net/wiki/index.php?title=return keyword"><span class="kw1">return</span></a> <span class="kw3">COMBAT_RESULT_HIT</span>
+&#160;
+bHit <span class="sy0">=</span> RandomF<span class="br0">&#40;</span><span class="nu0">100.0</span><span class="br0">&#41;</span> <span class="sy0">&lt;</span> AttackRating <span class="sy0">-</span> DefenseRating
+bCrit <span class="sy0">=</span> CheckCricital<span class="br0">&#40;</span><span class="br0">&#41;</span>
+bBackstab <span class="sy0">=</span> CheckBackstab<span class="br0">&#40;</span><span class="br0">&#41;</span>
+&#160;
+<a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a> bHit
+&#160;
+  <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a>  HasEffect<span class="br0">&#40;</span>attacker, EFFECT_TYPE_MISDIRECTION_HEX<span class="br0">&#41;</span>
+    <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a> bCrit 
+      <a href="http://www.datoolset.net/wiki/index.php?title=return keyword"><span class="kw1">return</span></a> <span class="kw3">COMBAT_RESULT_HIT</span>
+    <a href="http://www.datoolset.net/wiki/index.php?title=else keyword"><span class="kw1">else</span></a>
+      <a href="http://www.datoolset.net/wiki/index.php?title=return keyword"><span class="kw1">return</span></a> <span class="kw3">COMBAT_RESULT_MISS</span>
+&#160;
+  <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a> bBackstab
+    <a href="http://www.datoolset.net/wiki/index.php?title=return keyword"><span class="kw1">return</span></a> <span class="kw3">COMBAT_RESULT_BACKSTAB</span>
+&#160;
+  <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a> bCrit
+    <a href="http://www.datoolset.net/wiki/index.php?title=return keyword"><span class="kw1">return</span></a> COMBAT_RESULT_CRITICAL_HIT
+  <a href="http://www.datoolset.net/wiki/index.php?title=else keyword"><span class="kw1">else</span></a>
+    <a href="http://www.datoolset.net/wiki/index.php?title=return keyword"><span class="kw1">return</span></a>  <span class="kw3">COMBAT_RESULT_HIT</span>
+&#160;
+<a href="http://www.datoolset.net/wiki/index.php?title=else keyword"><span class="kw1">else</span></a>
+  <a href="http://www.datoolset.net/wiki/index.php?title=return keyword"><span class="kw1">return</span></a> <span class="kw3">COMBAT_RESULT_MISS</span></pre></div></div>
+<h4><span class="mw-headline" id="Attack_Rating">Attack Rating</span></h4>
+<p>Attack rating includes:
+</p>
+<ul><li> Base attack value (54.0f)</li>
+<li> + <a href="#Flanking_Bonus_Determination">Flanking Bonus</a> (position based, modified by attacker and enemy talents and effects as well as shields. Rogues have a bonus here).</li>
+<li> + Distance based penalties (for ranged attacks)</li>
+<li> + Attacker's attack property value (this includes modifiers from buffs, etc.)</li>
+<li> + Any +attack item bonuses on the weapon that performs the attack.</li>
+<li> + Any external bonuses or penalties passed into the function (from talent scripts, etc.)</li>
+<li> + Difficulty setting based modifications</li></ul>
+<h4><span class="mw-headline" id="Defense_Rating">Defense Rating</span></h4>
+<p>Defense rating includes:
+</p>
+<ul><li> Defender defense value (and missile deflection if attack was ranged). This includes items, effects and magical bonus.</li>
+<li> Difficulty setting based modifications</li></ul>
+<h4><span class="mw-headline" id="Flanking_Bonus_Determination">Flanking Bonus Determination</span></h4>
+<ul><li> Flanking bonus is a floating point value that applies to both AttackRating and to the chance to score a critical hit.</li>
+<li> It is essentially a representation of how close the character is to the best position when attacking the enemy (directly in the back)</li>
+<li> Various shield abilities on the target reduce or prevent the attacker from getting the bonus.</li>
+<li> The further away the character is from that position, the more the bonus is diluted.</li>
+<li> The magnitude of the bonus ranges from +0 to +15 (+20 with combat_movement) and is applied to AttackRating and partially (1+(FlankingBonus/5)) to critical hit chance.</li>
+<li> Most characters only flank 60 degrees in each direction, combat movement allows an increase to 90 degrees (the full back 180).</li>
+<li> Only rogues get the full flanking bonus, everyone else still gets half.</li>
+<li> The full logic is implemented in the function <a href="Combat_h.nss.html#Combat_GetFlankingBonus" title="Combat h.nss">Combat_GetFlankingBonus</a> in <a href="Combat_h.nss.html" title="Combat h.nss">combat_h.nss</a>.</li></ul>
+<h4><span class="mw-headline" id="Backstab_Determination">Backstab Determination</span></h4>
+<ul><li> Backstab is determined for each melee attack only.</li>
+<li> Backstab requires the attacker to have a flanking bonus &gt; 0 (some talents waive this restriction)</li>
+<li> Only creatures with the Rogue <a href="Classes.html" title="Classes">Character Class</a> may backstab. This is a class benefit.</li>
+<li> Only humanoid attackers can backstab (this includes darkspawn)</li>
+<li> The full logic is implemented in the function <a href="Combat_h.nss.html#Combat_CheckBackstab" title="Combat h.nss">Combat_CheckBackstab</a> in <a href="Combat_h.nss.html" title="Combat h.nss">combat_h.nss</a>.</li>
+<li> The damage logic is implemented in <a href="Combat_damage_h.nss.html#Combat_Damage_GetBackstabDamage" title="Combat damage h.nss">Combat_Damage_GetBackstabDamage</a>.</li></ul>
+<h4><span class="mw-headline" id="Critical_Hit_Determination">Critical Hit Determination</span></h4>
+<ul><li> Critical Hit Chance uses the attackers Melee or Ranged critical hit modifier based on attack type.</li>
+<li> + the attacking weapon's critical hit modifier stat.</li>
+<li> + 1.20x (1.1x for non rogues) the attacker's <a href="#Flanking_Bonus_Determination">Flanking Bonus</a> in the current situation.</li>
+<li> + 3.5 for each enemy past the 2nd that is fighting a warrior with the bravery talent.</li>
+<li> A critical hit occurs when the resulting CriticalHitChance is smaller than RandomFloat()*100.0f.</li>
+<li> Certain effects and spells (e.g. Death Hex) can always override the result, as will attacking from stealth (always hits critical).</li>
+<li> The logic is  implemented in the function <a href="Combat_h.nss.html#Combat_GetAttackResult" title="Combat h.nss">Combat_GetAttackResult</a> in the script library <a href="Combat_h.nss.html" title="Combat h.nss">combat_h.nss</a></li></ul>
+<h3><span class="mw-headline" id="Damage_Resolution">Damage Resolution</span></h3>
+<p>Damage resolution logic is implemented in the script <a href="Combat_damage_h.nss.html" title="Combat damage h.nss">combat_damage_h.nss</a>.
+</p>
+<h4><span class="mw-headline" id="Critical_Hit_Damage_Modification">Critical Hit Damage Modification</span></h4>
+<ul><li> Critical hits increase the amount of damage done by an attack by a fixed multiplier.</li>
+<li> The magnitude of the multiplier can be affected by items and effects, but is not affected by any of the character's attributes.</li>
+<li> Historical Note: Critical damage used to be variable 'up to...', but was changed to constant to provide a more predictable flow of damage.</li>
+<li> The logic for critical damage is implemented in <a href="Combat_damage_h.nss.html#GetCriticalDamageModifier" title="Combat damage h.nss">combat_damage_h.nss#GetCriticalDamageModifier</a>.</li></ul>
+<h4><span class="mw-headline" id="Backstab_Damage_Modification">Backstab Damage Modification</span></h4>
+<ul><li> Backstab damage is essentially identical to critical damage, but modified by certain rogue talents.</li>
+<li> The full logic is implemented <a href="Combat_damage_h.nss.html#Combat_Damage_GetBackstabDamage" title="Combat damage h.nss">Combat_Damage_GetBackstabDamage</a> in <a href="Combat_damage_h.nss.html" title="Combat damage h.nss">combat_damage_h.nss</a>.</li></ul>
+<p><br />
+</p>
+<table class="nmbox" style="width:100%; border:1px solid #AAAAAA; border-collapse:collapse; clear:both; font-size:85%; margin:0.25em 0;">
+<tr style="background: #CFDFEF;">
+<th style="border:none; padding:4px 1em; border-right:1px solid #AAAAAA; text-align:center; white-space:nowrap;"> <b><a href="Dragon_Age_Toolset_Wiki%3ALanguage_policy.html" title="Dragon Age Toolset Wiki:Language policy">Language:</a></b></th>
+<td style="border:none; padding:0.25em 0.9em; width:100%; background:#DFEFFF;"><b><strong class="selflink">English</strong></b> <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>&#160;&#8226;&#32;<span lang="ru"><a href="Combat_Rules/ru.html" title="Combat Rules/ru">русский</a></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></td>
+</tr></table>
+
+<!-- 
+NewPP limit report
+CPU time usage: 0.068 seconds
+Real time usage: 0.141 seconds
+Preprocessor visited node count: 970/1000000
+Preprocessor generated node count: 3391/1000000
+Post‐expand include size: 5918/2097152 bytes
+Template argument size: 3380/2097152 bytes
+Highest expansion depth: 8/40
+Expensive parser function count: 54/100
+-->
+
+<!-- 
+Transclusion expansion time report (%,ms,calls,template)
+100.00%  125.934      1 - -total
+ 79.69%  100.360      1 - Template:Languages
+ 74.87%   94.285      1 - Template:LanguagesBox
+ 57.92%   72.939     54 - Template:LanguagesLang
+  8.97%   11.293      1 - Template:Infobox_script
+  7.87%    9.907      1 - Template:LanguagesTitle
+  5.24%    6.596      1 - Template:Infobox_template
+-->
+
+<!-- Saved in parser cache with key db714099484-datoolwiki_:pcache:idhash:3574-0!*!0!!en!*!* and timestamp 20260530225713 and revision id 19437
+ -->
+</div>									<div class="printfooter">
+						Retrieved from "<a dir="ltr" href="Combat_Rules.html">https://www.datoolset.net/mw/index.php?title=Combat_Rules&amp;oldid=19437</a>"					</div>
+													<div id='catlinks' class='catlinks'><div id="mw-normal-catlinks" class="mw-normal-catlinks"><a href="/wiki/Special:Categories" title="Special:Categories">Category</a>: <ul><li><a href="Category%3AScripts.html" title="Category:Scripts">Scripts</a></li></ul></div></div>												<div class="visualClear"></div>
+							</div>
+		</div>
+		<div id="mw-navigation">
+			<h2>Navigation menu</h2>
+
+			<div id="mw-head">
+									<div id="p-personal" role="navigation" class="" aria-labelledby="p-personal-label">
+						<h3 id="p-personal-label">Personal tools</h3>
+						<ul>
+							<li id="pt-login"><a href="/mw/index.php?title=Special:UserLogin&amp;returnto=Combat+Rules" title="You are encouraged to log in; however, it is not mandatory [o]" accesskey="o">Log in</a></li>						</ul>
+					</div>
+									<div id="left-navigation">
+										<div id="p-namespaces" role="navigation" class="vectorTabs" aria-labelledby="p-namespaces-label">
+						<h3 id="p-namespaces-label">Namespaces</h3>
+						<ul>
+															<li  id="ca-nstab-main" class="selected"><span><a href="Combat_Rules.html"  title="View the content page [c]" accesskey="c">Page</a></span></li>
+															<li  id="ca-talk"><span><a href="Talk%3ACombat_Rules.html"  title="Discussion about the content page [t]" accesskey="t">Discussion</a></span></li>
+													</ul>
+					</div>
+										<div id="p-variants" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-variants-label">
+												<h3 id="p-variants-label"><span>Variants</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+									</div>
+				<div id="right-navigation">
+										<div id="p-views" role="navigation" class="vectorTabs" aria-labelledby="p-views-label">
+						<h3 id="p-views-label">Views</h3>
+						<ul>
+															<li id="ca-view" class="selected"><span><a href="Combat_Rules.html" >Read</a></span></li>
+															<li id="ca-viewsource"><span><a href="Combat_Rules.html"  title="This page is protected.&#10;You can view its source [e]" accesskey="e">View source</a></span></li>
+															<li id="ca-history" class="collapsible"><span><a href="Combat_Rules.html"  title="Past revisions of this page [h]" accesskey="h">View history</a></span></li>
+													</ul>
+					</div>
+										<div id="p-cactions" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-cactions-label">
+						<h3 id="p-cactions-label"><span>More</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+										<div id="p-search" role="search">
+						<h3>
+							<label for="searchInput">Search</label>
+						</h3>
+
+						<form action="/mw/index.php" id="searchform">
+														<div id="simpleSearch">
+															<input type="search" name="search" placeholder="Search" title="Search Dragon Age Toolset Wiki [f]" accesskey="f" id="searchInput" /><input type="hidden" value="Special:Search" name="title" /><input type="submit" name="fulltext" value="Search" title="Search the pages for this text" id="mw-searchButton" class="searchButton mw-fallbackSearchButton" /><input type="submit" name="go" value="Go" title="Go to a page with this exact name if exists" id="searchButton" class="searchButton" />								</div>
+						</form>
+					</div>
+									</div>
+			</div>
+			<div id="mw-panel">
+				<div id="p-logo" role="banner"><a class="mw-wiki-logo" href="Main_Page.html"  title="Visit the main page"></a></div>
+						<div class="portal" role="navigation" id='p-navigation' aria-labelledby='p-navigation-label'>
+			<h3 id='p-navigation-label'>Navigation</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-mainpage-description"><a href="Main_Page.html" title="Visit the main page [z]" accesskey="z">Main page</a></li>
+													<li id="n-recentchanges"><a href="/wiki/Special:RecentChanges" title="A list of recent changes in the wiki [r]" accesskey="r">Recent changes</a></li>
+													<li id="n-randompage"><a href="/wiki/Special:Random" title="Load a random page [x]" accesskey="x">Random page</a></li>
+													<li id="n-help"><a href="https://www.mediawiki.org/wiki/Special:MyLanguage/Help:Contents" title="The place to find out">Help</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-Links' aria-labelledby='p-Links-label'>
+			<h3 id='p-Links-label'>Links</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-Toolset-forums"><a href="http://forum.bioware.com/forum/30-dragon-age-toolset" rel="nofollow">Toolset forums</a></li>
+													<li id="n-Legacy-forums"><a href="http://social.bioware.com/forum/1/subindex/70" rel="nofollow">Legacy forums</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-tb' aria-labelledby='p-tb-label'>
+			<h3 id='p-tb-label'>Tools</h3>
+
+			<div class="body">
+									<ul>
+													<li id="t-whatlinkshere"><a href="/wiki/Special:WhatLinksHere/Combat_Rules" title="A list of all wiki pages that link here [j]" accesskey="j">What links here</a></li>
+													<li id="t-recentchangeslinked"><a href="/wiki/Special:RecentChangesLinked/Combat_Rules" title="Recent changes in pages linked from this page [k]" accesskey="k">Related changes</a></li>
+													<li id="t-specialpages"><a href="/wiki/Special:SpecialPages" title="A list of all special pages [q]" accesskey="q">Special pages</a></li>
+													<li id="t-print"><a href="Combat_Rules.html" rel="alternate" title="Printable version of this page [p]" accesskey="p">Printable version</a></li>
+													<li id="t-permalink"><a href="Combat_Rules.html" title="Permanent link to this revision of the page">Permanent link</a></li>
+													<li id="t-info"><a href="Combat_Rules.html" title="More information about this page">Page information</a></li>
+											</ul>
+							</div>
+		</div>
+				</div>
+		</div>
+		<div id="footer" role="contentinfo">
+							<ul id="footer-info">
+											<li id="footer-info-lastmod"> This page was last modified on 4 April 2015, at 13:42.</li>
+									</ul>
+							<ul id="footer-places">
+											<li id="footer-places-privacy"><a href="/wiki/Dragon_Age_Toolset_Wiki:Privacy_policy" title="Dragon Age Toolset Wiki:Privacy policy">Privacy policy</a></li>
+											<li id="footer-places-about"><a href="/wiki/Dragon_Age_Toolset_Wiki:About" title="Dragon Age Toolset Wiki:About">About Dragon Age Toolset Wiki</a></li>
+											<li id="footer-places-disclaimer"><a href="/wiki/Dragon_Age_Toolset_Wiki:General_disclaimer" title="Dragon Age Toolset Wiki:General disclaimer">Disclaimers</a></li>
+									</ul>
+										<ul id="footer-icons" class="noprint">
+											<li id="footer-poweredbyico">
+															<a href="//www.mediawiki.org/"><img src="../assets/mw/resources/assets/poweredby_mediawiki_88x31.png" alt="Powered by MediaWiki" srcset="../assets/mw/resources/assets/poweredby_mediawiki_132x47.png 1.5x, ../assets/mw/resources/assets/poweredby_mediawiki_176x62.png 2x" width="88" height="31" /></a>
+													</li>
+									</ul>
+						<div style="clear:both"></div>
+		</div>
+		<script>if(window.jQuery)jQuery.ready();</script><script>if(window.mw){
+mw.loader.state({"site":"loading","user":"ready","user.groups":"ready"});
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.toc","mediawiki.action.view.postEdit","mediawiki.user","mediawiki.hidpi","mediawiki.page.ready","mediawiki.searchSuggest"],null,true);
+}</script>
+<script>if(window.mw){
+document.write("\u003Cscript src=\"https://www.datoolset.net/mw/load.php?debug=false\u0026amp;lang=en\u0026amp;modules=site\u0026amp;only=scripts\u0026amp;skin=vector\u0026amp;*\"\u003E\u003C/script\u003E");
+}</script>
+<script>if(window.mw){
+mw.config.set({"wgBackendResponseTime":354});
+}</script>
+	</body>
+</html>

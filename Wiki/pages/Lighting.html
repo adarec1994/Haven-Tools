@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" class="client-nojs">
+<head>
+<meta charset="UTF-8" />
+<title>Lighting - Dragon Age Toolset Wiki</title>
+<meta name="generator" content="MediaWiki 1.25.6" />
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="search" type="application/opensearchdescription+xml" href="/mw/opensearch_desc.php" title="Dragon Age Toolset Wiki (en)" />
+<link rel="EditURI" type="application/rsd+xml" href="https://www.datoolset.net/mw/api.php?action=rsd" />
+<link rel="alternate" hreflang="x-default" href="Lighting.html" />
+<link rel="alternate" type="application/atom+xml" title="Dragon Age Toolset Wiki Atom feed" href="/mw/index.php?title=Special:RecentChanges&amp;feed=atom" />
+<meta name="ResourceLoaderDynamicStyles" content="" />
+<style>a:lang(ar),a:lang(kk-arab),a:lang(mzn),a:lang(ps),a:lang(ur){text-decoration:none}
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-css:7:270a0dcd3ae587df0f041aebfc42e61b */</style>
+<script>if(window.mw){
+mw.config.set({"wgCanonicalNamespace":"","wgCanonicalSpecialPageName":false,"wgNamespaceNumber":0,"wgPageName":"Lighting","wgTitle":"Lighting","wgCurRevisionId":19730,"wgRevisionId":19730,"wgArticleId":2234,"wgIsArticle":true,"wgIsRedirect":false,"wgAction":"view","wgUserName":null,"wgUserGroups":["*"],"wgCategories":["Level layouts"],"wgBreakFrames":false,"wgPageContentLanguage":"en","wgPageContentModel":"wikitext","wgSeparatorTransformTable":["",""],"wgDigitTransformTable":["",""],"wgDefaultDateFormat":"dmy","wgMonthNames":["","January","February","March","April","May","June","July","August","September","October","November","December"],"wgMonthNamesShort":["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],"wgRelevantPageName":"Lighting","wgRelevantArticleId":2234,"wgIsProbablyEditable":false,"wgRestrictionEdit":[],"wgRestrictionMove":[]});
+}</script><script>if(window.mw){
+mw.loader.implement("user.options",function($,jQuery){mw.user.options.set({"variant":"en"});});mw.loader.implement("user.tokens",function($,jQuery){mw.user.tokens.set({"editToken":"+\\","patrolToken":"+\\","watchToken":"+\\"});});
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-js:7:a5c52c063dc436c1ca7c9f456936a5e9 */
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.page.startup","mediawiki.legacy.wikibits","mediawiki.legacy.ajax","skins.vector.js"]);
+}</script>
+<!--[if lt IE 7]><style type="text/css">body{behavior:url("/mw/skins/Vector/csshover.min.htc")}</style><![endif]-->
+<link rel="stylesheet" href="../assets/local/wiki-static.css" />
+</head>
+<body class="mediawiki ltr sitedir-ltr ns-0 ns-subject page-Lighting skin-vector action-view">
+		<div id="mw-page-base" class="noprint"></div>
+		<div id="mw-head-base" class="noprint"></div>
+		<div id="content" class="mw-body" role="main">
+			<a id="top"></a>
+
+						<div class="mw-indicators">
+</div>
+			<h1 id="firstHeading" class="firstHeading" lang="en">Lighting</h1>
+						<div id="bodyContent" class="mw-body-content">
+									<div id="siteSub">From Dragon Age Toolset Wiki</div>
+								<div id="contentSub"></div>
+												<div id="jump-to-nav" class="mw-jump">
+					Jump to:					<a href="#mw-head">navigation</a>, 					<a href="#p-search">search</a>
+				</div>
+				<div id="mw-content-text" lang="en" dir="ltr" class="mw-content-ltr"><table style="float:right; background-color:#eeeeee; border:2px #999999 solid; padding:4px; margin:4px; width:220px;">
+
+<tr>
+<th align="center"> Level editor topics
+</th></tr>
+<tr>
+<td>
+<ul><li><a href="Level_editor.html" title="Level editor">Level editor</a>
+<ul><li> <a href="Creating_a_new_level.html" title="Creating a new level">Creating a new level</a></li>
+<li> <a href="Exportable_area.html" title="Exportable area">Exportable area</a></li>
+<li> <a href="Level_Editor_Tutorial.html" title="Level Editor Tutorial">Level Editor Tutorial</a></li>
+<li> <a href="Exterior_Level_Manual.html" title="Exterior Level Manual">Exterior Level Manual</a></li></ul></li>
+<li><a href="Model_Placement.html" title="Model Placement">Model Placement</a>
+<ul><li><a href="Model_list.html" title="Model list">Model list</a> <small>(screenshots)</small></li>
+<li><a href="Vista_object.html" title="Vista object">Vista objects</a></li></ul></li>
+<li><a href="Vegetation.html" title="Vegetation">Vegetation Placement</a>
+<ul><li><a href="Vegetation_list.html" title="Vegetation list">Vegetation list</a> <small>(screenshots)</small></li></ul></li>
+<li><strong class="selflink">Lighting</strong></li>
+<li><a href="Terrain_mesh.html" title="Terrain mesh">Terrain mesh</a>
+<ul><li><a href="Terrain_list.html" title="Terrain list">Terrain list</a> <small>(screenshots)</small></li></ul></li></ul>
+</td></tr></table>
+<p>There are many different types of lighting and light combinations that can be placed in the editor.
+</p><p>There are also many tools used to create lighting and generate lighting and even visualize lighting in the editor.  The goal with the editor is to give the artist the same experience as he/she would see in the game.  This will help them to be able to create the levels and tweak lighting quickly without having to stop to see it in-game.
+</p><p><br />
+</p>
+<div id="toc" class="toc"><div id="toctitle"><h2>Contents</h2></div>
+<ul>
+<li class="toclevel-1 tocsection-1"><a href="#Lights"><span class="tocnumber">1</span> <span class="toctext">Lights</span></a></li>
+<li class="toclevel-1 tocsection-2"><a href="#Character_lights"><span class="tocnumber">2</span> <span class="toctext">Character lights</span></a></li>
+<li class="toclevel-1 tocsection-3"><a href="#Sunlight"><span class="tocnumber">3</span> <span class="toctext">Sunlight</span></a></li>
+<li class="toclevel-1 tocsection-4"><a href="#Light_probes"><span class="tocnumber">4</span> <span class="toctext">Light probes</span></a></li>
+<li class="toclevel-1 tocsection-5"><a href="#Delete_all_the_lightmap_files"><span class="tocnumber">5</span> <span class="toctext">Delete all the lightmap files</span></a></li>
+<li class="toclevel-1 tocsection-6"><a href="#Advanced_lighting"><span class="tocnumber">6</span> <span class="toctext">Advanced lighting</span></a>
+<ul>
+<li class="toclevel-2 tocsection-7"><a href="#Room-based_lights"><span class="tocnumber">6.1</span> <span class="toctext">Room-based lights</span></a></li>
+<li class="toclevel-2 tocsection-8"><a href="#Bloom_and_Other_Effects"><span class="tocnumber">6.2</span> <span class="toctext">Bloom and Other Effects</span></a></li>
+</ul>
+</li>
+<li class="toclevel-1 tocsection-9"><a href="#Light_mapping"><span class="tocnumber">7</span> <span class="toctext">Light mapping</span></a></li>
+<li class="toclevel-1 tocsection-10"><a href="#External_Tutorials"><span class="tocnumber">8</span> <span class="toctext">External Tutorials</span></a></li>
+</ul>
+</div>
+
+<h2><span class="mw-headline" id="Lights">Lights</span></h2>
+<p>Lights for the game are split into two categories based on what they affect: levels and characters.  Character lights will affect the player, NPCs, and creatures.  The level lights will affect static geometry and designer placeables.
+</p><p>The game supports several different light types, with the purpose of balancing quality vs performance.  To understand the use of the light types, one must first know the general lighting equation:
+</p>
+<pre>Diffuse = DynamicAmbient + F(DynamicLights, DynamicShadows) + ( LightmapRGB + LightmapShadowMap * F(StaticLights , DynamicShadows) )
+</pre>
+<p>Where F is the function which calculates light contribution given the dynamic shadow map.
+</p><p>Light Effect:
+</p>
+<ul><li> Baked: This is lighting that only affects things in the level layout. The player will not be lit by this. Its contribution to the lighting scene is encoded in the lightmap RGB.</li>
+<li> Dynamic: This only affects the Player Character. The dynamic lights will light all geometry without regard for baked shadow maps.  They still however, respect the dynamically generated shadowmap.</li>
+<li> Static: This is lighting that is both baked and dynamic. The most “expensive” of the light types. Static lights are those that don’t move.  This provides the opportunity to bake in the shadow contribution of that light into the lightmap.   Multiple static lights will mix together in this baked-shadow map.  No RGB contribution from the light will go into the lightmap when rendering lightmaps. During run-time, the game will calculate the RGB color of the static light and then only apply it in areas that are uncovered by the baked-shadow map.  Characters and placeable props are fully lit by the static lights.</li>
+<li> Animated: Animated lights are those that don’t move about, but do have animation properties on their light intensity.  These lights are baked into the shadow map.</li></ul>
+<p>Light Type:
+</p>
+<ul><li> Point: The light originates from a spot. “Light Size” corresponds to the size of the object casting off light. “Num Samples” is the number of shadow render passes – the higher the number the “crisper” the shadows.</li>
+<li> Ambient: This is ever-present light that affects everything. Ambient lights affect an entire level, even when there are multiple rooms. You can only use one ambient light per level.</li>
+<li> Spot: This is directional light. To move the location of the light right click on the icon at the end of the effect. You will then see arrows that allow you to move it around.</li></ul>
+<p>Only dynamic lights will affect placeables placed in the design tool. So a designer chest will not be lit properly next to a chest placed in the art tool. That’s a limitation of the engine. Any object that is animated has to be placed in the designer tool (nothing placed in the art tool can ever, ever move).
+</p><p>Lights from different rooms only are applied if they are visible from your current room. Even an ambient light isn’t applied if the room it’s placed in isn’t visible to that room.
+</p><p><br />
+</p>
+<h2><span class="mw-headline" id="Character_lights">Character lights</span></h2>
+<p>You will needed 3 character lights around your level in the circle. Like this:
+</p><p><a href="File%3ALOP_attach.jpg.html" class="image"><img alt="LOP attach.jpg" src="../assets/mw/images/7/73/LOP_attach.jpg" width="652" height="691" class="thumbborder" /></a>
+</p>
+<h2><span class="mw-headline" id="Sunlight">Sunlight</span></h2>
+<p>When you are working with a terrain or exterior level, you can set the sunlight properties in the <a href="Level_editor.html" title="Level editor">Level editor</a> by clicking on the <a href="Exportable_area.html" title="Exportable Area" class="mw-redirect">Exportable Area</a> Properties button in the toolbar (next to the <a href="File%3AIconAddExportableArea.png.html" class="image"><img alt="IconAddExportableArea.png" src="../assets/mw/images/a/aa/IconAddExportableArea.png" width="12" height="12" /></a>).
+</p><p>Clicking on the Exportable Area Properties button will cause an Area Properties window to pop up. Scrolling down the window you will see a section titled Layout Sunlight. In this section Color controls the color of the sunlight and Color Multiplier controls the brightness.
+</p><p>The direction of the sunlight can be set by either typing values into the Direction field, or by clicking the Set Sunlight button in the Exportable Area Properties window and moving the red arrow surrounded by a blue circle that will appear in the bottom left hand corner of your screen. The arrow is pointing in the sunlight direction.
+</p><p>The default shadows cast by sunlight are pitch black and very dark. If you do not like this default, you can change the color of the shadows by adding an Ambient - Baked light source that has the color you desire for your shadows. The default light color (grey - 0.50, 0.50. 0.50) works well, but you may change it to whatever you like.
+</p>
+<h2><span class="mw-headline" id="Light_probes">Light probes</span></h2>
+<p>Light probes are used to generate the appearance of nearby reflective surfaces and the illuminance values for characters. A light probe consists of an imaginary sphere that is textured with a pre-rendered view of its surroundings in every direction; reflective objects will use the texture of the nearest light probe to produce an approximation of what a reflection should look like. Light probes are particularly important where water planes are used.
+</p><p>The following example shows a light probe with the reflection texture rendered onto it (to make the light probe's texture visible you need to have "view models fully lit" turned off and "display light maps" turned on). The water below the light probe is using the probe's texture to determine its reflection.
+</p><p><a href="File%3ALevel_editor_light_probe.png.html" class="image"><img alt="Level editor light probe.png" src="../assets/mw/images/3/38/Level_editor_light_probe.png" width="400" height="395" srcset="../assets/mw/images/3/38/Level_editor_light_probe.png 1.5x, ../assets/mw/images/3/38/Level_editor_light_probe.png 2x" /></a>
+</p><p>If you make any changes to the level that would make a visible difference to what a light probe "sees" you'll have to re-render the light probes to update the reflection texture. This command is under the menu "Tools -&gt; Render -&gt; Render light probes", or you can click the toolbar button <a href="File%3AIconRenderLightProbe.png.html" class="image"><img alt="IconRenderLightProbe.png" src="../assets/mw/images/6/6a/IconRenderLightProbe.png" width="16" height="16" /></a>
+</p><p>Light probes show up as a sphere with arrows pointing in each +/- axis direction.  The only editable property that is unique is the High LOD Model Radius.
+</p><p>High LOD Model Radius:  This is a setting that will flip all the models within this radius (in meters) of the light probe to high LOD before rendering it.  It is only really useful in outdoor levels as indoors everything defaults to high Level Of Detail.
+</p><p>The tool for rendering light probes will render all the light probes within the current level.  First what it does is switch the editor lighting to look exactly like it does in the game.  Then it renders the light probes.  Be patient, this can take a moment or two.
+</p><p>In general, you should render lightmaps first before rendering light probes because otherwise, the probes would not reflect the final in-game lightmapped appearance of the level.
+</p><p>Once the light probes have been rendered they will be packaged up with the level.
+</p><p><br />
+</p>
+<h2><span class="mw-headline" id="Delete_all_the_lightmap_files">Delete all the lightmap files</span></h2>
+<p>My Documents\\\\BioWare\\\\Dragon Age\\\\Toolset\\\\LvlWorkspace\\\\lightmaps\\\\LAYOUT
+</p><p>My Documents\\\\BioWare\\\\Dragon Age\\\\Toolset\\\\ProbeLightMaps\\\\LAYOUT
+</p><p>My Documents\\\\BioWare\\\\Dragon Age\\\\Toolset\\\\resourcepostintermediatewin32\\\\processed\\\\addins\\\\MODULE\\\\layouts\\\\win32\\\\layouts\\\\LAYOUT
+</p><p>My Documents\\\\BioWare\\\\Dragon Age\\\\Toolset\\\\resourcepostintermediatewin32\\\\processed\\\\addins\\\\MODULE\\\\layouts\\\\win32\\\\modelhierarchies\\\\LAYOUT
+</p><p>My Documents\\\\BioWare\\\\Dragon Age\\\\Toolset\\\\resourcepostintermediatewin32\\\\processed\\\\addins\\\\MODULE\\\\layouts\\\\win32\\\\textures\\\\dds\\\\LAYOUT
+</p><p>(path of your level file)\\\\LAYOUT.erf
+</p><p>(path of your level file)\\\\LAYOUT.bak.erf
+</p><p>C:\\\\DOCUME~1\\\\Mike\\\\LOCALS~1\\\\Temp\\\\DALightmap\\\\LAYOUT (you can use Run... and type&#160;%TEMP% and hit OK)
+</p><p>(if you have posted to local) My Documents\\\\BioWare\\\\Dragon Age\\\\addins\\\\MODULE\\\\core\\\\override\\\\toolsetexport\\\\LAYOUT
+</p>
+<h2><span class="mw-headline" id="Advanced_lighting">Advanced lighting</span></h2>
+<p>You can add light by right click &gt; insert &gt; new Light. I will take the settings of the light from DAO levels.
+</p><p>For any level first light you need to add is always ambient.
+</p><p>1) Ambient light. This type of light is the general one- the main light of your level, it gives the color for your shadows.
+</p><p><a href="File%3ALOP_rdtoport.jpg.html" class="image"><img alt="LOP rdtoport.jpg" src="../assets/mw/images/8/89/LOP_rdtoport.jpg" width="347" height="199" class="thumbborder" /></a> 
+</p><p>2) Character lights. For all characters in the area you need 3 of them in each level.
+</p><p>Not finished. Don't touch it.
+</p>
+<h3><span class="mw-headline" id="Room-based_lights">Room-based lights</span></h3>
+<p>Each light placed in a room-based level is automatically attached to the parent room during export.  This ensures that only those lights that are under a room affect the geometry in that room.
+</p><p>To specify lights in other rooms that can affect the selected room, the artist can bring up the Room Properties dialog and add references to additional lights in adjacent rooms.
+</p><p>Lighting is very much a matter of taste, so there isn't necessarily a right way to do it. One rule-of-thumb approach is
+</p>
+<ul><li> Use one set of lights for characters (only). Use the remaining lights for the level (only).</li></ul>
+<ul><li> For characters, place 3-4 static lights in a circle outside all of the rooms, to ensure that faces are never in darkness. Normally, you only need one set of these lights for the entire level.</li></ul>
+<ul><li> Adjust the ambient light until the level looks roughly right. This can't be done dynamically - you have to go through the slow process of light rendering iteratively, so you might want to start with a very small test level. </li></ul>
+<ul><li> If necessary, add baked lights to flood large areas.</li></ul>
+<ul><li> Add static lights for features (e.g. fires). Once these lights have been rendered, you can fine-tune them in the toolset dynamically.</li></ul>
+<h3><span class="mw-headline" id="Bloom_and_Other_Effects">Bloom and Other Effects</span></h3>
+<p>Bloom is activated the same way any other effect is activated. In order to activate the Bloom effect:
+</p>
+<ul><li>Interiors:
+<ul><li> Select the interior AREA you want it to be applied to.</li>
+<li> Under the Effect section, modify the Buffer Effect Name text field to “da_bloom”.</li></ul></li>
+<li> Exteriors:
+<ul><li> Select the exterior area you want to apply the effect to and bring up it's Exportable Area Properties.</li>
+<li> Under the Effect section, modify the Buffer Effect Name text field to “da_bloom”.</li></ul></li></ul>
+<p>If you do not immediately see bloom effects take place, you might have visualization off, be sure to have it on to preview your bloom
+</p>
+<h2><span class="mw-headline" id="Light_mapping">Light mapping</span></h2>
+<p>If the filename of your level file is &lt;filename&gt;.lvl, then the editor saves a &lt;filename&gt;.erf file in the same directory as &lt;filename.lvl&gt;. This <a href="Erf.html" title="ERF">ERF</a> file contains the last set of lightmaps that the editor obtained from the lightmapper. When you share the LVL file with other artists you should also include the ERF so that the other artists can use your rendered lightmaps without having to render lightmaps themselves.
+</p><p>Under the "options" menu for the level editor are the following three settings. These are what they should be in a default installation:
+</p>
+<dl><dt>Lightmapper Command</dt>
+<dd> $(TOOLSET)\lightmapper\EclipseRay.exe LightMapper.py --terse -cpus=2</dd>
+<dt>Lightmapper Command Working Folder</dt>
+<dd> $(TOOLSET)\lightmapper\</dd>
+<dt>Lightmapper Texture Folder</dt>
+<dd> $(TEMP)\DALightmap\</dd></dl>
+<ul><li>Note: There appears to be a bug with the 64-bit version of ActiveState Python 2.5 for Windows that prevents the lightmapper from functioning. Install the 32-bit version as described in the <a href="Installing_the_toolset.html#Lightmapper" title="Installing the toolset">lightmapper section of the installation instructions</a>. If you don't have Python installed you'll receive a standard Windows error message indicating that "EclipseRay.exe has stopped working."</li></ul>
+<p><br />
+</p>
+<h2><span class="mw-headline" id="External_Tutorials">External Tutorials</span></h2>
+<ul><li><a href="Lighting_Tutorial.html" title="Lighting Tutorial">Lighting Tutorial</a></li></ul>
+
+<!-- 
+NewPP limit report
+CPU time usage: 0.048 seconds
+Real time usage: 0.077 seconds
+Preprocessor visited node count: 58/1000000
+Preprocessor generated node count: 142/1000000
+Post‐expand include size: 1128/2097152 bytes
+Template argument size: 416/2097152 bytes
+Highest expansion depth: 4/40
+Expensive parser function count: 0/100
+-->
+
+<!-- 
+Transclusion expansion time report (%,ms,calls,template)
+100.00%   12.194      1 - -total
+100.00%   12.194      1 - Template:Infobox_level_editor
+ 40.59%    4.950      1 - Template:Infobox_template
+-->
+
+<!-- Saved in parser cache with key db714099484-datoolwiki_:pcache:idhash:2234-0!*!0!!en!5!* and timestamp 20260531161034 and revision id 19730
+ -->
+</div>									<div class="printfooter">
+						Retrieved from "<a dir="ltr" href="Lighting.html">https://www.datoolset.net/mw/index.php?title=Lighting&amp;oldid=19730</a>"					</div>
+													<div id='catlinks' class='catlinks'><div id="mw-normal-catlinks" class="mw-normal-catlinks"><a href="/wiki/Special:Categories" title="Special:Categories">Category</a>: <ul><li><a href="Category%3ALevel_layouts.html" title="Category:Level layouts">Level layouts</a></li></ul></div></div>												<div class="visualClear"></div>
+							</div>
+		</div>
+		<div id="mw-navigation">
+			<h2>Navigation menu</h2>
+
+			<div id="mw-head">
+									<div id="p-personal" role="navigation" class="" aria-labelledby="p-personal-label">
+						<h3 id="p-personal-label">Personal tools</h3>
+						<ul>
+							<li id="pt-login"><a href="/mw/index.php?title=Special:UserLogin&amp;returnto=Lighting" title="You are encouraged to log in; however, it is not mandatory [o]" accesskey="o">Log in</a></li>						</ul>
+					</div>
+									<div id="left-navigation">
+										<div id="p-namespaces" role="navigation" class="vectorTabs" aria-labelledby="p-namespaces-label">
+						<h3 id="p-namespaces-label">Namespaces</h3>
+						<ul>
+															<li  id="ca-nstab-main" class="selected"><span><a href="Lighting.html"  title="View the content page [c]" accesskey="c">Page</a></span></li>
+															<li  id="ca-talk"><span><a href="Talk%3ALighting.html"  title="Discussion about the content page [t]" accesskey="t">Discussion</a></span></li>
+													</ul>
+					</div>
+										<div id="p-variants" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-variants-label">
+												<h3 id="p-variants-label"><span>Variants</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+									</div>
+				<div id="right-navigation">
+										<div id="p-views" role="navigation" class="vectorTabs" aria-labelledby="p-views-label">
+						<h3 id="p-views-label">Views</h3>
+						<ul>
+															<li id="ca-view" class="selected"><span><a href="Lighting.html" >Read</a></span></li>
+															<li id="ca-viewsource"><span><a href="Lighting.html"  title="This page is protected.&#10;You can view its source [e]" accesskey="e">View source</a></span></li>
+															<li id="ca-history" class="collapsible"><span><a href="Lighting.html"  title="Past revisions of this page [h]" accesskey="h">View history</a></span></li>
+													</ul>
+					</div>
+										<div id="p-cactions" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-cactions-label">
+						<h3 id="p-cactions-label"><span>More</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+										<div id="p-search" role="search">
+						<h3>
+							<label for="searchInput">Search</label>
+						</h3>
+
+						<form action="/mw/index.php" id="searchform">
+														<div id="simpleSearch">
+															<input type="search" name="search" placeholder="Search" title="Search Dragon Age Toolset Wiki [f]" accesskey="f" id="searchInput" /><input type="hidden" value="Special:Search" name="title" /><input type="submit" name="fulltext" value="Search" title="Search the pages for this text" id="mw-searchButton" class="searchButton mw-fallbackSearchButton" /><input type="submit" name="go" value="Go" title="Go to a page with this exact name if exists" id="searchButton" class="searchButton" />								</div>
+						</form>
+					</div>
+									</div>
+			</div>
+			<div id="mw-panel">
+				<div id="p-logo" role="banner"><a class="mw-wiki-logo" href="Main_Page.html"  title="Visit the main page"></a></div>
+						<div class="portal" role="navigation" id='p-navigation' aria-labelledby='p-navigation-label'>
+			<h3 id='p-navigation-label'>Navigation</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-mainpage-description"><a href="Main_Page.html" title="Visit the main page [z]" accesskey="z">Main page</a></li>
+													<li id="n-recentchanges"><a href="/wiki/Special:RecentChanges" title="A list of recent changes in the wiki [r]" accesskey="r">Recent changes</a></li>
+													<li id="n-randompage"><a href="/wiki/Special:Random" title="Load a random page [x]" accesskey="x">Random page</a></li>
+													<li id="n-help"><a href="https://www.mediawiki.org/wiki/Special:MyLanguage/Help:Contents" title="The place to find out">Help</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-Links' aria-labelledby='p-Links-label'>
+			<h3 id='p-Links-label'>Links</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-Toolset-forums"><a href="http://forum.bioware.com/forum/30-dragon-age-toolset" rel="nofollow">Toolset forums</a></li>
+													<li id="n-Legacy-forums"><a href="http://social.bioware.com/forum/1/subindex/70" rel="nofollow">Legacy forums</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-tb' aria-labelledby='p-tb-label'>
+			<h3 id='p-tb-label'>Tools</h3>
+
+			<div class="body">
+									<ul>
+													<li id="t-whatlinkshere"><a href="/wiki/Special:WhatLinksHere/Lighting" title="A list of all wiki pages that link here [j]" accesskey="j">What links here</a></li>
+													<li id="t-recentchangeslinked"><a href="/wiki/Special:RecentChangesLinked/Lighting" title="Recent changes in pages linked from this page [k]" accesskey="k">Related changes</a></li>
+													<li id="t-specialpages"><a href="/wiki/Special:SpecialPages" title="A list of all special pages [q]" accesskey="q">Special pages</a></li>
+													<li id="t-print"><a href="Lighting.html" rel="alternate" title="Printable version of this page [p]" accesskey="p">Printable version</a></li>
+													<li id="t-permalink"><a href="Lighting.html" title="Permanent link to this revision of the page">Permanent link</a></li>
+													<li id="t-info"><a href="Lighting.html" title="More information about this page">Page information</a></li>
+											</ul>
+							</div>
+		</div>
+				</div>
+		</div>
+		<div id="footer" role="contentinfo">
+							<ul id="footer-info">
+											<li id="footer-info-lastmod"> This page was last modified on 26 June 2016, at 12:14.</li>
+									</ul>
+							<ul id="footer-places">
+											<li id="footer-places-privacy"><a href="/wiki/Dragon_Age_Toolset_Wiki:Privacy_policy" title="Dragon Age Toolset Wiki:Privacy policy">Privacy policy</a></li>
+											<li id="footer-places-about"><a href="/wiki/Dragon_Age_Toolset_Wiki:About" title="Dragon Age Toolset Wiki:About">About Dragon Age Toolset Wiki</a></li>
+											<li id="footer-places-disclaimer"><a href="/wiki/Dragon_Age_Toolset_Wiki:General_disclaimer" title="Dragon Age Toolset Wiki:General disclaimer">Disclaimers</a></li>
+									</ul>
+										<ul id="footer-icons" class="noprint">
+											<li id="footer-poweredbyico">
+															<a href="//www.mediawiki.org/"><img src="../assets/mw/resources/assets/poweredby_mediawiki_88x31.png" alt="Powered by MediaWiki" srcset="../assets/mw/resources/assets/poweredby_mediawiki_132x47.png 1.5x, ../assets/mw/resources/assets/poweredby_mediawiki_176x62.png 2x" width="88" height="31" /></a>
+													</li>
+									</ul>
+						<div style="clear:both"></div>
+		</div>
+		<script>if(window.jQuery)jQuery.ready();</script><script>if(window.mw){
+mw.loader.state({"site":"loading","user":"ready","user.groups":"ready"});
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.toc","mediawiki.action.view.postEdit","mediawiki.user","mediawiki.hidpi","mediawiki.page.ready","mediawiki.searchSuggest"],null,true);
+}</script>
+<script>if(window.mw){
+document.write("\u003Cscript src=\"https://www.datoolset.net/mw/load.php?debug=false\u0026amp;lang=en\u0026amp;modules=site\u0026amp;only=scripts\u0026amp;skin=vector\u0026amp;*\"\u003E\u003C/script\u003E");
+}</script>
+<script>if(window.mw){
+mw.config.set({"wgBackendResponseTime":215});
+}</script>
+	</body>
+</html>

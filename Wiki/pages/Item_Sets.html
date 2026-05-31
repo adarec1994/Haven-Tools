@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" class="client-nojs">
+<head>
+<meta charset="UTF-8" />
+<title>Item set - Dragon Age Toolset Wiki</title>
+<meta name="generator" content="MediaWiki 1.25.6" />
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="search" type="application/opensearchdescription+xml" href="/mw/opensearch_desc.php" title="Dragon Age Toolset Wiki (en)" />
+<link rel="EditURI" type="application/rsd+xml" href="https://www.datoolset.net/mw/api.php?action=rsd" />
+<link rel="alternate" hreflang="x-default" href="Item_set.html" />
+<link rel="alternate" type="application/atom+xml" title="Dragon Age Toolset Wiki Atom feed" href="/mw/index.php?title=Special:RecentChanges&amp;feed=atom" />
+<link rel="canonical" href="Item_set.html" />
+<meta name="ResourceLoaderDynamicStyles" content="" />
+<style>a:lang(ar),a:lang(kk-arab),a:lang(mzn),a:lang(ps),a:lang(ur){text-decoration:none}
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-css:7:270a0dcd3ae587df0f041aebfc42e61b */</style>
+<script>if(window.mw){
+mw.config.set({"wgCanonicalNamespace":"","wgCanonicalSpecialPageName":false,"wgNamespaceNumber":0,"wgPageName":"Item_set","wgTitle":"Item set","wgCurRevisionId":11091,"wgRevisionId":11091,"wgArticleId":4105,"wgIsArticle":true,"wgIsRedirect":false,"wgAction":"view","wgUserName":null,"wgUserGroups":["*"],"wgCategories":["Items"],"wgBreakFrames":false,"wgPageContentLanguage":"en","wgPageContentModel":"wikitext","wgSeparatorTransformTable":["",""],"wgDigitTransformTable":["",""],"wgDefaultDateFormat":"dmy","wgMonthNames":["","January","February","March","April","May","June","July","August","September","October","November","December"],"wgMonthNamesShort":["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],"wgRelevantPageName":"Item_set","wgRelevantArticleId":4105,"wgIsProbablyEditable":false,"wgRestrictionEdit":[],"wgRestrictionMove":[],"wgRedirectedFrom":"Item_Sets","wgInternalRedirectTargetUrl":"/wiki/Item_set"});
+}</script><script>if(window.mw){
+mw.loader.implement("user.options",function($,jQuery){mw.user.options.set({"variant":"en"});});mw.loader.implement("user.tokens",function($,jQuery){mw.user.tokens.set({"editToken":"+\\","patrolToken":"+\\","watchToken":"+\\"});});
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-js:7:a5c52c063dc436c1ca7c9f456936a5e9 */
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.action.view.redirect","mediawiki.page.startup","mediawiki.legacy.wikibits","mediawiki.legacy.ajax","skins.vector.js"]);
+}</script>
+<!--[if lt IE 7]><style type="text/css">body{behavior:url("/mw/skins/Vector/csshover.min.htc")}</style><![endif]-->
+<link rel="stylesheet" href="../assets/local/wiki-static.css" />
+</head>
+<body class="mediawiki ltr sitedir-ltr ns-0 ns-subject page-Item_set skin-vector action-view">
+		<div id="mw-page-base" class="noprint"></div>
+		<div id="mw-head-base" class="noprint"></div>
+		<div id="content" class="mw-body" role="main">
+			<a id="top"></a>
+
+						<div class="mw-indicators">
+</div>
+			<h1 id="firstHeading" class="firstHeading" lang="en">Item set</h1>
+						<div id="bodyContent" class="mw-body-content">
+									<div id="siteSub">From Dragon Age Toolset Wiki</div>
+								<div id="contentSub"><span class="mw-redirectedfrom">(Redirected from <a href="Item_Sets.html" title="Item Sets">Item Sets</a>)</span></div>
+												<div id="jump-to-nav" class="mw-jump">
+					Jump to:					<a href="#mw-head">navigation</a>, 					<a href="#p-search">search</a>
+				</div>
+				<div id="mw-content-text" lang="en" dir="ltr" class="mw-content-ltr"><table style="float:right; background-color:#eeeeee; border:2px #999999 solid; padding:4px; margin:4px; width:220px;">
+
+<tr>
+<th align="center"> Item topics
+</th></tr>
+<tr>
+<td>
+<ul><li><a href="Item_tutorial.html" title="Item tutorial">Item tutorial</a></li>
+<li><a href="Item.html" title="Item">Items</a></li>
+<li><strong class="selflink">Item sets</strong></li>
+<li><a href="Item_properties.html" title="Item properties">Item properties</a></li>
+<li><a href="BITM_base.xls.html" title="BITM base.xls">BITM base.xls</a></li>
+<li><a href="ItemVariations.xls.html" title="ItemVariations.xls">ItemVariations.xls</a></li></ul>
+</td></tr></table>
+<p>An item set is a collection of one or more items that bestow additional bonuses if all are equipped at the same time. The item set system is implemented through scripts and 2da tables, and is very flexible.
+</p><p>Examples of item sets include:
+</p>
+<ul><li> All armor sets (Leather, Chain Mail, Heavy Plate, ...)</li>
+<li> Imperium Rings (two rings)</li>
+<li> Juggernaut (full body armor with helmet)</li></ul>
+<p>and many more.
+</p><p>The set bonus of an item set is not explicitly shown on the items themselves, but rather has to be included in the individual item's description.
+</p>
+<div id="toc" class="toc"><div id="toctitle"><h2>Contents</h2></div>
+<ul>
+<li class="toclevel-1 tocsection-1"><a href="#item_sets.gda"><span class="tocnumber">1</span> <span class="toctext">item_sets.gda</span></a>
+<ul>
+<li class="toclevel-2 tocsection-2"><a href="#Slots"><span class="tocnumber">1.1</span> <span class="toctext">Slots</span></a></li>
+<li class="toclevel-2 tocsection-3"><a href="#Set_Properties"><span class="tocnumber">1.2</span> <span class="toctext">Set Properties</span></a></li>
+</ul>
+</li>
+<li class="toclevel-1 tocsection-4"><a href="#Item_Properties"><span class="tocnumber">2</span> <span class="toctext">Item Properties</span></a></li>
+<li class="toclevel-1 tocsection-5"><a href="#Example_Set"><span class="tocnumber">3</span> <span class="toctext">Example Set</span></a></li>
+</ul>
+</div>
+
+<h3><span class="mw-headline" id="item_sets.gda">item_sets.gda</span></h3>
+<hr />
+<p><br />
+All sets the game recognizes are defined in <a href="GDA.html" title="GDA">item_sets.gda</a>. The table has the following structure:
+</p>
+<table class="wikitable">
+
+<tr>
+<th> Column </th>
+<th> Type </th>
+<th> Description
+</th></tr>
+<tr>
+<th> ID
+</th>
+<td align="center"> <a href="Int_%282da_type%29.html" title="Int (2da type)">int</a>
+</td>
+<td> A number that uniquely identifies the entry (unless creating an <a href="M2DA_override.html" title="M2DA override" class="mw-redirect">M2DA override</a>). ID numbers are listed from smallest to highest within a given file but do not need to be consecutive.
+</td></tr>
+<tr>
+<th>  Label
+</th>
+<td align="center"> <a href="String_%282da_type%29.html" title="String (2da type)"> string </a>
+</td>
+<td>  Label for the set, never seen in game
+</td></tr>
+<tr>
+<th>  namestrref
+</th>
+<td align="center"> <a href="Int_%282da_type%29.html" title="Int (2da type)"> int </a>
+</td>
+<td>  Appears to have been a string reference at some point, but only contains a copy of the Slots column at the moment. Not used.
+</td></tr>
+<tr>
+<th>  Slots
+</th>
+<td align="center"> <a href="Int_%282da_type%29.html" title="Int (2da type)"> int </a>
+</td>
+<td>  A bit mask identifying which slots are occupied by the items in the set. See below for description.
+</td></tr>
+<tr>
+<th>  Prop1
+</th>
+<td align="center"> <a href="Int_%282da_type%29.html" title="Int (2da type)"> int </a>
+</td>
+<td>  The ID of the first set bonus property. "Increases Strength", "Increases Armor", etc..., see below for valid values.
+</td></tr>
+<tr>
+<th>  Prop1Value
+</th>
+<td align="center"> <a href="Float_%282da_type%29.html" title="Float (2da type)"> float </a>
+</td>
+<td>  Value for the first set bonus property. +5 Strength, or -12.5% fatigue, etc...
+</td></tr>
+<tr>
+<th>  Prop2
+</th>
+<td align="center"> <a href="Int_%282da_type%29.html" title="Int (2da type)"> int </a>
+</td>
+<td>  Second set bonus property.
+</td></tr>
+<tr>
+<th>  Prop2Value
+</th>
+<td align="center"> <a href="Float_%282da_type%29.html" title="Float (2da type)"> float </a>
+</td>
+<td>  Magnitude of the second set bonus.
+</td></tr></table>
+<p>The data in item_sets.gda is referenced by sys_itemsets_h to check for equipped sets and apply the corresponding bonuses.
+</p>
+<h4><span class="mw-headline" id="Slots">Slots</span></h4>
+<p>The <b>Slots field</b> contains a bit field that specifies which equipment slots are occupied by the set. These are the individual slot IDs:
+</p>
+<table class="wikitable" border="1">
+
+<tr>
+<th> Slot </th>
+<th> ID
+</th></tr>
+<tr>
+<td> Main Hand </td>
+<td> 1
+</td></tr>
+<tr>
+<td> Off Hand </td>
+<td> 2
+</td></tr>
+<tr>
+<td> Chest </td>
+<td> 4
+</td></tr>
+<tr>
+<td> Head </td>
+<td> 8
+</td></tr>
+<tr>
+<td> Gloves </td>
+<td> 16
+</td></tr>
+<tr>
+<td> Boots </td>
+<td> 32
+</td></tr>
+<tr>
+<td> Belt </td>
+<td> 64
+</td></tr>
+<tr>
+<td> Ring 1 </td>
+<td> 128
+</td></tr>
+<tr>
+<td> Ring 2 </td>
+<td> 256
+</td></tr>
+<tr>
+<td> Neck </td>
+<td> 512
+</td></tr>
+<tr>
+<td> Ammo </td>
+<td> 1024
+</td></tr>
+<tr>
+<td> Dog Collar </td>
+<td> 2048
+</td></tr>
+<tr>
+<td> Dog Paint </td>
+<td> 4096
+</td></tr></table>
+<p>To get the value you have to enter into your own set's <b>Slots</b> field in item_sets.gda, simply add the individual slot IDs together. For example:
+</p><p>Neck + Ring1 + Ring2 = 512 + 128 + 256 = 896
+</p><p>Chest + Helmet + Gloves + Boots = 4 + 8 + 16 + 32 = 60
+</p>
+<h4><span class="mw-headline" id="Set_Properties">Set Properties</span></h4>
+<p>Each item set can have up to two separate set bonuses. The type of bonus is determined by the <b>Prop1</b> and <b>Prop2</b> fields in the item_sets row. If the corresponding value field (<b>Prop1Value</b> for <b>Prop1</b>, <b>Prop2Value</b> for <b>Prop2</b>) is NOT 0.0, then a property modifier will be constructed from the <b>PropX</b> entry. These directly correspond to the <a href="Creature_Properties.html" title="Creature Properties">Creature Properties</a>. Here are a few examples:
+</p>
+<table class="wikitable" border="1">
+
+<tr>
+<th> Prop1 </th>
+<th> Prop1Value </th>
+<th> Description
+</th></tr>
+<tr>
+<td> 1 </td>
+<td> 5.0 </td>
+<td> Increases Strength by 5
+</td></tr>
+<tr>
+<td> 41 </td>
+<td> -15.0 </td>
+<td> Reduces Fatigue by 15%
+</td></tr>
+<tr>
+<td> 22 </td>
+<td> 7.5 </td>
+<td> Increases chance to avoid missiles by 7.5%
+</td></tr></table>
+<p>If the value field to a <b>PropX</b> field is 0.0, an effect from <a href="Effects.xls.html" title="Effects.xls">effects.xls</a> will be applied. The only instance of this in the default game is the Griffon set, which uses a <b>Prop1</b> value of 1050, which corresponds to EFFECT_TYPE_FLANK_IMMUNITY. In theory you could make item sets that petrify their wearer, give them transparency or a permanent mana shield.
+</p>
+<h3><span class="mw-headline" id="Item_Properties">Item Properties</span></h3>
+<hr />
+<p>In addition to defining the properties of the set as mentioned above, each individual item in a set also has to be flagged as belonging to that set. This is done by entering the set's ID into the ITEM_SET field on each item's <a href="Item.html#Variables" title="Item">variables</a> list.
+</p>
+<h3><span class="mw-headline" id="Example_Set">Example Set</span></h3>
+<hr />
+<p>Here is an example entry from item_sets.gda for a custom set. <b><span style="color:red">Please do not reuse the ID!</span></b>
+</p>
+<table class="wikitable" border="1">
+
+<tr>
+<th> ID </th>
+<th> Label </th>
+<th> namestrref </th>
+<th> Slots </th>
+<th> Prop1 </th>
+<th> Prop1Value </th>
+<th> Prop2 </th>
+<th> Prop2Value
+</th></tr>
+<tr>
+<td> 10121480 </td>
+<td> Knight Champion's Aegis </td>
+<td> 60 </td>
+<td> 60 </td>
+<td> 3 </td>
+<td> 5 </td>
+<td> 41 </td>
+<td> -20
+</td></tr></table>
+<p>This set uses all four armor slots (head, chest, gloves and boots). It has two set bonuses, increasing Willpower by 5 and reducing Fatigue by 20% while wearing it. The four armor items would also have to get the value 10121480 inserted into their ITEM_SET variable field.
+</p>
+<!-- 
+NewPP limit report
+CPU time usage: 0.016 seconds
+Real time usage: 0.033 seconds
+Preprocessor visited node count: 152/1000000
+Preprocessor generated node count: 512/1000000
+Post‐expand include size: 1813/2097152 bytes
+Template argument size: 794/2097152 bytes
+Highest expansion depth: 4/40
+Expensive parser function count: 0/100
+-->
+
+<!-- 
+Transclusion expansion time report (%,ms,calls,template)
+100.00%   23.216      1 - -total
+ 39.03%    9.061      1 - Template:Infobox_items
+ 21.91%    5.086      7 - Template:2da_column
+ 20.94%    4.862      1 - Template:Infobox_template
+ 20.75%    4.818      1 - Template:2da_end
+ 14.81%    3.439      1 - Template:2da_start
+-->
+
+<!-- Saved in parser cache with key db714099484-datoolwiki_:pcache:idhash:4105-0!*!0!!en!*!* and timestamp 20260531033835 and revision id 11091
+ -->
+</div>									<div class="printfooter">
+						Retrieved from "<a dir="ltr" href="Item_set.html">https://www.datoolset.net/mw/index.php?title=Item_set&amp;oldid=11091</a>"					</div>
+													<div id='catlinks' class='catlinks'><div id="mw-normal-catlinks" class="mw-normal-catlinks"><a href="/wiki/Special:Categories" title="Special:Categories">Category</a>: <ul><li><a href="Category%3AItems.html" title="Category:Items">Items</a></li></ul></div></div>												<div class="visualClear"></div>
+							</div>
+		</div>
+		<div id="mw-navigation">
+			<h2>Navigation menu</h2>
+
+			<div id="mw-head">
+									<div id="p-personal" role="navigation" class="" aria-labelledby="p-personal-label">
+						<h3 id="p-personal-label">Personal tools</h3>
+						<ul>
+							<li id="pt-login"><a href="/mw/index.php?title=Special:UserLogin&amp;returnto=Item+set" title="You are encouraged to log in; however, it is not mandatory [o]" accesskey="o">Log in</a></li>						</ul>
+					</div>
+									<div id="left-navigation">
+										<div id="p-namespaces" role="navigation" class="vectorTabs" aria-labelledby="p-namespaces-label">
+						<h3 id="p-namespaces-label">Namespaces</h3>
+						<ul>
+															<li  id="ca-nstab-main" class="selected"><span><a href="Item_set.html"  title="View the content page [c]" accesskey="c">Page</a></span></li>
+															<li  id="ca-talk" class="new"><span><a href="/mw/index.php?title=Talk:Item_set&amp;action=edit&amp;redlink=1"  title="Discussion about the content page [t]" accesskey="t">Discussion</a></span></li>
+													</ul>
+					</div>
+										<div id="p-variants" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-variants-label">
+												<h3 id="p-variants-label"><span>Variants</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+									</div>
+				<div id="right-navigation">
+										<div id="p-views" role="navigation" class="vectorTabs" aria-labelledby="p-views-label">
+						<h3 id="p-views-label">Views</h3>
+						<ul>
+															<li id="ca-view" class="selected"><span><a href="Item_set.html" >Read</a></span></li>
+															<li id="ca-viewsource"><span><a href="Item_set.html"  title="This page is protected.&#10;You can view its source [e]" accesskey="e">View source</a></span></li>
+															<li id="ca-history" class="collapsible"><span><a href="Item_set.html"  title="Past revisions of this page [h]" accesskey="h">View history</a></span></li>
+													</ul>
+					</div>
+										<div id="p-cactions" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-cactions-label">
+						<h3 id="p-cactions-label"><span>More</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+										<div id="p-search" role="search">
+						<h3>
+							<label for="searchInput">Search</label>
+						</h3>
+
+						<form action="/mw/index.php" id="searchform">
+														<div id="simpleSearch">
+															<input type="search" name="search" placeholder="Search" title="Search Dragon Age Toolset Wiki [f]" accesskey="f" id="searchInput" /><input type="hidden" value="Special:Search" name="title" /><input type="submit" name="fulltext" value="Search" title="Search the pages for this text" id="mw-searchButton" class="searchButton mw-fallbackSearchButton" /><input type="submit" name="go" value="Go" title="Go to a page with this exact name if exists" id="searchButton" class="searchButton" />								</div>
+						</form>
+					</div>
+									</div>
+			</div>
+			<div id="mw-panel">
+				<div id="p-logo" role="banner"><a class="mw-wiki-logo" href="Main_Page.html"  title="Visit the main page"></a></div>
+						<div class="portal" role="navigation" id='p-navigation' aria-labelledby='p-navigation-label'>
+			<h3 id='p-navigation-label'>Navigation</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-mainpage-description"><a href="Main_Page.html" title="Visit the main page [z]" accesskey="z">Main page</a></li>
+													<li id="n-recentchanges"><a href="/wiki/Special:RecentChanges" title="A list of recent changes in the wiki [r]" accesskey="r">Recent changes</a></li>
+													<li id="n-randompage"><a href="/wiki/Special:Random" title="Load a random page [x]" accesskey="x">Random page</a></li>
+													<li id="n-help"><a href="https://www.mediawiki.org/wiki/Special:MyLanguage/Help:Contents" title="The place to find out">Help</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-Links' aria-labelledby='p-Links-label'>
+			<h3 id='p-Links-label'>Links</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-Toolset-forums"><a href="http://forum.bioware.com/forum/30-dragon-age-toolset" rel="nofollow">Toolset forums</a></li>
+													<li id="n-Legacy-forums"><a href="http://social.bioware.com/forum/1/subindex/70" rel="nofollow">Legacy forums</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-tb' aria-labelledby='p-tb-label'>
+			<h3 id='p-tb-label'>Tools</h3>
+
+			<div class="body">
+									<ul>
+													<li id="t-whatlinkshere"><a href="/wiki/Special:WhatLinksHere/Item_set" title="A list of all wiki pages that link here [j]" accesskey="j">What links here</a></li>
+													<li id="t-recentchangeslinked"><a href="/wiki/Special:RecentChangesLinked/Item_set" title="Recent changes in pages linked from this page [k]" accesskey="k">Related changes</a></li>
+													<li id="t-specialpages"><a href="/wiki/Special:SpecialPages" title="A list of all special pages [q]" accesskey="q">Special pages</a></li>
+													<li id="t-print"><a href="Item_set.html" rel="alternate" title="Printable version of this page [p]" accesskey="p">Printable version</a></li>
+													<li id="t-permalink"><a href="Item_set.html" title="Permanent link to this revision of the page">Permanent link</a></li>
+													<li id="t-info"><a href="Item_set.html" title="More information about this page">Page information</a></li>
+											</ul>
+							</div>
+		</div>
+				</div>
+		</div>
+		<div id="footer" role="contentinfo">
+							<ul id="footer-info">
+											<li id="footer-info-lastmod"> This page was last modified on 8 February 2010, at 23:09.</li>
+									</ul>
+							<ul id="footer-places">
+											<li id="footer-places-privacy"><a href="/wiki/Dragon_Age_Toolset_Wiki:Privacy_policy" title="Dragon Age Toolset Wiki:Privacy policy">Privacy policy</a></li>
+											<li id="footer-places-about"><a href="/wiki/Dragon_Age_Toolset_Wiki:About" title="Dragon Age Toolset Wiki:About">About Dragon Age Toolset Wiki</a></li>
+											<li id="footer-places-disclaimer"><a href="/wiki/Dragon_Age_Toolset_Wiki:General_disclaimer" title="Dragon Age Toolset Wiki:General disclaimer">Disclaimers</a></li>
+									</ul>
+										<ul id="footer-icons" class="noprint">
+											<li id="footer-poweredbyico">
+															<a href="//www.mediawiki.org/"><img src="../assets/mw/resources/assets/poweredby_mediawiki_88x31.png" alt="Powered by MediaWiki" srcset="../assets/mw/resources/assets/poweredby_mediawiki_132x47.png 1.5x, ../assets/mw/resources/assets/poweredby_mediawiki_176x62.png 2x" width="88" height="31" /></a>
+													</li>
+									</ul>
+						<div style="clear:both"></div>
+		</div>
+		<script>if(window.jQuery)jQuery.ready();</script><script>if(window.mw){
+mw.loader.state({"site":"loading","user":"ready","user.groups":"ready"});
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.toc","mediawiki.action.view.postEdit","mediawiki.user","mediawiki.hidpi","mediawiki.page.ready","mediawiki.searchSuggest"],null,true);
+}</script>
+<script>if(window.mw){
+document.write("\u003Cscript src=\"https://www.datoolset.net/mw/load.php?debug=false\u0026amp;lang=en\u0026amp;modules=site\u0026amp;only=scripts\u0026amp;skin=vector\u0026amp;*\"\u003E\u003C/script\u003E");
+}</script>
+<script>if(window.mw){
+mw.config.set({"wgBackendResponseTime":219});
+}</script>
+	</body>
+</html>

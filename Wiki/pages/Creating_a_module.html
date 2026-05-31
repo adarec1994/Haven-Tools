@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" class="client-nojs">
+<head>
+<meta charset="UTF-8" />
+<title>Creating a module - Dragon Age Toolset Wiki</title>
+<meta name="generator" content="MediaWiki 1.25.6" />
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="search" type="application/opensearchdescription+xml" href="/mw/opensearch_desc.php" title="Dragon Age Toolset Wiki (en)" />
+<link rel="EditURI" type="application/rsd+xml" href="https://www.datoolset.net/mw/api.php?action=rsd" />
+<link rel="alternate" hreflang="x-default" href="Creating_a_module.html" />
+<link rel="alternate" type="application/atom+xml" title="Dragon Age Toolset Wiki Atom feed" href="/mw/index.php?title=Special:RecentChanges&amp;feed=atom" />
+<meta name="ResourceLoaderDynamicStyles" content="" />
+<style>a:lang(ar),a:lang(kk-arab),a:lang(mzn),a:lang(ps),a:lang(ur){text-decoration:none}
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-css:7:270a0dcd3ae587df0f041aebfc42e61b */</style>
+<script>if(window.mw){
+mw.config.set({"wgCanonicalNamespace":"","wgCanonicalSpecialPageName":false,"wgNamespaceNumber":0,"wgPageName":"Creating_a_module","wgTitle":"Creating a module","wgCurRevisionId":19094,"wgRevisionId":19094,"wgArticleId":48,"wgIsArticle":true,"wgIsRedirect":false,"wgAction":"view","wgUserName":null,"wgUserGroups":["*"],"wgCategories":["Modules"],"wgBreakFrames":false,"wgPageContentLanguage":"en","wgPageContentModel":"wikitext","wgSeparatorTransformTable":["",""],"wgDigitTransformTable":["",""],"wgDefaultDateFormat":"dmy","wgMonthNames":["","January","February","March","April","May","June","July","August","September","October","November","December"],"wgMonthNamesShort":["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],"wgRelevantPageName":"Creating_a_module","wgRelevantArticleId":48,"wgIsProbablyEditable":false,"wgRestrictionEdit":[],"wgRestrictionMove":[]});
+}</script><script>if(window.mw){
+mw.loader.implement("user.options",function($,jQuery){mw.user.options.set({"variant":"en"});});mw.loader.implement("user.tokens",function($,jQuery){mw.user.tokens.set({"editToken":"+\\","patrolToken":"+\\","watchToken":"+\\"});});
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-js:7:a5c52c063dc436c1ca7c9f456936a5e9 */
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.page.startup","mediawiki.legacy.wikibits","mediawiki.legacy.ajax","skins.vector.js"]);
+}</script>
+<!--[if lt IE 7]><style type="text/css">body{behavior:url("/mw/skins/Vector/csshover.min.htc")}</style><![endif]-->
+<link rel="stylesheet" href="../assets/local/wiki-static.css" />
+</head>
+<body class="mediawiki ltr sitedir-ltr ns-0 ns-subject page-Creating_a_module skin-vector action-view">
+		<div id="mw-page-base" class="noprint"></div>
+		<div id="mw-head-base" class="noprint"></div>
+		<div id="content" class="mw-body" role="main">
+			<a id="top"></a>
+
+						<div class="mw-indicators">
+</div>
+			<h1 id="firstHeading" class="firstHeading" lang="en">Creating a module</h1>
+						<div id="bodyContent" class="mw-body-content">
+									<div id="siteSub">From Dragon Age Toolset Wiki</div>
+								<div id="contentSub"></div>
+												<div id="jump-to-nav" class="mw-jump">
+					Jump to:					<a href="#mw-head">navigation</a>, 					<a href="#p-search">search</a>
+				</div>
+				<div id="mw-content-text" lang="en" dir="ltr" class="mw-content-ltr"><table style="float:right; background-color:#eeeeee; border:2px #999999 solid; padding:4px; margin:4px; width:220px;">
+
+<tr>
+<th align="center"> Module topics
+</th></tr>
+<tr>
+<td>
+<ul><li><a href="Module.html" title="Module">Module</a>
+<ul><li> <strong class="selflink">Creating a module</strong></li>
+<li> <a href="Manage_modules.html" title="Manage modules">Managing modules</a></li>
+<li> <a href="Exporting_a_module.html" title="Exporting a module">Exporting a module</a></li></ul></li>
+<li><a href="Builder_to_player.html" title="Builder to player">Builder to player</a></li>
+<li><a href="Builder_to_builder.html" title="Builder to builder">Builder to builder</a></li></ul>
+</td></tr></table>
+<p>To create and modify <a href="Module.html" title="Module">modules</a>, select "Manage Modules" from the File menu. This will bring up a list of existing modules, with a "New" button for creating new modules and a "Properties" button for editing the properties of existing modules. You can only edit the properties of the module that's currently open.
+</p><p><b>NOTE:</b> when you create new items, it's best to stick to unique naming, specially if items belongs to your module. For example: your module UID is "asar" so item, createre, area or any other file should begin with asar_ (asar_mysword).
+</p><p><br />
+</p>
+<div id="toc" class="toc"><div id="toctitle"><h2>Contents</h2></div>
+<ul>
+<li class="toclevel-1 tocsection-1"><a href="#Creating_a_new_Module"><span class="tocnumber">1</span> <span class="toctext">Creating a new Module</span></a>
+<ul>
+<li class="toclevel-2 tocsection-2"><a href="#Opening_the_Module"><span class="tocnumber">1.1</span> <span class="toctext">Opening the Module</span></a></li>
+<li class="toclevel-2 tocsection-3"><a href="#To_create_a_standalone_module:"><span class="tocnumber">1.2</span> <span class="toctext">To create a standalone module:</span></a></li>
+<li class="toclevel-2 tocsection-4"><a href="#Extending_the_game_with_addins_.28common.29"><span class="tocnumber">1.3</span> <span class="toctext">Extending the game with addins (common)</span></a></li>
+<li class="toclevel-2 tocsection-5"><a href="#Advanced_Properties"><span class="tocnumber">1.4</span> <span class="toctext">Advanced Properties</span></a></li>
+</ul>
+</li>
+<li class="toclevel-1 tocsection-6"><a href="#Core_resources:"><span class="tocnumber">2</span> <span class="toctext">Core resources:</span></a></li>
+</ul>
+</div>
+
+<h2><span class="mw-headline" id="Creating_a_new_Module">Creating a new Module</span></h2>
+<table align="right">
+
+<tr>
+<td> <div class="thumb tright"><div class="thumbinner" style="width:195px;"><a href="File%3AModule_menu_command.png.html" class="image"><img alt="" src="../assets/mw/images/0/07/Module_menu_command.png" width="193" height="386" class="thumbimage" /></a>  <div class="thumbcaption">Select "Manage Modules"</div></div></div>
+</td>
+<td> <div class="thumb tright"><div class="thumbinner" style="width:301px;"><a href="File%3AModule_manage_module_window.png.html" class="image"><img alt="" src="../assets/mw/images/7/7c/Module_manage_module_window.png" width="299" height="373" class="thumbimage" /></a>  <div class="thumbcaption">Then click the "New" button to create a new module.</div></div></div>
+</td></tr></table>
+<ol><li>Open File/Manage Modules</li>
+<li>Click on "New" and the module properties window will open. </li>
+<li>Edit the "Name" field give the module a name (This is the name that will also be visible in Game as a Addin)</li>
+<li>Add a unique identifier string to the UID field. The File and Folder will appear in that name.</li>
+<li>Make an independent note of the StringID Begin value. This is vital information if you ever have to export the module to a new data base.</li>
+<li>Then click "OK"; the other properties can be changed later on once you have some content to set them to.</li></ol>
+<h3><span class="mw-headline" id="Opening_the_Module">Opening the Module</span></h3>
+<ol><li>Select the module in the Manage Modules list </li>
+<li>Click the "Open" button. </li></ol>
+<ul><li>The Open Module is displayed in the Title Bar. Only resources that are available to the open module will be visible.</li></ul>
+<h3><span class="mw-headline" id="To_create_a_standalone_module:">To create a standalone module:</span></h3>
+<ol><li>Select the module in the Manage Modules list </li>
+<li>Click on the "Hierarchy" button</li>
+<li>Unmark any parent module (all are unmarked by default)</li></ol>
+<ul><li>The Extended Module property should be left as the default (None).</li>
+<li>You should use the default script "module_core" or your own custom script.</li></ul>
+<h3><span class="mw-headline" id="Extending_the_game_with_addins_.28common.29">Extending the game with addins (common)</span></h3>
+<ol><li>Select the module in the Manage Modules list </li>
+<li>Click on the "Hierarchy" button</li>
+<li>Mark the parent module "Single Player"</li>
+<li>Hit OK</li></ol>
+<ul><li>The Extended Module property should be set to "Single Player".</li>
+<li>Note that as of toolset version 1.01 and game version 1.02b, you should NOT use "module_core" as the script (as found in module properties) for an add-in that extends an existing module, otherwise you will encounter issues that may include slow-downs during conversations and attribute allocation.  The exact cause of these issues is not yet known, but using a blank script with an empty main function will eliminate these issues.</li>
+<li>Resources of "Single Player" will now become available to this module.</li></ul>
+<h3><span class="mw-headline" id="Advanced_Properties">Advanced Properties</span></h3>
+<ol><li>Select the module in the Manage Modules list </li>
+<li>Click on the "Properties" button</li></ol>
+<p>The Settings can be changed at any later time. To set up your Module prior Exporting see <a href="Manage_modules.html" title="Manage modules">Manage modules</a>
+</p>
+<ul><li>For a detailed explanation of the properties you will see here, See <a href="Module.html" title="Module">Module</a>.</li></ul>
+<p><br />
+</p>
+<hr />
+<p>The only module type that's supported by the toolset is "Addin". You can use addins in two basic ways; either to extend an existing campaign (such as the main campaign) or as a stand-alone campaign in its own right. Addins can be enabled and disabled by the user in the "Downloadable content" menu from the game. You can also create addins that add to or modify core resources, which are available to all modules of the game.
+</p><p>A module with no event script will start the player without going through character generation, which will leave the player with an almost unusable character to play with. See <a href="Character_generation.html" title="Character generation">character generation</a> for some simple character generation code you can use. 
+</p><p><b>NOTE:</b> Currently there is no way to delete a module within the toolset once it's been created.
+</p>
+<h2><span class="mw-headline" id="Core_resources:">Core resources:</span></h2>
+<p>One way of using the same object template in more than one module is to create a core resource. 
+</p><p>When importing a character from one module to another, custom items in the player's inventory will be lost unless the resource template is available to both modules. A core resource is one way of doing this.
+</p><p>Note that core resources are visible to every campaign, so, for compatibility purposes, it's better to use alternate methods where available. For example, an add-in inherits resources from the parent module, so there's no need to use core resources in that case. 
+</p><p>To create a core resource:
+</p>
+<ol><li> Right click on properties for the resource in the Palette Window</li>
+<li> Change Module to: Core Game Resources</li>
+<li> Change Owner Module to: New Module Name</li></ol>
+<p>Be aware of dependencies between core and non-core resources; especially around scripts. If a core resource uses a non-core script, the script won't exist if you use the core resource in a different module.
+</p><p>There will be a separate <a href="Talk_table.html" title="Talk table" class="mw-redirect">talk table</a> created for the Addin in its directories. When the game loads it will combine all the talk tables across all the addins that it knows about.
+</p><p><br />
+</p>
+<table class="nmbox" style="width:100%; border:1px solid #AAAAAA; border-collapse:collapse; clear:both; font-size:85%; margin:0.25em 0;">
+<tr style="background: #CFDFEF;">
+<th style="border:none; padding:4px 1em; border-right:1px solid #AAAAAA; text-align:center; white-space:nowrap;"> <b><a href="Dragon_Age_Toolset_Wiki%3ALanguage_policy.html" title="Dragon Age Toolset Wiki:Language policy">Language:</a></b></th>
+<td style="border:none; padding:0.25em 0.9em; width:100%; background:#DFEFFF;"><b><strong class="selflink">English</strong></b> <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>&#160;&#8226;&#32;<span lang="ru"><a href="Creating_a_module/ru.html" title="Creating a module/ru">русский</a></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></td>
+</tr></table>
+
+<!-- 
+NewPP limit report
+CPU time usage: 0.096 seconds
+Real time usage: 0.189 seconds
+Preprocessor visited node count: 1051/1000000
+Preprocessor generated node count: 3321/1000000
+Post‐expand include size: 6768/2097152 bytes
+Template argument size: 1206/2097152 bytes
+Highest expansion depth: 8/40
+Expensive parser function count: 54/100
+-->
+
+<!-- 
+Transclusion expansion time report (%,ms,calls,template)
+100.00%  138.737      1 - -total
+ 91.91%  127.513      1 - Template:Languages
+ 85.23%  118.252      1 - Template:LanguagesBox
+ 66.51%   92.269     54 - Template:LanguagesLang
+  9.24%   12.825      1 - Template:LanguagesTitle
+  7.91%   10.979      1 - Template:Infobox_module
+  4.51%    6.252      1 - Template:Infobox_template
+-->
+
+<!-- Saved in parser cache with key db714099484-datoolwiki_:pcache:idhash:48-0!*!0!!en!5!* and timestamp 20260531162809 and revision id 19094
+ -->
+</div>									<div class="printfooter">
+						Retrieved from "<a dir="ltr" href="Creating_a_module.html">https://www.datoolset.net/mw/index.php?title=Creating_a_module&amp;oldid=19094</a>"					</div>
+													<div id='catlinks' class='catlinks'><div id="mw-normal-catlinks" class="mw-normal-catlinks"><a href="/wiki/Special:Categories" title="Special:Categories">Category</a>: <ul><li><a href="Category%3AModules.html" title="Category:Modules">Modules</a></li></ul></div></div>												<div class="visualClear"></div>
+							</div>
+		</div>
+		<div id="mw-navigation">
+			<h2>Navigation menu</h2>
+
+			<div id="mw-head">
+									<div id="p-personal" role="navigation" class="" aria-labelledby="p-personal-label">
+						<h3 id="p-personal-label">Personal tools</h3>
+						<ul>
+							<li id="pt-login"><a href="/mw/index.php?title=Special:UserLogin&amp;returnto=Creating+a+module" title="You are encouraged to log in; however, it is not mandatory [o]" accesskey="o">Log in</a></li>						</ul>
+					</div>
+									<div id="left-navigation">
+										<div id="p-namespaces" role="navigation" class="vectorTabs" aria-labelledby="p-namespaces-label">
+						<h3 id="p-namespaces-label">Namespaces</h3>
+						<ul>
+															<li  id="ca-nstab-main" class="selected"><span><a href="Creating_a_module.html"  title="View the content page [c]" accesskey="c">Page</a></span></li>
+															<li  id="ca-talk"><span><a href="Talk%3ACreating_a_module.html"  title="Discussion about the content page [t]" accesskey="t">Discussion</a></span></li>
+													</ul>
+					</div>
+										<div id="p-variants" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-variants-label">
+												<h3 id="p-variants-label"><span>Variants</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+									</div>
+				<div id="right-navigation">
+										<div id="p-views" role="navigation" class="vectorTabs" aria-labelledby="p-views-label">
+						<h3 id="p-views-label">Views</h3>
+						<ul>
+															<li id="ca-view" class="selected"><span><a href="Creating_a_module.html" >Read</a></span></li>
+															<li id="ca-viewsource"><span><a href="Creating_a_module.html"  title="This page is protected.&#10;You can view its source [e]" accesskey="e">View source</a></span></li>
+															<li id="ca-history" class="collapsible"><span><a href="Creating_a_module.html"  title="Past revisions of this page [h]" accesskey="h">View history</a></span></li>
+													</ul>
+					</div>
+										<div id="p-cactions" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-cactions-label">
+						<h3 id="p-cactions-label"><span>More</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+										<div id="p-search" role="search">
+						<h3>
+							<label for="searchInput">Search</label>
+						</h3>
+
+						<form action="/mw/index.php" id="searchform">
+														<div id="simpleSearch">
+															<input type="search" name="search" placeholder="Search" title="Search Dragon Age Toolset Wiki [f]" accesskey="f" id="searchInput" /><input type="hidden" value="Special:Search" name="title" /><input type="submit" name="fulltext" value="Search" title="Search the pages for this text" id="mw-searchButton" class="searchButton mw-fallbackSearchButton" /><input type="submit" name="go" value="Go" title="Go to a page with this exact name if exists" id="searchButton" class="searchButton" />								</div>
+						</form>
+					</div>
+									</div>
+			</div>
+			<div id="mw-panel">
+				<div id="p-logo" role="banner"><a class="mw-wiki-logo" href="Main_Page.html"  title="Visit the main page"></a></div>
+						<div class="portal" role="navigation" id='p-navigation' aria-labelledby='p-navigation-label'>
+			<h3 id='p-navigation-label'>Navigation</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-mainpage-description"><a href="Main_Page.html" title="Visit the main page [z]" accesskey="z">Main page</a></li>
+													<li id="n-recentchanges"><a href="/wiki/Special:RecentChanges" title="A list of recent changes in the wiki [r]" accesskey="r">Recent changes</a></li>
+													<li id="n-randompage"><a href="/wiki/Special:Random" title="Load a random page [x]" accesskey="x">Random page</a></li>
+													<li id="n-help"><a href="https://www.mediawiki.org/wiki/Special:MyLanguage/Help:Contents" title="The place to find out">Help</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-Links' aria-labelledby='p-Links-label'>
+			<h3 id='p-Links-label'>Links</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-Toolset-forums"><a href="http://forum.bioware.com/forum/30-dragon-age-toolset" rel="nofollow">Toolset forums</a></li>
+													<li id="n-Legacy-forums"><a href="http://social.bioware.com/forum/1/subindex/70" rel="nofollow">Legacy forums</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-tb' aria-labelledby='p-tb-label'>
+			<h3 id='p-tb-label'>Tools</h3>
+
+			<div class="body">
+									<ul>
+													<li id="t-whatlinkshere"><a href="/wiki/Special:WhatLinksHere/Creating_a_module" title="A list of all wiki pages that link here [j]" accesskey="j">What links here</a></li>
+													<li id="t-recentchangeslinked"><a href="/wiki/Special:RecentChangesLinked/Creating_a_module" title="Recent changes in pages linked from this page [k]" accesskey="k">Related changes</a></li>
+													<li id="t-specialpages"><a href="/wiki/Special:SpecialPages" title="A list of all special pages [q]" accesskey="q">Special pages</a></li>
+													<li id="t-print"><a href="Creating_a_module.html" rel="alternate" title="Printable version of this page [p]" accesskey="p">Printable version</a></li>
+													<li id="t-permalink"><a href="Creating_a_module.html" title="Permanent link to this revision of the page">Permanent link</a></li>
+													<li id="t-info"><a href="Creating_a_module.html" title="More information about this page">Page information</a></li>
+											</ul>
+							</div>
+		</div>
+				</div>
+		</div>
+		<div id="footer" role="contentinfo">
+							<ul id="footer-info">
+											<li id="footer-info-lastmod"> This page was last modified on 29 November 2013, at 07:34.</li>
+									</ul>
+							<ul id="footer-places">
+											<li id="footer-places-privacy"><a href="/wiki/Dragon_Age_Toolset_Wiki:Privacy_policy" title="Dragon Age Toolset Wiki:Privacy policy">Privacy policy</a></li>
+											<li id="footer-places-about"><a href="/wiki/Dragon_Age_Toolset_Wiki:About" title="Dragon Age Toolset Wiki:About">About Dragon Age Toolset Wiki</a></li>
+											<li id="footer-places-disclaimer"><a href="/wiki/Dragon_Age_Toolset_Wiki:General_disclaimer" title="Dragon Age Toolset Wiki:General disclaimer">Disclaimers</a></li>
+									</ul>
+										<ul id="footer-icons" class="noprint">
+											<li id="footer-poweredbyico">
+															<a href="//www.mediawiki.org/"><img src="../assets/mw/resources/assets/poweredby_mediawiki_88x31.png" alt="Powered by MediaWiki" srcset="../assets/mw/resources/assets/poweredby_mediawiki_132x47.png 1.5x, ../assets/mw/resources/assets/poweredby_mediawiki_176x62.png 2x" width="88" height="31" /></a>
+													</li>
+									</ul>
+						<div style="clear:both"></div>
+		</div>
+		<script>if(window.jQuery)jQuery.ready();</script><script>if(window.mw){
+mw.loader.state({"site":"loading","user":"ready","user.groups":"ready"});
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.toc","mediawiki.action.view.postEdit","mediawiki.user","mediawiki.hidpi","mediawiki.page.ready","mediawiki.searchSuggest"],null,true);
+}</script>
+<script>if(window.mw){
+document.write("\u003Cscript src=\"https://www.datoolset.net/mw/load.php?debug=false\u0026amp;lang=en\u0026amp;modules=site\u0026amp;only=scripts\u0026amp;skin=vector\u0026amp;*\"\u003E\u003C/script\u003E");
+}</script>
+<script>if(window.mw){
+mw.config.set({"wgBackendResponseTime":345});
+}</script>
+	</body>
+</html>

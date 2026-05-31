@@ -1,0 +1,98 @@
+[
+  {
+    "id": 0,
+    "name": "(Main)"
+  },
+  {
+    "id": 1,
+    "name": "Talk"
+  },
+  {
+    "id": 2,
+    "name": "User"
+  },
+  {
+    "id": 3,
+    "name": "User talk"
+  },
+  {
+    "id": 4,
+    "name": "Dragon Age Toolset Wiki"
+  },
+  {
+    "id": 5,
+    "name": "Dragon Age Toolset Wiki talk"
+  },
+  {
+    "id": 6,
+    "name": "File"
+  },
+  {
+    "id": 7,
+    "name": "File talk"
+  },
+  {
+    "id": 8,
+    "name": "MediaWiki"
+  },
+  {
+    "id": 9,
+    "name": "MediaWiki talk"
+  },
+  {
+    "id": 10,
+    "name": "Template"
+  },
+  {
+    "id": 11,
+    "name": "Template talk"
+  },
+  {
+    "id": 12,
+    "name": "Help"
+  },
+  {
+    "id": 13,
+    "name": "Help talk"
+  },
+  {
+    "id": 14,
+    "name": "Category"
+  },
+  {
+    "id": 15,
+    "name": "Category talk"
+  },
+  {
+    "id": 800,
+    "name": "Portal"
+  },
+  {
+    "id": 801,
+    "name": "Portal talk"
+  },
+  {
+    "id": 802,
+    "name": "Community"
+  },
+  {
+    "id": 803,
+    "name": "Community talk"
+  },
+  {
+    "id": 804,
+    "name": "Contest"
+  },
+  {
+    "id": 805,
+    "name": "Contest talk"
+  },
+  {
+    "id": 806,
+    "name": "Script"
+  },
+  {
+    "id": 807,
+    "name": "Script talk"
+  }
+]

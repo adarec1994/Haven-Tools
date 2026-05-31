@@ -3,6 +3,7 @@
 #include "renderer.h"
 #include "terrain_loader.h"
 #include "dds_loader.h"
+#include <filesystem>
 
 bool loadSptFromData(AppState& state, const std::vector<uint8_t>& sptData,
                      const std::string& name, const std::string& erfPath) {
@@ -23,6 +24,13 @@ bool loadSptFromData(AppState& state, const std::vector<uint8_t>& sptData,
     SptModel spt;
     if (!loadSptModel(tempSpt, spt)) {
 #ifdef _WIN32
+        // Save the offending .spt so the failure can be diagnosed offline.
+        std::string dbgDir = tempDir + "haven_spt_failed\\";
+        CreateDirectoryA(dbgDir.c_str(), NULL);
+        std::string dbgName = name;
+        for (auto& ch : dbgName) if (ch == '/' || ch == '\\') ch = '_';
+        std::ofstream df(dbgDir + dbgName, std::ios::binary);
+        if (df) df.write(reinterpret_cast<const char*>(sptData.data()), sptData.size());
         DeleteFileA(tempSpt.c_str());
 #else
         remove(tempSpt.c_str());
@@ -56,54 +64,92 @@ bool loadSptFromData(AppState& state, const std::vector<uint8_t>& sptData,
         return (d != std::string::npos) ? s.substr(0, d) : s;
     };
 
+    // Search the .spt's own archive PLUS all the level's loaded archives for the
+    // textures (env tree textures usually aren't in the .spt's own RIM). Original
+    // assignment is kept: bark on branches, composite .dds on everything else.
+    ensureBaseErfsLoaded(state);
+    namespace fs = std::filesystem;
+    std::vector<std::string> texPaths;
+    texPaths.push_back(erfPath);
+    {
+        std::error_code ec;
+        fs::path dir = fs::path(erfPath).parent_path();
+        if (fs::is_directory(dir, ec))
+            for (const auto& de : fs::directory_iterator(dir, ec)) {
+                if (!de.is_regular_file()) continue;
+                std::string fnl = de.path().filename().string();
+                std::transform(fnl.begin(), fnl.end(), fnl.begin(), ::tolower);
+                if (fnl.size() > 8 && fnl.substr(fnl.size() - 8) == ".gpu.rim")
+                    texPaths.push_back(de.path().string());
+            }
+    }
+    auto loadTexInto = [&](Material& mat, std::vector<std::string> names) {
+        std::vector<std::string> cands;
+        for (auto& nm : names) {
+            if (nm.empty()) continue;
+            std::string stem = stripExt(nm), nl = nm;
+            std::transform(stem.begin(), stem.end(), stem.begin(), ::tolower);
+            std::transform(nl.begin(), nl.end(), nl.begin(), ::tolower);
+            cands.push_back(nl);
+            cands.push_back(stem + ".dds");
+            cands.push_back(stem + ".xds");
+            cands.push_back(stem + ".tga");
+        }
+        if (cands.empty()) return;
+        auto decodeInto = [&](const std::vector<uint8_t>& data) -> bool {
+            if (data.empty()) return false;
+            if (data.size() > 4 && data[0] == 'D' && data[1] == 'D' &&
+                data[2] == 'S' && data[3] == ' ') {
+                mat.diffuseTexId = createTextureFromDDS(data);
+                decodeDDSToRGBA(data, mat.diffuseData, mat.diffuseWidth, mat.diffuseHeight);
+                return mat.diffuseTexId != 0;
+            }
+            std::vector<uint8_t> rgba; int w = 0, h = 0;
+            if (isXDS(data)) { if (!decodeXDSToRGBA(data, rgba, w, h)) return false; }
+            else if (!decodeTGAToRGBA(data, rgba, w, h)) return false;
+            mat.diffuseTexId = createTexture2D(rgba.data(), w, h);
+            mat.diffuseData = std::move(rgba); mat.diffuseWidth = w; mat.diffuseHeight = h;
+            return true;
+        };
+        auto matches = [&](const std::string& en) {
+            std::string e = en;
+            std::transform(e.begin(), e.end(), e.begin(), ::tolower);
+            for (const auto& c : cands) if (e == c) return true;
+            return false;
+        };
+        for (const auto& ap : texPaths) {
+            ERFFile erf;
+            if (!erf.open(ap)) continue;
+            for (const auto& te : erf.entries())
+                if (matches(te.name) && decodeInto(erf.readEntry(te))) return;
+        }
+        auto coll = [&](const std::vector<std::unique_ptr<ERFFile>>& c) -> bool {
+            for (const auto& e : c)
+                for (const auto& te : e->entries())
+                    if (matches(te.name) && decodeInto(e->readEntry(te))) return true;
+            return false;
+        };
+        if (coll(state.textureErfs)) return;
+        if (coll(state.modelErfs)) return;
+        if (coll(state.materialErfs)) return;
+        if (state.currentErf)
+            for (const auto& te : state.currentErf->entries())
+                if (matches(te.name) && decodeInto(state.currentErf->readEntry(te))) return;
+    };
+
     Material branchMat;
     std::string branchKey = spt.branchTexture.empty() ? baseName : stripExt(spt.branchTexture);
     branchMat.name = branchKey;
     branchMat.diffuseMap = branchKey;
     branchMat.opacity = 1.0f;
+    loadTexInto(branchMat, {spt.branchTexture, branchKey});
 
     Material ddsMat;
     std::string ddsKey = baseName + "_diffuse";
     ddsMat.name = ddsKey;
     ddsMat.diffuseMap = ddsKey;
     ddsMat.opacity = 1.0f;
-
-    ERFFile texErf;
-    if (texErf.open(erfPath)) {
-        for (const auto& entry : texErf.entries()) {
-            std::string entryLower = entry.name;
-            std::transform(entryLower.begin(), entryLower.end(), entryLower.begin(), ::tolower);
-
-            if (branchMat.diffuseTexId == 0) {
-                std::string keyLower = branchKey;
-                std::transform(keyLower.begin(), keyLower.end(), keyLower.begin(), ::tolower);
-                if (entryLower == keyLower + ".tga") {
-                    auto tgaData = texErf.readEntry(entry);
-                    if (!tgaData.empty()) {
-                        std::vector<uint8_t> rgba; int w, h;
-                        if (decodeTGAToRGBA(tgaData, rgba, w, h)) {
-                            branchMat.diffuseTexId = createTexture2D(rgba.data(), w, h);
-                            branchMat.diffuseData = std::move(rgba);
-                            branchMat.diffuseWidth = w;
-                            branchMat.diffuseHeight = h;
-                        }
-                    }
-                }
-            }
-
-            if (ddsMat.diffuseTexId == 0) {
-                std::string keyLower = ddsKey;
-                std::transform(keyLower.begin(), keyLower.end(), keyLower.begin(), ::tolower);
-                if (entryLower == keyLower + ".dds" || entryLower == keyLower) {
-                    auto ddsData = texErf.readEntry(entry);
-                    if (!ddsData.empty()) {
-                        ddsMat.diffuseTexId = createTextureFromDDS(ddsData);
-                        decodeDDSToRGBA(ddsData, ddsMat.diffuseData, ddsMat.diffuseWidth, ddsMat.diffuseHeight);
-                    }
-                }
-            }
-        }
-    }
+    loadTexInto(ddsMat, {spt.compositeTexture, ddsKey, baseName});
 
     int branchMatIdx = (int)state.currentModel.materials.size();
     state.currentModel.materials.push_back(std::move(branchMat));

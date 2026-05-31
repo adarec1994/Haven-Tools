@@ -820,6 +820,51 @@ void drawBrowserWindow(AppState& state) {
                     return (d != std::string::npos) ? s.substr(0, d) : s;
                 };
 
+                // Resolve a tree texture by name across the .spt's own ERF AND all
+                // of the level's loaded archives (texture/model/material/current),
+                // trying .dds/.xds/.tga. Env tree textures often aren't in the .spt's
+                // ERF, so the search must be broad.
+                auto loadTexInto = [&](Material& mat, const std::string& key, ERFFile* srcErf) {
+                    std::string keyLower = key;
+                    std::transform(keyLower.begin(), keyLower.end(), keyLower.begin(), ::tolower);
+                    std::vector<std::string> cands = {keyLower, keyLower + ".dds",
+                                                      keyLower + ".xds", keyLower + ".tga"};
+                    auto decodeInto = [&](const std::vector<uint8_t>& data) -> bool {
+                        if (data.empty()) return false;
+                        if (data.size() > 4 && data[0] == 'D' && data[1] == 'D' &&
+                            data[2] == 'S' && data[3] == ' ') {
+                            mat.diffuseTexId = createTextureFromDDS(data);
+                            decodeDDSToRGBA(data, mat.diffuseData, mat.diffuseWidth, mat.diffuseHeight);
+                            return mat.diffuseTexId != 0;
+                        }
+                        std::vector<uint8_t> rgba; int w = 0, h = 0;
+                        if (isXDS(data)) {
+                            if (!decodeXDSToRGBA(data, rgba, w, h)) return false;
+                        } else if (!decodeTGAToRGBA(data, rgba, w, h)) {
+                            return false;
+                        }
+                        mat.diffuseTexId = createTexture2D(rgba.data(), w, h);
+                        mat.diffuseData = std::move(rgba);
+                        mat.diffuseWidth = w; mat.diffuseHeight = h;
+                        return true;
+                    };
+                    auto searchErf = [&](ERFFile* e) -> bool {
+                        if (!e) return false;
+                        for (const auto& te : e->entries()) {
+                            std::string el = te.name;
+                            std::transform(el.begin(), el.end(), el.begin(), ::tolower);
+                            for (const auto& c : cands)
+                                if (el == c && decodeInto(e->readEntry(te))) return true;
+                        }
+                        return false;
+                    };
+                    if (searchErf(srcErf)) return;
+                    for (const auto& e : state.textureErfs)  if (searchErf(e.get())) return;
+                    for (const auto& e : state.modelErfs)    if (searchErf(e.get())) return;
+                    for (const auto& e : state.materialErfs) if (searchErf(e.get())) return;
+                    searchErf(state.currentErf.get());
+                };
+
                 for (const auto& [treeId, treeModel] : ll.sptCache) {
                     auto fit = ll.sptIdToFile.find(treeId);
                     if (fit == ll.sptIdToFile.end()) continue;
@@ -836,27 +881,7 @@ void drawBrowserWindow(AppState& state) {
                         mat.name = branchKey;
                         mat.diffuseMap = branchKey;
                         mat.opacity = 1.0f;
-                        if (erf) {
-                            std::string keyLower = branchKey;
-                            std::transform(keyLower.begin(), keyLower.end(), keyLower.begin(), ::tolower);
-                            for (const auto& te : erf->entries()) {
-                                std::string eLower = te.name;
-                                std::transform(eLower.begin(), eLower.end(), eLower.begin(), ::tolower);
-                                if (eLower == keyLower + ".tga") {
-                                    auto tgaData = erf->readEntry(te);
-                                    if (!tgaData.empty()) {
-                                        std::vector<uint8_t> rgba; int w, h;
-                                        if (decodeTGAToRGBA(tgaData, rgba, w, h)) {
-                                            mat.diffuseTexId = createTexture2D(rgba.data(), w, h);
-                                            mat.diffuseData = std::move(rgba);
-                                            mat.diffuseWidth = w;
-                                            mat.diffuseHeight = h;
-                                        }
-                                    }
-                                    break;
-                                }
-                            }
-                        }
+                        loadTexInto(mat, branchKey, erf);
                         branchMatIdx = (int)state.currentModel.materials.size();
                         state.currentModel.materials.push_back(std::move(mat));
                     }
@@ -871,6 +896,7 @@ void drawBrowserWindow(AppState& state) {
                         mat.name = diffuseKey;
                         mat.diffuseMap = diffuseKey;
                         mat.opacity = 1.0f;
+                        loadTexInto(mat, diffuseKey, erf);
                         ddsMatIdx = (int)state.currentModel.materials.size();
                         state.currentModel.materials.push_back(std::move(mat));
                     }
@@ -2876,10 +2902,14 @@ void drawBrowserWindow(AppState& state) {
                     bool isMao = isMaoFile(re.name);
                     bool isPhy = isPhyFile(re.name);
                     bool isTexture = re.name.size() > 4 && (re.name.substr(re.name.size() - 4) == ".dds" || re.name.substr(re.name.size() - 4) == ".xds");
+                    std::string reExt4 = re.name.size() >= 4 ? re.name.substr(re.name.size() - 4) : "";
+                    std::transform(reExt4.begin(), reExt4.end(), reExt4.begin(), ::tolower);
+                    bool isSpt = (reExt4 == ".spt");
                     if (isModel) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.4f, 1.0f, 0.4f, 1.0f));
                     else if (isMao) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.8f, 0.4f, 1.0f));
                     else if (isPhy) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.4f, 1.0f, 1.0f));
                     else if (isTexture) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.4f, 0.8f, 1.0f, 1.0f));
+                    else if (isSpt) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.3f, 0.9f, 0.5f, 1.0f));
                     else if (isGff) ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(1.0f, 0.5f, 0.8f, 1.0f));
 
                     char label[256];
@@ -2989,6 +3019,24 @@ void drawBrowserWindow(AppState& state) {
                                         }
                                     }
                                 }
+                            } else if (isSpt) {
+                                state.showTerrain = false;
+                                g_terrainLoader.clear();
+                                std::string sptRimPath = resolveRimPath();
+                                ERFFile rimErf;
+                                if (rimErf.open(sptRimPath)) {
+                                    if (re.entryIdx < rimErf.entries().size()) {
+                                        auto data = rimErf.readEntry(rimErf.entries()[re.entryIdx]);
+                                        if (!data.empty()) {
+                                            if (loadSptFromData(state, data, re.name, sptRimPath)) {
+                                                state.statusMessage = "Loaded SPT: " + re.name + " (from RIM)";
+                                                state.showRenderSettings = true;
+                                            } else {
+                                                state.statusMessage = "Failed to load SPT: " + re.name + " — " + getLastSptError();
+                                            }
+                                        }
+                                    }
+                                }
                             } else {
                                 ERFFile rimErf;
                                 if (rimErf.open(state.currentRIMPath)) {
@@ -3091,7 +3139,7 @@ void drawBrowserWindow(AppState& state) {
                         ImGui::EndPopup();
                     }
 
-                    if (isModel || isMao || isPhy || isTexture || isGff) ImGui::PopStyleColor();
+                    if (isModel || isMao || isPhy || isTexture || isSpt || isGff) ImGui::PopStyleColor();
                 }
             }
 

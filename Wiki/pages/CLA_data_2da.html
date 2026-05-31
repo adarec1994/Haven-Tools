@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" class="client-nojs">
+<head>
+<meta charset="UTF-8" />
+<title>CLA 2da - Dragon Age Toolset Wiki</title>
+<meta name="generator" content="MediaWiki 1.25.6" />
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="search" type="application/opensearchdescription+xml" href="/mw/opensearch_desc.php" title="Dragon Age Toolset Wiki (en)" />
+<link rel="EditURI" type="application/rsd+xml" href="https://www.datoolset.net/mw/api.php?action=rsd" />
+<link rel="alternate" hreflang="x-default" href="CLA_2da.html" />
+<link rel="alternate" type="application/atom+xml" title="Dragon Age Toolset Wiki Atom feed" href="/mw/index.php?title=Special:RecentChanges&amp;feed=atom" />
+<link rel="canonical" href="CLA_2da.html" />
+<meta name="ResourceLoaderDynamicStyles" content="" />
+<style>a:lang(ar),a:lang(kk-arab),a:lang(mzn),a:lang(ps),a:lang(ur){text-decoration:none}
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-css:7:270a0dcd3ae587df0f041aebfc42e61b */</style>
+<script>if(window.mw){
+mw.config.set({"wgCanonicalNamespace":"","wgCanonicalSpecialPageName":false,"wgNamespaceNumber":0,"wgPageName":"CLA_2da","wgTitle":"CLA 2da","wgCurRevisionId":19371,"wgRevisionId":19371,"wgArticleId":2159,"wgIsArticle":true,"wgIsRedirect":false,"wgAction":"view","wgUserName":null,"wgUserGroups":["*"],"wgCategories":["2da files","2da files from CLA base.xls"],"wgBreakFrames":false,"wgPageContentLanguage":"en","wgPageContentModel":"wikitext","wgSeparatorTransformTable":["",""],"wgDigitTransformTable":["",""],"wgDefaultDateFormat":"dmy","wgMonthNames":["","January","February","March","April","May","June","July","August","September","October","November","December"],"wgMonthNamesShort":["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],"wgRelevantPageName":"CLA_2da","wgRelevantArticleId":2159,"wgIsProbablyEditable":false,"wgRestrictionEdit":[],"wgRestrictionMove":[],"wgRedirectedFrom":"CLA_data_2da","wgInternalRedirectTargetUrl":"/wiki/CLA_2da"});
+}</script><script>if(window.mw){
+mw.loader.implement("user.options",function($,jQuery){mw.user.options.set({"variant":"en"});});mw.loader.implement("user.tokens",function($,jQuery){mw.user.tokens.set({"editToken":"+\\","patrolToken":"+\\","watchToken":"+\\"});});
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-js:7:a5c52c063dc436c1ca7c9f456936a5e9 */
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.action.view.redirect","mediawiki.page.startup","mediawiki.legacy.wikibits","mediawiki.legacy.ajax","skins.vector.js"]);
+}</script>
+<!--[if lt IE 7]><style type="text/css">body{behavior:url("/mw/skins/Vector/csshover.min.htc")}</style><![endif]-->
+<link rel="stylesheet" href="../assets/local/wiki-static.css" />
+</head>
+<body class="mediawiki ltr sitedir-ltr ns-0 ns-subject page-CLA_2da skin-vector action-view">
+		<div id="mw-page-base" class="noprint"></div>
+		<div id="mw-head-base" class="noprint"></div>
+		<div id="content" class="mw-body" role="main">
+			<a id="top"></a>
+
+						<div class="mw-indicators">
+</div>
+			<h1 id="firstHeading" class="firstHeading" lang="en">CLA 2da</h1>
+						<div id="bodyContent" class="mw-body-content">
+									<div id="siteSub">From Dragon Age Toolset Wiki</div>
+								<div id="contentSub"><span class="mw-redirectedfrom">(Redirected from <a href="CLA_data_2da.html" title="CLA data 2da">CLA data 2da</a>)</span></div>
+												<div id="jump-to-nav" class="mw-jump">
+					Jump to:					<a href="#mw-head">navigation</a>, 					<a href="#p-search">search</a>
+				</div>
+				<div id="mw-content-text" lang="en" dir="ltr" class="mw-content-ltr"><p>The <strong class="selflink">CLA_ 2da</strong> defines the available Player and NPC <a href="/mw/index.php?title=Class&amp;action=edit&amp;redlink=1" class="new" title="Class (page does not exist)">classes</a> and <a href="/mw/index.php?title=Specialization&amp;action=edit&amp;redlink=1" class="new" title="Specialization (page does not exist)">specializations</a>.
+</p><p>This <a href="2da.html" title="2da" class="mw-redirect">2da</a> is defined as an <a href="/mw/index.php?title=M2da&amp;action=edit&amp;redlink=1" class="new" title="M2da (page does not exist)">m2da</a> in the <a href="M2DA_base_2da.html" title="M2DA base 2da">M2DA_base 2da</a> and has an <b>ID</b> of 3. It can be extended by m2da fragments which have names starting with <b>CLA_</b>. It can be referenced in scripting using the <a href="TABLE_%2A.html" title="TABLE *">TABLE_RULES_CLASSES</a> constant defined in <a href="2da_constants_h.html" title="2da constants h">2da_constants_h</a>. 
+</p>
+<h2><span class="mw-headline" id="Structure">Structure</span></h2>
+<table class="wikitable">
+
+<tr>
+<th> Column </th>
+<th> Type </th>
+<th> Description
+</th></tr>
+<tr>
+<th> ID
+</th>
+<td align="center"> <a href="Int_%282da_type%29.html" title="Int (2da type)">int</a>
+</td>
+<td> A number that uniquely identifies the entry (unless creating an <a href="M2DA_override.html" title="M2DA override" class="mw-redirect">M2DA override</a>). ID numbers are listed from smallest to highest within a given file but do not need to be consecutive.
+</td></tr>
+<tr>
+<th>  Label
+</th>
+<td align="center"> <a href="String_%282da_type%29.html" title="String (2da type)"> string </a>
+</td>
+<td>
+</td></tr>
+<tr>
+<th>  NameStrref
+</th>
+<td align="center"> <a href="Int_%282da_type%29.html" title="Int (2da type)">int</a>
+</td>
+<td>  the reference ID number of a string in the string table that has this class' name in it. Use the <a href="String_editor.html" title="String Editor" class="mw-redirect">String Editor</a> to view strings by ID.
+</td></tr>
+<tr>
+<th>  PluralStrref
+</th>
+<td align="center"> <a href="Int_%282da_type%29.html" title="Int (2da type)"> int </a>
+</td>
+<td>  a string in the string table with the class' name, pluralized
+</td></tr>
+<tr>
+<th>  LowerStrref
+</th>
+<td align="center"> <a href="Int_%282da_type%29.html" title="Int (2da type)"> int </a>
+</td>
+<td>
+</td></tr>
+<tr>
+<th>  DescStrref
+</th>
+<td align="center"> <a href="Int_%282da_type%29.html" title="Int (2da type)"> int </a>
+</td>
+<td>  A short description of the class.
+</td></tr>
+<tr>
+<th>  TooltipStrref
+</th>
+<td align="center"> <a href="Int_%282da_type%29.html" title="Int (2da type)">int</a>
+</td>
+<td>  Tooltip text for the class.
+</td></tr>
+<tr>
+<th>  Icon
+</th>
+<td align="center"> <a href="Resource_%282da_type%29.html" title="Resource (2da type)"> resource </a>
+</td>
+<td>  Icon used to represent this class in character generation.
+</td></tr>
+<tr>
+<th>  Constant
+</th>
+<td align="center"> <a href="String_%282da_type%29.html" title="String (2da type)"> string</a>
+</td>
+<td>   The name of the constant used in scripts to refer to this class. eg, "CLASS_Warrior".
+</td></tr>
+<tr>
+<th>  Package
+</th>
+<td align="center"> <a href="Int_%282da_type%29.html" title="Int (2da type)"> int </a>
+</td>
+<td>
+</td></tr>
+<tr>
+<th>  BaseHealth
+</th>
+<td align="center"> <a href="Float_%282da_type%29.html" title="Float (2da type)"> float </a>
+</td>
+<td>
+</td></tr>
+<tr>
+<th>  bUsesMana
+</th>
+<td align="center"> <a href="Int_%282da_type%29.html" title="Int (2da type)">int</a>
+</td>
+<td>  0 sets this class to use stamina for its abilities, 1 sets it to use mana.
+</td></tr>
+<tr>
+<th>  BaseManaStamina
+</th>
+<td align="center"> <a href="Float_%282da_type%29.html" title="Float (2da type)"> float </a>
+</td>
+<td>
+</td></tr>
+<tr>
+<th>  DepletableProgression
+</th>
+<td align="center"> <a href="Float_%282da_type%29.html" title="Float (2da type)"> float </a>
+</td>
+<td>
+</td></tr>
+<tr>
+<th>  StrAdjust
+</th>
+<td align="center"> <a href="Float_%282da_type%29.html" title="Float (2da type)">float</a>
+</td>
+<td>  a bonus this class gets to starting strength attribute
+</td></tr>
+<tr>
+<th>  ConAdjust
+</th>
+<td align="center"> <a href="Float_%282da_type%29.html" title="Float (2da type)">float</a>
+</td>
+<td>  a bonus this class gets to starting constitution attribute
+</td></tr>
+<tr>
+<th>  WillAdjust
+</th>
+<td align="center"> <a href="Float_%282da_type%29.html" title="Float (2da type)">float</a>
+</td>
+<td>  a bonus this class gets to starting willpower attribute
+</td></tr>
+<tr>
+<th>  MagAdjust
+</th>
+<td align="center"> <a href="Float_%282da_type%29.html" title="Float (2da type)">float</a>
+</td>
+<td>  a bonus this class gets to starting magic attribute
+</td></tr>
+<tr>
+<th>  IntAdjust
+</th>
+<td align="center"> <a href="Float_%282da_type%29.html" title="Float (2da type)">float</a>
+</td>
+<td>  a bonus this class gets to starting cunning attribute
+</td></tr>
+<tr>
+<th>  DexAdjust
+</th>
+<td align="center"> <a href="Float_%282da_type%29.html" title="Float (2da type)">float</a>
+</td>
+<td>  a bonus this class gets to starting dexterity attribute
+</td></tr>
+<tr>
+<th>  MinLevel
+</th>
+<td align="center"> <a href="Int_%282da_type%29.html" title="Int (2da type)">int</a>
+</td>
+<td>  The prerequesite level a character must be to take this class. If it's greater than zero, it's an advanced class.
+</td></tr>
+<tr>
+<th>  BaseClass
+</th>
+<td align="center"> <a href="Int_%282da_type%29.html" title="Int (2da type)">int</a>
+</td>
+<td>  For advanced classes, this sets which base class it is an advanced class of. The number here refers to the ID of the row that it's a advanced class for.
+</td></tr>
+<tr>
+<th>  BaseAttack
+</th>
+<td align="center"> <a href="Float_%282da_type%29.html" title="Float (2da type)"> float </a>
+</td>
+<td>
+</td></tr>
+<tr>
+<th>  BaseDefense
+</th>
+<td align="center"> <a href="Float_%282da_type%29.html" title="Float (2da type)"> float </a>
+</td>
+<td>
+</td></tr>
+<tr>
+<th>  DefensePerLevel
+</th>
+<td align="center"> <a href="Float_%282da_type%29.html" title="Float (2da type)"> float </a>
+</td>
+<td>
+</td></tr>
+<tr>
+<th>  HealthPerLevel
+</th>
+<td align="center"> <a href="Float_%282da_type%29.html" title="Float (2da type)"> float </a>
+</td>
+<td>
+</td></tr>
+<tr>
+<th>  LevelsPerAbility
+</th>
+<td align="center"> <a href="Int_%282da_type%29.html" title="Int (2da type)"> int </a>
+</td>
+<td>  How many levels before gaining an ability. Example. If a 3 is here, it means you get an ability on every level divisible by 3
+</td></tr>
+<tr>
+<th>  LevelsPerSkill
+</th>
+<td align="center"> <a href="Int_%282da_type%29.html" title="Int (2da type)"> int </a>
+</td>
+<td>  How many levels before gaining a skill. Example. If a 3 is here, it means you get an ability on every level divisible by 3
+</td></tr>
+<tr>
+<th>  DamagePerLevel
+</th>
+<td align="center"> <a href="Float_%282da_type%29.html" title="Float (2da type)"> float </a>
+</td>
+<td>  This was a fudge added to the rule system to diminish the power that Strength's bonus damage had. Basically, this is just added to the base damage bonus of the character.
+</td></tr>
+<tr>
+<th>  StartingAbility1
+</th>
+<td align="center"> <a href="Int_%282da_type%29.html" title="Int (2da type)"> int </a>
+</td>
+<td>  This is an index into the ABI 2da. If its valid it will add that ability to the character when you first take a level with the class. This is used for the hidden talent that all classes get. This talent is used in subsequent prereq checks
+</td></tr>
+<tr>
+<th>  StartingAbility2
+</th>
+<td align="center"> <a href="Int_%282da_type%29.html" title="Int (2da type)"> int </a>
+</td>
+<td>  This is an index into the ABI 2da. If its valid it will add that ability to the character when you first take a level with the class.
+</td></tr>
+<tr>
+<th>  PlayerClass
+</th>
+<td align="center"> <a href="Int_%282da_type%29.html" title="Int (2da type)">int</a>
+</td>
+<td>  Determines whether this class can be taken by a player.
+</td></tr>
+<tr>
+<th>  CharGenLabel
+</th>
+<td align="center"> <a href="String_%282da_type%29.html" title="String (2da type)"> string</a>
+</td>
+<td>
+</td></tr>
+<tr>
+<th>  Achievement
+</th>
+<td align="center"> <a href="String_%282da_type%29.html" title="String (2da type)"> string</a>
+</td>
+<td>  Required Achievement to unlock this class
+</td></tr></table>
+<h2><span class="mw-headline" id="Remarks">Remarks</span></h2>
+<p>The <b>Label</b> column is the name used by the Toolset in the <a href="/mw/index.php?title=Creature_editor&amp;action=edit&amp;redlink=1" class="new" title="Creature editor (page does not exist)">Creature editor</a> to populate the list of classes available in the <b>Class</b> property.
+</p>
+<!-- 
+NewPP limit report
+CPU time usage: 0.040 seconds
+Real time usage: 0.056 seconds
+Preprocessor visited node count: 510/1000000
+Preprocessor generated node count: 1388/1000000
+Post‐expand include size: 4535/2097152 bytes
+Template argument size: 2787/2097152 bytes
+Highest expansion depth: 2/40
+Expensive parser function count: 0/100
+-->
+
+<!-- 
+Transclusion expansion time report (%,ms,calls,template)
+100.00%   27.816      1 - -total
+ 59.98%   16.685     33 - Template:2da_column
+ 14.22%    3.955      1 - Template:2da_end
+ 13.83%    3.846      1 - Template:2da_start
+-->
+
+<!-- Saved in parser cache with key db714099484-datoolwiki_:pcache:idhash:2159-0!*!0!!*!*!* and timestamp 20260530235901 and revision id 19371
+ -->
+</div>									<div class="printfooter">
+						Retrieved from "<a dir="ltr" href="CLA_2da.html">https://www.datoolset.net/mw/index.php?title=CLA_2da&amp;oldid=19371</a>"					</div>
+													<div id='catlinks' class='catlinks'><div id="mw-normal-catlinks" class="mw-normal-catlinks"><a href="/wiki/Special:Categories" title="Special:Categories">Categories</a>: <ul><li><a href="Category%3A2da_files.html" title="Category:2da files">2da files</a></li><li><a href="Category%3A2da_files_from_CLA_base.xls.html" title="Category:2da files from CLA base.xls">2da files from CLA base.xls</a></li></ul></div></div>												<div class="visualClear"></div>
+							</div>
+		</div>
+		<div id="mw-navigation">
+			<h2>Navigation menu</h2>
+
+			<div id="mw-head">
+									<div id="p-personal" role="navigation" class="" aria-labelledby="p-personal-label">
+						<h3 id="p-personal-label">Personal tools</h3>
+						<ul>
+							<li id="pt-login"><a href="/mw/index.php?title=Special:UserLogin&amp;returnto=CLA+2da" title="You are encouraged to log in; however, it is not mandatory [o]" accesskey="o">Log in</a></li>						</ul>
+					</div>
+									<div id="left-navigation">
+										<div id="p-namespaces" role="navigation" class="vectorTabs" aria-labelledby="p-namespaces-label">
+						<h3 id="p-namespaces-label">Namespaces</h3>
+						<ul>
+															<li  id="ca-nstab-main" class="selected"><span><a href="CLA_2da.html"  title="View the content page [c]" accesskey="c">Page</a></span></li>
+															<li  id="ca-talk"><span><a href="Talk%3ACLA_2da.html"  title="Discussion about the content page [t]" accesskey="t">Discussion</a></span></li>
+													</ul>
+					</div>
+										<div id="p-variants" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-variants-label">
+												<h3 id="p-variants-label"><span>Variants</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+									</div>
+				<div id="right-navigation">
+										<div id="p-views" role="navigation" class="vectorTabs" aria-labelledby="p-views-label">
+						<h3 id="p-views-label">Views</h3>
+						<ul>
+															<li id="ca-view" class="selected"><span><a href="CLA_2da.html" >Read</a></span></li>
+															<li id="ca-viewsource"><span><a href="CLA_2da.html"  title="This page is protected.&#10;You can view its source [e]" accesskey="e">View source</a></span></li>
+															<li id="ca-history" class="collapsible"><span><a href="CLA_2da.html"  title="Past revisions of this page [h]" accesskey="h">View history</a></span></li>
+													</ul>
+					</div>
+										<div id="p-cactions" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-cactions-label">
+						<h3 id="p-cactions-label"><span>More</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+										<div id="p-search" role="search">
+						<h3>
+							<label for="searchInput">Search</label>
+						</h3>
+
+						<form action="/mw/index.php" id="searchform">
+														<div id="simpleSearch">
+															<input type="search" name="search" placeholder="Search" title="Search Dragon Age Toolset Wiki [f]" accesskey="f" id="searchInput" /><input type="hidden" value="Special:Search" name="title" /><input type="submit" name="fulltext" value="Search" title="Search the pages for this text" id="mw-searchButton" class="searchButton mw-fallbackSearchButton" /><input type="submit" name="go" value="Go" title="Go to a page with this exact name if exists" id="searchButton" class="searchButton" />								</div>
+						</form>
+					</div>
+									</div>
+			</div>
+			<div id="mw-panel">
+				<div id="p-logo" role="banner"><a class="mw-wiki-logo" href="Main_Page.html"  title="Visit the main page"></a></div>
+						<div class="portal" role="navigation" id='p-navigation' aria-labelledby='p-navigation-label'>
+			<h3 id='p-navigation-label'>Navigation</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-mainpage-description"><a href="Main_Page.html" title="Visit the main page [z]" accesskey="z">Main page</a></li>
+													<li id="n-recentchanges"><a href="/wiki/Special:RecentChanges" title="A list of recent changes in the wiki [r]" accesskey="r">Recent changes</a></li>
+													<li id="n-randompage"><a href="/wiki/Special:Random" title="Load a random page [x]" accesskey="x">Random page</a></li>
+													<li id="n-help"><a href="https://www.mediawiki.org/wiki/Special:MyLanguage/Help:Contents" title="The place to find out">Help</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-Links' aria-labelledby='p-Links-label'>
+			<h3 id='p-Links-label'>Links</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-Toolset-forums"><a href="http://forum.bioware.com/forum/30-dragon-age-toolset" rel="nofollow">Toolset forums</a></li>
+													<li id="n-Legacy-forums"><a href="http://social.bioware.com/forum/1/subindex/70" rel="nofollow">Legacy forums</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-tb' aria-labelledby='p-tb-label'>
+			<h3 id='p-tb-label'>Tools</h3>
+
+			<div class="body">
+									<ul>
+													<li id="t-whatlinkshere"><a href="/wiki/Special:WhatLinksHere/CLA_2da" title="A list of all wiki pages that link here [j]" accesskey="j">What links here</a></li>
+													<li id="t-recentchangeslinked"><a href="/wiki/Special:RecentChangesLinked/CLA_2da" title="Recent changes in pages linked from this page [k]" accesskey="k">Related changes</a></li>
+													<li id="t-specialpages"><a href="/wiki/Special:SpecialPages" title="A list of all special pages [q]" accesskey="q">Special pages</a></li>
+													<li id="t-print"><a href="CLA_2da.html" rel="alternate" title="Printable version of this page [p]" accesskey="p">Printable version</a></li>
+													<li id="t-permalink"><a href="CLA_2da.html" title="Permanent link to this revision of the page">Permanent link</a></li>
+													<li id="t-info"><a href="CLA_2da.html" title="More information about this page">Page information</a></li>
+											</ul>
+							</div>
+		</div>
+				</div>
+		</div>
+		<div id="footer" role="contentinfo">
+							<ul id="footer-info">
+											<li id="footer-info-lastmod"> This page was last modified on 25 December 2014, at 20:54.</li>
+									</ul>
+							<ul id="footer-places">
+											<li id="footer-places-privacy"><a href="/wiki/Dragon_Age_Toolset_Wiki:Privacy_policy" title="Dragon Age Toolset Wiki:Privacy policy">Privacy policy</a></li>
+											<li id="footer-places-about"><a href="/wiki/Dragon_Age_Toolset_Wiki:About" title="Dragon Age Toolset Wiki:About">About Dragon Age Toolset Wiki</a></li>
+											<li id="footer-places-disclaimer"><a href="/wiki/Dragon_Age_Toolset_Wiki:General_disclaimer" title="Dragon Age Toolset Wiki:General disclaimer">Disclaimers</a></li>
+									</ul>
+										<ul id="footer-icons" class="noprint">
+											<li id="footer-poweredbyico">
+															<a href="//www.mediawiki.org/"><img src="../assets/mw/resources/assets/poweredby_mediawiki_88x31.png" alt="Powered by MediaWiki" srcset="../assets/mw/resources/assets/poweredby_mediawiki_132x47.png 1.5x, ../assets/mw/resources/assets/poweredby_mediawiki_176x62.png 2x" width="88" height="31" /></a>
+													</li>
+									</ul>
+						<div style="clear:both"></div>
+		</div>
+		<script>if(window.jQuery)jQuery.ready();</script><script>if(window.mw){
+mw.loader.state({"site":"loading","user":"ready","user.groups":"ready"});
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.action.view.postEdit","mediawiki.user","mediawiki.hidpi","mediawiki.page.ready","mediawiki.searchSuggest"],null,true);
+}</script>
+<script>if(window.mw){
+document.write("\u003Cscript src=\"https://www.datoolset.net/mw/load.php?debug=false\u0026amp;lang=en\u0026amp;modules=site\u0026amp;only=scripts\u0026amp;skin=vector\u0026amp;*\"\u003E\u003C/script\u003E");
+}</script>
+<script>if(window.mw){
+mw.config.set({"wgBackendResponseTime":324});
+}</script>
+	</body>
+</html>

@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" class="client-nojs">
+<head>
+<meta charset="UTF-8" />
+<title>Exporting a module - Dragon Age Toolset Wiki</title>
+<meta name="generator" content="MediaWiki 1.25.6" />
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="search" type="application/opensearchdescription+xml" href="/mw/opensearch_desc.php" title="Dragon Age Toolset Wiki (en)" />
+<link rel="EditURI" type="application/rsd+xml" href="https://www.datoolset.net/mw/api.php?action=rsd" />
+<link rel="alternate" hreflang="x-default" href="Exporting_a_module.html" />
+<link rel="alternate" type="application/atom+xml" title="Dragon Age Toolset Wiki Atom feed" href="/mw/index.php?title=Special:RecentChanges&amp;feed=atom" />
+<meta name="ResourceLoaderDynamicStyles" content="" />
+<style>a:lang(ar),a:lang(kk-arab),a:lang(mzn),a:lang(ps),a:lang(ur){text-decoration:none}
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-css:7:270a0dcd3ae587df0f041aebfc42e61b */</style>
+<script>if(window.mw){
+mw.config.set({"wgCanonicalNamespace":"","wgCanonicalSpecialPageName":false,"wgNamespaceNumber":0,"wgPageName":"Exporting_a_module","wgTitle":"Exporting a module","wgCurRevisionId":15735,"wgRevisionId":15735,"wgArticleId":4168,"wgIsArticle":true,"wgIsRedirect":false,"wgAction":"view","wgUserName":null,"wgUserGroups":["*"],"wgCategories":["Articles with documentation requests","Modules"],"wgBreakFrames":false,"wgPageContentLanguage":"en","wgPageContentModel":"wikitext","wgSeparatorTransformTable":["",""],"wgDigitTransformTable":["",""],"wgDefaultDateFormat":"dmy","wgMonthNames":["","January","February","March","April","May","June","July","August","September","October","November","December"],"wgMonthNamesShort":["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],"wgRelevantPageName":"Exporting_a_module","wgRelevantArticleId":4168,"wgIsProbablyEditable":false,"wgRestrictionEdit":[],"wgRestrictionMove":[]});
+}</script><script>if(window.mw){
+mw.loader.implement("user.options",function($,jQuery){mw.user.options.set({"variant":"en"});});mw.loader.implement("user.tokens",function($,jQuery){mw.user.tokens.set({"editToken":"+\\","patrolToken":"+\\","watchToken":"+\\"});});
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-js:7:a5c52c063dc436c1ca7c9f456936a5e9 */
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.page.startup","mediawiki.legacy.wikibits","mediawiki.legacy.ajax","skins.vector.js"]);
+}</script>
+<!--[if lt IE 7]><style type="text/css">body{behavior:url("/mw/skins/Vector/csshover.min.htc")}</style><![endif]-->
+<link rel="stylesheet" href="../assets/local/wiki-static.css" />
+</head>
+<body class="mediawiki ltr sitedir-ltr ns-0 ns-subject page-Exporting_a_module skin-vector action-view">
+		<div id="mw-page-base" class="noprint"></div>
+		<div id="mw-head-base" class="noprint"></div>
+		<div id="content" class="mw-body" role="main">
+			<a id="top"></a>
+
+						<div class="mw-indicators">
+</div>
+			<h1 id="firstHeading" class="firstHeading" lang="en">Exporting a module</h1>
+						<div id="bodyContent" class="mw-body-content">
+									<div id="siteSub">From Dragon Age Toolset Wiki</div>
+								<div id="contentSub"></div>
+												<div id="jump-to-nav" class="mw-jump">
+					Jump to:					<a href="#mw-head">navigation</a>, 					<a href="#p-search">search</a>
+				</div>
+				<div id="mw-content-text" lang="en" dir="ltr" class="mw-content-ltr"><table style="float:right; background-color:#eeeeee; border:2px #999999 solid; padding:4px; margin:4px; width:220px;">
+
+<tr>
+<th align="center"> Module topics
+</th></tr>
+<tr>
+<td>
+<ul><li><a href="Module.html" title="Module">Module</a>
+<ul><li> <a href="Creating_a_module.html" title="Creating a module">Creating a module</a></li>
+<li> <a href="Manage_modules.html" title="Manage modules">Managing modules</a></li>
+<li> <strong class="selflink">Exporting a module</strong></li></ul></li>
+<li><a href="Builder_to_player.html" title="Builder to player">Builder to player</a></li>
+<li><a href="Builder_to_builder.html" title="Builder to builder">Builder to builder</a></li></ul>
+</td></tr></table>
+<p>For the Game to load a <a href="Module.html" title="Module">Module</a> and any Resources of it, it has to get exported from the Toolset first.
+</p>
+<div id="toc" class="toc"><div id="toctitle"><h2>Contents</h2></div>
+<ul>
+<li class="toclevel-1 tocsection-1"><a href="#Overview"><span class="tocnumber">1</span> <span class="toctext">Overview</span></a></li>
+<li class="toclevel-1 tocsection-2"><a href="#Exporting"><span class="tocnumber">2</span> <span class="toctext">Exporting</span></a>
+<ul>
+<li class="toclevel-2 tocsection-3"><a href="#Export_Capabilities"><span class="tocnumber">2.1</span> <span class="toctext">Export Capabilities</span></a></li>
+<li class="toclevel-2 tocsection-4"><a href="#Testing_an_Area_by_overriding_the_starting_area"><span class="tocnumber">2.2</span> <span class="toctext">Testing an Area by overriding the starting area</span></a></li>
+</ul>
+</li>
+<li class="toclevel-1 tocsection-5"><a href="#Creating_a_downloadable_Package"><span class="tocnumber">3</span> <span class="toctext">Creating a downloadable Package</span></a></li>
+<li class="toclevel-1 tocsection-6"><a href="#Exporting_resources_to_other_Modders"><span class="tocnumber">4</span> <span class="toctext">Exporting resources to other Modders</span></a></li>
+</ul>
+</div>
+
+<h2><span class="mw-headline" id="Overview">Overview</span></h2>
+<p>Exporting a <a href="Module.html" title="Module">Module</a> is the process of exporting a single or all <a href="Designer_Resources.html" title="Designer Resources">Designer Resources</a> from the Database. 
+</p><p>The toolset stores exported Resources as files in Folders that are unique to the Module a Resource belongs to, so that the Game which has no access to the Database can read them. 
+</p><p>By default, the path is Documents\Bioware\Dragon Age\AddIns\(module name). Resources are normally exported to the module\override\toolsetexport folder, but any resources whose Owner Module property is "Core" are exported to core\override\toolsetexport. The difference in game is that core resources affect all campaigns as long as the add-in is enabled, whereas module resources only affect the module's campaign.    
+</p><p>Exporting is done 'per resource' on a single by single basis, however you can tell the toolset to export all at once, or a single resource with all dependend resources. Dependand Resources are those which are required for a Resource to work correctly, like a Vendor who sells a Sword is dependant on the Sword Resource. The Toolset will see the dependency automatically. 
+</p><p><a href="Art_Resources.html" title="Art Resources">Art Resources</a> and <a href="2da.html" title="2DA">2DA's</a> are already present as files, which the creator has to put into into the respective Override Folder of the <a href="Module.html" title="Module">Module</a> manually. <sup>[<a href="Category%3AArticles_with_documentation_requests.html" title="Category:Articles with documentation requests">Undocumented</a>]</sup>
+</p><p><br />
+All of the Resources can then be packaged into a <a href="Builder_to_player.html" title="Builder to player">"Builder to Player"</a> package, once the <a href="Module.html" title="Module">Module</a> is finished. This will collect all those <i>loose</i> files, and put it in a single downloadable file. Which is known as <a href="Dazip.html" title="DAZIP">"DAZIP"</a>.
+</p>
+<h2><span class="mw-headline" id="Exporting">Exporting</span></h2>
+<p>Exporting by single Resources is done to test single resources in game during development. During Export, the toolset extends the "Addins.xml" file, which enables the Module to be seen from the Games Menu. 
+</p>
+<h3><span class="mw-headline" id="Export_Capabilities">Export Capabilities</span></h3>
+<ul><li>Export with dependent resources: This will export the currently selected resource, as well as any other resources that it depends upon. For instance, if you have created an area with a creature in it, this option will export the area, the creature, the creature's inventory, the scripts, etc. It would then grab any dependencies for the creature, inventory, or scripts and continue until it exhausted all of their dependencies. Doing this is a good way to make sure you get all of the needed pieces for any particular resource, but it can also quickly multiply to the point where it is picking up half of the module.</li></ul>
+<ul><li>Export without dependent resource: This will only export the currently selected resource. This is a quick and efficient way to update your module when you have modified parts of a resource that only affect that resource.</li></ul>
+<ul><li>Export all resources of type: This will export every resource of the same type as that which is currently selected in the palette. For instance, if you select a creature and choose this method, it will export all creatures in the module.</li></ul>
+<ul><li>Full export: This option exports every resource associated with the module. It is the most comprehensive, and takes the longest to run.</li></ul>
+<table align="right">
+
+<tr>
+<td><a href="File%3AExport_menu_2.png.html" class="image"><img alt="Export menu 2.png" src="../assets/mw/images/b/bd/Export_menu_2.png" width="400" height="121" srcset="../assets/mw/images/b/bd/Export_menu_2.png 1.5x, ../assets/mw/images/b/bd/Export_menu_2.png 2x" /></a>
+</td></tr>
+<tr>
+<td><a href="File%3AExport_options.png.html" class="image"><img alt="Export options.png" src="../assets/mw/images/7/7c/Export_options.png" width="300" height="102" srcset="../assets/mw/images/7/7c/Export_options.png 1.5x, ../assets/mw/images/7/7c/Export_options.png 2x" /></a>
+</td></tr></table>
+<h3><span class="mw-headline" id="Testing_an_Area_by_overriding_the_starting_area">Testing an Area by overriding the starting area</span></h3>
+<p>Area Resources can be tested in a very convenient way. If you just want to give it a test run you can override the module's start area on an export-by-export basis.
+</p>
+<ol><li>Save the Area you are working on</li>
+<li>Navigate Tools/Export/Export Options</li>
+<li>Activate "Override campaign export settings"</li>
+<li>Choose the Area, and a Waypoint with it</li>
+<li>Export the Area with or without dependand resources as needed</li></ol>
+<p>Once the export has completed you should be able to start a "New Game" (if editing the main campaign) or select your module under "Other Campaigns" (for stand-alone content). You should start in the level that you have exported at the waypoint that you have set as your starting point. You need to have an custom module setup as Standalone, see above.
+</p>
+<h2><span class="mw-headline" id="Creating_a_downloadable_Package">Creating a downloadable Package</span></h2>
+<p>All of the Resources which are exported are only <i>loose</i> files in your Filesystem. However to create downloadable and installable packages the toolset is capable of creating so called <a href="Builder_to_player.html" title="Builder to player">Builder to player</a> packages, to create <a href="Dazip.html" title="DAZIP">"DAZIP"</a> installable Filetype.
+</p>
+<dl><dd><i>See Article: <a href="Builder_to_player.html" title="Builder to player">Builder to player</a></i></dd></dl>
+<h2><span class="mw-headline" id="Exporting_resources_to_other_Modders">Exporting resources to other Modders</span></h2>
+<p>Normally the whole process will convert Resources into Gamereadable formats. Which excludes being able to edit them further with the Toolset. The source is however stored in the cloggy Database. <a href="Builder_to_builder.html" title="Builder to builder">Builder to builder</a> is the mechanisms used by the toolset that allow packages of game resources to be shared between multiple collaborating builders.
+</p>
+<dl><dd><i>See Article: <a href="Builder_to_builder.html" title="Builder to builder">Builder to builder</a></i></dd></dl>
+<p><br />
+</p>
+<table class="nmbox" style="width:100%; border:1px solid #AAAAAA; border-collapse:collapse; clear:both; font-size:85%; margin:0.25em 0;">
+<tr style="background: #CFDFEF;">
+<th style="border:none; padding:4px 1em; border-right:1px solid #AAAAAA; text-align:center; white-space:nowrap;"> <b><a href="Dragon_Age_Toolset_Wiki%3ALanguage_policy.html" title="Dragon Age Toolset Wiki:Language policy">Language:</a></b></th>
+<td style="border:none; padding:0.25em 0.9em; width:100%; background:#DFEFFF;"><b><strong class="selflink">English</strong></b> <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>&#160;&#8226;&#32;<span lang="ru"><a href="Exporting_a_module/ru.html" title="Exporting a module/ru">русский</a></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></td>
+</tr></table>
+
+<!-- 
+NewPP limit report
+CPU time usage: 0.088 seconds
+Real time usage: 0.180 seconds
+Preprocessor visited node count: 1061/1000000
+Preprocessor generated node count: 3355/1000000
+Post‐expand include size: 7059/2097152 bytes
+Template argument size: 1209/2097152 bytes
+Highest expansion depth: 8/40
+Expensive parser function count: 54/100
+-->
+
+<!-- 
+Transclusion expansion time report (%,ms,calls,template)
+100.00%  130.591      1 - -total
+ 88.82%  115.996      1 - Template:Languages
+ 84.71%  110.630      1 - Template:LanguagesBox
+ 65.78%   85.898     54 - Template:LanguagesLang
+  9.07%   11.840      1 - Template:LanguagesTitle
+  7.67%   10.018      1 - Template:Infobox_module
+  4.22%    5.507      1 - Template:Infobox_template
+  3.15%    4.114      1 - Template:Undocumented
+-->
+
+<!-- Saved in parser cache with key db714099484-datoolwiki_:pcache:idhash:4168-0!*!0!!en!5!* and timestamp 20260531000308 and revision id 15735
+ -->
+</div>									<div class="printfooter">
+						Retrieved from "<a dir="ltr" href="Exporting_a_module.html">https://www.datoolset.net/mw/index.php?title=Exporting_a_module&amp;oldid=15735</a>"					</div>
+													<div id='catlinks' class='catlinks'><div id="mw-normal-catlinks" class="mw-normal-catlinks"><a href="/wiki/Special:Categories" title="Special:Categories">Categories</a>: <ul><li><a href="Category%3AArticles_with_documentation_requests.html" title="Category:Articles with documentation requests">Articles with documentation requests</a></li><li><a href="Category%3AModules.html" title="Category:Modules">Modules</a></li></ul></div></div>												<div class="visualClear"></div>
+							</div>
+		</div>
+		<div id="mw-navigation">
+			<h2>Navigation menu</h2>
+
+			<div id="mw-head">
+									<div id="p-personal" role="navigation" class="" aria-labelledby="p-personal-label">
+						<h3 id="p-personal-label">Personal tools</h3>
+						<ul>
+							<li id="pt-login"><a href="/mw/index.php?title=Special:UserLogin&amp;returnto=Exporting+a+module" title="You are encouraged to log in; however, it is not mandatory [o]" accesskey="o">Log in</a></li>						</ul>
+					</div>
+									<div id="left-navigation">
+										<div id="p-namespaces" role="navigation" class="vectorTabs" aria-labelledby="p-namespaces-label">
+						<h3 id="p-namespaces-label">Namespaces</h3>
+						<ul>
+															<li  id="ca-nstab-main" class="selected"><span><a href="Exporting_a_module.html"  title="View the content page [c]" accesskey="c">Page</a></span></li>
+															<li  id="ca-talk" class="new"><span><a href="/mw/index.php?title=Talk:Exporting_a_module&amp;action=edit&amp;redlink=1"  title="Discussion about the content page [t]" accesskey="t">Discussion</a></span></li>
+													</ul>
+					</div>
+										<div id="p-variants" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-variants-label">
+												<h3 id="p-variants-label"><span>Variants</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+									</div>
+				<div id="right-navigation">
+										<div id="p-views" role="navigation" class="vectorTabs" aria-labelledby="p-views-label">
+						<h3 id="p-views-label">Views</h3>
+						<ul>
+															<li id="ca-view" class="selected"><span><a href="Exporting_a_module.html" >Read</a></span></li>
+															<li id="ca-viewsource"><span><a href="Exporting_a_module.html"  title="This page is protected.&#10;You can view its source [e]" accesskey="e">View source</a></span></li>
+															<li id="ca-history" class="collapsible"><span><a href="Exporting_a_module.html"  title="Past revisions of this page [h]" accesskey="h">View history</a></span></li>
+													</ul>
+					</div>
+										<div id="p-cactions" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-cactions-label">
+						<h3 id="p-cactions-label"><span>More</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+										<div id="p-search" role="search">
+						<h3>
+							<label for="searchInput">Search</label>
+						</h3>
+
+						<form action="/mw/index.php" id="searchform">
+														<div id="simpleSearch">
+															<input type="search" name="search" placeholder="Search" title="Search Dragon Age Toolset Wiki [f]" accesskey="f" id="searchInput" /><input type="hidden" value="Special:Search" name="title" /><input type="submit" name="fulltext" value="Search" title="Search the pages for this text" id="mw-searchButton" class="searchButton mw-fallbackSearchButton" /><input type="submit" name="go" value="Go" title="Go to a page with this exact name if exists" id="searchButton" class="searchButton" />								</div>
+						</form>
+					</div>
+									</div>
+			</div>
+			<div id="mw-panel">
+				<div id="p-logo" role="banner"><a class="mw-wiki-logo" href="Main_Page.html"  title="Visit the main page"></a></div>
+						<div class="portal" role="navigation" id='p-navigation' aria-labelledby='p-navigation-label'>
+			<h3 id='p-navigation-label'>Navigation</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-mainpage-description"><a href="Main_Page.html" title="Visit the main page [z]" accesskey="z">Main page</a></li>
+													<li id="n-recentchanges"><a href="/wiki/Special:RecentChanges" title="A list of recent changes in the wiki [r]" accesskey="r">Recent changes</a></li>
+													<li id="n-randompage"><a href="/wiki/Special:Random" title="Load a random page [x]" accesskey="x">Random page</a></li>
+													<li id="n-help"><a href="https://www.mediawiki.org/wiki/Special:MyLanguage/Help:Contents" title="The place to find out">Help</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-Links' aria-labelledby='p-Links-label'>
+			<h3 id='p-Links-label'>Links</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-Toolset-forums"><a href="http://forum.bioware.com/forum/30-dragon-age-toolset" rel="nofollow">Toolset forums</a></li>
+													<li id="n-Legacy-forums"><a href="http://social.bioware.com/forum/1/subindex/70" rel="nofollow">Legacy forums</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-tb' aria-labelledby='p-tb-label'>
+			<h3 id='p-tb-label'>Tools</h3>
+
+			<div class="body">
+									<ul>
+													<li id="t-whatlinkshere"><a href="/wiki/Special:WhatLinksHere/Exporting_a_module" title="A list of all wiki pages that link here [j]" accesskey="j">What links here</a></li>
+													<li id="t-recentchangeslinked"><a href="/wiki/Special:RecentChangesLinked/Exporting_a_module" title="Recent changes in pages linked from this page [k]" accesskey="k">Related changes</a></li>
+													<li id="t-specialpages"><a href="/wiki/Special:SpecialPages" title="A list of all special pages [q]" accesskey="q">Special pages</a></li>
+													<li id="t-print"><a href="Exporting_a_module.html" rel="alternate" title="Printable version of this page [p]" accesskey="p">Printable version</a></li>
+													<li id="t-permalink"><a href="Exporting_a_module.html" title="Permanent link to this revision of the page">Permanent link</a></li>
+													<li id="t-info"><a href="Exporting_a_module.html" title="More information about this page">Page information</a></li>
+											</ul>
+							</div>
+		</div>
+				</div>
+		</div>
+		<div id="footer" role="contentinfo">
+							<ul id="footer-info">
+											<li id="footer-info-lastmod"> This page was last modified on 11 February 2011, at 16:37.</li>
+									</ul>
+							<ul id="footer-places">
+											<li id="footer-places-privacy"><a href="/wiki/Dragon_Age_Toolset_Wiki:Privacy_policy" title="Dragon Age Toolset Wiki:Privacy policy">Privacy policy</a></li>
+											<li id="footer-places-about"><a href="/wiki/Dragon_Age_Toolset_Wiki:About" title="Dragon Age Toolset Wiki:About">About Dragon Age Toolset Wiki</a></li>
+											<li id="footer-places-disclaimer"><a href="/wiki/Dragon_Age_Toolset_Wiki:General_disclaimer" title="Dragon Age Toolset Wiki:General disclaimer">Disclaimers</a></li>
+									</ul>
+										<ul id="footer-icons" class="noprint">
+											<li id="footer-poweredbyico">
+															<a href="//www.mediawiki.org/"><img src="../assets/mw/resources/assets/poweredby_mediawiki_88x31.png" alt="Powered by MediaWiki" srcset="../assets/mw/resources/assets/poweredby_mediawiki_132x47.png 1.5x, ../assets/mw/resources/assets/poweredby_mediawiki_176x62.png 2x" width="88" height="31" /></a>
+													</li>
+									</ul>
+						<div style="clear:both"></div>
+		</div>
+		<script>if(window.jQuery)jQuery.ready();</script><script>if(window.mw){
+mw.loader.state({"site":"loading","user":"ready","user.groups":"ready"});
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.toc","mediawiki.action.view.postEdit","mediawiki.user","mediawiki.hidpi","mediawiki.page.ready","mediawiki.searchSuggest"],null,true);
+}</script>
+<script>if(window.mw){
+document.write("\u003Cscript src=\"https://www.datoolset.net/mw/load.php?debug=false\u0026amp;lang=en\u0026amp;modules=site\u0026amp;only=scripts\u0026amp;skin=vector\u0026amp;*\"\u003E\u003C/script\u003E");
+}</script>
+<script>if(window.mw){
+mw.config.set({"wgBackendResponseTime":225});
+}</script>
+	</body>
+</html>

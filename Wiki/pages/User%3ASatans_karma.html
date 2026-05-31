@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" class="client-nojs">
+<head>
+<meta charset="UTF-8" />
+<title>User:Satans karma - Dragon Age Toolset Wiki</title>
+<meta name="generator" content="MediaWiki 1.25.6" />
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="search" type="application/opensearchdescription+xml" href="/mw/opensearch_desc.php" title="Dragon Age Toolset Wiki (en)" />
+<link rel="EditURI" type="application/rsd+xml" href="https://www.datoolset.net/mw/api.php?action=rsd" />
+<link rel="alternate" hreflang="x-default" href="User%3ASatans_karma.html" />
+<link rel="alternate" type="application/atom+xml" title="Dragon Age Toolset Wiki Atom feed" href="/mw/index.php?title=Special:RecentChanges&amp;feed=atom" />
+<meta name="ResourceLoaderDynamicStyles" content="" />
+<style>a:lang(ar),a:lang(kk-arab),a:lang(mzn),a:lang(ps),a:lang(ur){text-decoration:none}
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-css:7:270a0dcd3ae587df0f041aebfc42e61b */</style>
+<script>if(window.mw){
+mw.config.set({"wgCanonicalNamespace":"User","wgCanonicalSpecialPageName":false,"wgNamespaceNumber":2,"wgPageName":"User:Satans_karma","wgTitle":"Satans karma","wgCurRevisionId":18895,"wgRevisionId":18895,"wgArticleId":4726,"wgIsArticle":true,"wgIsRedirect":false,"wgAction":"view","wgUserName":null,"wgUserGroups":["*"],"wgCategories":[],"wgBreakFrames":false,"wgPageContentLanguage":"en","wgPageContentModel":"wikitext","wgSeparatorTransformTable":["",""],"wgDigitTransformTable":["",""],"wgDefaultDateFormat":"dmy","wgMonthNames":["","January","February","March","April","May","June","July","August","September","October","November","December"],"wgMonthNamesShort":["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],"wgRelevantPageName":"User:Satans_karma","wgRelevantArticleId":4726,"wgIsProbablyEditable":false,"wgRestrictionEdit":[],"wgRestrictionMove":[],"wgRelevantUserName":"Satans karma"});
+}</script><script>if(window.mw){
+mw.loader.implement("user.options",function($,jQuery){mw.user.options.set({"variant":"en"});});mw.loader.implement("user.tokens",function($,jQuery){mw.user.tokens.set({"editToken":"+\\","patrolToken":"+\\","watchToken":"+\\"});});
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-js:7:a5c52c063dc436c1ca7c9f456936a5e9 */
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.page.startup","mediawiki.legacy.wikibits","mediawiki.legacy.ajax","skins.vector.js"]);
+}</script>
+<!--[if lt IE 7]><style type="text/css">body{behavior:url("/mw/skins/Vector/csshover.min.htc")}</style><![endif]-->
+<link rel="stylesheet" href="../assets/local/wiki-static.css" />
+</head>
+<body class="mediawiki ltr sitedir-ltr ns-2 ns-subject page-User_Satans_karma skin-vector action-view">
+		<div id="mw-page-base" class="noprint"></div>
+		<div id="mw-head-base" class="noprint"></div>
+		<div id="content" class="mw-body" role="main">
+			<a id="top"></a>
+
+						<div class="mw-indicators">
+</div>
+			<h1 id="firstHeading" class="firstHeading" lang="en">User:Satans karma</h1>
+						<div id="bodyContent" class="mw-body-content">
+									<div id="siteSub">From Dragon Age Toolset Wiki</div>
+								<div id="contentSub"></div>
+												<div id="jump-to-nav" class="mw-jump">
+					Jump to:					<a href="#mw-head">navigation</a>, 					<a href="#p-search">search</a>
+				</div>
+				<div id="mw-content-text" lang="en" dir="ltr" class="mw-content-ltr"><p>When I tried to create a follower based on the other <a href="Follower_tutorial.html" title="Follower tutorial">Follower_tutorial</a>, I had a bit of trouble following along. Most of it was understandable, but the scripts were kind of scattered, duplicated, confusing, and generally not designed for extensions to the single player campaign. So I made a more noob-friendly follower tutorial that extends the single player campaign. Since the other follower tutorial goes into more detail than I do about steps 1, 3, 4, and 11, you may want to look there when you're at those steps. 
+</p><p>This is a work-in-progress. The formatting clearly needs some work. If you find something amiss, PM me on Bioware (screen name = satans_karma) or edit it here. 
+</p><p><br />
+</p>
+<div id="toc" class="toc"><div id="toctitle"><h2>Contents</h2></div>
+<ul>
+<li class="toclevel-1 tocsection-1"><a href="#Assumptions"><span class="tocnumber">1</span> <span class="toctext">Assumptions</span></a></li>
+<li class="toclevel-1 tocsection-2"><a href="#Directions"><span class="tocnumber">2</span> <span class="toctext">Directions</span></a></li>
+<li class="toclevel-1 tocsection-3"><a href="#Scripts"><span class="tocnumber">3</span> <span class="toctext">Scripts</span></a>
+<ul>
+<li class="toclevel-2 tocsection-4"><a href="#Module_Core_Script"><span class="tocnumber">3.1</span> <span class="toctext">Module Core Script</span></a></li>
+<li class="toclevel-2 tocsection-5"><a href="#Hiring_Script_.28short_version_-_no_level_up_table.2C_no_AI.29"><span class="tocnumber">3.2</span> <span class="toctext">Hiring Script (short version - no level up table, no AI)</span></a></li>
+<li class="toclevel-2 tocsection-6"><a href="#Hiring_Script_.28long_version_-_level_up_table.2C_AI_table.29"><span class="tocnumber">3.3</span> <span class="toctext">Hiring Script (long version - level up table, AI table)</span></a></li>
+<li class="toclevel-2 tocsection-7"><a href="#Firing_Script"><span class="tocnumber">3.4</span> <span class="toctext">Firing Script</span></a></li>
+<li class="toclevel-2 tocsection-8"><a href="#Spawn_Follower_in_Camp_Script"><span class="tocnumber">3.5</span> <span class="toctext">Spawn Follower in Camp Script</span></a></li>
+<li class="toclevel-2 tocsection-9"><a href="#Spawn_Follower_in_Area_Script"><span class="tocnumber">3.6</span> <span class="toctext">Spawn Follower in Area Script</span></a></li>
+<li class="toclevel-2 tocsection-10"><a href="#Simple_Approval_Script"><span class="tocnumber">3.7</span> <span class="toctext">Simple Approval Script</span></a></li>
+</ul>
+</li>
+<li class="toclevel-1 tocsection-11"><a href="#Other_Notes"><span class="tocnumber">4</span> <span class="toctext">Other Notes</span></a></li>
+</ul>
+</div>
+
+<h2><span class="mw-headline" id="Assumptions">Assumptions</span></h2>
+<p>1) You know how to create a new module. If not, read through the module tutorial first. <a href="Making_a_new%2C_playable_module.html#Creating_a_Module" title="Making a new, playable module">Making_a_new,_playable_module#Creating_a_Module</a>
+</p><p>2) You know how to create a basic dialogue. If not, read through the conversation tutorial first. <a href="Conversation_tutorial.html" title="Conversation tutorial">Conversation_tutorial</a>
+</p><p>3) You know how to make a creature. If not, read through the creature tutorial first. <a href="Creature_tutorial.html" title="Creature tutorial">Creature_tutorial</a>
+</p><p>4) You know how to add waypoints to an area. If not, read through the area tutorial first. <a href="Area_tutorial.html#Setting_the_start_point" title="Area tutorial">Area_tutorial#Setting_the_start_point</a>
+</p><p>5) You know how to create a plot. If not, read through the plot tutorial first. <a href="Plot.html#Journal_entries" title="Plot">Plot#Journal_entries</a>
+</p><p>6) You know how to create a blank script and can copy-and-paste.
+</p><p>7) You know how to turn an Excel document (.xls extension) into a 2DA file (.gda extension). If not, read through the tutorial on how to compile 2DAs first. <a href="Compiling_2DAs.html" title="Compiling 2DAs">Compiling_2DAs</a>
+</p><p><br />
+</p>
+<h2><span class="mw-headline" id="Directions">Directions</span></h2>
+<p>1) Create a new module. Make sure that "Extended Module" option in the "Properties" section is set to "Single Player." [Eventually you'll have to come back to this to set the "script" to the module_script you'll write below.] Always make sure you are working within your module. It'll say your module name at the top of the toolset.
+</p><p>2) Create a dialogue that has conversation branches that:
+</p>
+<dl><dd>a. allows you to hire the follower (e.g. "Can I join your party?" --&gt; "Yes" or "No") (Set this line to show up only once per game)  </dd>
+<dd>b. allows you to fire the follower (e.g. "I want you to leave")   </dd>
+<dd>c. allows you to back out of the conversation (e.g. "Nevermind. I didn't mean to bother you.")  </dd>
+<dd>d. any other optional dialogue lines</dd></dl>
+<p>3) Create your follower. Change its class, inventory, name, description, etc. to whatever you want. Be sure to list the dialogue you created in the "Conversation" option. Make sure you give the creature/follower a UNIQUE tag (usually only an issue if you are duplicating an existing NPC). Save and check in.
+</p><p>4) Find the area called "char_stage." Duplicate it. When you name it, add a prefix to char_stage (so it'll be called something like "xxx_char_stage"). The Folder, Module, and Owner Module should all be your module. Add a waypoint to the area. The tag of the waypoint should be your creature's unique tag with a "char_" prefix (so it'll be called something like "char_YourUniqueCreatureTag"). [If you plan to release this mod to the public, you should also include waypoints for the other mod companions. A list can be found on the <a href="Follower_guidelines.html" title="Follower guidelines">Follower_guidelines</a> page.] Save and check in the area. [The other <a href="Follower_tutorial.html" title="Follower tutorial">Follower_tutorial</a> has some nice images that might help you with this. You should check them out.] Alternatively, you can download my partypicker from <a rel="nofollow" class="external free" href="http://social.bioware.com/project/3408/">http://social.bioware.com/project/3408/</a> and add your waypoint (and any others that I may be missing) to it.
+</p><p>5) Create a new plot. Call it something like gen00pt_party_xxx. Insert (at minimum) five new main flags - FOLLOWERNAME_CREATED, FOLLOWERNAME_HIRED, FOLLOWERNAME_IN_PARTY, FOLLOWERNAME_IN_CAMP, and FOLLOWERNAME_FIRED. Replace "FOLLOWERNAME" with your follower's name. In the column that says "repeatable" check "yes" for "FOLLOWERNAME_IN_PARTY" and "FOLLOWERNAME_IN_CAMP." Save and check in.
+</p><p>6) Create a new script. Name it something like xxx_module_core. Copy and paste the Module Core Script below into this script. Be sure to change all "xxx," "FOLLOWERNAME," and "INSERT FOLLOWER TAG HERE" bits to the appropriate prefixes, names, and tags. Save and check in.
+</p><p>7) Create a new script. Name it something like xxx_hire_creaturename. Copy and paste the Hiring Script below into this script. Be sure to change all "xxx," "FOLLOWERNAME," and "INSERT FOLLOWER TAG HERE" bits to the appropriate prefixes, names, and tags. Save and check in.
+</p><p>8) Create a new script. Name it something like xxx_fire_creaturename. Copy and paste the Firing Script below into this script. Be sure to change all "xxx," "FOLLOWERNAME," and "INSERT FOLLOWER TAG HERE" bits to the appropriate prefixes, names, and tags. Save and check in.
+</p><p>9) Create a new script. Name it something like xxx_spawn_camp. Copy and paste the Spawn Follower in Camp Script into this script. Be sure to change all "xxx," "FOLLOWERNAME," and "INSERT FOLLOWER TAG HERE" bits to the appropriate prefixes, names, and tags. Save and check in.
+</p><p>10) At this point, you need to decide where you want to spawn your new follower. If your follower is an NPC that already exists in the game, things can get rather complicated. You'll probably have to duplicate an existing dialogue, add your hiring lines to it (which means you won't need the hiring line in the dialogue from Step #2), override it, and repackage the voice over. (This is beyond the scope of this tutorial.) If you want to place your follower in an existing area, that can be done fairly easily with PRCSCR scripts.
+</p>
+<dl><dd>a. You will have to find the tag of the area and the exact location in which you want to spawn your follower. <a rel="nofollow" class="external text" href="http://dragonagemodding.wordpress.com/2009/11/15/creating-a-custom-merchant-for-the-players-camp-part-1/">This Website</a> describes how to do that using a short script.</dd>
+<dd>b. After finding the area tag and location of your desired spawning spot, create a new script. Name it something like xxx_spawn_follower. Copy and paste the spawn follower in area script into this script. Be sure to change all "xxx," "FOLLOWERNAME," and "INSERT FOLLOWER TAG HERE" bits to the appropriate prefixes, names, and tags. </dd>
+<dd>c. Save and check in.</dd></dl>
+<p>NOTE: You cannot (as far as I know) use PRCSCR to spawn creatures in areas that are included in an area list but are not the first area entered on that list. For example, you can spawn a creature in the marketplace in Denerim (because it's usually the first area of Denerim to be entered), but you cannot spawn a creature in the Wonders of Thedas shop (because you had to go through the marketplace to get there). If I can get this to work in the future, I will update the script, but until then, you'll have to find other spawning locations. To check to see if your location is on an area list, find the area in the toolset and look at its Area List property in the object inspector.
+</p><p>11) Open a new excel document. It doesn't matter what it's called. Rename the Sheet1, Sheet2, and Sheet3 tabs at the bottom to partypicker_xxx, party_picker_xxx, and PRCSCR_xxx.
+</p><p>In partypicker_xxx, create columns like those below. Replace ### with a very large number, and add in your creature's tag and name.
+<a href="File%3APartypicker.jpg.html" class="image"><img alt="Partypicker.jpg" src="../assets/mw/images/f/fb/Partypicker.jpg" width="1106" height="89" /></a>
+</p><p>In party_picker_xxx, create columns like those below. Replace ### with the same very large number you used above, and add in your creature's tag.
+<a href="File%3AParty_picker.jpg.html" class="image"><img alt="Party picker.jpg" src="../assets/mw/images/d/dc/Party_picker.jpg" width="413" height="94" /></a>
+</p><p>In PRCSCR_xxx, create columns like those below. Replace ### with a very large number, and change the script to whatever you called the spawn follower in camp script (probably something like xxx_spawn_camp).
+</p><p><a href="File%3ASpawn_camp.jpg.html" class="image"><img alt="Spawn camp.jpg" src="../assets/mw/images/b/b8/Spawn_camp.jpg" width="400" height="165" /></a>
+</p><p>AMENDMENT: In addition to the rows above, add another row that contains | ###5 | INSERT THE AREA TAG YOU FOUND | xxx_spawn_follower |
+</p><p>Convert the excel document into a 2DA. Make sure the resulting GDA file is in your .../module/override folder.
+</p><p>12) Go back to your dialogue. In the hiring branch, set the "action" to fire the hiring script. In the firing branch, set the "action" to fire the firing script. [The plot gen00pt_generic_actions has a flag GEN_OWNER_DISAPPEAR. This can be used to make the follower disappear/get fired, though it won't set the plot flag that the follower was fired, so be careful.] Save and check in (unless you want to do the optional step below). For more complex dialogues, you'll have to set up conditions based on plots. (For example, setting the firing branch to only show up if the follower has actually been hired.)
+</p><p>13) OPTIONAL: If you want to increase/decrease approval with your dialogue, you can create a new script using the Simple Approval Script below. You may have to make several copies for varying levels of approval/disapproval. (There is a shorter way of doing this using plots, but it's not very noob-friendly.) After you have saved and checked in the approval scripts, you can set your conversation to fire these scripts. Save and check in.
+</p><p>14) Export your module. 
+</p>
+<dl><dd>Go to Tools-&gt;Export-&gt;Export without dependent resources</dd>
+<dd>Go to Tools-&gt;Export-&gt;Generate module XML</dd>
+<dd>Go to Tools-&gt;Export-&gt;Generate manifest XML</dd></dl>
+<p>15) Don't forget to clean out the toolsetexport folders before in-game testing. 
+</p>
+<dl><dd>Go to C:\Documents and Settings\YourName\My Documents\BioWare\Dragon Age\AddIns\YourModule\core\override\toolsetexport. Move everything in there (if anything) up one level to C:\Documents and Settings\YourName\My Documents\BioWare\Dragon Age\AddIns\YourModule\core\override.</dd>
+<dd>Go to C:\Documents and Settings\YourName\My Documents\BioWare\Dragon Age\AddIns\YourModule\module\override\toolsetexport. Move everything in there (if anything) up one level to C:\Documents and Settings\YourName\My Documents\BioWare\Dragon Age\AddIns\YourModule\module\override.</dd>
+<dd>In the toolset, go to Tools-&gt;Export-&gt;Empty export directories</dd></dl>
+<h2><span class="mw-headline" id="Scripts">Scripts</span></h2>
+<p>In theory, these scripts should first spawn the follower in camp. At that point, you should be able to talk to him/her to hire them. It'll show the partypicker GUI (probably unnecessarily since you're in camp). After that, whenever you enter camp, the follower should move to the location where they were spawned. However, I do advise caution. I hired my follower from a location other than camp, so these scripts have not been tested as I included them here. You may need to tweak them a bit to fit them to your needs. If you don't want the partypicker GUI to show up at camp when you hire the follower, just omit "SetPartyPickerGUIStatus(2);" and "ShowPartyPickerGUI();" from the hiring script.
+</p><p><br />
+</p>
+<h3><span class="mw-headline" id="Module_Core_Script">Module Core Script</span></h3>
+<pre>#include "wrappers_h"
+#include "approval_h"
+#include "plt_gen00pt_party_xxx"
+void main()
+{
+      event ev = GetCurrentEvent();
+      int nEventType = GetEventType(ev);
+      object oEventCreator = GetEventCreator(ev);
+      object oHero = GetHero();
+      object oParty = GetParty(oHero);
+      int nEventHandled = FALSE;
+      switch(nEventType)
+      {
+         case EVENT_TYPE_MODULE_GETCHARSTAGE:
+         {
+            //ONLY DO THIS IF YOU HAVE A STAGE WITH EVERYONE'S CHARACTERS IN IT
+            SetPartyPickerStage("xxx_char_stage", "partypicker");
+            break;
+         }
+         case EVENT_TYPE_PARTYMEMBER_ADDED:
+         {
+            object oFollower = GetEventObject(ev, 0);
+            
+            if (GetTag(oFollower) == "INSERT FOLLOWER TAG HERE")
+            {
+               SetLocalInt(oFollower, CREATURE_REWARD_FLAGS, 0);
+               WR_SetFollowerState(oFollower, FOLLOWER_STATE_ACTIVE, FALSE);
+               AddCommand(oFollower, CommandJumpToLocation(GetLocation(GetHero())));
+               WR_SetPlotFlag(PLT_GEN00PT_PARTY_XXX, FOLLOWERNAME_IN_PARTY, TRUE, FALSE);
+               WR_SetPlotFlag(PLT_GEN00PT_PARTY_XXX, FOLLOWERNAME_IN_CAMP, FALSE, FALSE);
+            }
+            break;
+         }
+         case EVENT_TYPE_PARTYMEMBER_DROPPED:
+         {
+            object oFollower = GetEventObject(ev, 0);
+            
+            if (GetTag(oFollower) == "INSERT FOLLOWER TAG HERE")
+            {
+               WR_SetFollowerState(oFollower, FOLLOWER_STATE_AVAILABLE, FALSE);
+               WR_SetPlotFlag(PLT_GEN00PT_PARTY_XXX, FOLLOWERNAME_IN_CAMP, TRUE, FALSE);
+               WR_SetPlotFlag(PLT_GEN00PT_PARTY_XXX, FOLLOWERNAME_IN_PARTY, FALSE, FALSE);
+            }
+            WR_SetObjectActive(oFollower, FALSE);
+            break;
+         }
+         //The section below is supposed to handle gifts; omit it if it causes a problem
+         case EVENT_TYPE_MODULE_HANDLE_GIFT:
+         {
+           object oFollower = GetEventObject(ev, 0);
+           object oControlled = GetMainControlled();
+           int nFollower = INSERT VERY LARGE NUMBER HERE; //&lt;-- same as one from approval GDA 
+           if (GetTag(oFollower) == "INSERT FOLLOWER TAG HERE")
+           {
+               Approval_ChangeApproval(nFollower, 5);
+               AdjustFollowerApproval(oControlled, -5, TRUE);
+           }
+           break;
+         }
+       //The section below returns followers to their positions in camp when world map is closed
+       case EVENT_TYPE_WORLD_MAP_CLOSED:
+       {
+           object oPC = GetHero();
+           object oFollower = GetObjectByTag("INSERT FOLLOWER TAG HERE");
+           object oArea = GetArea(oPC);
+           string sAreaTag = GetTag(oArea);
+           int nCloseType = GetEventInteger(ev, 0); // 0 for cancel, 1 for travel            
+                    
+           if(nCloseType == 0)
+           {
+               if (GetLocalInt(oArea, AREA_PARTY_CAMP) == 1)
+               {  
+                   if(GetFollowerState(oFollower) == FOLLOWER_STATE_ACTIVE)
+                   {
+                       //Creature's camp position - should be same as used in spawn in camp script
+                       vector vTent = Vector(138.564f, 111.815f, -1.08586f);
+                       location lTent = Location(GetArea(GetHero()), vTent,  180.0f);
+                       command cMoveFollower = CommandJumpToLocation(lTent); 
+                       SetFollowerState(oFollower, FOLLOWER_STATE_AVAILABLE);
+                       AddCommand(oFollower, cMoveFollower);
+                       WR_SetObjectActive(oFollower, TRUE);
+                       WR_SetPlotFlag(PLT_GEN00PT_PARTY_XXX, FOLLOWERNAME_IN_PARTY, FALSE, FALSE);
+                       WR_SetPlotFlag(PLT_GEN00PT_PARTY_XXX, FOLLOWERNAME_IN_CAMP, TRUE, FALSE);
+                   }                   
+               }
+           }
+           break;
+       }
+    }
+}
+</pre>
+<h3><span class="mw-headline" id="Hiring_Script_.28short_version_-_no_level_up_table.2C_no_AI.29">Hiring Script (short version - no level up table, no AI)</span></h3>
+<pre>#include "utility_h"
+#include "wrappers_h"
+#include "plot_h"
+#include "party_h"
+#include "events_h"
+#include "core_h"
+#include "global_objects_h"
+#include "sys_autolevelup_h"
+#include "sys_chargen_h"
+#include "sys_rewards_h"
+#include "approval_h"
+#include "plt_gen00pt_party_xxx"
+void main()
+{
+   object oHero = GetHero();
+   object oFollower = GetObjectByTag("INSERT FOLLOWER TAG HERE");
+   int nLevel = GetLevel(oHero);
+   ScaleEquippedItems(oFollower, nLevel);
+   UT_HireFollower(oFollower, FALSE);
+   WR_SetPlotFlag(PLT_GEN00PT_PARTY_XXX, FOLLOWERNAME_HIRED, TRUE, FALSE);
+   SetLocalInt(oFollower, CREATURE_REWARD_FLAGS, 0);
+   SetGroupId(oFollower, GetGroupId(oHero));
+   SetFollowerApprovalEnabled(oFollower, TRUE);
+   SetFollowerApprovalDescription(oFollower, 371487);
+   SetPartyPickerGUIStatus(2);
+   ShowPartyPickerGUI();
+}
+</pre>
+<p><br />
+</p>
+<h3><span class="mw-headline" id="Hiring_Script_.28long_version_-_level_up_table.2C_AI_table.29">Hiring Script (long version - level up table, AI table)</span></h3>
+<pre>#include "wrappers_h"
+#include "ability_h"
+#include "sys_autolevelup_h"
+#include "sys_chargen_h"
+#include "approval_h"
+#include "2da_constants_h"
+#include "global_constants_h"
+#include "plt_gen00pt_party_xxx"
+void main()
+{
+   object oHero = GetHero();
+   object oPC = GetPartyLeader();    
+   object oFollower = GetObjectByTag("INSERT FOLLOWER TAG HERE");
+   //object oFollower = CreateObject(OBJECT_TYPE_CREATURE, R"INSERT TAG OF CLONED FOLLOWER HERE.utc", GetLocation(GetHero())); &lt;--use if hiring existing NPC
+   int nALTable = TABLE_ALFOLLOWERNAME;
+   int nLevel = GetLevel(oHero);
+   //SetObjectActive(GetObjectByTag("INSERT TAG OF ORIGINAL NPC HERE"), FALSE); &lt;--use if hiring existing NPC
+   SetEventScript(oFollower, RESOURCE_SCRIPT_PLAYER_CORE);
+   SetLocalInt(oFollower, CREATURE_REWARD_FLAGS, 0);
+   Chargen_InitializeCharacter(oFollower, FALSE);
+   Chargen_SelectRace(oFollower, GetCreatureRacialType(oFollower));
+   Chargen_SelectCoreClass(oFollower, nClass);
+   AL_DoAutoLevelUp(oFollower, TRUE);
+   Chargen_EnableTacticsPresets(oFollower);
+   SetAutoLevelUp(oFollower, 2); //done by UT_HireFollower
+   ScaleEquippedItems(oFollower, nLevel);
+   SetFollowerApprovalEnabled(oFollower, TRUE);
+   SetFollowerApprovalDescription(oFollower, 371487);
+   //Approval_AddFollowerBonusAbility(nAppIndex, 0); &lt;--write custom script similar to this one to have approval bonus abilities
+   SetGroupId(oFollower, GetGroupId(oHero)); //done by UT_HireFollower
+   if (GetArraySize(GetPartyList(oPC)) &lt; 4)
+   {
+       //adds follower to party if there is room
+       AddCommand(oFollower, CommandJumpToLocation(GetLocation(GetHero())));
+       WR_SetFollowerState(oFollower, FOLLOWER_STATE_ACTIVE);
+   }
+   else
+   {
+           // clears active party if the party is full
+           if(WR_GetPlotFlag( PLT_GEN00PT_PARTY, GEN_ALISTAIR_RECRUITED))
+                       WR_SetPlotFlag(PLT_GEN00PT_PARTY, GEN_ALISTAIR_IN_CAMP, TRUE, TRUE);
+           if(WR_GetPlotFlag( PLT_GEN00PT_PARTY, GEN_DOG_RECRUITED))
+                       WR_SetPlotFlag(PLT_GEN00PT_PARTY, GEN_DOG_IN_CAMP, TRUE, TRUE);
+           if(WR_GetPlotFlag( PLT_GEN00PT_PARTY, GEN_SHALE_RECRUITED))
+                       WR_SetPlotFlag(PLT_GEN00PT_PARTY, GEN_SHALE_IN_CAMP, TRUE, TRUE);
+           if(WR_GetPlotFlag( PLT_GEN00PT_PARTY, GEN_STEN_RECRUITED))
+                       WR_SetPlotFlag(PLT_GEN00PT_PARTY, GEN_STEN_IN_CAMP, TRUE, TRUE);
+           if(WR_GetPlotFlag( PLT_GEN00PT_PARTY, GEN_ZEVRAN_RECRUITED))
+                       WR_SetPlotFlag(PLT_GEN00PT_PARTY, GEN_ZEVRAN_IN_CAMP, TRUE, TRUE);
+           if(WR_GetPlotFlag( PLT_GEN00PT_PARTY, GEN_OGHREN_RECRUITED))
+                       WR_SetPlotFlag(PLT_GEN00PT_PARTY, GEN_OGHREN_IN_CAMP, TRUE, TRUE);
+           if(WR_GetPlotFlag( PLT_GEN00PT_PARTY, GEN_LELIANA_RECRUITED))
+                       WR_SetPlotFlag(PLT_GEN00PT_PARTY, GEN_LELIANA_IN_CAMP, TRUE, TRUE);
+           if(WR_GetPlotFlag( PLT_GEN00PT_PARTY, GEN_MORRIGAN_RECRUITED))
+                       WR_SetPlotFlag(PLT_GEN00PT_PARTY, GEN_MORRIGAN_IN_CAMP, TRUE, TRUE);
+           if(WR_GetPlotFlag( PLT_GEN00PT_PARTY, GEN_WYNNE_RECRUITED))
+                       WR_SetPlotFlag(PLT_GEN00PT_PARTY, GEN_WYNNE_IN_CAMP, TRUE, TRUE);
+           if(WR_GetPlotFlag( PLT_GEN00PT_PARTY, GEN_LOGHAIN_RECRUITED))
+                       WR_SetPlotFlag(PLT_GEN00PT_PARTY, GEN_LOGHAIN_IN_CAMP, TRUE, TRUE);
+           if(WR_GetPlotFlag( PLT_GEN00PT_PARTY_XXX, FOLLOWERNAME_HIRED))
+           {
+               WR_SetFollowerState(GetObjectByTag(GEN_FL_FOLLOWERNAME), FOLLOWER_STATE_AVAILABLE);
+               WR_SetPlotFlag(PLT_GEN00PT_PARTY_XXX, FOLLOWERNAME_IN_PARTY, FALSE, FALSE);
+               WR_SetPlotFlag(PLT_GEN00PT_PARTY_XXX, FOLLOWERNAME_IN_CAMP, TRUE, FALSE);
+           }      
+           WR_SetFollowerState(oFollower, FOLLOWER_STATE_ACTIVE);
+           SetPartyPickerGUIStatus(2);
+           ShowPartyPickerGUI();
+   }
+}
+</pre>
+<p>The other follower tutorial shows how to set up level up table.
+</p><p>Where it says INSERTCLASSHERE, use CLASS_WARRIOR, CLASS_WIZARD, or CLASS_ROGUE
+</p><p>For specialization numbers, go to the dragon age wiki <a rel="nofollow" class="external autonumber" href="http://dragonage.wikia.com/wiki/Console">[1]</a>
+(I know the same listing exists here somewhere, but I can't seem to find it right now.)
+</p><p>If you are using an existing NPC as your follower, you'll have to make three easy changes to the script above:
+</p><p>1) Remove the "//" from "//SetObjectActive(GetObjectByTag("INSERT TAG OF ORIGINAL NPC HERE"), FALSE);"
+</p><p>2) Add "//" in front of "object oFollower = GetObjectByTag("INSERT TAG OF CLONED FOLLOWER HERE");" 
+</p><p>3) Remove the "//" from "//object oFollower = CreateObject(OBJECT_TYPE_CREATURE, R"INSERT TAG OF CLONED FOLLOWER HERE.utc", GetLocation(GetHero()));"
+</p>
+<h3><span class="mw-headline" id="Firing_Script">Firing Script</span></h3>
+<pre>#include "utility_h"
+#include "wrappers_h"
+#include "events_h"
+#include "plt_gen00pt_party_xxx"
+void main()
+{
+   object oFollower = GetObjectByTag("INSERT FOLLOWER TAG HERE");
+   UT_FireFollower(oFollower, TRUE, TRUE);
+   DestroyObject(oFollower);
+   WR_SetPlotFlag(PLT_GEN00PT_PARTY_XXX, FOLLOWERNAME_FIRED, TRUE);
+}
+</pre>
+<p><br />
+</p>
+<h3><span class="mw-headline" id="Spawn_Follower_in_Camp_Script">Spawn Follower in Camp Script</span></h3>
+<pre>#include "utility_h"
+#include "wrappers_h"
+#include "party_h"
+#include "plt_gen00pt_party_xxx"
+void main()
+{
+   object oFollower = GetObjectByTag("INSERT TAG OF FOLLOWER HERE");
+   //Follower's camp position near... &lt;--change the vector coordinates below to camp coordinates
+   vector vFollowerCamp = Vector(135.424f, 124.962f, -0.253687f);
+   location lFollowerCamp = Location(GetArea(GetHero()), vFollowerCamp,  -130.2f);
+   command cMoveFollowerCamp = CommandJumpToLocation(lFollowerCamp);
+   //Follower's Redcliffe position near... &lt;--change the vector coordinates below to Redcliffe coordinates
+   vector vFollowerRed = Vector(32.3337f, -26.7351f, 0.401679f);
+   location lFollowerRed = Location(GetArea(GetHero()), vFollowerRed,  30.0f);
+   command cMoveFollowerRed = CommandJumpToLocation(lFollowerRed);
+   //Follower's Denerim position near... &lt;--change the vector coordinates below to Denerim estate coordinates
+   vector vFollowerDen = Vector(79.0577f, -9.56501f, 5.02284f);
+   location lFollowerDen = Location(GetArea(GetHero()), vFollowerDen,  180.0f);
+   command cMoveFollowerDen = CommandJumpToLocation(lFollowerDen);
+   SetFollowerState(oFollower, FOLLOWER_STATE_AVAILABLE);
+   WR_SetObjectActive(oFollower, TRUE);
+   SetImmortal(oFollower, TRUE);
+   RW_CatchUpToPlayer(oFollower);
+   if (GetTag(oArea) == "cam100ar_camp_plains" || GetTag(oArea) == "cam110ar_camp_arch3" || GetTag(oArea) == "cam104ar_camp_arch1")
+   {
+       AddCommand(oFollower, cMoveFollowerCamp);
+       WR_SetPlotFlag(PLT_GEN00PT_PARTY_XXX, FOLLOWER_IN_PARTY, FALSE, FALSE);
+       WR_SetPlotFlag(PLT_GEN00PT_PARTY_XXX, FOLLOWER_IN_CAMP, TRUE, FALSE);
+   }
+   else if (GetTag(oArea) == "cli300ar_redcliffe_castle")
+   {
+       AddCommand(oFollower, cMoveFollowerRed);
+       WR_SetPlotFlag(PLT_GEN00PT_PARTY_XXX, FOLLOWER_IN_PARTY, FALSE, FALSE);
+       WR_SetPlotFlag(PLT_GEN00PT_PARTY_XXX, FOLLOWER_IN_CAMP, FALSE, FALSE);
+   }
+   else if (GetTag(oArea) == "den211ar_arl_eamon_estate_1")
+   {
+       AddCommand(oFollower, cMoveFollowerDen);
+       WR_SetPlotFlag(PLT_GEN00PT_PARTY_XXX, FOLLOWER_IN_PARTY, FALSE, FALSE);
+       WR_SetPlotFlag(PLT_GEN00PT_PARTY_XXX, FOLLOWER_IN_CAMP, FALSE, FALSE);
+   }
+}
+</pre>
+<h3><span class="mw-headline" id="Spawn_Follower_in_Area_Script">Spawn Follower in Area Script</span></h3>
+<pre>#include "utility_h"
+#include "wrappers_h"
+#include "plt_gen00pt_party_xxx"
+void main()
+{
+   object oArea = GetObjectByTag("INSERT AREA TAG HERE");
+   vector vLocation = Vector(361.868f, 214.521f, 1.93519f); //change these numbers to the ones you found
+   if (WR_GetPlotFlag(PLT_GEN00PT_PARTY_XXX, FOLLOWERNAME_CREATED) == FALSE)
+   {
+       CreateObject(OBJECT_TYPE_CREATURE, R"INSERT FOLLOWER TAG HERE.utc", Location(oArea, vLocation, 0.0f)); //change 0.0f to the orientation angle you found
+       WR_SetPlotFlag(PLT_GEN00PT_PARTY_XXX, FOLLOWERNAME_CREATED, TRUE);
+   }
+}
+</pre>
+<p><br />
+</p>
+<h3><span class="mw-headline" id="Simple_Approval_Script">Simple Approval Script</span></h3>
+<pre>#include "approval_h"
+void main()
+{
+   object oFollower = GetObjectByTag("INSERT FOLLOWER TAG HERE");
+   AdjustFollowerApproval(oFollower, 5, TRUE); 
+}
+</pre>
+<p>NOTE: Change the 5 to whatever you want the approval to increase by. Change to a negative number if you want to decrease approval.
+</p>
+<h2><span class="mw-headline" id="Other_Notes">Other Notes</span></h2>
+<p>It is possible to combine the separate party-related scripts (like hiring, firing, etc.) into a single plot script. This can also be done for the various approval-related scripts (like increasing/decreasing approval, setting up romances, etc.). However, this requires more advanced scripting knowledge than the separate scripts. Eventually, I may add the scripts and directions here for more advanced users.
+</p>
+<!-- 
+NewPP limit report
+CPU time usage: 0.036 seconds
+Real time usage: 0.050 seconds
+Preprocessor visited node count: 43/1000000
+Preprocessor generated node count: 48/1000000
+Post‐expand include size: 0/2097152 bytes
+Template argument size: 0/2097152 bytes
+Highest expansion depth: 2/40
+Expensive parser function count: 0/100
+-->
+
+<!-- 
+Transclusion expansion time report (%,ms,calls,template)
+100.00%    0.000      1 - -total
+-->
+
+<!-- Saved in parser cache with key db714099484-datoolwiki_:pcache:idhash:4726-0!*!0!!en!5!* and timestamp 20260531041846 and revision id 18895
+ -->
+</div>									<div class="printfooter">
+						Retrieved from "<a dir="ltr" href="User%3ASatans_karma.html">https://www.datoolset.net/mw/index.php?title=User:Satans_karma&amp;oldid=18895</a>"					</div>
+													<div id='catlinks' class='catlinks catlinks-allhidden'></div>												<div class="visualClear"></div>
+							</div>
+		</div>
+		<div id="mw-navigation">
+			<h2>Navigation menu</h2>
+
+			<div id="mw-head">
+									<div id="p-personal" role="navigation" class="" aria-labelledby="p-personal-label">
+						<h3 id="p-personal-label">Personal tools</h3>
+						<ul>
+							<li id="pt-login"><a href="/mw/index.php?title=Special:UserLogin&amp;returnto=User%3ASatans+karma" title="You are encouraged to log in; however, it is not mandatory [o]" accesskey="o">Log in</a></li>						</ul>
+					</div>
+									<div id="left-navigation">
+										<div id="p-namespaces" role="navigation" class="vectorTabs" aria-labelledby="p-namespaces-label">
+						<h3 id="p-namespaces-label">Namespaces</h3>
+						<ul>
+															<li  id="ca-nstab-user" class="selected"><span><a href="User%3ASatans_karma.html"  title="View the user page [c]" accesskey="c">User page</a></span></li>
+															<li  id="ca-talk" class="new"><span><a href="/mw/index.php?title=User_talk:Satans_karma&amp;action=edit&amp;redlink=1"  title="Discussion about the content page [t]" accesskey="t">Discussion</a></span></li>
+													</ul>
+					</div>
+										<div id="p-variants" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-variants-label">
+												<h3 id="p-variants-label"><span>Variants</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+									</div>
+				<div id="right-navigation">
+										<div id="p-views" role="navigation" class="vectorTabs" aria-labelledby="p-views-label">
+						<h3 id="p-views-label">Views</h3>
+						<ul>
+															<li id="ca-view" class="selected"><span><a href="User%3ASatans_karma.html" >Read</a></span></li>
+															<li id="ca-viewsource"><span><a href="User%3ASatans_karma.html"  title="This page is protected.&#10;You can view its source [e]" accesskey="e">View source</a></span></li>
+															<li id="ca-history" class="collapsible"><span><a href="User%3ASatans_karma.html"  title="Past revisions of this page [h]" accesskey="h">View history</a></span></li>
+													</ul>
+					</div>
+										<div id="p-cactions" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-cactions-label">
+						<h3 id="p-cactions-label"><span>More</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+										<div id="p-search" role="search">
+						<h3>
+							<label for="searchInput">Search</label>
+						</h3>
+
+						<form action="/mw/index.php" id="searchform">
+														<div id="simpleSearch">
+															<input type="search" name="search" placeholder="Search" title="Search Dragon Age Toolset Wiki [f]" accesskey="f" id="searchInput" /><input type="hidden" value="Special:Search" name="title" /><input type="submit" name="fulltext" value="Search" title="Search the pages for this text" id="mw-searchButton" class="searchButton mw-fallbackSearchButton" /><input type="submit" name="go" value="Go" title="Go to a page with this exact name if exists" id="searchButton" class="searchButton" />								</div>
+						</form>
+					</div>
+									</div>
+			</div>
+			<div id="mw-panel">
+				<div id="p-logo" role="banner"><a class="mw-wiki-logo" href="Main_Page.html"  title="Visit the main page"></a></div>
+						<div class="portal" role="navigation" id='p-navigation' aria-labelledby='p-navigation-label'>
+			<h3 id='p-navigation-label'>Navigation</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-mainpage-description"><a href="Main_Page.html" title="Visit the main page [z]" accesskey="z">Main page</a></li>
+													<li id="n-recentchanges"><a href="/wiki/Special:RecentChanges" title="A list of recent changes in the wiki [r]" accesskey="r">Recent changes</a></li>
+													<li id="n-randompage"><a href="/wiki/Special:Random" title="Load a random page [x]" accesskey="x">Random page</a></li>
+													<li id="n-help"><a href="https://www.mediawiki.org/wiki/Special:MyLanguage/Help:Contents" title="The place to find out">Help</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-Links' aria-labelledby='p-Links-label'>
+			<h3 id='p-Links-label'>Links</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-Toolset-forums"><a href="http://forum.bioware.com/forum/30-dragon-age-toolset" rel="nofollow">Toolset forums</a></li>
+													<li id="n-Legacy-forums"><a href="http://social.bioware.com/forum/1/subindex/70" rel="nofollow">Legacy forums</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-tb' aria-labelledby='p-tb-label'>
+			<h3 id='p-tb-label'>Tools</h3>
+
+			<div class="body">
+									<ul>
+													<li id="t-whatlinkshere"><a href="/wiki/Special:WhatLinksHere/User:Satans_karma" title="A list of all wiki pages that link here [j]" accesskey="j">What links here</a></li>
+													<li id="t-recentchangeslinked"><a href="/wiki/Special:RecentChangesLinked/User:Satans_karma" title="Recent changes in pages linked from this page [k]" accesskey="k">Related changes</a></li>
+													<li id="t-contributions"><a href="/wiki/Special:Contributions/Satans_karma" title="A list of contributions of this user">User contributions</a></li>
+													<li id="t-log"><a href="/wiki/Special:Log/Satans_karma">Logs</a></li>
+													<li id="t-specialpages"><a href="/wiki/Special:SpecialPages" title="A list of all special pages [q]" accesskey="q">Special pages</a></li>
+													<li id="t-print"><a href="User%3ASatans_karma.html" rel="alternate" title="Printable version of this page [p]" accesskey="p">Printable version</a></li>
+													<li id="t-permalink"><a href="User%3ASatans_karma.html" title="Permanent link to this revision of the page">Permanent link</a></li>
+													<li id="t-info"><a href="User%3ASatans_karma.html" title="More information about this page">Page information</a></li>
+											</ul>
+							</div>
+		</div>
+				</div>
+		</div>
+		<div id="footer" role="contentinfo">
+							<ul id="footer-info">
+											<li id="footer-info-lastmod"> This page was last modified on 6 August 2012, at 00:32.</li>
+									</ul>
+							<ul id="footer-places">
+											<li id="footer-places-privacy"><a href="/wiki/Dragon_Age_Toolset_Wiki:Privacy_policy" title="Dragon Age Toolset Wiki:Privacy policy">Privacy policy</a></li>
+											<li id="footer-places-about"><a href="/wiki/Dragon_Age_Toolset_Wiki:About" title="Dragon Age Toolset Wiki:About">About Dragon Age Toolset Wiki</a></li>
+											<li id="footer-places-disclaimer"><a href="/wiki/Dragon_Age_Toolset_Wiki:General_disclaimer" title="Dragon Age Toolset Wiki:General disclaimer">Disclaimers</a></li>
+									</ul>
+										<ul id="footer-icons" class="noprint">
+											<li id="footer-poweredbyico">
+															<a href="//www.mediawiki.org/"><img src="../assets/mw/resources/assets/poweredby_mediawiki_88x31.png" alt="Powered by MediaWiki" srcset="../assets/mw/resources/assets/poweredby_mediawiki_132x47.png 1.5x, ../assets/mw/resources/assets/poweredby_mediawiki_176x62.png 2x" width="88" height="31" /></a>
+													</li>
+									</ul>
+						<div style="clear:both"></div>
+		</div>
+		<script>if(window.jQuery)jQuery.ready();</script><script>if(window.mw){
+mw.loader.state({"site":"loading","user":"ready","user.groups":"ready"});
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.toc","mediawiki.action.view.postEdit","mediawiki.user","mediawiki.hidpi","mediawiki.page.ready","mediawiki.searchSuggest"],null,true);
+}</script>
+<script>if(window.mw){
+document.write("\u003Cscript src=\"https://www.datoolset.net/mw/load.php?debug=false\u0026amp;lang=en\u0026amp;modules=site\u0026amp;only=scripts\u0026amp;skin=vector\u0026amp;*\"\u003E\u003C/script\u003E");
+}</script>
+<script>if(window.mw){
+mw.config.set({"wgBackendResponseTime":251});
+}</script>
+	</body>
+</html>

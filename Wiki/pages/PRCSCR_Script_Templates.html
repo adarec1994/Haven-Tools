@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" class="client-nojs">
+<head>
+<meta charset="UTF-8" />
+<title>PRCSCR Script Templates - Dragon Age Toolset Wiki</title>
+<meta name="generator" content="MediaWiki 1.25.6" />
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="search" type="application/opensearchdescription+xml" href="/mw/opensearch_desc.php" title="Dragon Age Toolset Wiki (en)" />
+<link rel="EditURI" type="application/rsd+xml" href="https://www.datoolset.net/mw/api.php?action=rsd" />
+<link rel="alternate" hreflang="x-default" href="PRCSCR_Script_Templates.html" />
+<link rel="alternate" type="application/atom+xml" title="Dragon Age Toolset Wiki Atom feed" href="/mw/index.php?title=Special:RecentChanges&amp;feed=atom" />
+<meta name="ResourceLoaderDynamicStyles" content="" />
+<style>a:lang(ar),a:lang(kk-arab),a:lang(mzn),a:lang(ps),a:lang(ur){text-decoration:none}
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-css:7:270a0dcd3ae587df0f041aebfc42e61b */</style>
+<script>if(window.mw){
+mw.config.set({"wgCanonicalNamespace":"","wgCanonicalSpecialPageName":false,"wgNamespaceNumber":0,"wgPageName":"PRCSCR_Script_Templates","wgTitle":"PRCSCR Script Templates","wgCurRevisionId":19942,"wgRevisionId":19942,"wgArticleId":4174,"wgIsArticle":true,"wgIsRedirect":false,"wgAction":"view","wgUserName":null,"wgUserGroups":["*"],"wgCategories":["Articles with documentation requests","Tutorials","Scripts","Pages with example scripts"],"wgBreakFrames":false,"wgPageContentLanguage":"en","wgPageContentModel":"wikitext","wgSeparatorTransformTable":["",""],"wgDigitTransformTable":["",""],"wgDefaultDateFormat":"dmy","wgMonthNames":["","January","February","March","April","May","June","July","August","September","October","November","December"],"wgMonthNamesShort":["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],"wgRelevantPageName":"PRCSCR_Script_Templates","wgRelevantArticleId":4174,"wgIsProbablyEditable":false,"wgRestrictionEdit":[],"wgRestrictionMove":[]});
+}</script><script>if(window.mw){
+mw.loader.implement("user.options",function($,jQuery){mw.user.options.set({"variant":"en"});});mw.loader.implement("user.tokens",function($,jQuery){mw.user.tokens.set({"editToken":"+\\","patrolToken":"+\\","watchToken":"+\\"});});
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-js:7:a5c52c063dc436c1ca7c9f456936a5e9 */
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.page.startup","mediawiki.legacy.wikibits","mediawiki.legacy.ajax","skins.vector.js"]);
+}</script>
+<!--[if lt IE 7]><style type="text/css">body{behavior:url("/mw/skins/Vector/csshover.min.htc")}</style><![endif]-->
+<link rel="stylesheet" href="../assets/local/wiki-static.css" />
+</head>
+<body class="mediawiki ltr sitedir-ltr ns-0 ns-subject page-PRCSCR_Script_Templates skin-vector action-view">
+		<div id="mw-page-base" class="noprint"></div>
+		<div id="mw-head-base" class="noprint"></div>
+		<div id="content" class="mw-body" role="main">
+			<a id="top"></a>
+
+						<div class="mw-indicators">
+</div>
+			<h1 id="firstHeading" class="firstHeading" lang="en">PRCSCR Script Templates</h1>
+						<div id="bodyContent" class="mw-body-content">
+									<div id="siteSub">From Dragon Age Toolset Wiki</div>
+								<div id="contentSub"></div>
+												<div id="jump-to-nav" class="mw-jump">
+					Jump to:					<a href="#mw-head">navigation</a>, 					<a href="#p-search">search</a>
+				</div>
+				<div id="mw-content-text" lang="en" dir="ltr" class="mw-content-ltr"><p>This page serves as a repository for ready to use M2DA's and Scripts to use in conjunction with <a href="PRCSCR.html" title="PRCSCR">PRCSCR</a> M2DA's when adding custom content to the game. 
+</p><p>References:
+</p>
+<ul><li>See Main Article: <i><a href="PRCSCR.html" title="PRCSCR">PRCSCR</a></i></li>
+<li>See <i><a href="PRCSCR.xls.html" title="PRCSCR.xls">PRCSCR.xls</a></i> for details about that M2DA, or <i><a href="2da.html" title="2DA">2DA</a></i> for an explanation of 2DA's as a whole</li>
+<li>To create a Script, right click in the Resourcepalette and select "New/Script" , or see <i><a href="Designer_Resources.html" title="Designer Resources">Designer Resources</a></i> for such Resources as a whole.</li></ul>
+<p><br />
+<b>Contents:</b>
+</p>
+<table style="background-color:#eeeeee; border:2px #999999 solid; padding:4px; margin:4px" border="3">
+<tr>
+<td width="300"><a href="PRCSCR_Script_Templates.html#Adding_a_placeable_into_an_existing_Area" title="PRCSCR Script Templates">1. Adding a placeable into an existing Area</a>
+</td>
+<td width="800">This Script serves to add a placeable of your choice into an Area of choice. <i>(non removable)</i>
+</td></tr>
+<tr>
+<td> <a href="PRCSCR_Script_Templates.html#Adding_a_NPC_into_an_existing_Area" title="PRCSCR Script Templates">2. Adding a NPC into an existing Area</a>
+</td>
+<td> This Script serves to any custom NPC or Creature to a Area of choice. <i>(removable)</i>
+</td></tr>
+<tr>
+<td> <a href="PRCSCR_Script_Templates.html#Activating_a_Waypoint_on_the_Worldmap" title="PRCSCR Script Templates">3. Activating a Waypoint on the Worldmap</a>
+</td>
+<td> This Script serves to activate a custom Waypoint (Map Pin) of choice ,when leaving Lothering or at any other time into the Game.
+</td></tr>
+<tr>
+<td> <a href="PRCSCR_Script_Templates.html#Adding_an_Item_into_the_Players_Inventory" title="PRCSCR Script Templates">4. Adding an Item into the Players Inventory</a>
+</td>
+<td> This Script serves to instantly add an Item into the Players Inventory.
+</td></tr>
+<tr>
+<td> <a href="PRCSCR_Script_Templates.html#Adding_an_Item_to_an_existing_Vendor_or_Container" title="PRCSCR Script Templates">5. Adding an Item to an existing Vendor or Container</a>
+</td>
+<td> This Script serves to add any Item into a existing Vendors Inventory, as long the Vendor exists.
+</td></tr>
+<tr>
+<td> 6. Adding a Working Door into an existing Area
+</td>
+<td> This Script serves to add a custom Door into a existing Area, that the Player can enter into a custom Area.
+</td></tr>
+<tr>
+<td> 7. Adding a Quest to an existing Chanters Board
+</td>
+<td> This Script serves to add a new Quest to a existing Chanters Board, at any chosen time into the Game.
+</td></tr>
+<tr>
+<td> 8. <a href="Playing_custom_Player_Character.html" title="Playing custom Player Character">Playing custom Player Character</a>
+</td>
+<td> Allows you to play custom character. Also: start your module with cutscene and allows you to create character 10 lvl and set it's characteristics as you want.
+</td></tr></table>
+<p><br />
+</p>
+<h2><span class="mw-headline" id="Adding_a_placeable_into_an_existing_Area">Adding a placeable into an existing Area</span></h2>
+<p><b>M2DA Setup:</b>
+</p>
+<ol><li>AreaListName must not be "any". Chose a specific one.</li>
+<li>Copy the GDA into your modules override folder.</li></ol>
+<p><b>Script:</b> (As taken from the Storage Chest mod a kind Bioware employee made&#160;:o)
+</p>
+<div dir="ltr" class="mw-geshi mw-code mw-content-ltr"><div class="dascript source-dascript"><pre class="de1"><span class="co1">//const string TAL_STORAGE_CHEST_SPAWNED = &quot;TAL_STORAGE_CHEST_SPAWNED&quot;;</span>
+<a href="http://www.datoolset.net/wiki/index.php?title=const keyword"><span class="kw1">const</span></a> <a href="http://www.datoolset.net/wiki/index.php?title=string keyword"><span class="kw2">string</span></a> TAL_IP_STORAGE_CHEST <span class="sy0">=</span> <span class="st0">&quot;tal_ip_storage_chest&quot;</span>;
+<a href="http://www.datoolset.net/wiki/index.php?title=const keyword"><span class="kw1">const</span></a> <a href="http://www.datoolset.net/wiki/index.php?title=resource keyword"><span class="kw2">resource</span></a> TAL_RESOURCE_IP_STORAGE_CHEST <span class="sy0">=</span> R<span class="st0">&quot;tal_ip_storage_chest.utp&quot;</span>;
+&#160;
+<a href="http://www.datoolset.net/wiki/index.php?title=void keyword"><span class="kw2">void</span></a> main<span class="br0">&#40;</span><span class="br0">&#41;</span>
+<span class="br0">&#123;</span>
+    <a href="http://www.datoolset.net/wiki/index.php?title=object keyword"><span class="kw2">object</span></a> oMainControlled <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetMainControlled"><span class="kw4">GetMainControlled</span></a><span class="br0">&#40;</span><span class="br0">&#41;</span>;
+    <a href="http://www.datoolset.net/wiki/index.php?title=object keyword"><span class="kw2">object</span></a> oChest <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=UT_GetNearestObjectByTag"><span class="kw4">UT_GetNearestObjectByTag</span></a><span class="br0">&#40;</span>oMainControlled, TAL_IP_STORAGE_CHEST<span class="br0">&#41;</span>;
+&#160;
+&#160;
+    <span class="co1">//DisplayFloatyMessage(oMainControlled, &quot;storage script working&quot;, FLOATY_MESSAGE, 16777215, 30.0);</span>
+&#160;
+    <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a> <span class="br0">&#40;</span><span class="sy0">!</span><a href="http://www.datoolset.net/wiki/index.php?title=IsObjectValid"><span class="kw4">IsObjectValid</span></a><span class="br0">&#40;</span>oChest<span class="br0">&#41;</span><span class="br0">&#41;</span>
+    <span class="br0">&#123;</span>
+        <a href="http://www.datoolset.net/wiki/index.php?title=location keyword"><span class="kw2">location</span></a> lSpawn <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=Location"><span class="kw4">Location</span></a><span class="br0">&#40;</span><a href="http://www.datoolset.net/wiki/index.php?title=GetArea"><span class="kw4">GetArea</span></a><span class="br0">&#40;</span>oMainControlled<span class="br0">&#41;</span>, <a href="http://www.datoolset.net/wiki/index.php?title=Vector"><span class="kw4">Vector</span></a><span class="br0">&#40;</span><span class="nu0">148.77</span>, <span class="nu0">117.68</span>, <span class="sy0">-</span><span class="nu0">0.94</span><span class="br0">&#41;</span>, <span class="nu0">0.0</span><span class="br0">&#41;</span>;
+        <a href="http://www.datoolset.net/wiki/index.php?title=CreateObject"><span class="kw4">CreateObject</span></a><span class="br0">&#40;</span><span class="kw3">OBJECT_TYPE_PLACEABLE</span>, TAL_RESOURCE_IP_STORAGE_CHEST, lSpawn<span class="br0">&#41;</span>;          
+&#160;
+        <span class="co1">//DisplayFloatyMessage(oMainControlled, &quot;storage chest created&quot;, FLOATY_MESSAGE, 16777215, 30.0);</span>
+    <span class="br0">&#125;</span>
+<span class="br0">&#125;</span></pre></div></div>
+<ol><li>Replace "tal_ip_storage_chest" in the 2nd line with the "Tag" of your own placeable. (only small letters allowed)</li>
+<li>Replace "tal_ip_storage_chest.utp" in 3rd line with the Resources Filename of your placable.</li>
+<li>Exchange the (4) numbers after it sais "Vector" ,which should be the location of your placable. How to determine?</li>
+<li>Create a temporary duplicate of the specific Area, and add the placeable until you see fit. (delete this Area afterwards, do not export)</li>
+<li>Note down the numbers in the Object Inspector, and get the first 3 numbers of Position, and the 4rth Number from Rotation. (only 1 number, the first)</li>
+<li>Rotation needs to be recalculated before entering it into the script. For positive angles do (180-angle). For negative angles do (-180-(-angle)).</li></ol>
+<p>Export the script, the placeable ,and start the game. When you arrive at the specific Area in game, the Placeable will be there.
+</p><p><b>Note:</b> This method prevents removal of the placable. Check out a Plot driven method.
+</p>
+<h2><span class="mw-headline" id="Adding_a_NPC_into_an_existing_Area">Adding a NPC into an existing Area</span></h2>
+<p><b>M2DA Setup:</b>
+</p>
+<ol><li>AreaListName must be "any". This Script is Plot driven.</li>
+<li>Copy the GDA into your modules override folder.</li></ol>
+<p><b>Script:</b>
+</p>
+<div dir="ltr" class="mw-geshi mw-code mw-content-ltr"><div class="dascript source-dascript"><pre class="de1"><span class="co1">// this is the name of a precreated plot file &quot;joblos_quest&quot; prefixed with the special &quot;plt_&quot;</span>
+<span class="co1">// &quot;plt_&quot; + quest name allows you to reference the flag names as constants.</span>
+<span class="co2">#include &quot;plt_joblos_quest&quot; </span>
+<span class="co2">#include &quot;wrappers_h&quot;</span>
+&#160;
+<a href="http://www.datoolset.net/wiki/index.php?title=void keyword"><span class="kw2">void</span></a> main<span class="br0">&#40;</span><span class="br0">&#41;</span>
+<span class="br0">&#123;</span>
+    <span class="co1">//Check whether we've added Joblo already.</span>
+    <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a> <span class="br0">&#40;</span>WR_GetPlotFlag<span class="br0">&#40;</span>PLT_JOBLOS_QUEST, JOBLO_ADDED_TO_TOWN<span class="br0">&#41;</span> <span class="sy0">==</span> FALSE<span class="br0">&#41;</span>
+    <span class="br0">&#123;</span>
+        <a href="http://www.datoolset.net/wiki/index.php?title=object keyword"><span class="kw2">object</span></a> oTown <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetObjectByTag"><span class="kw4">GetObjectByTag</span></a><span class="br0">&#40;</span><span class="st0">&quot;lot100ar_lothering&quot;</span><span class="br0">&#41;</span>; <span class="co1">//An area's tag is the same as its resource name</span>
+        <a href="http://www.datoolset.net/wiki/index.php?title=vector keyword"><span class="kw2">vector</span></a> vJobloLocation <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=Vector"><span class="kw4">Vector</span></a><span class="br0">&#40;</span><span class="nu0">126.745f</span>, <span class="nu0">120.724f</span>, <span class="nu0">0.460568f</span><span class="br0">&#41;</span>; <span class="co1">// See below for how to get these coordinates</span>
+&#160;
+        <a href="http://www.datoolset.net/wiki/index.php?title=CreateObject"><span class="kw4">CreateObject</span></a><span class="br0">&#40;</span>
+            <span class="kw3">OBJECT_TYPE_CREATURE</span>,
+            R<span class="st0">&quot;joblo.utc&quot;</span>,
+            <a href="http://www.datoolset.net/wiki/index.php?title=Location"><span class="kw4">Location</span></a><span class="br0">&#40;</span>oTown, vJobloLocation, <span class="nu0">180.0f</span><span class="br0">&#41;</span> <span class="co1">//See below for how to get the value for orientation</span>
+        <span class="br0">&#41;</span>; <span class="co1">//this semicolom was missing and caused errors </span>
+&#160;
+        WR_SetPlotFlag<span class="br0">&#40;</span><span class="st0">&quot;joblos_quest&quot;</span>, JOBLO_ADDED_TO_TOWN, TRUE<span class="br0">&#41;</span>;
+    <span class="br0">&#125;</span>
+<span class="br0">&#125;</span></pre></div></div>
+<ol><li>Replace "joblos_quest" (3x) with the name of your Plot.</li>
+<li>Replace "JOBLO_ADDED_TO_TOWN" (2x) with a custom Flag you create in your Plot.</li>
+<li>Replace "lot100ar_lothering" with the Tag of an Area ,the NPC should spawn in.</li>
+<li>Replace "joblo.utc" with the filename of your <a href="Creature.html" title="Creature">Creature</a>.</li>
+<li>Exchange the (4) numbers ,which should be the location of your placable. How to determine?</li>
+<li>Create a temporary duplicate of the specific Area, and add the NPC until you see fit. (delete this Area afterwards, do not export)</li>
+<li>Note down the numbers in the Object Inspector, and get the first 3 numbers of Position, and the 4rth Number from Rotation. (only 1 number, the first)</li>
+<li>Rotation needs to be recalculated before entering it into the script. For positive angles do (180-angle). For negative angles do (-180-(-angle)).</li></ol>
+<p>Export the script, the creature ,and start the game. When you arrive at the specific Area in game, the <a href="Creature.html" title="Creature">Creature</a> (Monsters or NPCs alike) will be there.
+</p>
+<h2><span class="mw-headline" id="Activating_a_Waypoint_on_the_Worldmap">Activating a Waypoint on the Worldmap</span></h2>
+<p><b>Requirements:</b> Your module must extend Single Player. 
+</p><p><b>M2DA Setup:</b>
+</p>
+<ol><li>AreaListName must be "any". Because Waypoint activation should be universal and it is Plot driven.</li>
+<li>Copy the GDA into your modules override folder.</li></ol>
+<p><b>Script:</b>
+</p>
+<div dir="ltr" class="mw-geshi mw-code mw-content-ltr"><div class="dascript source-dascript"><pre class="de1"><span class="co2">#include &quot;plt_mnp000pt_main_events&quot;</span>
+<span class="co2">#include &quot;wrappers_h&quot;</span>
+&#160;
+<a href="http://www.datoolset.net/wiki/index.php?title=const keyword"><span class="kw1">const</span></a> <a href="http://www.datoolset.net/wiki/index.php?title=string keyword"><span class="kw2">string</span></a> WML_WOW_Custom <span class="sy0">=</span> <span class="st0">&quot;eshmeswp&quot;</span>;
+&#160;
+<a href="http://www.datoolset.net/wiki/index.php?title=void keyword"><span class="kw2">void</span></a> main<span class="br0">&#40;</span><span class="br0">&#41;</span>
+<span class="br0">&#123;</span>
+    <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a><span class="br0">&#40;</span>WR_GetPlotFlag<span class="br0">&#40;</span> PLT_MNP000PT_MAIN_EVENTS, ARCHDEMON_EVENT_ONE<span class="br0">&#41;</span> <span class="sy0">==</span> TRUE <span class="br0">&#41;</span>
+    <span class="br0">&#123;</span>
+        WR_SetWorldMapLocationStatus<span class="br0">&#40;</span><a href="http://www.datoolset.net/wiki/index.php?title=GetObjectByTag"><span class="kw4">GetObjectByTag</span></a><span class="br0">&#40;</span>WML_WOW_Custom<span class="br0">&#41;</span>, <span class="kw3">WM_LOCATION_ACTIVE</span><span class="br0">&#41;</span>;
+    <span class="br0">&#125;</span>
+<span class="br0">&#125;</span></pre></div></div>
+<ol><li>Replace "eshmeswp" in the 1st line with the "Tag" of your Waypoint (Map Pin) which u created. That Map Pin can be greyed out or inactive or so. Map Pin information can be found at: <a href="Map.html" title="Map">Map</a>.</li></ol>
+<p>Export the script, the Map ,and start the game. The Waypoint will now be activated once you leave Lothering, just like the other main Waypoints. This is to get in line with the Story. However to change the time of it happening..
+</p>
+<ol><li>Choose which <a href="Plot.html" title="Plot">Plot</a> should activate the Waypoint. The above example uses the Archdemon quest, when your nightmare triggers for example.</li>
+<li>Exchange "mnp000pt_main_events" in the 2nd and 6th line with the name of that other <a href="Plot.html" title="Plot">Plot</a>. Leaving the "plt_" there.</li>
+<li>Exchange "ARCHDEMON_EVENT_ONE" with a "Flag" of your choice from that Plot.</li></ol>
+<p>This "should" work for any plot. Actually, waypoints dont need all this PRCSCR stuff and can be set "Active" in the first place. But the above example is to get in line with the Main Campaign, and potential gamebreaking Plot conflicts if able to leave Lothering too early.
+</p>
+<h2><span class="mw-headline" id="Adding_an_Item_into_the_Players_Inventory">Adding an Item into the Players Inventory</span></h2>
+<p><b>Requirements:</b>
+</p><p><b>M2DA Setup:</b>
+</p>
+<ol><li>AreaListName is "any".</li>
+<li>Copy the GDA into your modules override folder.</li></ol>
+<p><b>Script:</b>
+</p>
+<div dir="ltr" class="mw-geshi mw-code mw-content-ltr"><div class="dascript source-dascript"><pre class="de1"><span class="co1">//include utility_h for the UT_AddItemToInventory() function.</span>
+<span class="co2">#include &quot;utility_h&quot;</span>
+<span class="co1">//include the custom made plot file</span>
+<span class="co2">#include &quot;plt_$plot_file_name$&quot;</span>
+&#160;
+<a href="http://www.datoolset.net/wiki/index.php?title=void keyword"><span class="kw2">void</span></a> main<span class="br0">&#40;</span><span class="br0">&#41;</span>
+<span class="br0">&#123;</span>
+    <span class="co1">// If plot flag is TRUE then item already given.</span>
+    <span class="co1">// Otherwise add item to inventory.</span>
+    <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a> <span class="br0">&#40;</span> WR_GetPlotFlag<span class="br0">&#40;</span> PLT_$plot_file_name$, $check_flag_name$ <span class="br0">&#41;</span> <span class="sy0">==</span> FALSE <span class="br0">&#41;</span>
+    <span class="br0">&#123;</span>
+        UT_AddItemToInventory<span class="br0">&#40;</span>R<span class="st0">&quot;$item_file_name$.uti&quot;</span><span class="br0">&#41;</span>;
+        <span class="co1">//Set the plot flag to TRUE to indicate that the item was given.</span>
+        WR_SetPlotFlag<span class="br0">&#40;</span> PLT_$plot_file_name$, $check_flag_name$, TRUE <span class="br0">&#41;</span>;
+    <span class="br0">&#125;</span>
+<span class="br0">&#125;</span></pre></div></div>
+<ol><li> Replace everything between and including the $ signs with appropriate names (without the file extensions).</li></ol>
+<h2><span class="mw-headline" id="Adding_an_Item_to_an_existing_Vendor_or_Container">Adding an Item to an existing Vendor or Container</span></h2>
+<p><b>Requirements:</b>
+</p><p><b>M2DA Setup:</b>
+</p>
+<table border="1">
+<tr>
+<th> Campaign </th>
+<th> Container </th>
+<th> ContainerTag </th>
+<th> AreaListName
+</th></tr>
+<tr>
+<td>Origins </td>
+<td> Bodahn </td>
+<td> store_camp_bodahn </td>
+<td> cam100ar_camp_plains
+</td></tr>
+<tr>
+<td>Origins </td>
+<td> daytime King's Camp quartermaster </td>
+<td> pre100sr_quartermaster </td>
+<td> pre01al_kings_camp
+</td></tr>
+<tr>
+<td>Awakening </td>
+<td> Yuriah </td>
+<td> store_vgk100cr_merchant </td>
+<td> vgk210ar_throne_room
+</td></tr>
+<tr>
+<td>Awakening </td>
+<td> Party Chest in Vigil's Keep </td>
+<td> vgk210ip_party_chest </td>
+<td> vgk210ar_throne_room
+</td></tr>
+<tr>
+<td>Leliana's Song </td>
+<td> first Lem encounter </td>
+<td> store_lel00cr_lem </td>
+<td> lel100ar_market
+</td></tr></table>
+<ol><li>Create a <a href="PRCSCR.xls.html" title="PRCSCR.xls">PRCSCR M2DA override</a> using the desired AreaListName from the above table</li>
+<li>Copy this new PRCSCR M2DA into your module's override folder (AddIns\{YourMod}\core\override)</li></ol>
+<p><b>Script:</b>
+</p>
+<div dir="ltr" class="mw-geshi mw-code mw-content-ltr"><div class="dascript source-dascript"><pre class="de1"><span class="co2">#include &quot;wrappers_h&quot;</span>
+<span class="co2">#include &quot;plt_$plot_file_name$&quot;  // include your custom plot</span>
+&#160;
+<a href="http://www.datoolset.net/wiki/index.php?title=void keyword"><span class="kw2">void</span></a> main<span class="br0">&#40;</span><span class="br0">&#41;</span>
+<span class="br0">&#123;</span>
+  <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a> <span class="br0">&#40;</span> WR_GetPlotFlag<span class="br0">&#40;</span> PLT_$plot_file_name$, $check_flag_name$ <span class="br0">&#41;</span> <span class="sy0">==</span> TRUE <span class="br0">&#41;</span> <a href="http://www.datoolset.net/wiki/index.php?title=return keyword"><span class="kw1">return</span></a>;
+&#160;
+  <a href="http://www.datoolset.net/wiki/index.php?title=object keyword"><span class="kw2">object</span></a> oContainer <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetObjectByTag"><span class="kw4">GetObjectByTag</span></a><span class="br0">&#40;</span><span class="st0">&quot;$ContainerTag$&quot;</span><span class="br0">&#41;</span>;
+&#160;
+  <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a> <span class="br0">&#40;</span><a href="http://www.datoolset.net/wiki/index.php?title=IsObjectValid"><span class="kw4">IsObjectValid</span></a><span class="br0">&#40;</span>oContainer<span class="br0">&#41;</span><span class="br0">&#41;</span>
+  <span class="br0">&#123;</span>
+    <a href="http://www.datoolset.net/wiki/index.php?title=CreateItemOnObject"><span class="kw4">CreateItemOnObject</span></a><span class="br0">&#40;</span>R<span class="st0">&quot;$resource_name$.uti&quot;</span>, oContainer, <span class="nu0">1</span>, <span class="st0">&quot;&quot;</span>, TRUE<span class="br0">&#41;</span>; <span class="co1">// repeat this for each item</span>
+&#160;
+    WR_SetPlotFlag<span class="br0">&#40;</span> PLT_$plot_file_name$, $check_flag_name$, TRUE <span class="br0">&#41;</span>;
+  <span class="br0">&#125;</span>
+<span class="br0">&#125;</span></pre></div></div>
+<ol><li>Replace "$plot_file_name$" and "$check_flag_name$" with the custom <a href="Plot.html#Scripting" title="Plot">plot and plot flags</a> you create for your module.</li>
+<li>Replace "$resource_name$" with the resource name of your custom item.</li>
+<li>Replace "$ContainerTag$" with the desired container tag from the table in the M2DA setup section.</li>
+<li>The very first time you go to the party camp in Origins (after leaving Lothering) and view the Archdemon cutscene, this script will NOT run when using "cam100ar_camp_plains" as the AreaListName. This is because the cutscene version of the camp is actually a different area. In this case you must exit and return to the "normal" (non-cutscene) party camp for the script to run for the first time.</li></ol>
+<h2><span class="mw-headline" id="Adding_a_Working_Door_into_an_existing_Area">Adding a Working Door into an existing Area</span></h2>
+<p><b>Requirements:</b>
+</p><p><b>M2DA Setup:</b>
+</p><p><b>Script:</b> <sup>[<a href="Category%3AArticles_with_documentation_requests.html" title="Category:Articles with documentation requests">Undocumented</a>]</sup>
+</p>
+<h2><span class="mw-headline" id="Adding_a_Quest_to_an_existing_Chanters_Board">Adding a Quest to an existing Chanters Board</span></h2>
+<p><b>Requirements:</b>
+</p><p><b>M2DA Setup:</b>
+</p><p><b>Script:</b> <sup>[<a href="Category%3AArticles_with_documentation_requests.html" title="Category:Articles with documentation requests">Undocumented</a>]</sup>
+</p>
+<!-- 
+NewPP limit report
+CPU time usage: 0.052 seconds
+Real time usage: 0.081 seconds
+Preprocessor visited node count: 102/1000000
+Preprocessor generated node count: 290/1000000
+Post‐expand include size: 346/2097152 bytes
+Template argument size: 0/2097152 bytes
+Highest expansion depth: 3/40
+Expensive parser function count: 0/100
+-->
+
+<!-- 
+Transclusion expansion time report (%,ms,calls,template)
+100.00%    4.507      1 - -total
+ 96.65%    4.356      2 - Template:Undocumented
+-->
+
+<!-- Saved in parser cache with key db714099484-datoolwiki_:pcache:idhash:4174-0!*!0!!*!*!* and timestamp 20260531004345 and revision id 19942
+ -->
+</div>									<div class="printfooter">
+						Retrieved from "<a dir="ltr" href="PRCSCR_Script_Templates.html">https://www.datoolset.net/mw/index.php?title=PRCSCR_Script_Templates&amp;oldid=19942</a>"					</div>
+													<div id='catlinks' class='catlinks'><div id="mw-normal-catlinks" class="mw-normal-catlinks"><a href="/wiki/Special:Categories" title="Special:Categories">Categories</a>: <ul><li><a href="Category%3AArticles_with_documentation_requests.html" title="Category:Articles with documentation requests">Articles with documentation requests</a></li><li><a href="Category%3ATutorials.html" title="Category:Tutorials">Tutorials</a></li><li><a href="Category%3AScripts.html" title="Category:Scripts">Scripts</a></li><li><a href="Category%3APages_with_example_scripts.html" title="Category:Pages with example scripts">Pages with example scripts</a></li></ul></div></div>												<div class="visualClear"></div>
+							</div>
+		</div>
+		<div id="mw-navigation">
+			<h2>Navigation menu</h2>
+
+			<div id="mw-head">
+									<div id="p-personal" role="navigation" class="" aria-labelledby="p-personal-label">
+						<h3 id="p-personal-label">Personal tools</h3>
+						<ul>
+							<li id="pt-login"><a href="/mw/index.php?title=Special:UserLogin&amp;returnto=PRCSCR+Script+Templates" title="You are encouraged to log in; however, it is not mandatory [o]" accesskey="o">Log in</a></li>						</ul>
+					</div>
+									<div id="left-navigation">
+										<div id="p-namespaces" role="navigation" class="vectorTabs" aria-labelledby="p-namespaces-label">
+						<h3 id="p-namespaces-label">Namespaces</h3>
+						<ul>
+															<li  id="ca-nstab-main" class="selected"><span><a href="PRCSCR_Script_Templates.html"  title="View the content page [c]" accesskey="c">Page</a></span></li>
+															<li  id="ca-talk"><span><a href="Talk%3APRCSCR_Script_Templates.html"  title="Discussion about the content page [t]" accesskey="t">Discussion</a></span></li>
+													</ul>
+					</div>
+										<div id="p-variants" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-variants-label">
+												<h3 id="p-variants-label"><span>Variants</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+									</div>
+				<div id="right-navigation">
+										<div id="p-views" role="navigation" class="vectorTabs" aria-labelledby="p-views-label">
+						<h3 id="p-views-label">Views</h3>
+						<ul>
+															<li id="ca-view" class="selected"><span><a href="PRCSCR_Script_Templates.html" >Read</a></span></li>
+															<li id="ca-viewsource"><span><a href="PRCSCR_Script_Templates.html"  title="This page is protected.&#10;You can view its source [e]" accesskey="e">View source</a></span></li>
+															<li id="ca-history" class="collapsible"><span><a href="PRCSCR_Script_Templates.html"  title="Past revisions of this page [h]" accesskey="h">View history</a></span></li>
+													</ul>
+					</div>
+										<div id="p-cactions" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-cactions-label">
+						<h3 id="p-cactions-label"><span>More</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+										<div id="p-search" role="search">
+						<h3>
+							<label for="searchInput">Search</label>
+						</h3>
+
+						<form action="/mw/index.php" id="searchform">
+														<div id="simpleSearch">
+															<input type="search" name="search" placeholder="Search" title="Search Dragon Age Toolset Wiki [f]" accesskey="f" id="searchInput" /><input type="hidden" value="Special:Search" name="title" /><input type="submit" name="fulltext" value="Search" title="Search the pages for this text" id="mw-searchButton" class="searchButton mw-fallbackSearchButton" /><input type="submit" name="go" value="Go" title="Go to a page with this exact name if exists" id="searchButton" class="searchButton" />								</div>
+						</form>
+					</div>
+									</div>
+			</div>
+			<div id="mw-panel">
+				<div id="p-logo" role="banner"><a class="mw-wiki-logo" href="Main_Page.html"  title="Visit the main page"></a></div>
+						<div class="portal" role="navigation" id='p-navigation' aria-labelledby='p-navigation-label'>
+			<h3 id='p-navigation-label'>Navigation</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-mainpage-description"><a href="Main_Page.html" title="Visit the main page [z]" accesskey="z">Main page</a></li>
+													<li id="n-recentchanges"><a href="/wiki/Special:RecentChanges" title="A list of recent changes in the wiki [r]" accesskey="r">Recent changes</a></li>
+													<li id="n-randompage"><a href="/wiki/Special:Random" title="Load a random page [x]" accesskey="x">Random page</a></li>
+													<li id="n-help"><a href="https://www.mediawiki.org/wiki/Special:MyLanguage/Help:Contents" title="The place to find out">Help</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-Links' aria-labelledby='p-Links-label'>
+			<h3 id='p-Links-label'>Links</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-Toolset-forums"><a href="http://forum.bioware.com/forum/30-dragon-age-toolset" rel="nofollow">Toolset forums</a></li>
+													<li id="n-Legacy-forums"><a href="http://social.bioware.com/forum/1/subindex/70" rel="nofollow">Legacy forums</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-tb' aria-labelledby='p-tb-label'>
+			<h3 id='p-tb-label'>Tools</h3>
+
+			<div class="body">
+									<ul>
+													<li id="t-whatlinkshere"><a href="/wiki/Special:WhatLinksHere/PRCSCR_Script_Templates" title="A list of all wiki pages that link here [j]" accesskey="j">What links here</a></li>
+													<li id="t-recentchangeslinked"><a href="/wiki/Special:RecentChangesLinked/PRCSCR_Script_Templates" title="Recent changes in pages linked from this page [k]" accesskey="k">Related changes</a></li>
+													<li id="t-specialpages"><a href="/wiki/Special:SpecialPages" title="A list of all special pages [q]" accesskey="q">Special pages</a></li>
+													<li id="t-print"><a href="PRCSCR_Script_Templates.html" rel="alternate" title="Printable version of this page [p]" accesskey="p">Printable version</a></li>
+													<li id="t-permalink"><a href="PRCSCR_Script_Templates.html" title="Permanent link to this revision of the page">Permanent link</a></li>
+													<li id="t-info"><a href="PRCSCR_Script_Templates.html" title="More information about this page">Page information</a></li>
+											</ul>
+							</div>
+		</div>
+				</div>
+		</div>
+		<div id="footer" role="contentinfo">
+							<ul id="footer-info">
+											<li id="footer-info-lastmod"> This page was last modified on 26 April 2020, at 21:37.</li>
+									</ul>
+							<ul id="footer-places">
+											<li id="footer-places-privacy"><a href="/wiki/Dragon_Age_Toolset_Wiki:Privacy_policy" title="Dragon Age Toolset Wiki:Privacy policy">Privacy policy</a></li>
+											<li id="footer-places-about"><a href="/wiki/Dragon_Age_Toolset_Wiki:About" title="Dragon Age Toolset Wiki:About">About Dragon Age Toolset Wiki</a></li>
+											<li id="footer-places-disclaimer"><a href="/wiki/Dragon_Age_Toolset_Wiki:General_disclaimer" title="Dragon Age Toolset Wiki:General disclaimer">Disclaimers</a></li>
+									</ul>
+										<ul id="footer-icons" class="noprint">
+											<li id="footer-poweredbyico">
+															<a href="//www.mediawiki.org/"><img src="../assets/mw/resources/assets/poweredby_mediawiki_88x31.png" alt="Powered by MediaWiki" srcset="../assets/mw/resources/assets/poweredby_mediawiki_132x47.png 1.5x, ../assets/mw/resources/assets/poweredby_mediawiki_176x62.png 2x" width="88" height="31" /></a>
+													</li>
+									</ul>
+						<div style="clear:both"></div>
+		</div>
+		<script>if(window.jQuery)jQuery.ready();</script><script>if(window.mw){
+mw.loader.state({"site":"loading","user":"ready","user.groups":"ready"});
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.action.view.postEdit","mediawiki.user","mediawiki.hidpi","mediawiki.page.ready","mediawiki.searchSuggest"],null,true);
+}</script>
+<script>if(window.mw){
+document.write("\u003Cscript src=\"https://www.datoolset.net/mw/load.php?debug=false\u0026amp;lang=en\u0026amp;modules=site\u0026amp;only=scripts\u0026amp;skin=vector\u0026amp;*\"\u003E\u003C/script\u003E");
+}</script>
+<script>if(window.mw){
+mw.config.set({"wgBackendResponseTime":235});
+}</script>
+	</body>
+</html>

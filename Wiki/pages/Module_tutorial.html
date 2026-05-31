@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" class="client-nojs">
+<head>
+<meta charset="UTF-8" />
+<title>Module tutorial - Dragon Age Toolset Wiki</title>
+<meta name="generator" content="MediaWiki 1.25.6" />
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="search" type="application/opensearchdescription+xml" href="/mw/opensearch_desc.php" title="Dragon Age Toolset Wiki (en)" />
+<link rel="EditURI" type="application/rsd+xml" href="https://www.datoolset.net/mw/api.php?action=rsd" />
+<link rel="alternate" hreflang="x-default" href="Module_tutorial.html" />
+<link rel="alternate" type="application/atom+xml" title="Dragon Age Toolset Wiki Atom feed" href="/mw/index.php?title=Special:RecentChanges&amp;feed=atom" />
+<meta name="ResourceLoaderDynamicStyles" content="" />
+<style>a:lang(ar),a:lang(kk-arab),a:lang(mzn),a:lang(ps),a:lang(ur){text-decoration:none}
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-css:7:270a0dcd3ae587df0f041aebfc42e61b */</style>
+<script>if(window.mw){
+mw.config.set({"wgCanonicalNamespace":"","wgCanonicalSpecialPageName":false,"wgNamespaceNumber":0,"wgPageName":"Module_tutorial","wgTitle":"Module tutorial","wgCurRevisionId":19744,"wgRevisionId":19744,"wgArticleId":86,"wgIsArticle":true,"wgIsRedirect":false,"wgAction":"view","wgUserName":null,"wgUserGroups":["*"],"wgCategories":["Tutorials"],"wgBreakFrames":false,"wgPageContentLanguage":"en","wgPageContentModel":"wikitext","wgSeparatorTransformTable":["",""],"wgDigitTransformTable":["",""],"wgDefaultDateFormat":"dmy","wgMonthNames":["","January","February","March","April","May","June","July","August","September","October","November","December"],"wgMonthNamesShort":["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],"wgRelevantPageName":"Module_tutorial","wgRelevantArticleId":86,"wgIsProbablyEditable":false,"wgRestrictionEdit":[],"wgRestrictionMove":[]});
+}</script><script>if(window.mw){
+mw.loader.implement("user.options",function($,jQuery){mw.user.options.set({"variant":"en"});});mw.loader.implement("user.tokens",function($,jQuery){mw.user.tokens.set({"editToken":"+\\","patrolToken":"+\\","watchToken":"+\\"});});
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-js:7:a5c52c063dc436c1ca7c9f456936a5e9 */
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.page.startup","mediawiki.legacy.wikibits","mediawiki.legacy.ajax","skins.vector.js"]);
+}</script>
+<!--[if lt IE 7]><style type="text/css">body{behavior:url("/mw/skins/Vector/csshover.min.htc")}</style><![endif]-->
+<link rel="stylesheet" href="../assets/local/wiki-static.css" />
+</head>
+<body class="mediawiki ltr sitedir-ltr ns-0 ns-subject page-Module_tutorial skin-vector action-view">
+		<div id="mw-page-base" class="noprint"></div>
+		<div id="mw-head-base" class="noprint"></div>
+		<div id="content" class="mw-body" role="main">
+			<a id="top"></a>
+
+						<div class="mw-indicators">
+</div>
+			<h1 id="firstHeading" class="firstHeading" lang="en">Module tutorial</h1>
+						<div id="bodyContent" class="mw-body-content">
+									<div id="siteSub">From Dragon Age Toolset Wiki</div>
+								<div id="contentSub"></div>
+												<div id="jump-to-nav" class="mw-jump">
+					Jump to:					<a href="#mw-head">navigation</a>, 					<a href="#p-search">search</a>
+				</div>
+				<div id="mw-content-text" lang="en" dir="ltr" class="mw-content-ltr"><p>The simple <a href="Demo_module.html" title="Demo module">demo module</a> that is included with the Dragon Age Toolset is intended to show off a variety of methods that will be commonly used in real stand-alone modules. The documentation on this website will walk you through the major steps required to set it all up, but the <a href="Demo_module.html" title="Demo module">demo module</a> itself also has documentation embedded within it in the form of comments; it is intended to be explored in the designer toolkit and dissected to see how things tick.
+</p><p>One thing that this demo doesn't demonstrate is the art of writing. As such the 'plot' of the adventure is somewhat nonsensical.
+</p><p>This tutorial also assumes that you've read many of the other basic tutorials elsewhere on this site and are familiar with the basic functioning of the toolkit. Links will be provided directing you to more specific information if needed.
+</p>
+<div id="toc" class="toc"><div id="toctitle"><h2>Contents</h2></div>
+<ul>
+<li class="toclevel-1 tocsection-1"><a href="#Organization"><span class="tocnumber">1</span> <span class="toctext">Organization</span></a>
+<ul>
+<li class="toclevel-2 tocsection-2"><a href="#Naming_conventions"><span class="tocnumber">1.1</span> <span class="toctext">Naming conventions</span></a></li>
+</ul>
+</li>
+<li class="toclevel-1 tocsection-3"><a href="#Setting_up_character_generation_in_a_new_module"><span class="tocnumber">2</span> <span class="toctext">Setting up character generation in a new module</span></a></li>
+<li class="toclevel-1 tocsection-4"><a href="#Creating_our_areas"><span class="tocnumber">3</span> <span class="toctext">Creating our areas</span></a></li>
+<li class="toclevel-1 tocsection-5"><a href="#Placing_area_transitions_and_setting_up_the_world_map"><span class="tocnumber">4</span> <span class="toctext">Placing area transitions and setting up the world map</span></a></li>
+<li class="toclevel-1 tocsection-6"><a href="#Introductory_cutscene"><span class="tocnumber">5</span> <span class="toctext">Introductory cutscene</span></a></li>
+<li class="toclevel-1 tocsection-7"><a href="#The_main_plot_file"><span class="tocnumber">6</span> <span class="toctext">The main plot file</span></a></li>
+<li class="toclevel-1 tocsection-8"><a href="#Giving_the_player_an_item"><span class="tocnumber">7</span> <span class="toctext">Giving the player an item</span></a></li>
+<li class="toclevel-1 tocsection-9"><a href="#Using_a_trigger_to_initiate_conversation"><span class="tocnumber">8</span> <span class="toctext">Using a trigger to initiate conversation</span></a></li>
+<li class="toclevel-1 tocsection-10"><a href="#Using_a_placeable_to_call_a_script"><span class="tocnumber">9</span> <span class="toctext">Using a placeable to call a script</span></a></li>
+<li class="toclevel-1 tocsection-11"><a href="#Troubleshooting"><span class="tocnumber">10</span> <span class="toctext">Troubleshooting</span></a>
+<ul>
+<li class="toclevel-2 tocsection-12"><a href="#Failure_to_exit_combat_mode_after_defeating_the_bandits_in_the_inn"><span class="tocnumber">10.1</span> <span class="toctext">Failure to exit combat mode after defeating the bandits in the inn</span></a></li>
+</ul>
+</li>
+</ul>
+</div>
+
+<h2><span class="mw-headline" id="Organization">Organization</span></h2>
+<p>There are two major groups of resources that are used when creating a Dragon Age module; designer resources and art resources. Designer resources are housed in a database whereas art resources take the form of conventional files on your file system.
+</p><p>For your art resources the most convenient approach it is probably to create a directory tree with subdirectories sorting your art resources by what regions of the game they appear in. The directory tree should be someplace easily accessible and with full read/write priviledges - somewhere in your "My Documents" folder is a good place to put them.
+</p><p>In our example we're going to have three areas:
+</p>
+<ul><li>A swampy outdoor area with a small tavern in it</li>
+<li>The tavern's interior</li>
+<li>An outdoor roadway</li></ul>
+<h3><span class="mw-headline" id="Naming_conventions">Naming conventions</span></h3>
+<p>See <a href="Naming_conventions.html" title="Naming conventions">Naming conventions</a>
+</p><p>Designer resources will have a three-letter extension, much like a regular file system file, but this is not editable and does not frequently come up.
+</p><p>Resources in the designer toolkit can also be placed into folders, again much like a regular file system. Unlike most file systems, though, you don't need to explicitly create a folder in order to put a resource into it. Just edit the resource's "folder" property and if the folder didn't have anything in it before it'll be created automatically. Folders that don't have any resources in them are removed automatically.
+</p><p>Here's a preview of what we're going to put into the demo module, to illustrate how this naming convention looks in practice. We'll be using the four-letter prefix "demo" instead of the usual three-letter one for clarity.
+</p><p><b>NOTE:</b> when you create new items, it's best to stick to unique naming, specially if items belongs to your module. For example: your module UID is "asar" so item, createre, area or any other file should begin with asar_ (asar_mysword).
+</p>
+<h2><span class="mw-headline" id="Setting_up_character_generation_in_a_new_module">Setting up character generation in a new module</span></h2>
+<p>The most basic steps of creating a new module are described in "<a href="Creating_a_module.html" title="Creating a module">creating a module</a>". A Dragon Age module, when first created, lacks many very basic components such as the ability to generate a character or an area to start in.
+</p><p>Note that you can actually start creating areas and testing content before you set up character creation if you prefer, the game will provide a player with a simple (and very weak!) default character if character generation isn't performed. You can also override the default starting area and waypoint every time you export for testing purposes, using the "Export Options" found under the "Tools" menu, so you can skip directly to the area you're working on without needing to write debugging scripts.
+</p><p>We're going to follow the flow of the finished game for now, though, so after creating the module the first thing we'll want to do is create a module script that triggers character generation.
+</p><p>Once you've created the initial empty module you'll need to create a module script. We call it "demo_module". The event that we'll want to handle character generation in is EVENT_TYPE_MODULE_START, which is sent to the module script only once when the game is first started up.
+</p><p>To call the default character generation system, simply have this event call the following functions:
+</p>
+<div dir="ltr" class="mw-geshi mw-code mw-content-ltr"><div class="dascript source-dascript"><pre class="de1">            <a href="http://www.datoolset.net/wiki/index.php?title=PreloadCharGen"><span class="kw4">PreloadCharGen</span></a><span class="br0">&#40;</span><span class="br0">&#41;</span>;
+            <a href="http://www.datoolset.net/wiki/index.php?title=StartCharGen"><span class="kw4">StartCharGen</span></a><span class="br0">&#40;</span><a href="http://www.datoolset.net/wiki/index.php?title=GetHero"><span class="kw4">GetHero</span></a><span class="br0">&#40;</span><span class="br0">&#41;</span>,<span class="nu0">0</span><span class="br0">&#41;</span>;</pre></div></div>
+<p>PreloadCharGen causes the game to load up various resources that will be used in character generation, and StartCharGen causes the game to show the character generation GUI to the player.
+</p>
+<h2><span class="mw-headline" id="Creating_our_areas">Creating our areas</span></h2>
+<p>This module will be very simple, consisting of only three areas - only two of which will have any significant amount of detail. They will be named:
+</p>
+<ul><li> demo100ar_wilderness</li>
+<li> demo200ar_tavern</li>
+<li> demo300ar_road</li></ul>
+<p>Three level layouts (<a href="LVL.html" title="LVL">LVL</a> files) are included with the module for use in these areas; ost101d (a swampy wasteland with a small wooden structure), hrt002d (a small tavern interior), and lgt600d (a section of roadway). The naming convention for level layouts used internally at BioWare is specific to the single player campaign, the meaning of these filenames is not relevant to this basic tutorial.
+</p><p>The area editor (and the game itself) cannot use a LVL file directly, it must be compiled into a more efficient form for use. Open up each LVL file in the level editor and, under tools, select "Post to local" to compile the level and export it to an appropriate directory where the game and toolset will be able to find it.
+</p><p>Once you've done this you can select the layout in the area editor's "Area Layout" property field.
+</p>
+<h2><span class="mw-headline" id="Placing_area_transitions_and_setting_up_the_world_map">Placing area transitions and setting up the world map</span></h2>
+<p>See the <a href="Area_tutorial.html" title="Area tutorial">Area tutorial</a> for details on how to link areas up with level transitions. The transition from demo100ar_wilderness to demo200_tavern is straightforward and is basically the same as what's shown in that tutorial.
+</p><p>The transition between demo100ar_wilderness and demo300ar_road, however, is going to be handled via the world <a href="Map.html" title="Map">map</a> instead. The demo's map is a resource named demo000mp_world.
+</p><p>To create an area transition that sends the player to the world map, set the PLC_AT_DEST_AREA_TAG to the string "world_map". The placeable_core script recognizes this string as a special override that triggers a map transition by sending the module script an <a href="EVENT_TYPE_BEGIN_TRAVEL.html" title="EVENT TYPE BEGIN TRAVEL">EVENT_TYPE_BEGIN_TRAVEL</a> event.
+</p><p>Note that you can have multiple world maps in a module, but under the default code you can't directly specify which one an area transition will send the player to. Instead, you will need to call the script function <a href="WR_SetWorldMapPrimary.html" title="WR SetWorldMapPrimary">WR_SetWorldMapPrimary</a> to specify which world map is the currently active "primary" one. In this demo the code that performs this is also in the <a href="EVENT_TYPE_MODULE_START.html" title="EVENT TYPE MODULE START">EVENT_TYPE_MODULE_START</a> event of the module script, since we only have one map and it only needs to be set as primary once. If you have multiple maps in your module you'll need to call this function again later from some other scripted event to change it.
+</p><p>Here, then, is the complete code for the demo module's EVENT_TYPE_MODULE_START event:
+</p>
+<div dir="ltr" class="mw-geshi mw-code mw-content-ltr"><div class="dascript source-dascript"><pre class="de1">        <a href="http://www.datoolset.net/wiki/index.php?title=case keyword"><span class="kw1">case</span></a> <span class="kw3">EVENT_TYPE_MODULE_START</span><span class="sy0">:</span>
+        <span class="br0">&#123;</span>
+            <a href="http://www.datoolset.net/wiki/index.php?title=object keyword"><span class="kw2">object</span></a> oMapId <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetObjectByTag"><span class="kw4">GetObjectByTag</span></a><span class="br0">&#40;</span><span class="st0">&quot;demo000mp_world&quot;</span><span class="br0">&#41;</span>;
+            WR_SetWorldMapPrimary<span class="br0">&#40;</span>oMapId<span class="br0">&#41;</span>;
+&#160;
+            <a href="http://www.datoolset.net/wiki/index.php?title=PreloadCharGen"><span class="kw4">PreloadCharGen</span></a><span class="br0">&#40;</span><span class="br0">&#41;</span>;
+            <a href="http://www.datoolset.net/wiki/index.php?title=StartCharGen"><span class="kw4">StartCharGen</span></a><span class="br0">&#40;</span><a href="http://www.datoolset.net/wiki/index.php?title=GetHero"><span class="kw4">GetHero</span></a><span class="br0">&#40;</span><span class="br0">&#41;</span>,<span class="nu0">0</span><span class="br0">&#41;</span>;
+            <a href="http://www.datoolset.net/wiki/index.php?title=break keyword"><span class="kw1">break</span></a>;
+        <span class="br0">&#125;</span></pre></div></div>
+<p>Although the default placeable_core script has code in it to recognize that the "world_map" string should lead to a world transition and generates an EVENT_TYPE_BEGIN_TRAVEL event, the default module_core script doesn't actually do anything with this event. This is because the map transition code used in Dragon Age's single player world map transitions is rather complex and has to handle many special cases that depend on plot elements specific to the single player campaign, so BioWare never implemented a basic default - it would have had to be overridden completely anyway.
+</p><p>Fortunately it's quite easy to add one, though there's a slight hitch; the area transition code needs to be split over two different events.
+</p>
+<ul><li> In EVENT_TYPE_BEGIN_TRAVEL you'll be able to get the target area and waypoint tags from the event object, and then call the <a href="WorldMapStartTravelling.html" title="WorldMapStartTravelling">WorldMapStartTravelling</a> function to cause the map to start animating the map trail path the player is following.</li></ul>
+<ul><li> While the map trail animation is playing, the <a href="EVENT_TYPE_WORLDMAP_PRETRANSITION.html" title="EVENT TYPE WORLDMAP PRETRANSITION">EVENT_TYPE_WORLDMAP_PRETRANSITION</a> event is called. This is the event where you'll want to call the <a href="UT_DoAreaTransition.html" title="UT DoAreaTransition">UT_DoAreaTransition</a> function to start the loading process of the destination area. The area will load at the same time that the map trail animation is playing, making the transition seem more seamless for the player. Note, however, that EVENT_TYPE_WORLDMAP_PRETRANSITION's event object <i>doesn't</i> contain the destination area and waypoint tags as members; you'll need to use local variables in the module's variable table to preserve these strings and pass them on from EVENT_TYPE_BEGIN_TRAVEL.</li></ul>
+<p>The basic code to handle map travel, then, is:
+</p>
+<div dir="ltr" class="mw-geshi mw-code mw-content-ltr"><div class="dascript source-dascript"><pre class="de1">        <span class="co1">////////////////////////////////////////////////////////////////////////</span>
+        <span class="co1">// Sent by: The engine</span>
+        <span class="co1">// When: the player clicks on a destination in the world map</span>
+        <span class="co1">////////////////////////////////////////////////////////////////////////</span>
+        <a href="http://www.datoolset.net/wiki/index.php?title=case keyword"><span class="kw1">case</span></a> <span class="kw3">EVENT_TYPE_BEGIN_TRAVEL</span><span class="sy0">:</span>
+        <span class="br0">&#123;</span>
+            <a href="http://www.datoolset.net/wiki/index.php?title=string keyword"><span class="kw2">string</span></a> sSource <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetEventString"><span class="kw4">GetEventString</span></a><span class="br0">&#40;</span>ev, <span class="nu0">0</span><span class="br0">&#41;</span>; <span class="co1">//area tag source location</span>
+            <a href="http://www.datoolset.net/wiki/index.php?title=string keyword"><span class="kw2">string</span></a> sTarget <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetEventString"><span class="kw4">GetEventString</span></a><span class="br0">&#40;</span>ev, <span class="nu0">1</span><span class="br0">&#41;</span>; <span class="co1">// area tag target location</span>
+            <a href="http://www.datoolset.net/wiki/index.php?title=string keyword"><span class="kw2">string</span></a> sWPOverride <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetEventString"><span class="kw4">GetEventString</span></a><span class="br0">&#40;</span>ev, <span class="nu0">2</span><span class="br0">&#41;</span>; <span class="co1">// waypoint tag override</span>
+            <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a> <span class="br0">&#40;</span>sSource <span class="sy0">!=</span> sTarget<span class="br0">&#41;</span>
+            <span class="br0">&#123;</span>
+                <span class="co1">//store target area's tag to a local module variable</span>
+                <a href="http://www.datoolset.net/wiki/index.php?title=SetLocalString"><span class="kw4">SetLocalString</span></a><span class="br0">&#40;</span><a href="http://www.datoolset.net/wiki/index.php?title=GetModule"><span class="kw4">GetModule</span></a><span class="br0">&#40;</span><span class="br0">&#41;</span>, <span class="st0">&quot;WM_STORED_AREA&quot;</span>, sTarget<span class="br0">&#41;</span>;
+                <span class="co1">//store target waypoint tag</span>
+                <a href="http://www.datoolset.net/wiki/index.php?title=SetLocalString"><span class="kw4">SetLocalString</span></a><span class="br0">&#40;</span><a href="http://www.datoolset.net/wiki/index.php?title=GetModule"><span class="kw4">GetModule</span></a><span class="br0">&#40;</span><span class="br0">&#41;</span>, <span class="st0">&quot;WM_STORED_WP&quot;</span>, sWPOverride<span class="br0">&#41;</span>;
+                <span class="co1">//initiate the map's travelling animation. The engine will</span>
+                <span class="co1">//send EVENT_TYPE_WORLDMAP_PRETRANSITION once it's started.</span>
+                <a href="http://www.datoolset.net/wiki/index.php?title=WorldMapStartTravelling"><span class="kw4">WorldMapStartTravelling</span></a><span class="br0">&#40;</span><span class="br0">&#41;</span>;
+            <span class="br0">&#125;</span>
+        <span class="br0">&#125;</span>
+&#160;
+        <span class="co1">////////////////////////////////////////////////////////////////////////</span>
+        <span class="co1">// Sent by: The engine</span>
+        <span class="co1">// When: the world map has begun its &quot;travelling&quot; animation</span>
+        <span class="co1">////////////////////////////////////////////////////////////////////////</span>
+        <a href="http://www.datoolset.net/wiki/index.php?title=case keyword"><span class="kw1">case</span></a> <span class="kw3">EVENT_TYPE_WORLDMAP_PRETRANSITION</span><span class="sy0">:</span>
+        <span class="br0">&#123;</span>
+            <span class="co1">//retrieve the target area tag we stored in EVENT_TYPE_BEGIN_TRAVEL</span>
+            <a href="http://www.datoolset.net/wiki/index.php?title=string keyword"><span class="kw2">string</span></a> sArea <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetLocalString"><span class="kw4">GetLocalString</span></a><span class="br0">&#40;</span><a href="http://www.datoolset.net/wiki/index.php?title=GetModule"><span class="kw4">GetModule</span></a><span class="br0">&#40;</span><span class="br0">&#41;</span>, <span class="st0">&quot;WM_STORED_AREA&quot;</span><span class="br0">&#41;</span>;
+            <span class="co1">//retrieve the target waypoint tag</span>
+            <a href="http://www.datoolset.net/wiki/index.php?title=string keyword"><span class="kw2">string</span></a> sWP <span class="sy0">=</span> <a href="http://www.datoolset.net/wiki/index.php?title=GetLocalString"><span class="kw4">GetLocalString</span></a><span class="br0">&#40;</span><a href="http://www.datoolset.net/wiki/index.php?title=GetModule"><span class="kw4">GetModule</span></a><span class="br0">&#40;</span><span class="br0">&#41;</span>, <span class="st0">&quot;WM_STORED_WP&quot;</span><span class="br0">&#41;</span>;
+            <span class="co1">//execute the area transition to that target.</span>
+            UT_DoAreaTransition<span class="br0">&#40;</span>sArea, sWP<span class="br0">&#41;</span>;
+            <a href="http://www.datoolset.net/wiki/index.php?title=break keyword"><span class="kw1">break</span></a>;
+        <span class="br0">&#125;</span></pre></div></div>
+<p>We'll need to come back to the module script later on to add some plot-specific code, but for now this is all that's needed to enable a basic adventure to stand on its own.
+</p>
+<h2><span class="mw-headline" id="Introductory_cutscene">Introductory cutscene</span></h2>
+<p>After the player has finished character generation we play an introductory cutscene for him before the game starts.
+</p><p>The cutscene itself is quite simple, consisting of a few camera movements and an actor (substituted by the player) playing a walking animation. See <a href="Cutscene_tutorial.html" title="Cutscene tutorial">cutscene tutorial</a> for how to create a cutscene.
+</p><p>To make it play when the game begins we need to call it at the appropriate time with the <a href="CS_LoadCutscene.html" title="CS LoadCutscene">CS_LoadCutscene</a> function. The appropriate time has to be after the area that the cutscene is located in as loaded, otherwise the cutscene won't be able to play. The event that's best suited for this is <a href="EVENT_TYPE_AREALOAD_SPECIAL.html" title="EVENT TYPE AREALOAD SPECIAL">EVENT_TYPE_AREALOAD_SPECIAL</a>, which is called on an area's event script after the area has loaded but before any of the other game systems (AI and so forth) have been enabled. So in this case we want to insert the function call into the area script for the starting area, demo100ar_wilderness. We only want the cutscene to play the first time we enter this area so we've wrapped the function call in a plot flag check;
+</p>
+<div dir="ltr" class="mw-geshi mw-code mw-content-ltr"><div class="dascript source-dascript"><pre class="de1">        <a href="http://www.datoolset.net/wiki/index.php?title=case keyword"><span class="kw1">case</span></a> <span class="kw3">EVENT_TYPE_AREALOAD_SPECIAL</span><span class="sy0">:</span>
+        <span class="br0">&#123;</span>
+            <a href="http://www.datoolset.net/wiki/index.php?title=if keyword"><span class="kw1">if</span></a> <span class="br0">&#40;</span><span class="sy0">!</span>WR_GetPlotFlag<span class="br0">&#40;</span>PLT_DEMO000PL_MAIN, DEMO_INTRO_COMPLETE<span class="br0">&#41;</span><span class="br0">&#41;</span>
+            <span class="br0">&#123;</span>
+                CS_LoadCutscene<span class="br0">&#40;</span>R<span class="st0">&quot;demo100ct_intro.cut&quot;</span><span class="br0">&#41;</span>;
+                WR_SetPlotFlag<span class="br0">&#40;</span>PLT_DEMO000PL_MAIN, DEMO_INTRO_COMPLETE,TRUE<span class="br0">&#41;</span>; <span class="co1">//sets the plot flag to ensure we don't repeat the intro cutscene.</span>
+            <span class="br0">&#125;</span>
+            <a href="http://www.datoolset.net/wiki/index.php?title=break keyword"><span class="kw1">break</span></a>;
+        <span class="br0">&#125;</span></pre></div></div>
+<h2><span class="mw-headline" id="The_main_plot_file">The main plot file</span></h2>
+<p>For this demo module, all of the major events relating to the development of the plot are kept track of in the demo000pl_main plot file. This also allows for a centralized place to put scripting that deals with these events.
+</p><p>The plot outline of the demo module is:
+</p>
+<ol><li>Player encounters the innkeeper outside his inn and speaks with him, receiving the quest to retrieve the innkeeper's sword.</li>
+<li>Player enters the inn. As he approaches the lever that will open the door to the room the sword is in, the bandit that's taken over the inn initiates conversation with the player. This leads to combat.</li>
+<li>Player pulls the lever, blowing up the door to the room the sword is in</li>
+<li>Player retrieves the sword</li>
+<li>Player returns the sword to the innkeeper, who offers to join the party. A new area also opens up on the world map at this point.</li></ol>
+<p>We'll cover each of these events in a separate section of this documentation.
+</p><p>You may also note that many of the constants used in the code have been separated out into a "demo_consts_h" script file, even if they are only currently used in one particular place. This is not strictly necessary, and in fact the toolset doesn't recognize the "_h" suffix as having any special significance; whenever you save an _h script the toolset will try to compile it and complain about the lack of a main() or StartingConditional() function (you can ignore this complaint). However, it makes typos much easier to find and debug, and should you need to change a constant later on this approach ensures that you can always catch every instance of it.
+</p>
+<h2><span class="mw-headline" id="Giving_the_player_an_item">Giving the player an item</span></h2>
+<p>The first thing that happens if the player talks to the barkeep and accepts the quest is that the barkeep will give him a key. The key is a "plot item", meaning it will be shown in a separate section of the player's inventory and can't be given away or destroyed by the player, but the mechanism used here can give the player non-plot items as well.
+</p><p>The function <a href="UT_AddItemToInventory.html" title="UT AddItemToInventory">UT_AddItemToInventory</a> takes a resource variable as its parameter. It causes a new instance of the item to be created and added. If you call it multiple times with the same resource, earlier copies won't be affected - multiple copies of the item will be created. You'll see one way of removing an object from the player's inventory at the end of the quest when the innkeeper takes back his sword.
+</p>
+<h2><span class="mw-headline" id="Using_a_trigger_to_initiate_conversation">Using a trigger to initiate conversation</span></h2>
+<p>We want the bandit and his loyal patrons to attack the player before the lever can be pulled. A trigger has been placed in such a manner that the player will have to pass through it before reaching the lever; the trick is now to use that trigger to make the things we want to have happen, happen.
+</p><p>When a trigger is entered by any entity the trigger's event script is sent an <a href="EVENT_TYPE_ENTER.html" title="EVENT TYPE ENTER">EVENT_TYPE_ENTER</a> event. Note that this is sent <i>every</i> time the trigger is entered, by <i>any</i> entity, so the first thing we'll need to do in the event script is a test to ensure that the triggering entity is the player or one of his party members.
+</p><p>The IsPartyMember function tests to see whether an object is player-controllable, which is true for the player's character and for any creature currently in the player's party. We call it on the event's creator to check if this is the right person; if it's not the event script does nothing.
+</p><p>If we wanted the bandit and patrons to simply charge and attack the player, we'd have the trigger call <a href="UT_TeamGoesHostile.html" title="UT TeamGoesHostile">UT_TeamGoesHostile</a>(BANDIT_TEAM); directly (the bandit and patrons' creature templates are all set to the same team so that we don't need to set each one hostile individually). In this case an unexplained attack would be strange, so instead a conversation has been set up that has the bandit and patrons explain themselves before attacking. So we've set the trigger script to call <a href="UT_Talk.html" title="UT Talk">UT_Talk</a> instead.
+</p><p>Once this has been called, we never want the trigger to fire again for anyone. It is important to note that setting a trigger to "inactive" will <i>not</i> work; an inactive trigger still fires EVENT_TYPE_ENTER whenever an entity enters it. There are several approaches that can be used here:
+</p>
+<ul><li>Set the event script to check the trigger's active status and not perform any action if it's inactive</li>
+<li>Use a plot flag to make the code only fire once</li>
+<li>Call <a href="Safe_Destroy_Object.html" title="Safe Destroy Object">Safe_Destroy_Object</a>(OBJECT_SELF, 0); to destroy the trigger entirely</li></ul>
+<p>Since there will be no circumstances where we'll need the trigger to become active again in the future, destroying the trigger is the simplest and most foolproof way of accomplishing this.
+</p>
+<h2><span class="mw-headline" id="Using_a_placeable_to_call_a_script">Using a placeable to call a script</span></h2>
+<p>The lever placeable has a "use" option that allows the player to flip it from one state to the other. When this happens an <a href="EVENT_TYPE_USE.html" title="EVENT TYPE USE">EVENT_TYPE_USE</a> event is sent to the placeable's event script. We've added a custom event script to the lever to intercept this event and do something special; demo200pl_security_lever.nss.
+</p><p>Rather than handling all the details of what should happen when the lever is pulled right in this script, though, we've instead put them into the main plot file's script. The custom placeable script serves only to set the appropriate main plot file flag.
+</p>
+<h2><span class="mw-headline" id="Troubleshooting">Troubleshooting</span></h2>
+<h3><span class="mw-headline" id="Failure_to_exit_combat_mode_after_defeating_the_bandits_in_the_inn">Failure to exit combat mode after defeating the bandits in the inn</span></h3>
+<p>Try clearing out the folder My Documents\BioWare\Dragon Age\packages\core\override. As of version 1.0.982.0 of the Dragon Age Toolset, the export process deposits certain files to that override folder, which is currently causing conflicts within the game. One immediate indication of this may be that the player character is initially in their undergarments during character generation.
+</p>
+<!-- 
+NewPP limit report
+CPU time usage: 0.048 seconds
+Real time usage: 0.053 seconds
+Preprocessor visited node count: 99/1000000
+Preprocessor generated node count: 228/1000000
+Post‐expand include size: 0/2097152 bytes
+Template argument size: 0/2097152 bytes
+Highest expansion depth: 3/40
+Expensive parser function count: 0/100
+-->
+
+<!-- 
+Transclusion expansion time report (%,ms,calls,template)
+100.00%    0.000      1 - -total
+-->
+
+<!-- Saved in parser cache with key db714099484-datoolwiki_:pcache:idhash:86-0!*!0!!en!*!* and timestamp 20260531141713 and revision id 19744
+ -->
+</div>									<div class="printfooter">
+						Retrieved from "<a dir="ltr" href="Module_tutorial.html">https://www.datoolset.net/mw/index.php?title=Module_tutorial&amp;oldid=19744</a>"					</div>
+													<div id='catlinks' class='catlinks'><div id="mw-normal-catlinks" class="mw-normal-catlinks"><a href="/wiki/Special:Categories" title="Special:Categories">Category</a>: <ul><li><a href="Category%3ATutorials.html" title="Category:Tutorials">Tutorials</a></li></ul></div></div>												<div class="visualClear"></div>
+							</div>
+		</div>
+		<div id="mw-navigation">
+			<h2>Navigation menu</h2>
+
+			<div id="mw-head">
+									<div id="p-personal" role="navigation" class="" aria-labelledby="p-personal-label">
+						<h3 id="p-personal-label">Personal tools</h3>
+						<ul>
+							<li id="pt-login"><a href="/mw/index.php?title=Special:UserLogin&amp;returnto=Module+tutorial" title="You are encouraged to log in; however, it is not mandatory [o]" accesskey="o">Log in</a></li>						</ul>
+					</div>
+									<div id="left-navigation">
+										<div id="p-namespaces" role="navigation" class="vectorTabs" aria-labelledby="p-namespaces-label">
+						<h3 id="p-namespaces-label">Namespaces</h3>
+						<ul>
+															<li  id="ca-nstab-main" class="selected"><span><a href="Module_tutorial.html"  title="View the content page [c]" accesskey="c">Page</a></span></li>
+															<li  id="ca-talk"><span><a href="Talk%3AModule_tutorial.html"  title="Discussion about the content page [t]" accesskey="t">Discussion</a></span></li>
+													</ul>
+					</div>
+										<div id="p-variants" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-variants-label">
+												<h3 id="p-variants-label"><span>Variants</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+									</div>
+				<div id="right-navigation">
+										<div id="p-views" role="navigation" class="vectorTabs" aria-labelledby="p-views-label">
+						<h3 id="p-views-label">Views</h3>
+						<ul>
+															<li id="ca-view" class="selected"><span><a href="Module_tutorial.html" >Read</a></span></li>
+															<li id="ca-viewsource"><span><a href="Module_tutorial.html"  title="This page is protected.&#10;You can view its source [e]" accesskey="e">View source</a></span></li>
+															<li id="ca-history" class="collapsible"><span><a href="Module_tutorial.html"  title="Past revisions of this page [h]" accesskey="h">View history</a></span></li>
+													</ul>
+					</div>
+										<div id="p-cactions" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-cactions-label">
+						<h3 id="p-cactions-label"><span>More</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+										<div id="p-search" role="search">
+						<h3>
+							<label for="searchInput">Search</label>
+						</h3>
+
+						<form action="/mw/index.php" id="searchform">
+														<div id="simpleSearch">
+															<input type="search" name="search" placeholder="Search" title="Search Dragon Age Toolset Wiki [f]" accesskey="f" id="searchInput" /><input type="hidden" value="Special:Search" name="title" /><input type="submit" name="fulltext" value="Search" title="Search the pages for this text" id="mw-searchButton" class="searchButton mw-fallbackSearchButton" /><input type="submit" name="go" value="Go" title="Go to a page with this exact name if exists" id="searchButton" class="searchButton" />								</div>
+						</form>
+					</div>
+									</div>
+			</div>
+			<div id="mw-panel">
+				<div id="p-logo" role="banner"><a class="mw-wiki-logo" href="Main_Page.html"  title="Visit the main page"></a></div>
+						<div class="portal" role="navigation" id='p-navigation' aria-labelledby='p-navigation-label'>
+			<h3 id='p-navigation-label'>Navigation</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-mainpage-description"><a href="Main_Page.html" title="Visit the main page [z]" accesskey="z">Main page</a></li>
+													<li id="n-recentchanges"><a href="/wiki/Special:RecentChanges" title="A list of recent changes in the wiki [r]" accesskey="r">Recent changes</a></li>
+													<li id="n-randompage"><a href="/wiki/Special:Random" title="Load a random page [x]" accesskey="x">Random page</a></li>
+													<li id="n-help"><a href="https://www.mediawiki.org/wiki/Special:MyLanguage/Help:Contents" title="The place to find out">Help</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-Links' aria-labelledby='p-Links-label'>
+			<h3 id='p-Links-label'>Links</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-Toolset-forums"><a href="http://forum.bioware.com/forum/30-dragon-age-toolset" rel="nofollow">Toolset forums</a></li>
+													<li id="n-Legacy-forums"><a href="http://social.bioware.com/forum/1/subindex/70" rel="nofollow">Legacy forums</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-tb' aria-labelledby='p-tb-label'>
+			<h3 id='p-tb-label'>Tools</h3>
+
+			<div class="body">
+									<ul>
+													<li id="t-whatlinkshere"><a href="/wiki/Special:WhatLinksHere/Module_tutorial" title="A list of all wiki pages that link here [j]" accesskey="j">What links here</a></li>
+													<li id="t-recentchangeslinked"><a href="/wiki/Special:RecentChangesLinked/Module_tutorial" title="Recent changes in pages linked from this page [k]" accesskey="k">Related changes</a></li>
+													<li id="t-specialpages"><a href="/wiki/Special:SpecialPages" title="A list of all special pages [q]" accesskey="q">Special pages</a></li>
+													<li id="t-print"><a href="Module_tutorial.html" rel="alternate" title="Printable version of this page [p]" accesskey="p">Printable version</a></li>
+													<li id="t-permalink"><a href="Module_tutorial.html" title="Permanent link to this revision of the page">Permanent link</a></li>
+													<li id="t-info"><a href="Module_tutorial.html" title="More information about this page">Page information</a></li>
+											</ul>
+							</div>
+		</div>
+				</div>
+		</div>
+		<div id="footer" role="contentinfo">
+							<ul id="footer-info">
+											<li id="footer-info-lastmod"> This page was last modified on 4 September 2016, at 21:00.</li>
+									</ul>
+							<ul id="footer-places">
+											<li id="footer-places-privacy"><a href="/wiki/Dragon_Age_Toolset_Wiki:Privacy_policy" title="Dragon Age Toolset Wiki:Privacy policy">Privacy policy</a></li>
+											<li id="footer-places-about"><a href="/wiki/Dragon_Age_Toolset_Wiki:About" title="Dragon Age Toolset Wiki:About">About Dragon Age Toolset Wiki</a></li>
+											<li id="footer-places-disclaimer"><a href="/wiki/Dragon_Age_Toolset_Wiki:General_disclaimer" title="Dragon Age Toolset Wiki:General disclaimer">Disclaimers</a></li>
+									</ul>
+										<ul id="footer-icons" class="noprint">
+											<li id="footer-poweredbyico">
+															<a href="//www.mediawiki.org/"><img src="../assets/mw/resources/assets/poweredby_mediawiki_88x31.png" alt="Powered by MediaWiki" srcset="../assets/mw/resources/assets/poweredby_mediawiki_132x47.png 1.5x, ../assets/mw/resources/assets/poweredby_mediawiki_176x62.png 2x" width="88" height="31" /></a>
+													</li>
+									</ul>
+						<div style="clear:both"></div>
+		</div>
+		<script>if(window.jQuery)jQuery.ready();</script><script>if(window.mw){
+mw.loader.state({"site":"loading","user":"ready","user.groups":"ready"});
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.toc","mediawiki.action.view.postEdit","mediawiki.user","mediawiki.hidpi","mediawiki.page.ready","mediawiki.searchSuggest"],null,true);
+}</script>
+<script>if(window.mw){
+document.write("\u003Cscript src=\"https://www.datoolset.net/mw/load.php?debug=false\u0026amp;lang=en\u0026amp;modules=site\u0026amp;only=scripts\u0026amp;skin=vector\u0026amp;*\"\u003E\u003C/script\u003E");
+}</script>
+<script>if(window.mw){
+mw.config.set({"wgBackendResponseTime":228});
+}</script>
+	</body>
+</html>

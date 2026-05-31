@@ -1,0 +1,1876 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr" class="client-nojs">
+<head>
+<meta charset="UTF-8" />
+<title>MMH - Dragon Age Toolset Wiki</title>
+<meta name="generator" content="MediaWiki 1.25.6" />
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="search" type="application/opensearchdescription+xml" href="/mw/opensearch_desc.php" title="Dragon Age Toolset Wiki (en)" />
+<link rel="EditURI" type="application/rsd+xml" href="https://www.datoolset.net/mw/api.php?action=rsd" />
+<link rel="alternate" hreflang="x-default" href="Mmh.html" />
+<link rel="alternate" type="application/atom+xml" title="Dragon Age Toolset Wiki Atom feed" href="/mw/index.php?title=Special:RecentChanges&amp;feed=atom" />
+<link rel="canonical" href="Mmh.html" />
+<meta name="ResourceLoaderDynamicStyles" content="" />
+<style>a:lang(ar),a:lang(kk-arab),a:lang(mzn),a:lang(ps),a:lang(ur){text-decoration:none}
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-css:7:270a0dcd3ae587df0f041aebfc42e61b */</style>
+<script>if(window.mw){
+mw.config.set({"wgCanonicalNamespace":"","wgCanonicalSpecialPageName":false,"wgNamespaceNumber":0,"wgPageName":"MMH","wgTitle":"MMH","wgCurRevisionId":15742,"wgRevisionId":15742,"wgArticleId":2231,"wgIsArticle":true,"wgIsRedirect":false,"wgAction":"view","wgUserName":null,"wgUserGroups":["*"],"wgCategories":["Articles with documentation requests","File types"],"wgBreakFrames":false,"wgPageContentLanguage":"en","wgPageContentModel":"wikitext","wgSeparatorTransformTable":["",""],"wgDigitTransformTable":["",""],"wgDefaultDateFormat":"dmy","wgMonthNames":["","January","February","March","April","May","June","July","August","September","October","November","December"],"wgMonthNamesShort":["","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],"wgRelevantPageName":"MMH","wgRelevantArticleId":2231,"wgIsProbablyEditable":false,"wgRestrictionEdit":[],"wgRestrictionMove":[],"wgRedirectedFrom":"Mmh","wgInternalRedirectTargetUrl":"/wiki/MMH"});
+}</script><script>if(window.mw){
+mw.loader.implement("user.options",function($,jQuery){mw.user.options.set({"variant":"en"});});mw.loader.implement("user.tokens",function($,jQuery){mw.user.tokens.set({"editToken":"+\\","patrolToken":"+\\","watchToken":"+\\"});});
+/* cache key: db714099484-datoolwiki_:resourceloader:filter:minify-js:7:a5c52c063dc436c1ca7c9f456936a5e9 */
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.action.view.redirect","mediawiki.page.startup","mediawiki.legacy.wikibits","mediawiki.legacy.ajax","skins.vector.js"]);
+}</script>
+<!--[if lt IE 7]><style type="text/css">body{behavior:url("/mw/skins/Vector/csshover.min.htc")}</style><![endif]-->
+<link rel="stylesheet" href="../assets/local/wiki-static.css" />
+</head>
+<body class="mediawiki ltr sitedir-ltr ns-0 ns-subject page-MMH skin-vector action-view">
+		<div id="mw-page-base" class="noprint"></div>
+		<div id="mw-head-base" class="noprint"></div>
+		<div id="content" class="mw-body" role="main">
+			<a id="top"></a>
+
+						<div class="mw-indicators">
+</div>
+			<h1 id="firstHeading" class="firstHeading" lang="en">MMH</h1>
+						<div id="bodyContent" class="mw-body-content">
+									<div id="siteSub">From Dragon Age Toolset Wiki</div>
+								<div id="contentSub"><span class="mw-redirectedfrom">(Redirected from <a href="Mmh.html" title="Mmh">Mmh</a>)</span></div>
+												<div id="jump-to-nav" class="mw-jump">
+					Jump to:					<a href="#mw-head">navigation</a>, 					<a href="#p-search">search</a>
+				</div>
+				<div id="mw-content-text" lang="en" dir="ltr" class="mw-content-ltr"><p><b>MMH</b> ("Model Mesh Heirarchy") files are used to describe a wide variety of physical objects that appear in Dragon Age levels. It includes props, visual effects, creature models, weapon models, and so forth.
+</p><p>MMH files are defined by XML files named with the .mmh.xml extension. BioWare generated these XML files using 3DSMax plugins that have some legal encumberances preventing their distribution, but the specifications for .mmh.xml will be released and it is hoped that converters will be able to be written for other file formats. See <a href="3rd_party_extensions.html" title="3rd party extensions">3rd_party_extensions</a> for custom model export and import tools.
+</p><p>The XML file is then run through the GraphicsProcessorMMH.exe program (found in the Dragon Age\Toolset\export_processors directory) to produce a binary file that is used by the game. The game can actually use the XML file directly, but this has poor performance (it runs it through GraphicsProcessorMMH every time the object is loaded) and should only be used for testing purposes.
+</p>
+<dl><dd>GraphicsProcessorMMH [-outdir &lt;out-dir&gt;] [-platform &lt;x360,pc,ps3&gt;] [options] [-indir&lt;input-directory&gt; / &lt;input-file&gt;]</dd></dl>
+<p>Other options include:
+</p>
+<dl><dd>-byteswapgff<sup>[<a href="Category%3AArticles_with_documentation_requests.html" title="Category:Articles with documentation requests">Undocumented</a>]</sup></dd></dl>
+<p>This is the command line you'll typically need:
+</p>
+<dl><dd>GraphicsProcessorMMH -outdir&#160;%ls -platform pc&#160;%ls.mmh.xml</dd></dl>
+<p>MMH files reference <a href="Msh.html" title="MSH">MSH</a> (mesh) files to define the actual triangles and vertexes used in models.
+</p>
+<h2><span class="mw-headline" id="mmh.xml_schema">mmh.xml schema</span></h2>
+<p>Joint types:
+</p>
+<ul><li>Cylindrical</li>
+<li>6DOF</li>
+<li>Distance</li>
+<li>Fixed</li>
+<li>PointInPlane</li>
+<li>PointOnLine</li>
+<li>Prismatic</li>
+<li>Pulley</li>
+<li>Revolute</li>
+<li>Spherical</li></ul>
+<p>See <a rel="nofollow" class="external autonumber" href="http://www.oasis-open.org/committees/relax-ng/spec.html">[1]</a> for information on the RELAX NG 1.0 XML schema format. For a free converter/verifier, see <a rel="nofollow" class="external autonumber" href="http://code.google.com/p/jing-trang/">[2]</a>.
+</p>
+<pre>
+&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;grammar ns="" xmlns="http://relaxng.org/ns/structure/1.0" datatypeLibrary="http://www.w3.org/2001/XMLSchema-datatypes"&gt;
+  &lt;start&gt;
+    &lt;element name="ModelHierarchy"&gt;
+      &lt;optional&gt;
+        &lt;attribute name="FXActorName"&gt;
+          &lt;data type="NCName"/&gt; &lt;!-- An FXA file name --&gt;
+        &lt;/attribute&gt;
+      &lt;/optional&gt;
+      &lt;attribute name="ModelDataName"&gt;
+        &lt;data type="NCName"/&gt; &lt;!-- The MSH file name, of where the Mesh Chunks are in by default --&gt;
+      &lt;/attribute&gt;
+      &lt;attribute name="Name"&gt;
+        &lt;data type="NCName"/&gt; &lt;!-- An MMH file name. This MMH --&gt;
+      &lt;/attribute&gt;
+      &lt;optional&gt;
+        &lt;attribute name="PreSimulateTime"&gt;
+          &lt;data type="decimal"/&gt; &lt;!-- emitter presimulation time --&gt;
+        &lt;/attribute&gt;
+      &lt;/optional&gt;
+      &lt;optional&gt;
+        &lt;attribute name="ReferencedMeshes"/&gt; &lt;!-- List of names of referenced meshes. Most of the files I see this in have an empty string here, but some have one or more .msh files named with spaces separating them. For example: ReferencedMeshes="fx_l_plane.msh fx_l_plane.msh". Every file with ReferencedMeshes defined was exported by the VFX editor so this is a VFX thing.--&gt;
+      &lt;/optional&gt;
+      &lt;optional&gt;
+        &lt;attribute name="RemoteMaterialAlpha"&gt;
+          &lt;data type="decimal"/&gt; &lt;!-- if UseRemoteMaterial is true --&gt;
+        &lt;/attribute&gt;
+      &lt;/optional&gt;
+      &lt;optional&gt;
+        &lt;attribute name="RemoteMaterialDecalName"&gt;
+          &lt;data type="NCName"/&gt; &lt;!-- if UseRemoteMaterial is true --&gt;
+        &lt;/attribute&gt;
+      &lt;/optional&gt;
+      &lt;optional&gt;
+        &lt;attribute name="RemoteMaterialFresnelFalloff"&gt;
+          &lt;data type="decimal"/&gt;  &lt;!-- if UseRemoteMaterial is true --&gt;
+        &lt;/attribute&gt;
+      &lt;/optional&gt;
+      &lt;optional&gt;
+        &lt;attribute name="RemoteMaterialInvertFresnel"&gt;
+          &lt;data type="integer"/&gt;  &lt;!-- if UseRemoteMaterial is true. A true/false value --&gt;
+        &lt;/attribute&gt;
+      &lt;/optional&gt;
+      &lt;optional&gt;
+        &lt;attribute name="RemoteMaterialTintColor"/&gt; &lt;!-- if UseRemoteMaterial is true. Four numbers separated by spaces --&gt;
+      &lt;/optional&gt;
+      &lt;optional&gt;
+        &lt;attribute name="UseRemoteMaterial"&gt;
+          &lt;data type="integer"/&gt; &lt;!-- a true/false value --&gt;
+        &lt;/attribute&gt;
+      &lt;/optional&gt;
+      &lt;choice&gt;
+        &lt;ref name="MeshHierarchy"/&gt; &lt;!-- MeshHierarchy is a deprecated synonym for "NodeMesh". --&gt;
+        &lt;ref name="Node"/&gt;
+        &lt;ref name="NodeMesh"/&gt;
+      &lt;/choice&gt;
+    &lt;/element&gt;
+  &lt;/start&gt;
+  &lt;define name="NodeMesh"&gt;
+    &lt;element name="NodeMesh"&gt;
+      &lt;optional&gt;
+        &lt;attribute name="BonesUsed"/&gt; &lt;!-- list of integer values, representing the BoneIndices, in an order correlating to the Vertex Blend Indices. Used by models with skeletal Animation. --&gt;
+      &lt;/optional&gt;
+      &lt;optional&gt;
+        &lt;attribute name="CastBakedShadow"&gt; &lt;!-- true/false value --&gt;
+          &lt;data type="integer"/&gt;
+        &lt;/attribute&gt;
+      &lt;/optional&gt;
+      &lt;optional&gt;
+        &lt;attribute name="CastRuntimeShadow"&gt;  &lt;!-- true/false value --&gt;
+          &lt;data type="integer"/&gt;
+        &lt;/attribute&gt;
+      &lt;/optional&gt;
+      &lt;optional&gt;
+        &lt;attribute name="CutAway"&gt; &lt;!-- true/false value (Cut Away enables Fading out on Isometric view in Dragon Age) --&gt;
+          &lt;data type="integer"/&gt;
+        &lt;/attribute&gt;
+      &lt;/optional&gt;
+      &lt;optional&gt;
+        &lt;attribute name="ID"&gt;
+          &lt;data type="NCName"/&gt; &lt;!-- A short and unique string. It is unique across every mesh used in whole Dragon Age. Used by lightmapper to reference the mesh --&gt;
+        &lt;/attribute&gt;
+      &lt;/optional&gt;
+      &lt;optional&gt;
+        &lt;attribute name="IsVFXMesh"&gt; &lt;!-- if this mesh is categorized as a VFX Mesh, load in the MaterialColor parameter --&gt;
+          &lt;data type="integer"/&gt;
+        &lt;/attribute&gt;
+      &lt;/optional&gt;
+      &lt;optional&gt;
+        &lt;attribute name="MaterialColor"/&gt; &lt;!-- String with four values - RGBA --&gt;
+      &lt;/optional&gt;
+      &lt;optional&gt;
+        &lt;attribute name="MaterialLibrary"&gt; &lt;!-- Strings like "CavesInterior" - reference to MAL files, MAL are material editor file types. (may not actually be useful in the game) --&gt;
+          &lt;data type="NCName"/&gt;
+        &lt;/attribute&gt;
+      &lt;/optional&gt;
+      &lt;optional&gt;
+        &lt;attribute name="MaterialObject"&gt; &lt;!-- Strings like "pn_boo_hvyd_l3" here, this is referring to material object (MAO files) create by the material editor --&gt;
+          &lt;data type="NMTOKEN"/&gt;
+        &lt;/attribute&gt;
+      &lt;/optional&gt;
+      &lt;optional&gt;
+        &lt;attribute name="MeshGroupName"&gt; &lt;!-- The Meshes Name, used to reference the meshchunk name in the MSH  --&gt;
+          &lt;data type="NCName"/&gt;
+        &lt;/attribute&gt;
+      &lt;/optional&gt;
+      &lt;optional&gt;
+        &lt;attribute name="MeshName"&gt; &lt;!-- the mesh file that the meshchunk is in. if this isn't set, it will default to the first mesh in the model (for backwards compatibility) --&gt;
+          &lt;data type="NCName"/&gt;
+        &lt;/attribute&gt;
+      &lt;/optional&gt;
+      &lt;attribute name="Name"&gt; &lt;!-- name of the node --&gt;
+        &lt;data type="NCName"/&gt;
+      &lt;/attribute&gt;
+      &lt;optional&gt;
+        &lt;attribute name="PunchThrough"&gt; &lt;!-- true/false value --&gt;
+          &lt;data type="integer"/&gt;
+        &lt;/attribute&gt;
+      &lt;/optional&gt;
+      &lt;optional&gt;
+        &lt;attribute name="ReceiveBakedShadow"&gt; &lt;!-- true/false value --&gt;
+          &lt;data type="integer"/&gt;
+        &lt;/attribute&gt;
+      &lt;/optional&gt;
+      &lt;optional&gt;
+        &lt;attribute name="ReceiveRuntimeShadow"&gt; &lt;!-- true/false value --&gt;
+          &lt;data type="integer"/&gt;
+        &lt;/attribute&gt;
+      &lt;/optional&gt;
+      &lt;optional&gt;
+        &lt;attribute name="ReceiveShadow"&gt; &lt;!-- I didn't find this referenced in the source code - deprecated, perhaps? --&gt;
+          &lt;data type="integer"/&gt;
+        &lt;/attribute&gt;
+      &lt;/optional&gt;
+      &lt;optional&gt;
+        &lt;attribute name="ShadowCasting"&gt; &lt;!-- used to set GFF_MMH_MESH_CAST_RUNTIME_SHADOW in the source code, same as CastRuntimeShadow above - synonyms? --&gt;
+          &lt;data type="integer"/&gt;
+        &lt;/attribute&gt;
+      &lt;/optional&gt;
+      &lt;optional&gt;
+        &lt;attribute name="UseVariationTint"&gt;
+          &lt;data type="integer"/&gt;
+        &lt;/attribute&gt;
+      &lt;/optional&gt;
+      &lt;zeroOrMore&gt;
+        &lt;choice&gt;
+          &lt;ref name="Attribute"/&gt;
+          &lt;ref name="BoundingBox"/&gt; &lt;!-- may be empty, or may contain something of the form &lt;![CDATA[-8.00051 -32.0 -0.0103784 1.0 8.01207 0.0 30.0 1.0]]&gt;  I believe this is the two corners (min and max) of the bounding box. --&gt;
+          &lt;ref name="CollisionObject"/&gt;
+          &lt;ref name="Export"/&gt;
+          &lt;ref name="Node"/&gt;
+          &lt;ref name="NodeCrustHierarchy"/&gt;
+          &lt;ref name="NodeMesh"/&gt;
+          &lt;ref name="NodePointLight"/&gt;
+          &lt;ref name="NodeWeapontrail"/&gt;
+          &lt;ref name="Rotation"/&gt;
+          &lt;ref name="Translation"/&gt;
+          &lt;element name="Scale"&gt;
+            &lt;data type="decimal"/&gt;
+          &lt;/element&gt;
+        &lt;/choice&gt;
+      &lt;/zeroOrMore&gt;
+      &lt;choice&gt;
+        &lt;ref name="NodeAmbientLight"/&gt;
+        &lt;ref name="NodeUsePoint"/&gt;
+        &lt;zeroOrMore&gt;
+          &lt;ref name="NodeEmitter"/&gt;
+        &lt;/zeroOrMore&gt;
+      &lt;/choice&gt;
+    &lt;/element&gt;
+  &lt;/define&gt;
+  &lt;define name="Node"&gt;
+    &lt;element name="Node"&gt;
+      &lt;optional&gt;
+        &lt;attribute name="BoneIndex"&gt;
+          &lt;data type="integer"/&gt;
+        &lt;/attribute&gt;
+      &lt;/optional&gt;
+      &lt;attribute name="Name"&gt;
+        &lt;data type="NMTOKEN"/&gt;
+      &lt;/attribute&gt;
+      &lt;optional&gt;
+        &lt;attribute name="SoundMaterialType"&gt;
+          &lt;data type="integer"/&gt;
+        &lt;/attribute&gt;
+      &lt;/optional&gt;
+      &lt;zeroOrMore&gt;
+        &lt;choice&gt;
+          &lt;ref name="BoundingBox"/&gt;
+          &lt;ref name="CollisionObject"/&gt;
+          &lt;ref name="Export"/&gt;
+          &lt;ref name="Node"/&gt;
+          &lt;ref name="NodeCrustHierarchy"/&gt;
+          &lt;ref name="NodeEmitter"/&gt;
+          &lt;ref name="NodeEmitterGroup"/&gt;
+          &lt;ref name="NodeEmitterTarget"/&gt;
+          &lt;ref name="NodeLightProbe"/&gt;
+          &lt;ref name="NodeMesh"/&gt;
+          &lt;ref name="NodePointLight"/&gt;
+          &lt;ref name="NodeUsePoint"/&gt;
+          &lt;ref name="NodeWeapontrail"/&gt;
+          &lt;ref name="Rotation"/&gt;
+          &lt;ref name="Translation"/&gt;
+          &lt;element name="NodeCloth"&gt;
+            &lt;attribute name="AttachmentResponseCoefficient"&gt;
+              &lt;data type="decimal"/&gt;
+            &lt;/attribute&gt;
+            &lt;attribute name="AttachmentTearFactor"&gt;
+              &lt;data type="decimal"/&gt;
+            &lt;/attribute&gt;
+            &lt;attribute name="BendingStiffness"&gt;
+              &lt;data type="decimal"/&gt;
+            &lt;/attribute&gt;
+            &lt;attribute name="CF_BENDING"&gt;
+              &lt;data type="integer"/&gt;
+            &lt;/attribute&gt;
+            &lt;attribute name="CF_BENDING_ORTHO"&gt;
+              &lt;data type="integer"/&gt;
+            &lt;/attribute&gt;
+            &lt;attribute name="CF_COLLISION_TWOWAY"&gt;
+              &lt;data type="integer"/&gt;
+            &lt;/attribute&gt;
+            &lt;attribute name="CF_COMDAMPING"&gt;
+              &lt;data type="integer"/&gt;
+            &lt;/attribute&gt;
+            &lt;attribute name="CF_DAMPING"&gt;
+              &lt;data type="integer"/&gt;
+            &lt;/attribute&gt;
+            &lt;attribute name="CF_DISABLE_COLLISION"&gt;
+              &lt;data type="integer"/&gt;
+            &lt;/attribute&gt;
+            &lt;attribute name="CF_GRAVITY"&gt;
+              &lt;data type="integer"/&gt;
+            &lt;/attribute&gt;
+            &lt;attribute name="CF_HARDWARE"&gt;
+              &lt;data type="integer"/&gt;
+            &lt;/attribute&gt;
+            &lt;attribute name="CF_PRESSURE"&gt;
+              &lt;data type="integer"/&gt;
+            &lt;/attribute&gt;
+            &lt;attribute name="CF_SELFCOLLISION"&gt;
+              &lt;data type="integer"/&gt;
+            &lt;/attribute&gt;
+            &lt;attribute name="CF_STATIC"&gt;
+              &lt;data type="integer"/&gt;
+            &lt;/attribute&gt;
+            &lt;attribute name="CF_TEARABLE"&gt;
+              &lt;data type="integer"/&gt;
+            &lt;/attribute&gt;
+            &lt;attribute name="CF_VISUALIZATION"&gt;
+              &lt;data type="integer"/&gt;
+            &lt;/attribute&gt;
+            &lt;attribute name="CollisionResponseCoefficient"&gt;
+              &lt;data type="decimal"/&gt;
+            &lt;/attribute&gt;
+            &lt;attribute name="DampingCoefficient"&gt;
+              &lt;data type="decimal"/&gt;
+            &lt;/attribute&gt;
+            &lt;attribute name="Density"&gt;
+              &lt;data type="decimal"/&gt;
+            &lt;/attribute&gt;
+            &lt;attribute name="Fadeable"&gt;
+              &lt;data type="boolean"/&gt;
+            &lt;/attribute&gt;
+            &lt;attribute name="Friction"&gt;
+              &lt;data type="decimal"/&gt;
+            &lt;/attribute&gt;
+            &lt;attribute name="GROUP_MASK_NONWALKABLE"&gt;
+              &lt;data type="boolean"/&gt;
+            &lt;/attribute&gt;
+            &lt;optional&gt;
+              &lt;attribute name="GROUP_MASK_STATICGEOMETRY"&gt;
+                &lt;data type="boolean"/&gt;
+              &lt;/attribute&gt;
+            &lt;/optional&gt;
+            &lt;attribute name="GustingDirectionAxisRatio"/&gt; &lt;!-- removed, no longer supported by resource exporter. see bug 114919 --&gt;
+            &lt;attribute name="GustingDirectionChange"&gt; &lt;!-- removed, no longer supported by resource exporter. see bug 114919 --&gt;
+              &lt;data type="decimal"/&gt;
+            &lt;/attribute&gt;
+            &lt;attribute name="GustingMaxDuration"&gt; &lt;!-- removed, no longer supported by resource exporter. see bug 114919 --&gt;
+              &lt;data type="decimal"/&gt;
+            &lt;/attribute&gt;
+            &lt;attribute name="GustingMaxInterval"&gt; &lt;!-- removed, no longer supported by resource exporter. see bug 114919 --&gt;
+              &lt;data type="decimal"/&gt;
+            &lt;/attribute&gt;
+            &lt;attribute name="GustingMaxStrength"&gt; &lt;!-- removed, no longer supported by resource exporter. see bug 114919 --&gt;
+              &lt;data type="decimal"/&gt;
+            &lt;/attribute&gt;
+            &lt;attribute name="GustingMinDuration"&gt; &lt;!-- removed, no longer supported by resource exporter. see bug 114919 --&gt;
+              &lt;data type="decimal"/&gt;
+            &lt;/attribute&gt;
+            &lt;attribute name="GustingMinInterval"&gt; &lt;!-- removed, no longer supported by resource exporter. see bug 114919 --&gt;
+              &lt;data type="decimal"/&gt;
+            &lt;/attribute&gt;
+            &lt;attribute name="GustingMinStrength"&gt; &lt;!-- removed, no longer supported by resource exporter. see bug 114919 --&gt;
+              &lt;data type="decimal"/&gt;
+            &lt;/attribute&gt;
+            &lt;attribute name="ID"&gt;
+              &lt;data type="NCName"/&gt;
+            &lt;/attribute&gt;
+            &lt;attribute name="MaterialLibrary"&gt;
+              &lt;data type="NCName"/&gt;
+            &lt;/attribute&gt;
+            &lt;attribute name="MaterialObject"&gt;
+              &lt;data type="NCName"/&gt;
+            &lt;/attribute&gt;
+            &lt;attribute name="MeshGroupName"&gt;
+              &lt;data type="NCName"/&gt;
+            &lt;/attribute&gt;
+            &lt;attribute name="Name"&gt;
+              &lt;data type="NCName"/&gt;
+            &lt;/attribute&gt;
+            &lt;attribute name="Pressure"&gt;
+              &lt;data type="decimal"/&gt;
+            &lt;/attribute&gt;
+            &lt;attribute name="SleepLinearVelocity"&gt;
+              &lt;data type="decimal"/&gt;
+            &lt;/attribute&gt;
+            &lt;attribute name="SolverIterations"&gt;
+              &lt;data type="integer"/&gt;
+            &lt;/attribute&gt;
+            &lt;attribute name="SpeedTreeWindDirection"&gt;  &lt;!-- removed, no longer supported by resource exporter. see bug 114919 --&gt;
+              &lt;data type="boolean"/&gt;
+            &lt;/attribute&gt;
+            &lt;attribute name="SpeedTreeWindParams"&gt; &lt;!-- removed, no longer supported by resource exporter. see bug 114919 --&gt;
+              &lt;data type="boolean"/&gt;
+            &lt;/attribute&gt;
+            &lt;attribute name="SpeedTreeWindStrength"&gt; &lt;!-- removed, no longer supported by resource exporter. see bug 114919 --&gt;
+              &lt;data type="boolean"/&gt;
+            &lt;/attribute&gt;
+            &lt;attribute name="SpeedTreeWindUpdateTime"&gt; &lt;!-- removed, no longer supported by resource exporter. see bug 114919 --&gt;
+              &lt;data type="decimal"/&gt;
+            &lt;/attribute&gt;
+            &lt;attribute name="StretchingStiffness"&gt;
+              &lt;data type="decimal"/&gt;
+            &lt;/attribute&gt;
+            &lt;attribute name="TearFactor"&gt;
+              &lt;data type="decimal"/&gt;
+            &lt;/attribute&gt;
+            &lt;attribute name="Thickness"&gt;
+              &lt;data type="decimal"/&gt;
+            &lt;/attribute&gt;
+            &lt;attribute name="WakeUpCounter"&gt;
+              &lt;data type="decimal"/&gt;
+            &lt;/attribute&gt;
+            &lt;attribute name="WindDirection"/&gt; &lt;!-- removed, no longer supported by resource exporter. see bug 114919 --&gt;
+            &lt;attribute name="WindEnabled"&gt; &lt;!-- removed, no longer supported by resource exporter. see bug 114919 --&gt;
+              &lt;data type="boolean"/&gt;
+            &lt;/attribute&gt;
+            &lt;attribute name="WindResponse"&gt; &lt;!-- removed, no longer supported by resource exporter. see bug 114919 --&gt;
+              &lt;data type="decimal"/&gt;
+            &lt;/attribute&gt;
+            &lt;attribute name="WindResponseLimit"&gt; &lt;!-- removed, no longer supported by resource exporter. see bug 114919 --&gt;
+              &lt;data type="decimal"/&gt;
+            &lt;/attribute&gt;
+            &lt;attribute name="WindSpace"&gt; &lt;!-- removed, no longer supported by resource exporter. see bug 114919 --&gt;
+              &lt;data type="NCName"/&gt;
+            &lt;/attribute&gt;
+            &lt;attribute name="WindStrength"&gt; &lt;!-- removed, no longer supported by resource exporter. see bug 114919 --&gt;
+              &lt;data type="decimal"/&gt;
+            &lt;/attribute&gt;
+            &lt;ref name="Attribute"/&gt;
+            &lt;zeroOrMore&gt;
+              &lt;ref name="Export"/&gt;
+            &lt;/zeroOrMore&gt;
+            &lt;ref name="Translation"/&gt;
+            &lt;ref name="Rotation"/&gt;
+            &lt;element name="ClothAttachments"&gt;
+              &lt;element name="ClothAttachment"&gt;
+                &lt;attribute name="TearableAttachment"&gt;
+                  &lt;data type="integer"/&gt;
+                &lt;/attribute&gt;
+                &lt;attribute name="TwoWayAttachment"&gt;
+                  &lt;data type="integer"/&gt;
+                &lt;/attribute&gt;
+                &lt;attribute name="Type"&gt;
+                  &lt;data type="NCName"/&gt;
+                &lt;/attribute&gt;
+              &lt;/element&gt;
+            &lt;/element&gt;
+            &lt;element name="MeshGroup"&gt;
+              &lt;attribute name="Name"&gt;
+                &lt;data type="NCName"/&gt;
+              &lt;/attribute&gt;
+              &lt;oneOrMore&gt;
+                &lt;ref name="Data"/&gt;
+              &lt;/oneOrMore&gt;
+            &lt;/element&gt;
+          &lt;/element&gt;
+          &lt;element name="NodeSnaptoPoint"&gt;
+            &lt;attribute name="Name"&gt;
+              &lt;data type="NCName"/&gt;
+            &lt;/attribute&gt;
+            &lt;zeroOrMore&gt;
+              &lt;ref name="Export"/&gt;
+            &lt;/zeroOrMore&gt;
+            &lt;ref name="Translation"/&gt;
+            &lt;ref name="Rotation"/&gt;
+          &lt;/element&gt;
+        &lt;/choice&gt;
+      &lt;/zeroOrMore&gt;
+      &lt;optional&gt;
+        &lt;ref name="NodeAmbientLight"/&gt;
+      &lt;/optional&gt;
+    &lt;/element&gt;
+  &lt;/define&gt;
+  &lt;define name="MeshHierarchy"&gt; &lt;!-- MeshHierarchy is a deprecated synonym for "NodeMesh". Only 14 files still use it out of nearly 8000 in our internal sources. --&gt;
+    &lt;element name="MeshHierarchy"&gt;
+      &lt;attribute name="Name"&gt;
+        &lt;data type="NCName"/&gt;
+      &lt;/attribute&gt;
+      &lt;optional&gt;
+        &lt;ref name="BoundingBox"/&gt;
+        &lt;oneOrMore&gt;
+          &lt;choice&gt;
+            &lt;ref name="MeshHierarchy"/&gt;
+            &lt;ref name="Rotation"/&gt;
+            &lt;ref name="Translation"/&gt;
+          &lt;/choice&gt;
+        &lt;/oneOrMore&gt;
+      &lt;/optional&gt;
+      &lt;choice&gt;
+        &lt;ref name="NodeLightProbe"/&gt;
+        &lt;zeroOrMore&gt;
+          &lt;ref name="NodeEmitter"/&gt;
+        &lt;/zeroOrMore&gt;
+      &lt;/choice&gt;
+    &lt;/element&gt;
+  &lt;/define&gt;
+  &lt;define name="NodeCrustHierarchy"&gt;
+    &lt;element name="NodeCrustHierarchy"&gt;
+      &lt;attribute name="HookID"&gt;
+        &lt;data type="integer"/&gt;
+      &lt;/attribute&gt;
+      &lt;attribute name="Name"&gt;
+        &lt;data type="NCName"/&gt;
+      &lt;/attribute&gt;
+      &lt;zeroOrMore&gt;
+        &lt;ref name="Export"/&gt;
+      &lt;/zeroOrMore&gt;
+      &lt;optional&gt;
+        &lt;ref name="Translation"/&gt;
+        &lt;ref name="Rotation"/&gt;
+      &lt;/optional&gt;
+      &lt;zeroOrMore&gt;
+        &lt;choice&gt;
+          &lt;ref name="Node"/&gt;
+          &lt;ref name="NodeEmitter"/&gt;
+          &lt;ref name="NodeEmitterGroup"/&gt;
+          &lt;ref name="NodeEmitterTarget"/&gt;
+          &lt;ref name="NodePointLight"/&gt;
+        &lt;/choice&gt;
+      &lt;/zeroOrMore&gt;
+      &lt;optional&gt;
+        &lt;ref name="NodeMesh"/&gt;
+      &lt;/optional&gt;
+    &lt;/element&gt;
+  &lt;/define&gt;
+  &lt;define name="Export"&gt;
+    &lt;element name="Export"&gt;
+      &lt;attribute name="ControllerType"&gt;
+        &lt;data type="NCName"/&gt;
+      &lt;/attribute&gt;
+      &lt;attribute name="ExportName"&gt;
+        &lt;data type="NMTOKEN"/&gt;
+      &lt;/attribute&gt;
+      &lt;optional&gt;
+        &lt;attribute name="MaterialColor"/&gt; &lt;!-- String with four values - RGBA --&gt;
+      &lt;/optional&gt;
+      &lt;attribute name="TagName"&gt;
+        &lt;data type="NCName"/&gt;
+      &lt;/attribute&gt;
+    &lt;/element&gt;
+  &lt;/define&gt;
+  &lt;define name="BoundingBox"&gt;
+    &lt;element name="BoundingBox"&gt; &lt;!-- Vector4f min, Vector4f max --&gt;
+      &lt;text/&gt;
+    &lt;/element&gt;
+  &lt;/define&gt;
+  &lt;define name="Translation"&gt;
+    &lt;element name="Translation"&gt;
+      &lt;optional&gt;
+        &lt;attribute name="MeshParticleRollAxis"/&gt; &lt;!-- Three numbers separated by spaces --&gt;
+      &lt;/optional&gt;
+      &lt;optional&gt;
+        &lt;attribute name="MeshParticleUpAxis"/&gt; &lt;!-- Three numbers separated by spaces --&gt;
+      &lt;/optional&gt;
+      &lt;text/&gt;
+    &lt;/element&gt;
+  &lt;/define&gt;
+  &lt;define name="Rotation"&gt;
+    &lt;element name="Rotation"&gt; &lt;!-- Quaternionf --&gt;
+      &lt;text/&gt;
+    &lt;/element&gt;
+  &lt;/define&gt;
+  &lt;define name="CollisionObject"&gt;
+    &lt;element name="CollisionObject"&gt;
+      &lt;optional&gt;
+        &lt;attribute name="Kinematic"&gt;
+          &lt;data type="boolean"/&gt;
+        &lt;/attribute&gt;
+      &lt;/optional&gt;
+      &lt;optional&gt;
+        &lt;attribute name="Static"&gt;
+          &lt;data type="boolean"/&gt;
+        &lt;/attribute&gt;
+      &lt;/optional&gt;
+      &lt;oneOrMore&gt;
+        &lt;element name="Shape"&gt;
+          &lt;attribute name="AllowEmitterSpawn"&gt;
+            &lt;data type="integer"/&gt;
+          &lt;/attribute&gt;
+          &lt;optional&gt;
+            &lt;attribute name="DimX"&gt;
+              &lt;data type="decimal"/&gt;
+            &lt;/attribute&gt;
+          &lt;/optional&gt;
+          &lt;optional&gt;
+            &lt;attribute name="DimY"&gt;
+              &lt;data type="double"/&gt;
+            &lt;/attribute&gt;
+          &lt;/optional&gt;
+          &lt;optional&gt;
+            &lt;attribute name="DimZ"&gt;
+              &lt;data type="decimal"/&gt;
+            &lt;/attribute&gt;
+          &lt;/optional&gt;
+          &lt;attribute name="Fadeable"&gt;
+            &lt;data type="boolean"/&gt;
+          &lt;/attribute&gt;
+          &lt;optional&gt;
+            &lt;attribute name="GROUP_MASK_CREATURES"&gt;
+              &lt;data type="boolean"/&gt;
+            &lt;/attribute&gt;
+          &lt;/optional&gt;
+          &lt;optional&gt;
+            &lt;attribute name="GROUP_MASK_ITEMS"&gt;
+              &lt;data type="boolean"/&gt;
+            &lt;/attribute&gt;
+          &lt;/optional&gt;
+          &lt;optional&gt;
+            &lt;attribute name="GROUP_MASK_NONWALKABLE"&gt;
+              &lt;data type="boolean"/&gt;
+            &lt;/attribute&gt;
+          &lt;/optional&gt;
+          &lt;optional&gt;
+            &lt;attribute name="GROUP_MASK_PLACEABLES"&gt;
+              &lt;data type="boolean"/&gt;
+            &lt;/attribute&gt;
+          &lt;/optional&gt;
+          &lt;optional&gt;
+            &lt;attribute name="GROUP_MASK_STATICGEOMETRY"&gt;
+              &lt;data type="boolean"/&gt;
+            &lt;/attribute&gt;
+          &lt;/optional&gt;
+          &lt;optional&gt;
+            &lt;attribute name="GROUP_MASK_TERRAIN_WALL"&gt;
+              &lt;data type="boolean"/&gt;
+            &lt;/attribute&gt;
+          &lt;/optional&gt;
+          &lt;optional&gt;
+            &lt;attribute name="GROUP_MASK_TRIGGERS"&gt;
+              &lt;data type="boolean"/&gt;
+            &lt;/attribute&gt;
+          &lt;/optional&gt;
+          &lt;optional&gt;
+            &lt;attribute name="GROUP_MASK_WALKABLE"&gt;
+              &lt;data type="boolean"/&gt;
+            &lt;/attribute&gt;
+          &lt;/optional&gt;
+          &lt;optional&gt;
+            &lt;attribute name="Height"&gt;
+              &lt;data type="double"/&gt;
+            &lt;/attribute&gt;
+          &lt;/optional&gt;
+          &lt;attribute name="Name"&gt;
+            &lt;data type="NCName"/&gt;
+          &lt;/attribute&gt;
+          &lt;attribute name="Position"/&gt; &lt;!-- Vector4f --&gt;
+          &lt;optional&gt;
+            &lt;attribute name="Radius"&gt;
+              &lt;data type="decimal"/&gt;
+            &lt;/attribute&gt;
+          &lt;/optional&gt;
+          &lt;attribute name="Rotation"/&gt; &lt;!-- Quaternionf --&gt;
+          &lt;attribute name="Type"&gt;
+            &lt;data type="NCName"/&gt;
+          &lt;/attribute&gt;
+          &lt;optional&gt;
+            &lt;element name="VertexData"&gt;
+              &lt;attribute name="length"&gt;
+                &lt;data type="integer"/&gt;
+              &lt;/attribute&gt;
+              &lt;text/&gt;
+            &lt;/element&gt;
+            &lt;element name="IndexData"&gt; &lt;!-- UINT16? don't know what this one's for, ask for clarification --&gt;
+              &lt;text/&gt;
+            &lt;/element&gt;
+          &lt;/optional&gt;
+        &lt;/element&gt;
+      &lt;/oneOrMore&gt;
+    &lt;/element&gt;
+  &lt;/define&gt;
+  &lt;define name="NodePointLight"&gt;
+    &lt;element name="NodePointLight"&gt;
+      &lt;optional&gt;
+        &lt;attribute name="AffectsDomain"&gt; &lt;!-- A search through the existing files has this as either "1" or "2", no other values. I don't know what these domains represent. --&gt;
+          &lt;data type="integer"/&gt;
+        &lt;/attribute&gt;
+      &lt;/optional&gt;
+      &lt;attribute name="Color"/&gt; &lt;!-- string of four numbers, separated by spaces. --&gt;
+      &lt;optional&gt;
+        &lt;attribute name="IntensityPeriod"&gt;
+          &lt;data type="decimal"/&gt;
+        &lt;/attribute&gt;
+      &lt;/optional&gt;
+      &lt;optional&gt;
+        &lt;attribute name="IntensityPeriodDelta"&gt;
+          &lt;data type="decimal"/&gt;
+        &lt;/attribute&gt;
+      &lt;/optional&gt;
+      &lt;optional&gt;
+        &lt;attribute name="IntensityVariation"&gt;
+          &lt;data type="decimal"/&gt;
+        &lt;/attribute&gt;
+      &lt;/optional&gt;
+      &lt;attribute name="IsStatic"&gt;
+        &lt;data type="integer"/&gt;
+      &lt;/attribute&gt;
+      &lt;attribute name="Name"&gt;
+        &lt;data type="NCName"/&gt;
+      &lt;/attribute&gt;
+      &lt;attribute name="Radius"&gt;
+        &lt;data type="decimal"/&gt;
+      &lt;/attribute&gt;
+      &lt;optional&gt;
+        &lt;attribute name="UseVariationTint"&gt; &lt;!-- true/false, I believe --&gt;
+          &lt;data type="integer"/&gt;
+        &lt;/attribute&gt;
+      &lt;/optional&gt;
+      &lt;oneOrMore&gt;
+        &lt;choice&gt;
+          &lt;ref name="Export"/&gt;
+          &lt;ref name="Rotation"/&gt;
+          &lt;ref name="Translation"/&gt;
+        &lt;/choice&gt;
+      &lt;/oneOrMore&gt;
+    &lt;/element&gt;
+  &lt;/define&gt;
+  &lt;define name="NodeWeapontrail"&gt;
+    &lt;element name="NodeWeapontrail"&gt;
+      &lt;attribute name="Duration"&gt;
+        &lt;data type="decimal"/&gt;
+      &lt;/attribute&gt;
+      &lt;attribute name="MaterialObject"&gt; &lt;!-- All appear to be in either weapontrail_streaks or weapontrail_arrow --&gt;
+        &lt;data type="NCName"/&gt;
+      &lt;/attribute&gt;
+      &lt;attribute name="Name"&gt;
+        &lt;data type="NCName"/&gt;
+      &lt;/attribute&gt;
+      &lt;attribute name="SegmentLength"&gt;
+        &lt;data type="decimal"/&gt;
+      &lt;/attribute&gt;
+      &lt;ref name="Translation"/&gt;
+      &lt;ref name="Rotation"/&gt;
+    &lt;/element&gt;
+  &lt;/define&gt;
+  &lt;define name="Attribute"&gt;
+    &lt;element name="Attribute"&gt;
+      &lt;attribute name="AttributeName"&gt; &lt;!-- This attribute's value is almost universally "BaseLight" (11167 times out of 11170 in 7010 files) --&gt;
+        &lt;data type="NCName"/&gt;
+      &lt;/attribute&gt;
+      &lt;attribute name="SourceName"&gt;
+        &lt;data type="NCName"/&gt; &lt;!-- This attribute's value is almost universally "BaseLight" (11167 times out of 11170 in 7010 files)--&gt;
+      &lt;/attribute&gt;
+    &lt;/element&gt;
+  &lt;/define&gt;
+  &lt;define name="NodeUsePoint"&gt;
+    &lt;element name="NodeUsePoint"&gt;
+      &lt;attribute name="Name"&gt; &lt;!-- All seem to be of the form "UserPoint##", where ## is a zero-padded low number  (highest I've seen is 14) --&gt;
+        &lt;data type="NCName"/&gt;
+      &lt;/attribute&gt;
+      &lt;attribute name="Type"&gt; &lt;!-- "Front", "Back", "Right", "Left" are options. Most items seem to get by with just nodeusepoints of front and back, a few have all four types of nodeusepoint. --&gt;
+        &lt;data type="NCName"/&gt;
+      &lt;/attribute&gt;
+      &lt;zeroOrMore&gt;
+        &lt;ref name="Export"/&gt;
+      &lt;/zeroOrMore&gt;
+      &lt;ref name="Translation"/&gt;
+      &lt;ref name="Rotation"/&gt;
+      &lt;optional&gt;
+        &lt;ref name="NodeCrustHierarchy"/&gt;
+      &lt;/optional&gt;
+    &lt;/element&gt;
+  &lt;/define&gt;
+  &lt;define name="NodeAmbientLight"&gt;
+    &lt;element name="NodeAmbientLight"&gt; &lt;!-- Only 5 files had one of these; lightrig_day01.mmh.xml, lightrig_int01.mmh.xml, lightrig_night01.mmh.xml, tools_ambient.mmh.xml, and tools_bulb_ambient.mmh.xml. --&gt;
+      &lt;attribute name="Color"/&gt; &lt;!-- string of four numbers, separated by spaces. "0.0705882 0.0862745 0.0980392 1.0" for the three lightrigs, "0.498039 0.498039 0.498039 1.0" for the two tools --&gt;
+      &lt;attribute name="Name"&gt;&lt;!-- "BWDA_OmniLight04" for the three lightrigs, "BWDA_OmniLight01" for the two tools. --&gt;
+        &lt;data type="NCName"/&gt;
+      &lt;/attribute&gt;
+      &lt;attribute name="Radius"&gt; &lt;!-- 5.0 for the three lightrigs, "1e+007" for the two tools --&gt;
+        &lt;data type="double"/&gt;
+      &lt;/attribute&gt;
+      &lt;zeroOrMore&gt;
+        &lt;ref name="Export"/&gt;
+      &lt;/zeroOrMore&gt;
+      &lt;ref name="Translation"/&gt;
+      &lt;ref name="Rotation"/&gt;
+    &lt;/element&gt;
+  &lt;/define&gt;
+  &lt;define name="NodeEmitter"&gt;
+    &lt;element name="NodeEmitter"&gt;
+      &lt;attribute name="Acceleration"&gt;
+        &lt;data type="decimal"/&gt;
+      &lt;/attribute&gt;
+      &lt;optional&gt;
+        &lt;attribute name="AgeMapColorMultiplier"/&gt; &lt;!-- string of four numbers, separated by spaces. --&gt;
+      &lt;/optional&gt;
+      &lt;optional&gt;
+        &lt;attribute name="AgeMapScaleXMultiplier"&gt;
+          &lt;data type="decimal"/&gt;
+        &lt;/attribute&gt;
+      &lt;/optional&gt;
+      &lt;optional&gt;
+        &lt;attribute name="AgeMapScaleYMultiplier"&gt;
+          &lt;data type="decimal"/&gt;
+        &lt;/attribute&gt;
+      &lt;/optional&gt;
+      &lt;attribute name="Birthrate"&gt;
+        &lt;data type="decimal"/&gt;
+      &lt;/attribute&gt;
+      &lt;attribute name="BirthrateInParticlesPerMeter"&gt;
+        &lt;data type="integer"/&gt;
+      &lt;/attribute&gt;
+      &lt;attribute name="BirthrateRange"&gt;
+        &lt;data type="decimal"/&gt;
+      &lt;/attribute&gt;
+      &lt;optional&gt;
+        &lt;attribute name="Bounciness"&gt;
+          &lt;data type="decimal"/&gt;
+        &lt;/attribute&gt;
+      &lt;/optional&gt;
+      &lt;attribute name="EmitterType"&gt;
+        &lt;data type="NCName"/&gt;
+      &lt;/attribute&gt;
+      &lt;attribute name="EnableParticleCollisions"&gt;
+        &lt;data type="integer"/&gt;
+      &lt;/attribute&gt;
+      &lt;optional&gt;
+        &lt;attribute name="FlipbookColumns"&gt;
+          &lt;data type="integer"/&gt;
+        &lt;/attribute&gt;
+      &lt;/optional&gt;
+      &lt;optional&gt;
+        &lt;attribute name="FlipbookRows"&gt;
+          &lt;data type="integer"/&gt;
+        &lt;/attribute&gt;
+      &lt;/optional&gt;
+      &lt;optional&gt;
+        &lt;attribute name="FlipbookType"/&gt; &lt;!-- UINT8 nFlipbookType = FLIPBOOKTYPE_NONE = 0;  if (a_sFlipbookType.CompareNoCase(L"ContactSheet")) nFlipbookType = FLIPBOOKTYPE_CONTACT_SHEET = 1; if (a_sFlipbookType.CompareNoCase(L"Volume")) nFlipbookType = FLIPBOOKTYPE_VOLUME = 2;--&gt;
+      &lt;/optional&gt;
+      &lt;optional&gt;
+        &lt;attribute name="FramesPerSecond"&gt;
+          &lt;data type="decimal"/&gt;
+        &lt;/attribute&gt;
+      &lt;/optional&gt;
+      &lt;attribute name="GravityMultiplier"&gt;
+        &lt;data type="decimal"/&gt;
+      &lt;/attribute&gt;
+      &lt;attribute name="InheritVelocityInsteadOfPosition"&gt;
+        &lt;data type="integer"/&gt;
+      &lt;/attribute&gt;
+      &lt;optional&gt;
+        &lt;attribute name="InitialRotation"&gt;
+          &lt;data type="decimal"/&gt;
+        &lt;/attribute&gt;
+      &lt;/optional&gt;
+      &lt;optional&gt;
+        &lt;attribute name="InitialRotationRange"&gt;
+          &lt;data type="decimal"/&gt;
+        &lt;/attribute&gt;
+      &lt;/optional&gt;
+      &lt;attribute name="InitialRotationSpeed"&gt;
+        &lt;data type="decimal"/&gt;
+      &lt;/attribute&gt;
+      &lt;attribute name="InitialRotationSpeedRange"&gt;
+        &lt;data type="decimal"/&gt;
+      &lt;/attribute&gt;
+      &lt;attribute name="InitialSpeed"&gt;
+        &lt;data type="decimal"/&gt;
+      &lt;/attribute&gt;
+      &lt;attribute name="InitialSpeedRange"&gt;
+        &lt;data type="decimal"/&gt;
+      &lt;/attribute&gt;
+      &lt;optional&gt;
+        &lt;attribute name="InvMovementSpreadUpdateDelay"&gt;
+          &lt;data type="decimal"/&gt;
+        &lt;/attribute&gt;
+      &lt;/optional&gt;
+      &lt;optional&gt;
+        &lt;attribute name="KillParticleWhenTargetHit"&gt;
+          &lt;data type="integer"/&gt;
+        &lt;/attribute&gt;
+      &lt;/optional&gt;
+      &lt;optional&gt;
+        &lt;attribute name="LOD"&gt;
+          &lt;data type="integer"/&gt;
+        &lt;/attribute&gt;
+      &lt;/optional&gt;
+      &lt;attribute name="Life"&gt;
+        &lt;data type="decimal"/&gt;
+      &lt;/attribute&gt;
+      &lt;optional&gt;
+        &lt;attribute name="LifeRange"&gt;
+          &lt;data type="decimal"/&gt;
+        &lt;/attribute&gt;
+      &lt;/optional&gt;
+      &lt;attribute name="LinkParticlesTogether"&gt;
+        &lt;data type="integer"/&gt;
+      &lt;/attribute&gt;
+      &lt;attribute name="MaterialLibrary"&gt;
+        &lt;data type="NCName"/&gt;
+      &lt;/attribute&gt;
+      &lt;attribute name="MaterialObject"&gt;
+        &lt;data type="NMTOKEN"/&gt;
+      &lt;/attribute&gt;
+      &lt;optional&gt;
+        &lt;attribute name="MeshParticleModel"&gt;
+          &lt;data type="NMTOKEN"/&gt;
+        &lt;/attribute&gt;
+      &lt;/optional&gt;
+      &lt;optional&gt;
+        &lt;attribute name="MeshParticleRollAxis"/&gt; &lt;!-- Three numbers separated by spaces --&gt;
+      &lt;/optional&gt;
+      &lt;optional&gt;
+        &lt;attribute name="MeshParticleUpAxis"/&gt; &lt;!-- Three numbers separated by spaces --&gt;
+      &lt;/optional&gt;
+      &lt;attribute name="MovementSpread"/&gt; &lt;!-- Two floating point values, representing movementspread X and movementspread Y --&gt;
+      &lt;optional&gt;
+        &lt;attribute name="MovementSpreadUpdateDelay"&gt;
+          &lt;data type="decimal"/&gt;
+        &lt;/attribute&gt;
+      &lt;/optional&gt;
+      &lt;attribute name="Name"&gt;
+        &lt;data type="NMTOKEN"/&gt;
+      &lt;/attribute&gt;
+      &lt;optional&gt;
+        &lt;attribute name="ObjectSpaceAcceleration"&gt;
+          &lt;data type="integer"/&gt;
+        &lt;/attribute&gt;
+      &lt;/optional&gt;
+      &lt;attribute name="OrientationBehaviour"&gt;
+        &lt;data type="NCName"/&gt;
+      &lt;/attribute&gt;
+      &lt;attribute name="ParticleInheritance"&gt;
+        &lt;data type="NCName"/&gt;
+      &lt;/attribute&gt;
+      &lt;attribute name="ParticlesAffectedByWind"&gt;
+        &lt;data type="integer"/&gt;
+      &lt;/attribute&gt;
+      &lt;attribute name="ParticlesFollowPath"&gt;
+        &lt;data type="integer"/&gt;
+      &lt;/attribute&gt;
+      &lt;optional&gt;
+        &lt;attribute name="PhysicsEmitter"&gt;
+          &lt;data type="integer"/&gt;
+        &lt;/attribute&gt;
+      &lt;/optional&gt;
+      &lt;optional&gt;
+        &lt;attribute name="PhysicsObjectSpawn"&gt;
+          &lt;data type="integer"/&gt;
+        &lt;/attribute&gt;
+      &lt;/optional&gt;
+      &lt;optional&gt;
+        &lt;attribute name="RandomInitialRotation"&gt;
+          &lt;data type="integer"/&gt;
+        &lt;/attribute&gt;
+      &lt;/optional&gt;
+      &lt;optional&gt;
+        &lt;attribute name="RandomStartFrame"&gt;
+          &lt;data type="integer"/&gt;
+        &lt;/attribute&gt;
+      &lt;/optional&gt;
+      &lt;attribute name="RotationalAcceleration"&gt;
+        &lt;data type="decimal"/&gt;
+      &lt;/attribute&gt;
+      &lt;attribute name="ScaleRange"&gt;
+        &lt;data type="decimal"/&gt;
+      &lt;/attribute&gt;
+      &lt;optional&gt;
+        &lt;attribute name="SpawnDirectionTracksTarget"&gt;
+          &lt;data type="integer"/&gt;
+        &lt;/attribute&gt;
+      &lt;/optional&gt;
+      &lt;attribute name="SpawnSpread"/&gt; &lt;!-- Two floating point values, representing spawnspread X and spawnspread Y --&gt;
+      &lt;optional&gt;
+        &lt;attribute name="SplatEmitter"&gt;
+          &lt;data type="integer"/&gt;
+        &lt;/attribute&gt;
+      &lt;/optional&gt;
+      &lt;optional&gt;
+        &lt;attribute name="TargetAttraction"&gt;
+          &lt;data type="decimal"/&gt;
+        &lt;/attribute&gt;
+      &lt;/optional&gt;
+      &lt;optional&gt;
+        &lt;attribute name="TargetName"&gt;
+          &lt;data type="NMTOKEN"/&gt;
+        &lt;/attribute&gt;
+      &lt;/optional&gt;
+      &lt;optional&gt;
+        &lt;attribute name="TargetRadius"&gt;
+          &lt;data type="decimal"/&gt;
+        &lt;/attribute&gt;
+      &lt;/optional&gt;
+      &lt;optional&gt;
+        &lt;attribute name="UVDistributionSize"&gt;
+          &lt;data type="integer"/&gt;
+        &lt;/attribute&gt;
+      &lt;/optional&gt;
+      &lt;attribute name="UpdateOnlyWhenVisible"&gt;
+        &lt;data type="integer"/&gt;
+      &lt;/attribute&gt;
+      &lt;optional&gt;
+        &lt;attribute name="UseVariationTint"&gt;
+          &lt;data type="integer"/&gt;
+        &lt;/attribute&gt;
+      &lt;/optional&gt;
+      &lt;optional&gt;
+        &lt;attribute name="UserParamName"/&gt; &lt;!-- ECString, not sure if there's any special formatting here --&gt;
+      &lt;/optional&gt;
+      &lt;optional&gt;
+        &lt;attribute name="VertexFormat"&gt;
+          &lt;data type="NCName"/&gt;
+        &lt;/attribute&gt;
+      &lt;/optional&gt;
+      &lt;optional&gt;
+        &lt;attribute name="WorldAxisAcceleration"/&gt; &lt;!-- Three numbers separated by spaces --&gt;
+      &lt;/optional&gt;
+      &lt;oneOrMore&gt;
+        &lt;choice&gt;
+          &lt;ref name="Export"/&gt;
+          &lt;ref name="Rotation"/&gt;
+          &lt;ref name="Translation"/&gt;
+          &lt;element name="EmitterAttachments"&gt;
+            &lt;optional&gt;
+              &lt;attribute name="MeshParticleRollAxis"/&gt; &lt;!-- Three numbers separated by spaces --&gt;
+            &lt;/optional&gt;
+            &lt;optional&gt;
+              &lt;attribute name="MeshParticleUpAxis"/&gt;  &lt;!-- Three numbers separated by spaces --&gt;
+            &lt;/optional&gt;
+            &lt;element name="EmitterAttachment"&gt;
+              &lt;optional&gt;
+                &lt;attribute name="Name"&gt;
+                  &lt;data type="NCName"/&gt;
+                &lt;/attribute&gt;
+              &lt;/optional&gt;
+              &lt;optional&gt;
+                &lt;attribute name="SpawnOnSurface"&gt;
+                  &lt;data type="integer"/&gt;
+                &lt;/attribute&gt;
+              &lt;/optional&gt;
+              &lt;attribute name="Type"&gt;
+                &lt;data type="NCName"/&gt;
+              &lt;/attribute&gt;
+              &lt;optional&gt;
+                &lt;attribute name="UseNormalForVelocity"&gt;
+                  &lt;data type="integer"/&gt;
+                &lt;/attribute&gt;
+              &lt;/optional&gt;
+            &lt;/element&gt;
+          &lt;/element&gt;
+          &lt;element name="SpawnVolume"&gt;
+            &lt;optional&gt;
+              &lt;attribute name="Axis"/&gt;
+            &lt;/optional&gt;
+            &lt;attribute name="InvertSpawnVolumeNormals"&gt;
+              &lt;data type="integer"/&gt;
+            &lt;/attribute&gt;
+            &lt;optional&gt;
+              &lt;attribute name="Length"&gt;
+                &lt;data type="decimal"/&gt;
+              &lt;/attribute&gt;
+            &lt;/optional&gt;
+            &lt;optional&gt;
+              &lt;attribute name="MaxCorner"/&gt;  &lt;!-- Three numbers separated by spaces --&gt;
+            &lt;/optional&gt;
+            &lt;optional&gt;
+              &lt;attribute name="MeshParticleRollAxis"/&gt; &lt;!-- Three numbers separated by spaces --&gt;
+            &lt;/optional&gt;
+            &lt;optional&gt;
+              &lt;attribute name="MeshParticleUpAxis"/&gt; &lt;!-- Three numbers separated by spaces --&gt;
+            &lt;/optional&gt;
+            &lt;optional&gt;
+              &lt;attribute name="MinCorner"/&gt; &lt;!-- Three numbers separated by spaces --&gt;
+            &lt;/optional&gt;
+            &lt;optional&gt;
+              &lt;attribute name="Radius"&gt;
+                &lt;data type="decimal"/&gt;
+              &lt;/attribute&gt;
+            &lt;/optional&gt;
+            &lt;optional&gt;
+              &lt;attribute name="SpawnVolumeType"&gt;
+                &lt;data type="NCName"/&gt;
+              &lt;/attribute&gt;
+            &lt;/optional&gt;
+            &lt;attribute name="SpawnWithinVolume"&gt;
+              &lt;data type="integer"/&gt;
+            &lt;/attribute&gt;
+            &lt;optional&gt;
+              &lt;attribute name="UseVolumeNormalsForDirection"&gt;
+                &lt;data type="integer"/&gt;
+              &lt;/attribute&gt;
+            &lt;/optional&gt;
+            &lt;zeroOrMore&gt;
+              &lt;ref name="Data"/&gt;
+            &lt;/zeroOrMore&gt;
+          &lt;/element&gt;
+        &lt;/choice&gt;
+      &lt;/oneOrMore&gt;
+      &lt;optional&gt;
+        &lt;element name="SplatParticle"&gt;
+          &lt;optional&gt;
+            &lt;attribute name="AgeMapColorMultiplier"/&gt; &lt;!-- four numbers separated by spaces --&gt;
+          &lt;/optional&gt;
+          &lt;optional&gt;
+            &lt;attribute name="FlipbookColumns"&gt;
+              &lt;data type="integer"/&gt;
+            &lt;/attribute&gt;
+          &lt;/optional&gt;
+          &lt;optional&gt;
+            &lt;attribute name="FlipbookRows"&gt;
+              &lt;data type="integer"/&gt;
+            &lt;/attribute&gt;
+          &lt;/optional&gt;
+          &lt;optional&gt;
+            &lt;attribute name="FlipbookType"&gt;
+              &lt;data type="NCName"/&gt;
+            &lt;/attribute&gt;
+          &lt;/optional&gt;
+          &lt;optional&gt;
+            &lt;attribute name="FramesPerSecond"&gt;
+              &lt;data type="integer"/&gt;
+            &lt;/attribute&gt;
+          &lt;/optional&gt;
+          &lt;attribute name="Height"&gt;
+            &lt;data type="decimal"/&gt;
+          &lt;/attribute&gt;
+          &lt;optional&gt;
+            &lt;attribute name="HoldLastFrame"&gt;
+              &lt;data type="integer"/&gt;
+            &lt;/attribute&gt;
+          &lt;/optional&gt;
+          &lt;attribute name="Lifespan"&gt;
+            &lt;data type="integer"/&gt;
+          &lt;/attribute&gt;
+          &lt;attribute name="MaterialObject"&gt;
+            &lt;data type="NCName"/&gt;
+          &lt;/attribute&gt;
+          &lt;attribute name="NumSamplesH"&gt;
+            &lt;data type="integer"/&gt;
+          &lt;/attribute&gt;
+          &lt;attribute name="NumSamplesW"&gt;
+            &lt;data type="integer"/&gt;
+          &lt;/attribute&gt;
+          &lt;attribute name="OrientationRangeRadians"&gt;
+            &lt;data type="integer"/&gt;
+          &lt;/attribute&gt;
+          &lt;optional&gt;
+            &lt;attribute name="RandomStartFrame"&gt;
+              &lt;data type="integer"/&gt;
+            &lt;/attribute&gt;
+          &lt;/optional&gt;
+          &lt;attribute name="Width"&gt;
+            &lt;data type="decimal"/&gt;
+          &lt;/attribute&gt;
+          &lt;optional&gt;
+            &lt;ref name="Export"/&gt;
+          &lt;/optional&gt;
+          &lt;ref name="AgeMap"/&gt;
+        &lt;/element&gt;
+      &lt;/optional&gt;
+      &lt;ref name="AgeMap"/&gt;
+    &lt;/element&gt;
+  &lt;/define&gt;
+  &lt;define name="Data"&gt;
+    &lt;element name="Data"&gt;
+      &lt;optional&gt;
+        &lt;attribute name="ElementCount"&gt;
+          &lt;data type="integer"/&gt;
+        &lt;/attribute&gt;
+      &lt;/optional&gt;
+      &lt;optional&gt;
+        &lt;attribute name="IndexCount"&gt;
+          &lt;data type="integer"/&gt;
+        &lt;/attribute&gt;
+      &lt;/optional&gt;
+      &lt;optional&gt;
+        &lt;attribute name="IndexType"&gt;
+          &lt;data type="NCName"/&gt;
+        &lt;/attribute&gt;
+      &lt;/optional&gt;
+      &lt;attribute name="Semantic"&gt;
+        &lt;data type="NCName"/&gt;
+      &lt;/attribute&gt;
+      &lt;optional&gt;
+        &lt;attribute name="Type"&gt;
+          &lt;data type="NCName"/&gt;
+        &lt;/attribute&gt;
+      &lt;/optional&gt;
+      &lt;text/&gt;
+    &lt;/element&gt;
+  &lt;/define&gt;
+  &lt;define name="NodeEmitterGroup"&gt;
+    &lt;element name="NodeEmitterGroup"&gt;
+      &lt;attribute name="MaterialObject"&gt;
+        &lt;data type="NCName"/&gt;
+      &lt;/attribute&gt;
+      &lt;attribute name="Name"&gt;
+        &lt;data type="NMTOKEN"/&gt;
+      &lt;/attribute&gt;
+      &lt;ref name="Translation"/&gt;
+      &lt;ref name="Rotation"/&gt;
+      &lt;zeroOrMore&gt;
+        &lt;ref name="NodeEmitter"/&gt;
+      &lt;/zeroOrMore&gt;
+    &lt;/element&gt;
+  &lt;/define&gt;
+  &lt;define name="NodeEmitterTarget"&gt;
+    &lt;element name="NodeEmitterTarget"&gt;
+      &lt;attribute name="Name"&gt;
+        &lt;data type="NCName"/&gt;
+      &lt;/attribute&gt;
+      &lt;ref name="Translation"/&gt;
+      &lt;ref name="Rotation"/&gt;
+      &lt;zeroOrMore&gt;
+        &lt;ref name="Export"/&gt;
+      &lt;/zeroOrMore&gt;
+    &lt;/element&gt;
+  &lt;/define&gt;
+  &lt;define name="NodeLightProbe"&gt;
+    &lt;element name="NodeLightProbe"&gt;
+      &lt;attribute name="Name"&gt;
+        &lt;data type="NCName"/&gt;
+      &lt;/attribute&gt;
+      &lt;ref name="Translation"/&gt;
+      &lt;ref name="Rotation"/&gt;
+      &lt;optional&gt;
+        &lt;element name="ReflectionMap"&gt;
+          &lt;attribute name="ResName"&gt;
+            &lt;data type="NCName"/&gt;
+          &lt;/attribute&gt;
+        &lt;/element&gt;
+        &lt;element name="IrradianceMap"&gt;
+          &lt;attribute name="ResName"&gt;
+            &lt;data type="NCName"/&gt;
+          &lt;/attribute&gt;
+        &lt;/element&gt;
+      &lt;/optional&gt;
+    &lt;/element&gt;
+  &lt;/define&gt;
+  &lt;define name="AgeMap"&gt;
+    &lt;element name="AgeMap"&gt;
+      &lt;attribute name="Count"&gt;
+        &lt;data type="integer"/&gt;
+      &lt;/attribute&gt;
+      &lt;oneOrMore&gt;
+        &lt;element name="AgeMapElement"&gt;
+          &lt;attribute name="Alpha"&gt;
+            &lt;data type="decimal"/&gt;
+          &lt;/attribute&gt;
+          &lt;attribute name="Color"/&gt;
+          &lt;attribute name="PercentLifeElapsed"&gt;
+            &lt;data type="decimal"/&gt;
+          &lt;/attribute&gt;
+          &lt;optional&gt;
+            &lt;attribute name="RotationSpeedMultiplier"&gt;
+              &lt;data type="decimal"/&gt;
+            &lt;/attribute&gt;
+          &lt;/optional&gt;
+          &lt;attribute name="XScale"&gt;
+            &lt;data type="decimal"/&gt;
+          &lt;/attribute&gt;
+          &lt;attribute name="YScale"&gt;
+            &lt;data type="decimal"/&gt;
+          &lt;/attribute&gt;
+        &lt;/element&gt;
+      &lt;/oneOrMore&gt;
+    &lt;/element&gt;
+  &lt;/define&gt;
+&lt;/grammar&gt;
+</pre>
+<h2><span class="mw-headline" id="Example_.MMH.XML_file">Example .MMH.XML file</span></h2>
+<pre>
+&lt;!-- A note on value types:
+		List#:type -- means # amount of values of specified type with spaces in between
+		
+		string -- a series of characters, digits and underscores, can not start with a colon, no spaces
+		?string? -- same as above except can start with a colon
+		int -- an integer (whole number)
+		decimal -- any number including one with digits appearing after a decimal point, 
+				   all decimals MUST have a decimal point even if there are no digits after it (ie 1. not 1, or 0.0)
+--&gt;
+
+&lt;ModelHierarchy ModelDataName="string" Name="string"&gt;
+	&lt;!-- Optional Attributes:
+		FXActorName="string" -- An FXA file name 
+		PreSimulateTime="decimal" -- emitter presimulation time
+		ReferencedMeshes="List:string" -- List of names of referenced meshes. Most of the files I see this in have an empty string here, but some 
+										  have one or more .msh files named with spaces separating them. For example: 
+															ReferencedMeshes="fx_l_plane.msh fx_l_plane.msh"
+										  Every file with ReferencedMeshes defined was exported by the VFX editor so this is a VFX thing.
+		RemoteMaterialAlpha="decimal" -- if UseRemoteMaterial is true 
+		RemoteMaterialDecalName="string" -- if UseRemoteMaterial is true 
+		RemoteMaterialFresnelFalloff="decimal" -- if UseRemoteMaterial is true 
+		RemoteMaterialInvertFresnel="int" -- if UseRemoteMaterial is true. A true/false value 
+		RemoteMaterialTintColor="List4:decimal"-- if UseRemoteMaterial is true. Four numbers separated by spaces 
+		UseRemoteMaterial="int" -- a true/false value 
+	--&gt;
+	&lt;!-- 1 of (defined below): --&gt;
+	&lt;MeshHierarchy/&gt; &lt;!-- MeshHierarchy is a deprecated synonym for "NodeMesh". --&gt;
+	&lt;Node/&gt;
+	&lt;NodeMesh/&gt;	
+&lt;/ModelHierarchy&gt;
+
+&lt;NodeMesh&gt;
+	&lt;!-- Optional Attributes:
+		BonesUsed="List:int" -- list of integers. Bodies have a lot of bones listed, other body parts have fewer. Boots, armor, gloves, 
+								helmets, hair, eyes, etc. all have bonesused. 
+		CastBakedShadow="int" -- true/false value 
+		CastRuntimeShadow="int" -- true/false value
+		CutAway="int" -- true/false value (Cut Away enables Fading out on Isometric view in Dragon Age)
+		ID="string" -- A short and unique string. It is unique across every mesh used in whole Dragon Age. Used by lightmapper to reference the mesh
+		IsVFXMesh="int" -- if this mesh is categorized as a VFX Mesh, load in the MaterialColor parameter
+		MaterialColor="List4:decimal" -- String with four values - RGBA
+		MaterialLibrary="string" -- Strings like "CavesInterior" - reference to MAL files, MAL are material editor file types. (may not actually be useful in the game)
+		MaterialObject="?string?" -- Strings like "pn_boo_hvyd_l3" here, this is referring to material object (MAO files) create by the material editor 
+		MeshGroupName=string"&gt; -- The Meshes Name, used to reference the meshchunk name in the MSH 
+		MeshName="string" -- the mesh file that the meshchunk is in. if this isn't set, it will default to the first mesh in the model (for backwards compatibility)
+		Name="string" -- name of the node
+		PunchThrough="int" -- true/false value
+	    ReceiveBakedShadow="int" -- true/false value 
+		ReceiveRuntimeShadow="int" -- true/false value 
+		&lt;&lt;UNKNOWN&gt;&gt; ReceiveShadow="int" -- I didn't find this referenced in the source code - deprecated, perhaps? 
+		ShadowCasting="int" -- used to set GFF_MMH_MESH_CAST_RUNTIME_SHADOW in the source code, same as CastRuntimeShadow above - synonyms?
+		UseVariationTint="int" -- true/false value
+	--&gt;
+	&lt;!-- 0 or more of the following items come next, definitions follow later --&gt;
+	&lt;Attribute/&gt;
+	&lt;BoundingBox/&gt;	&lt;!-- may be empty, or may contain something of the form &lt;![CDATA[-8.00051 -32.0 -0.0103784 1.0 8.01207 0.0 30.0 1.0]]&gt; 
+						 I believe this is the two corners (min and max) of the bounding box. --&gt;
+	&lt;CollisionObject/&gt;
+	&lt;Export/&gt;
+	&lt;Node/&gt;
+	&lt;NodeCrustHierarchy/&gt;
+	&lt;NodeMesh/&gt;		&lt;!-- appears to be able to handle a nodemesh within a nodemesh&#160;:O --&gt;
+	&lt;NodePointLight/&gt;
+	&lt;NodeWeapontrail/&gt;
+	&lt;Rotation/&gt;
+	&lt;Translation/&gt;
+	&lt;Scale&gt;"decimal"&lt;/Scale&gt;  
+	&lt;!-- I am assuming next bit means no more than one of the following (could be none): 
+									  &lt;choice&gt;
+										&lt;ref name="NodeAmbientLight"/&gt;
+										&lt;ref name="NodeUsePoint"/&gt;
+										&lt;zeroOrMore&gt;
+										  &lt;ref name="NodeEmitter"/&gt;
+										&lt;/zeroOrMore&gt;
+									  &lt;/choice&gt;
+	--&gt;
+	&lt;NodeAmbientLight/&gt;
+	&lt;NodeUsePoint/&gt;
+	&lt;NodeEmitter/&gt;
+&lt;/NodeMesh&gt;
+
+&lt;Node Name="?string?"&gt;
+	&lt;!-- Optional Attributes:
+		BoneIndex="int" ---- possibly the bone to which this node is attached to, not included if not attached to a bone?
+		SoundMaterialType="int" ---- are there SoundMaterialType definitions somewhere? if so I guess this is the index of one
+    --&gt;
+	&lt;!-- can have 0 or more of the following(including duplicates), however I assume having more than one of the same type
+		 would cause the compiler to go wtf? in some cases (like bounding box or translation). Definitions follow later in file
+	--&gt;
+	&lt;BoundingBox/&gt;
+	&lt;CollisionObject/&gt;
+	&lt;Export/&gt;
+	&lt;Node/&gt;
+	&lt;NodeCrustHierarchy/&gt;
+	&lt;NodeEmitter/&gt;
+	&lt;NodeEmitterGroup/&gt;
+	&lt;NodeEmitterTarget/&gt;
+	&lt;NodeLightProbe/&gt;
+	&lt;NodeMesh/&gt;
+	&lt;NodePointLight/&gt;
+	&lt;NodeUsePoint/&gt;
+	&lt;NodeWeapontrail/&gt;
+	&lt;Rotation/&gt;
+	&lt;Translation/&gt;
+	&lt;NodeCloth&gt; &lt;!-- has a shit load of attributes with no comments however I assume they all have to do with cloth simulation paramaters --&gt;
+	&lt;!-- NodeCloth Attributes:
+		AttachmentResponseCoefficient="decimal" 
+		AttachmentTearFactor="decimal" 
+		BendingStiffness="decimal" 
+		CF_BENDING="int"
+		CF_BENDING_ORTHO="int"
+		CF_COLLISION_TWOWAY="int"
+		CF_COMDAMPING="int"
+		CF_DAMPING="int"
+		CF_DISABLE_COLLISION="int"
+		CF_GRAVITY="int"
+		CF_HARDWARE="int"
+		CF_PRESSURE="int"
+		CF_SELFCOLLISION="int"
+		CF_STATIC="int"
+		CF_TEARABLE="int"
+		CF_VISUALIZATION="int"
+		CollisionResponseCoefficient="decimal"
+		DampingCoefficient="decimal"
+		Density="decimal"
+		Fadeable="boolean"
+		Friction="decimal"
+		GROUP_MASK_NONWALKABLE="boolean"
+		ID="string"
+		MaterialLibrary="string"
+		MaterialObject="string"
+		MeshGroupName="string"
+		Name="string"
+		Pressure="decimal"
+		SleepLinearVelocity="decimal"
+		SolverIterations="int"
+		StretchingStiffness="decimal"
+		TearFactor="decimal"
+		Thickness="decimal"
+		WakeUpCounter="decimal"
+	--&gt;
+	&lt;!-- Optional Attributes:	GROUP_MASK_STATICGEOMETRY="boolean" --&gt;
+		&lt;Attribute/&gt;
+		&lt;Export/&gt;	&lt;!-- can have 0 or more Exports --&gt;
+		&lt;Translation/&gt;
+		&lt;Rotation/&gt;
+		&lt;ClothAttachments&gt;
+		  &lt;ClothAttachment TearableAttachment="int" TwoWayAttachment="int" Type="string"&gt;
+		  &lt;/ClothAttachment&gt;
+		&lt;/ClothAttachments&gt;
+		&lt;MeshGroup Name="string"&gt;	&lt;!-- contains 1 or more Data elements, defined later in file --&gt;
+			&lt;Data/&gt;	
+		&lt;/MeshGroup&gt;
+	&lt;/NodeCloth&gt;
+	&lt;NodeSnaptoPoint Name="string"&gt;
+			&lt;!-- can have 0 or more Exports --&gt;
+			&lt;Export/&gt;
+			&lt;!-- can have 0 or more of the following, defined later in file --&gt;
+            &lt;Translation/&gt;
+            &lt;Rotation/&gt;
+          &lt;/NodeSnapToPoint&gt;
+    &lt;NodeAmbientLight/&gt;	&lt;!-- Optional Element defined later in file--&gt; 
+&lt;/Node&gt;
+
+&lt;!-- &lt;&lt;&lt;WARNING: PROBABLY NOT A GOOD IDEA TO USE THIS ONE!!!&gt;&gt;&gt; --&gt;
+&lt;!-- MeshHierarchy is a deprecated synonym for "NodeMesh". Only 14 files still use it out of nearly 8000 in our internal sources. --&gt;
+&lt;!-- IE it is a REALLY old version of NodeMesh --&gt;
+&lt;MeshHierarchy Name="string"&gt; 
+	&lt;BoundingBox/&gt; &lt;!-- Optional --&gt;
+	&lt;!-- These are Optional and apparently can have more than one if you want, defined lated in file --&gt;
+		&lt;MeshHierarchy/&gt;
+		&lt;Rotation/&gt;
+		&lt;Translation/&gt;
+	&lt;!-- can have either a NodeLightProbe or 0 or more NodeEmitters --&gt;
+	&lt;NodeLightProbe/&gt;
+	&lt;NodeEmitter/&gt;
+&lt;/MeshHierarchy&gt;
+
+&lt;NodeCrustHierarchy HookID="int" Name="string"&gt;
+	&lt;Export/&gt; 		&lt;!-- can have 0 or more Exports, defined later in file --&gt;
+	&lt;Translation/&gt; 	&lt;!-- Optional --&gt;
+	&lt;Rotation/&gt; 	&lt;!-- Optional --&gt;	
+	&lt;NodeMesh/&gt; 	&lt;!-- Optional --&gt;
+	&lt;!-- can have 0 or more of the following (including duplicates apparently) --&gt;
+	  &lt;Node/&gt;
+	  &lt;NodeEmitter/&gt;
+	  &lt;NodeEmitterGroup/&gt;
+	  &lt;NodeEmitterTarget/&gt;
+	  &lt;NodePointLight/&gt;
+&lt;/NodeCrustHierarchy&gt;
+
+&lt;Rotation&gt; 
+  data &lt;!-- data is a Quaternionf and represents the relative rotation from its parent or the world axis if it has no parent--&gt;
+&lt;/Rotation&gt;
+
+&lt;Export ControllerType="string" ExportName="?string?" TagName="string"/&gt;
+  &lt;!-- Optional Attribute: MaterialColor="List4:decimal" -- String with four values - RGBA --&gt;
+  &lt;!-- An export is what is used to connect nodes from an animation file to nodes in a model file. The key frames in an animation file affect the translations/rotations of the nodes with the corresponding exports of the same name. --&gt;
+
+&lt;BoundingBox&gt;
+	data &lt;!-- data is Vector4f min, Vector4f max (ie: f f f f f f f f --&gt;
+&lt;/BoundingBox&gt;
+
+&lt;Translation&gt;
+	&lt;!-- Optional Attributes:
+		MeshParticleRollAxis="List3:decimal" -- Three numbers separated by spaces 
+		MeshParticleUpAxis="List3:decimal"-- Three numbers separated by spaces 
+	--&gt;
+	data &lt;!-- This is a vector4 representing the difference in position from its parent, or the origin if it has no parent --&gt;
+&lt;/Translation&gt;
+
+&lt;CollisionObject&gt;
+&lt;!-- Optional Attributes:
+	Kinematic="boolean"
+	Static="boolean"
+--&gt;
+&lt;!-- can have 1 or more Shapes --&gt;
+	&lt;Shape&gt;
+	&lt;!-- Attributes:
+		AllowEmitterSpawn="int"
+		Fadeable="boolean"
+		Name="string"
+		Position --Vector4f but no required type??
+		Rotation --Quaternionf but no required type??
+		Type="string"
+	--&gt;
+	&lt;!-- Optional Attributes:
+		DimX="decimal"
+		DimY="double"  -- why double when other dims are decimal???
+		DimZ="decimal"
+		GROUP_MASK_CREATURES="boolean"
+		GROUP_MASK_ITEMS="boolean"
+		GROUP_MASK_NONWALKABLE="boolean"
+		GROUP_MASK_PLACEABLES="boolean"
+		GROUP_MASK_STATICGEOMETRY="boolean"
+		GROUP_MASK_TERRAIN_WALL="boolean"
+		GROUP_MASK_TRIGGERS="boolean"
+		GROUP_MASK_WALKABLE="boolean"
+		Height="double"
+		Radius="decimal"
+	--&gt;
+		&lt;!-- VertexData and IndexData are optional, however you must have both or neither. Can have more than one pair??? --&gt;
+		&lt;VertexData length="int"&gt; &lt;!-- I assume length is the number of verts or possibly the number of values given in data --&gt;
+		  data &lt;!-- I assume this is a list of vert coords given in a list form (ie: x1,y1,z1,x2,y2,z2,...,xn,yn,zn maybe without commas) --&gt;
+		&lt;/VertexData&gt;
+		&lt;IndexData&gt; &lt;!-- UINT16? don't know what this one's for, ask for clarification --&gt;
+		  data		&lt;!-- maybe its vertex indicies for triangles? --&gt;
+		&lt;/IndexData&gt;
+	&lt;/Shape&gt;
+&lt;/CollisionObject&gt;
+
+&lt;NodePointLight Color="list4:decimal" IsStatic="int" Name="string" Radius="decimal"&gt; &lt;!-- Color: string of four numbers, separated by spaces. --&gt;
+&lt;!-- Optional Attributes:
+	AffectsDomain="int" -- A search through the existing files has this as either "1" or "2", no other values. 
+						   I don't know what these domains represent.
+    IntensityPeriod="decimal"
+    IntensityPeriodDelta="decimal"
+    IntensityVariation="decimal"
+    UseVariationTint="int"-- true/false, I believe 
+--&gt;
+	&lt;!-- must have at least 1 of the following, can have more including duplicates apparently --&gt;
+	&lt;Export/&gt;
+	&lt;Rotation/&gt;
+	&lt;Translation/&gt;
+&lt;/NodePointLight&gt;
+
+&lt;NodeWeapontrail Duration="decimal" MaterialObject="string" Name="string" SegmentLength="decimal"&gt;
+    &lt;!-- All MaterialObjects appear to be in either weapontrail_streaks or weapontrail_arrow --&gt;
+	&lt;Translation/&gt;
+	&lt;Rotation/&gt;
+&lt;/NodeWeaponTrail&gt;
+  
+&lt;Attribute AttributeName="string" SourceName="string"&gt;
+      &lt;!-- AttributeName's value is almost universally "BaseLight" (11167 times out of 11170 in 7010 files) --&gt;
+      &lt;!-- SourceName's value is almost universally "BaseLight" (11167 times out of 11170 in 7010 files)--&gt;
+&lt;/Attribute&gt; 
+  
+&lt;NodeUsePoint Name="string" Type="string"&gt;
+	&lt;!-- All Name values seem to be of the form "UserPoint##", where ## is a zero-padded low number  (highest I've seen is 14) --&gt;
+	&lt;!-- Type values: "Front", "Back", "Right", "Left" are options. Most items seem to get by with just nodeusepoints of front 
+		 and back, a few have all four types of nodeusepoint. --&gt;
+	&lt;Export/&gt; &lt;!-- 0 or more exports --&gt;
+	&lt;Translation/&gt;
+	&lt;Rotation/&gt;
+	&lt;NodeCrustHierarchy/&gt; &lt;!-- Optional --&gt;
+&lt;/NodeUsePoint&gt;
+ 
+&lt;!-- Only 5 files had one of these; lightrig_day01.mmh.xml, lightrig_int01.mmh.xml, lightrig_night01.mmh.xml, tools_ambient.mmh.xml, 
+	 and tools_bulb_ambient.mmh.xml. 
+	 
+	 I would assume this type of node is used for calculating ambient light/shadows maybe like a radiosity pass or something.
+	 Might make some interesting lighting changes if you fiddle with it but be careful! might break your lighting --&gt;
+&lt;NodeAmbientLight Color="List4:decimal" Name="string" Radius="double"&gt; 
+    &lt;!-- Color: string of four numbers, separated by spaces. "0.0705882 0.0862745 0.0980392 1.0" for the three lightrigs, 
+		 "0.498039 0.498039 0.498039 1.0" for the two tools 
+		 Name: "BWDA_OmniLight04" for the three lightrigs, "BWDA_OmniLight01" for the two tools. 
+		 Radius: 5.0 for the three lightrigs, "1e+007" (10000000?? big big radius!) for the two tools --&gt;
+    &lt;Export/&gt; &lt;!-- 0 or more exports --&gt;
+    &lt;Translation/&gt;
+	&lt;Rotation/&gt;
+&lt;/NodeAmbientLight&gt;
+  
+&lt;NodeEmitter&gt; &lt;!-- has a shit ton of attributes, all of which seem to pertain to particle emitter parameters (makes sense) --&gt;
+	&lt;!-- Attributes:
+		Acceleration="decimal"
+		Birthrate="decimal"
+		BirthrateInParticlesPerMeter="int"
+		BirthrateRange="decimal"
+		EmitterType="string"
+		EnableParticleCollisions="int" -- true/false&#160;??
+		GravityMultiplier="decimal"
+		IneritVelocityInsteadOfPosition="int" -- true/false&#160;??
+		InitialRotationSpeedRange="decimal"
+		InitialSpeed="decimal"
+		InitialSpeedRange="decimal"
+		Life="decimal"
+		LinkParticlesTogether="int" -- true/false&#160;??
+		MaterialLibrary="string"
+		MaterialObject="?string?"
+		MovementSpread="List2:float" -- Two floating point values, representing movementspread X and movementspread Y 
+		Name="?string?" 
+		OrientationBehaviour="string"
+		ParticleInheritance="string"
+		ParticlesAffectedByWind="int" -- true/false&#160;??
+		ParticlesFollowPath="int" -- true/false&#160;??
+		RotationalAcceleration="decimal"
+		ScaleRange="decimal"
+		SpawnSpread="List2:float" -- Two floating point values, representing spawnspread X and spawnspread Y
+		UpdateOnlyWhenVisible="int" -- true/false&#160;??
+	--&gt;	
+	&lt;!-- Optional Attributes:
+		AgeMapColorMultiplier="List4:decimal"- - string of four numbers, separated by spaces.
+		AgeMapScaleXMultiplier="decimal"
+		AgeMapScaleYMultiplier="decimal"
+		Bounciness="decimal"
+		FlipbookColumns="int" -- true/false&#160;??
+		FlipbookRows="int" -- true/false??
+		FlipbookType="int" -- UINT8 nFlipbookType = FLIPBOOKTYPE_NONE = 0;  
+							  if (a_sFlipbookType.CompareNoCase(L"ContactSheet")) nFlipbookType = FLIPBOOKTYPE_CONTACT_SHEET = 1;
+							  if (a_sFlipbookType.CompareNoCase(L"Volume")) nFlipbookType = FLIPBOOKTYPE_VOLUME = 2;
+		FramesPerSecond="decimal"
+		InitialRotation="decimal"
+		InitialRotationRange="decimal"
+		InitialRotationSpeed="decimal"
+		InvMovementSpreadUpdateDelay="decimal"
+		KillParticleWhenTargetHit="int" -- true/false&#160;??
+		LOD="int" -- true/false maybe?? might be an index/identifier
+		LifeRange="decimal"
+		MeshParticleModel="?string?"
+		MeshParticleRollAxis="List3:decimal" -- Three numbers separated by spaces 
+		MeshParticleUpAxis="List3:decimal" -- Three numbers separated by spaces 
+		MovementSpreadUpdateDelay="decimal"
+		ObjectSpaceAcceleration="int"
+		PhysicsEmitter="int" -- true/false&#160;??
+		PhysicsObjectSpawn="int -- true/false&#160;??
+		RandomInitialRotation="int" -- true/false&#160;??
+		RandomStartFrame="int" --true/false&#160;??
+		SpawnDirectionTracksTarget="int" -- true/false&#160;??
+		SplatEmitter="int" -- true/false&#160;?? might be index of a SplatEmitter if they exist
+		TargetAttraction="decimal"&gt;
+		TargetName="?string?" 
+		TargetRadius="decimal"
+		UVDistributionSize="int"&gt;
+		UseVariationTint="int" -- true/false&#160;??
+		UserParamName="??????" -- (datatype=ECString) &lt;&lt; What is this?? -- ECString, not sure if there's any special formatting here 
+		VertexFormat="string" -- are there VertexFormats defined somewhere?&gt;
+		WorldAxisAcceleration="List3:decimal" -- Three numbers separated by spaces 
+	--&gt;
+	&lt;!-- Requires 1 or more of the following, duplicates allowed apparently --&gt;
+	&lt;Export/&gt;
+	&lt;Rotation/&gt;
+	&lt;Translation/&gt;
+	&lt;EmitterAttachments&gt;
+	&lt;!-- Optional EmitterAttachments Attributes:
+		MeshParticleRollAxis="List3:decimal" -- Three numbers separated by spaces
+		MeshParticleUpAxis="List3:decimal" -- Three numbers separated by spaces
+	--&gt;
+		&lt;EmitterAttachment Type="string"/&gt;
+		&lt;!-- Optional EmitterAttachment Attributes:
+			Name="string"
+			SpawnOnSurface="int" -- true/false&#160;??
+			UseNormalForVelocity="int" -- true/false&#160;??
+		--&gt;
+	&lt;/EmitterAttachments&gt;
+	&lt;SpawnVolume InvertSpawnVolumeNormals="int" SpawnWithinVolume="int" &gt; &lt;!-- both look to be true/false values --&gt;
+	&lt;!-- Optional SpawnVolume Attributes:
+			Axis="??????" -- no data type specified, assuming 3 numbers
+			Length="decimal"
+			MaxCorner="List3:decimal" -- Three numbers separated by spaces
+			MeshParticleRollAxis="List3:decimal" -- Three numbers separated by spaces
+			MeshParticleUpAxis="List3:decimal" -- Three numbers separated by spaces
+			MinCorner="List3:decimal" -- Three numbers separated by spaces
+			Radius="decimal"
+			SpanwVolumeType="string" -- are there SpawnVolumeTypes defined somewhere???
+			UseVolumeNormalsForDirection="int" -- true/false&#160;??
+	--&gt;
+		&lt;Data/&gt;&lt;!-- 0 or more of these --&gt;
+	&lt;/SpawnVolumn&gt;
+    &lt;SplatParticle&gt; &lt;!-- Optional - Not included in the 1 or more --&gt;
+    &lt;!-- SplatParticle Attributes:
+			Height="decimal"
+			Lifespan="int"
+			MaterialObject="string"
+			NumSamplesH="int"
+			NumSamplesW="int"
+			OrientationRangeRadians="int"
+			Width="decimal"
+	--&gt;
+	&lt;!-- Optional SplatParticle Attributes:
+			AgeMapColorMultiplier="List4:decimal" -- four numbers separated by spaces
+			FlipbookColumns="int" -- true/false&#160;??
+			FlipbookRows="int" -- true/false??
+			FlipbookType="string" -- apparently not same as above in NodeEmitter
+			FramesPerSecond="int"
+			HoldLastFrame="int" -- true/false&#160;??
+			RandomStartFrame="int" -- true/false&#160;??
+	--&gt;
+		&lt;Export/&gt; &lt;!-- Optional --&gt;
+		&lt;AgeMap/&gt;
+	&lt;/SplatParticle&gt;
+	&lt;AgeMap/&gt; &lt;!-- Not Optional - Required - Not included in the 1 or more --&gt;
+&lt;/NodeEmitter&gt;
+  
+&lt;Data Semantic="string"&gt;
+&lt;!-- Optional Attributes:
+		ElementCount="int"
+		IndexCount="int"
+		IndexType="string"
+		Type="string"
+--&gt;
+ 	data
+&lt;/Data&gt;
+
+&lt;NodeEmitterGroup MaterialObject="string" Name="?string?"&gt; 
+	&lt;Translation/&gt;
+	&lt;Rotation/&gt;
+	&lt;NodeEmitter/&gt; &lt;!-- 0 or more of these --&gt;
+&lt;/NodeEmitterGroup&gt;
+
+&lt;NodeEmitterTarget Name="string"&gt;
+	&lt;Translation/&gt;
+	&lt;Rotation/&gt;
+	&lt;Export/&gt; &lt;!-- 0 or more exports --&gt;
+&lt;/NodeEmitterTarget&gt;
+
+&lt;NodeLightProbe Name="string"&gt;
+	&lt;Translation/&gt;
+	&lt;Rotation/&gt;
+	&lt;!-- following are optional elements, they are paired, can't have one without the other --&gt;
+	&lt;ReflectionMap ResName="string" /&gt;
+	&lt;IrradianceMap ResName="string" /&gt;
+&lt;/NodeLightProbe&gt;
+
+ &lt;AgeMap Count="int"&gt;
+ &lt;!-- contains one or more AgeMapElements --&gt;
+      &lt;AgeMapElement Alpha="decimal" Color="List4:decimal" PercentLifeElapsed="decimal" XScale="decimal" YScale="decimal" /&gt;
+	  &lt;!-- Optional AgeMapElement Attributes: RotationSpeedMultiplier="decimal" --&gt;
+ &lt;/AgeMap&gt;
+</pre>
+
+<!-- 
+NewPP limit report
+CPU time usage: 0.012 seconds
+Real time usage: 0.019 seconds
+Preprocessor visited node count: 27/1000000
+Preprocessor generated node count: 82/1000000
+Post‐expand include size: 173/2097152 bytes
+Template argument size: 0/2097152 bytes
+Highest expansion depth: 2/40
+Expensive parser function count: 0/100
+-->
+
+<!-- 
+Transclusion expansion time report (%,ms,calls,template)
+100.00%    4.011      1 - Template:Undocumented
+100.00%    4.011      1 - -total
+-->
+
+<!-- Saved in parser cache with key db714099484-datoolwiki_:pcache:idhash:2231-0!*!0!!*!*!* and timestamp 20260530181833 and revision id 15742
+ -->
+</div>									<div class="printfooter">
+						Retrieved from "<a dir="ltr" href="Mmh.html">https://www.datoolset.net/mw/index.php?title=MMH&amp;oldid=15742</a>"					</div>
+													<div id='catlinks' class='catlinks'><div id="mw-normal-catlinks" class="mw-normal-catlinks"><a href="/wiki/Special:Categories" title="Special:Categories">Categories</a>: <ul><li><a href="Category%3AArticles_with_documentation_requests.html" title="Category:Articles with documentation requests">Articles with documentation requests</a></li><li><a href="Category%3AFile_types.html" title="Category:File types">File types</a></li></ul></div></div>												<div class="visualClear"></div>
+							</div>
+		</div>
+		<div id="mw-navigation">
+			<h2>Navigation menu</h2>
+
+			<div id="mw-head">
+									<div id="p-personal" role="navigation" class="" aria-labelledby="p-personal-label">
+						<h3 id="p-personal-label">Personal tools</h3>
+						<ul>
+							<li id="pt-login"><a href="/mw/index.php?title=Special:UserLogin&amp;returnto=MMH" title="You are encouraged to log in; however, it is not mandatory [o]" accesskey="o">Log in</a></li>						</ul>
+					</div>
+									<div id="left-navigation">
+										<div id="p-namespaces" role="navigation" class="vectorTabs" aria-labelledby="p-namespaces-label">
+						<h3 id="p-namespaces-label">Namespaces</h3>
+						<ul>
+															<li  id="ca-nstab-main" class="selected"><span><a href="Mmh.html"  title="View the content page [c]" accesskey="c">Page</a></span></li>
+															<li  id="ca-talk"><span><a href="Talk%3AMMH.html"  title="Discussion about the content page [t]" accesskey="t">Discussion</a></span></li>
+													</ul>
+					</div>
+										<div id="p-variants" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-variants-label">
+												<h3 id="p-variants-label"><span>Variants</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+									</div>
+				<div id="right-navigation">
+										<div id="p-views" role="navigation" class="vectorTabs" aria-labelledby="p-views-label">
+						<h3 id="p-views-label">Views</h3>
+						<ul>
+															<li id="ca-view" class="selected"><span><a href="Mmh.html" >Read</a></span></li>
+															<li id="ca-viewsource"><span><a href="Mmh.html"  title="This page is protected.&#10;You can view its source [e]" accesskey="e">View source</a></span></li>
+															<li id="ca-history" class="collapsible"><span><a href="Mmh.html"  title="Past revisions of this page [h]" accesskey="h">View history</a></span></li>
+													</ul>
+					</div>
+										<div id="p-cactions" role="navigation" class="vectorMenu emptyPortlet" aria-labelledby="p-cactions-label">
+						<h3 id="p-cactions-label"><span>More</span><a href="#"></a></h3>
+
+						<div class="menu">
+							<ul>
+															</ul>
+						</div>
+					</div>
+										<div id="p-search" role="search">
+						<h3>
+							<label for="searchInput">Search</label>
+						</h3>
+
+						<form action="/mw/index.php" id="searchform">
+														<div id="simpleSearch">
+															<input type="search" name="search" placeholder="Search" title="Search Dragon Age Toolset Wiki [f]" accesskey="f" id="searchInput" /><input type="hidden" value="Special:Search" name="title" /><input type="submit" name="fulltext" value="Search" title="Search the pages for this text" id="mw-searchButton" class="searchButton mw-fallbackSearchButton" /><input type="submit" name="go" value="Go" title="Go to a page with this exact name if exists" id="searchButton" class="searchButton" />								</div>
+						</form>
+					</div>
+									</div>
+			</div>
+			<div id="mw-panel">
+				<div id="p-logo" role="banner"><a class="mw-wiki-logo" href="Main_Page.html"  title="Visit the main page"></a></div>
+						<div class="portal" role="navigation" id='p-navigation' aria-labelledby='p-navigation-label'>
+			<h3 id='p-navigation-label'>Navigation</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-mainpage-description"><a href="Main_Page.html" title="Visit the main page [z]" accesskey="z">Main page</a></li>
+													<li id="n-recentchanges"><a href="/wiki/Special:RecentChanges" title="A list of recent changes in the wiki [r]" accesskey="r">Recent changes</a></li>
+													<li id="n-randompage"><a href="/wiki/Special:Random" title="Load a random page [x]" accesskey="x">Random page</a></li>
+													<li id="n-help"><a href="https://www.mediawiki.org/wiki/Special:MyLanguage/Help:Contents" title="The place to find out">Help</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-Links' aria-labelledby='p-Links-label'>
+			<h3 id='p-Links-label'>Links</h3>
+
+			<div class="body">
+									<ul>
+													<li id="n-Toolset-forums"><a href="http://forum.bioware.com/forum/30-dragon-age-toolset" rel="nofollow">Toolset forums</a></li>
+													<li id="n-Legacy-forums"><a href="http://social.bioware.com/forum/1/subindex/70" rel="nofollow">Legacy forums</a></li>
+											</ul>
+							</div>
+		</div>
+			<div class="portal" role="navigation" id='p-tb' aria-labelledby='p-tb-label'>
+			<h3 id='p-tb-label'>Tools</h3>
+
+			<div class="body">
+									<ul>
+													<li id="t-whatlinkshere"><a href="/wiki/Special:WhatLinksHere/MMH" title="A list of all wiki pages that link here [j]" accesskey="j">What links here</a></li>
+													<li id="t-recentchangeslinked"><a href="/wiki/Special:RecentChangesLinked/MMH" title="Recent changes in pages linked from this page [k]" accesskey="k">Related changes</a></li>
+													<li id="t-specialpages"><a href="/wiki/Special:SpecialPages" title="A list of all special pages [q]" accesskey="q">Special pages</a></li>
+													<li id="t-print"><a href="Mmh.html" rel="alternate" title="Printable version of this page [p]" accesskey="p">Printable version</a></li>
+													<li id="t-permalink"><a href="Mmh.html" title="Permanent link to this revision of the page">Permanent link</a></li>
+													<li id="t-info"><a href="Mmh.html" title="More information about this page">Page information</a></li>
+											</ul>
+							</div>
+		</div>
+				</div>
+		</div>
+		<div id="footer" role="contentinfo">
+							<ul id="footer-info">
+											<li id="footer-info-lastmod"> This page was last modified on 13 February 2011, at 09:37.</li>
+									</ul>
+							<ul id="footer-places">
+											<li id="footer-places-privacy"><a href="/wiki/Dragon_Age_Toolset_Wiki:Privacy_policy" title="Dragon Age Toolset Wiki:Privacy policy">Privacy policy</a></li>
+											<li id="footer-places-about"><a href="/wiki/Dragon_Age_Toolset_Wiki:About" title="Dragon Age Toolset Wiki:About">About Dragon Age Toolset Wiki</a></li>
+											<li id="footer-places-disclaimer"><a href="/wiki/Dragon_Age_Toolset_Wiki:General_disclaimer" title="Dragon Age Toolset Wiki:General disclaimer">Disclaimers</a></li>
+									</ul>
+										<ul id="footer-icons" class="noprint">
+											<li id="footer-poweredbyico">
+															<a href="//www.mediawiki.org/"><img src="../assets/mw/resources/assets/poweredby_mediawiki_88x31.png" alt="Powered by MediaWiki" srcset="../assets/mw/resources/assets/poweredby_mediawiki_132x47.png 1.5x, ../assets/mw/resources/assets/poweredby_mediawiki_176x62.png 2x" width="88" height="31" /></a>
+													</li>
+									</ul>
+						<div style="clear:both"></div>
+		</div>
+		<script>if(window.jQuery)jQuery.ready();</script><script>if(window.mw){
+mw.loader.state({"site":"loading","user":"ready","user.groups":"ready"});
+}</script>
+<script>if(window.mw){
+mw.loader.load(["mediawiki.action.view.postEdit","mediawiki.user","mediawiki.hidpi","mediawiki.page.ready","mediawiki.searchSuggest"],null,true);
+}</script>
+<script>if(window.mw){
+document.write("\u003Cscript src=\"https://www.datoolset.net/mw/load.php?debug=false\u0026amp;lang=en\u0026amp;modules=site\u0026amp;only=scripts\u0026amp;skin=vector\u0026amp;*\"\u003E\u003C/script\u003E");
+}</script>
+<script>if(window.mw){
+mw.config.set({"wgBackendResponseTime":198});
+}</script>
+	</body>
+</html>
