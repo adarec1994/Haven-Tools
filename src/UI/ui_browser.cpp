@@ -443,26 +443,40 @@ void drawBrowserWindow(AppState& state) {
                 }
             }
 
-            std::string speedTreeErfPath;
-            for (const auto& erfPath : state.erfFiles) {
-                std::string fname = fs::path(erfPath).filename().string();
-                std::transform(fname.begin(), fname.end(), fname.begin(), ::tolower);
-                if (fname == "speedtreetools.erf") { speedTreeErfPath = erfPath; break; }
-            }
-
+            // Source the level's trees from its RIM files (the .spt live inside the
+            // area RIMs). Keyed by full stem; falls back to speedtreetools.erf if
+            // that shared library exists.
             std::map<std::string, std::string> sptLowerToActual;
-            if (!speedTreeErfPath.empty()) {
-                ERFFile stErf;
-                if (stErf.open(speedTreeErfPath)) {
-                    for (const auto& entry : stErf.entries()) {
+            {
+                auto scanForSpt = [&](const std::string& archivePath) {
+                    ERFFile arc;
+                    if (!arc.open(archivePath)) return;
+                    for (const auto& entry : arc.entries()) {
                         std::string eLower = entry.name;
                         std::transform(eLower.begin(), eLower.end(), eLower.begin(), ::tolower);
                         if (eLower.size() > 4 && eLower.substr(eLower.size() - 4) == ".spt") {
-                            ll.sptFileToErf[entry.name] = speedTreeErfPath;
-                            std::string stem = eLower.substr(0, eLower.size() - 4);
-                            sptLowerToActual[stem] = entry.name;
+                            ll.sptFileToErf[entry.name] = archivePath;
+                            sptLowerToActual[eLower.substr(0, eLower.size() - 4)] = entry.name;
                         }
                     }
+                };
+                scanForSpt(state.currentRIMPath);
+                std::error_code ec;
+                fs::path rimDir2 = fs::path(state.currentRIMPath).parent_path();
+                if (fs::is_directory(rimDir2, ec))
+                    for (const auto& de : fs::directory_iterator(rimDir2, ec)) {
+                        if (!de.is_regular_file()) continue;
+                        std::string fnl = de.path().filename().string();
+                        std::transform(fnl.begin(), fnl.end(), fnl.begin(), ::tolower);
+                        if (fnl.size() > 4 && fnl.substr(fnl.size() - 4) == ".rim" &&
+                            fnl.find(".gpu.rim") == std::string::npos &&
+                            de.path().string() != state.currentRIMPath)
+                            scanForSpt(de.path().string());
+                    }
+                for (const auto& erfPath : state.erfFiles) {
+                    std::string fname = fs::path(erfPath).filename().string();
+                    std::transform(fname.begin(), fname.end(), fname.begin(), ::tolower);
+                    if (fname == "speedtreetools.erf") { scanForSpt(erfPath); break; }
                 }
             }
 
@@ -506,6 +520,10 @@ void drawBrowserWindow(AppState& state) {
                                         stripped = stripped.substr(rimPrefix.size());
                                     }
                                     auto it = sptLowerToActual.find(stripped);
+                                    if (it == sptLowerToActual.end())
+                                        it = sptLowerToActual.find(treeNameLower);
+                                    if (it == sptLowerToActual.end())
+                                        it = sptLowerToActual.find(rimPrefix + stripped);
                                     if (it != sptLowerToActual.end()) {
                                         ll.sptIdToFile[i] = it->second;
                                     }
@@ -669,10 +687,15 @@ void drawBrowserWindow(AppState& state) {
                 }
             }
 
-            if (!speedTreeErfPath.empty()) {
-                auto stTexErf = std::make_unique<ERFFile>();
-                if (stTexErf->open(speedTreeErfPath))
-                    state.textureErfs.push_back(std::move(stTexErf));
+            for (const auto& erfPath : state.erfFiles) {
+                std::string fname = fs::path(erfPath).filename().string();
+                std::transform(fname.begin(), fname.end(), fname.begin(), ::tolower);
+                if (fname == "speedtreetools.erf") {
+                    auto stTexErf = std::make_unique<ERFFile>();
+                    if (stTexErf->open(erfPath))
+                        state.textureErfs.push_back(std::move(stTexErf));
+                    break;
+                }
             }
 
             ll.totalProps = (int)ll.propQueue.size();
@@ -896,7 +919,9 @@ void drawBrowserWindow(AppState& state) {
                         mat.name = diffuseKey;
                         mat.diffuseMap = diffuseKey;
                         mat.opacity = 1.0f;
-                        loadTexInto(mat, diffuseKey, erf);
+                        // composite filename comes from the map bank; fall back to the guess
+                        loadTexInto(mat, treeModel.compositeTexture.empty() ? diffuseKey
+                                                                            : treeModel.compositeTexture, erf);
                         ddsMatIdx = (int)state.currentModel.materials.size();
                         state.currentModel.materials.push_back(std::move(mat));
                     }
