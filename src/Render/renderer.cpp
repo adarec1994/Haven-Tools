@@ -165,6 +165,8 @@ struct StaticMeshDraw {
     float minX, minY, minZ;
     float maxX, maxY, maxZ;
     bool alphaTest;
+    std::string objectId;
+    std::vector<InstanceRange> instanceRanges;   // per-instance index spans for highlight
 };
 
 static ID3D11Buffer* s_levelVB = nullptr;
@@ -383,7 +385,9 @@ void bakeLevelBuffers(Model& model) {
         draw.minX = mesh.minX; draw.minY = mesh.minY; draw.minZ = mesh.minZ;
         draw.maxX = mesh.maxX; draw.maxY = mesh.maxY; draw.maxZ = mesh.maxZ;
         draw.alphaTest = mesh.alphaTest;
-        s_levelDraws.push_back(draw);
+        draw.objectId = mesh.objectId;
+        draw.instanceRanges = mesh.instanceRanges;
+        s_levelDraws.push_back(std::move(draw));
 
         for (size_t i = 0; i < mesh.vertices.size(); i++) {
             const Vertex& v = mesh.vertices[i];
@@ -455,7 +459,7 @@ static float getWaterTime() {
 
 static void renderLevelStatic(const Model& model, const float* mvp, const float* view,
                                const float* viewPos, const RenderSettings& settings,
-                               int selectedChunk) {
+                               int selectedChunk, int selectedInstance) {
     if (!s_levelBaked || !s_levelVB || !s_levelIB) return;
     D3DContext& d3d = getD3DContext();
 
@@ -502,7 +506,7 @@ static void renderLevelStatic(const Model& model, const float* mvp, const float*
 
         int lastMatIdx = -999;
         int lastAlpha = -1;
-        bool wasSelected = false;
+        CBPerMaterial perMat = {};   // persists across draws of the same material
 
         for (const auto& draw : s_levelDraws) {
             if (!aabbInFrustum(planes, draw.minX, draw.minY, draw.minZ,
@@ -519,8 +523,13 @@ static void renderLevelStatic(const Model& model, const float* mvp, const float*
             if (pass == 1 && !isWaterMat) continue;
 
             int curAlpha = draw.alphaTest ? 1 : 0;
-            bool isSelected = selectedChunk >= 0 && draw.meshIndex == selectedChunk;
-            if (draw.materialIndex != lastMatIdx || curAlpha != lastAlpha || isSelected || wasSelected) {
+            // Per-instance highlight: the contiguous index range of this draw (if any)
+            // that belongs to the picked instance.
+            const InstanceRange* selRange = nullptr;
+            if (selectedInstance >= 0)
+                for (const auto& r : draw.instanceRanges)
+                    if (r.instanceId == selectedInstance) { selRange = &r; break; }
+            if (draw.materialIndex != lastMatIdx || curAlpha != lastAlpha) {
                 lastMatIdx = draw.materialIndex;
                 lastAlpha = curAlpha;
 
@@ -530,21 +539,8 @@ static void renderLevelStatic(const Model& model, const float* mvp, const float*
                 bool hasTint     = mat && mat->tintTexId != 0 && settings.useTintMaps;
                 bool isTerrain   = mat && mat->isTerrain && mat->paletteTexId != 0 && mat->maskVTexId != 0;
 
-                CBPerMaterial perMat = {};
-                if (isSelected) {
-                    perMat.tintColor[0] = 0.6f;
-                    perMat.tintColor[1] = 1.0f;
-                    perMat.tintColor[2] = 0.6f;
-                    perMat.tintColor[3] = 1.0f;
-                    if (isTerrain) {
-                        perMat.highlightColor[0] = 0.2f;
-                        perMat.highlightColor[1] = 1.0f;
-                        perMat.highlightColor[2] = 0.2f;
-                        perMat.highlightColor[3] = 0.4f;
-                    }
-                } else {
-                    perMat.tintColor[0] = perMat.tintColor[1] = perMat.tintColor[2] = perMat.tintColor[3] = 1.0f;
-                }
+                perMat = {};
+                perMat.tintColor[0] = perMat.tintColor[1] = perMat.tintColor[2] = perMat.tintColor[3] = 1.0f;
                 perMat.useDiffuse  = (useShaders && (hasDiffuse || isTerrain)) ? 1 : 0;
                 perMat.useNormal   = (useShaders && hasNormal) ? 1 : 0;
                 perMat.useSpecular = (useShaders && hasSpecular) ? 1 : 0;
@@ -610,9 +606,26 @@ static void renderLevelStatic(const Model& model, const float* mvp, const float*
                 }
                 d3d.context->PSSetShaderResources(0, 10, srvs);
             }
-            wasSelected = isSelected;
 
-            d3d.context->DrawIndexed(draw.indexCount, draw.startIndex, draw.baseVertex);
+            if (!selRange) {
+                d3d.context->DrawIndexed(draw.indexCount, draw.startIndex, draw.baseVertex);
+            } else {
+                // Draw the picked instance's index range tinted green; the rest of the
+                // merged mesh stays normal. Disjoint segments — no overdraw / z-fight.
+                uint32_t rs = selRange->firstIndex;
+                uint32_t rc = selRange->indexCount;
+                if (rs > 0)
+                    d3d.context->DrawIndexed(rs, draw.startIndex, draw.baseVertex);
+                CBPerMaterial hl = perMat;
+                hl.tintColor[0] = 0.4f; hl.tintColor[1] = 1.0f;
+                hl.tintColor[2] = 0.4f; hl.tintColor[3] = 1.0f;
+                updatePerMaterialCB(hl);
+                d3d.context->DrawIndexed(rc, draw.startIndex + rs, draw.baseVertex);
+                updatePerMaterialCB(perMat);   // restore normal tint for following draws
+                uint32_t after = (draw.indexCount > rs + rc) ? (draw.indexCount - rs - rc) : 0;
+                if (after > 0)
+                    d3d.context->DrawIndexed(after, draw.startIndex + rs + rc, draw.baseVertex);
+            }
         }
     }
 
@@ -883,7 +896,7 @@ static void drawSimpleTris(const std::vector<SimpleVertex>& verts, const float* 
 
 void renderModel(Model& model, const Camera& camera, const RenderSettings& settings,
                  int width, int height, bool animating, int selectedBone, int selectedChunk,
-                 const EnvironmentSettings* envSettings, Model* skyboxModel) {
+                 const EnvironmentSettings* envSettings, Model* skyboxModel, int selectedInstance) {
 
     if (!s_rendererInit) initRenderer();
     if (!shadersAvailable()) return;
@@ -986,7 +999,7 @@ void renderModel(Model& model, const Camera& camera, const RenderSettings& setti
         updatePerFrameCB(perFrame);
 
         if (s_levelBaked) {
-            renderLevelStatic(model, mvp, view, viewPos, settings, selectedChunk);
+            renderLevelStatic(model, mvp, view, viewPos, settings, selectedChunk, selectedInstance);
         } else {
 
         bool useShaders = !settings.wireframe && settings.showTextures;

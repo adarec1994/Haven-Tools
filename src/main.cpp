@@ -162,7 +162,7 @@ int main(int argc, char** argv) {
         if (state.hasModel) {
             if (state.animPlaying && state.currentAnim.duration > 0)
                 applyAnimation(state.currentModel, state.currentAnim, state.animTime, state.basePoseBones);
-            renderModel(state.currentModel, state.camera, state.renderSettings, display_w, display_h, state.animPlaying, state.selectedBoneIndex, state.selectedLevelChunk, &state.envSettings, state.skyboxLoaded ? &state.skyboxModel : nullptr);
+            renderModel(state.currentModel, state.camera, state.renderSettings, display_w, display_h, state.animPlaying, state.selectedBoneIndex, state.selectedLevelChunk, &state.envSettings, state.skyboxLoaded ? &state.skyboxModel : nullptr, state.selectedLevelInstance);
         } else {
             Model empty;
             renderModel(empty, state.camera, state.renderSettings, display_w, display_h, false, -1, -1, &state.envSettings, state.skyboxLoaded ? &state.skyboxModel : nullptr);

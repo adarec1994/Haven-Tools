@@ -124,8 +124,19 @@ struct Skeleton {
         return -1;
     }
 };
+// A contiguous run of this mesh's indices that belongs to one placed instance.
+// After instance-merging, a merged mesh holds one of these per instance that
+// contributed to it; used for per-instance picking and highlight.
+struct InstanceRange {
+    uint32_t firstIndex = 0;   // offset into Mesh::indices
+    uint32_t indexCount = 0;
+    int instanceId = -1;       // unique per placed object instance in the level
+};
+
 struct Mesh {
     std::string name;
+    std::string objectId;   // identity shared by all submeshes of the same placed object
+    std::vector<InstanceRange> instanceRanges;  // per-instance index spans (level instancing)
     std::string materialName;
     int materialIndex = -1;
     std::vector<Vertex> vertices;

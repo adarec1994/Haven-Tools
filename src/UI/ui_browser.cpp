@@ -45,9 +45,12 @@ static void mergeLevelInstances(Model& model) {
         } else {
             Mesh& dst = out[(size_t)it->second];
             uint32_t base = (uint32_t)dst.vertices.size();
+            uint32_t idxBase = (uint32_t)dst.indices.size();
             dst.vertices.insert(dst.vertices.end(), mesh.vertices.begin(), mesh.vertices.end());
             dst.indices.reserve(dst.indices.size() + mesh.indices.size());
             for (uint32_t idx : mesh.indices) dst.indices.push_back(base + idx);
+            for (const auto& r : mesh.instanceRanges)
+                dst.instanceRanges.push_back({ idxBase + r.firstIndex, r.indexCount, r.instanceId });
         }
     }
     for (auto& m : out) m.calculateBounds();
@@ -143,7 +146,7 @@ static void startLevelLoad(AppState& state, const std::string& rimPath, const st
     state.currentModel = Model();
     state.currentModel.name = displayName + " (" + fs::path(rimPath).stem().string() + ")";
     state.hasModel = true;
-    state.selectedLevelChunk = -1;
+    state.selectedLevelChunk = -1; state.selectedLevelInstance = -1;
     state.currentModelAnimations.clear();
     state.showRIMBrowser = false;
 
@@ -802,13 +805,16 @@ void drawBrowserWindow(AppState& state) {
                 if (mergeModelByName(state, pw.modelName, pw.px, pw.py, pw.pz,
                                      pw.qx, pw.qy, pw.qz, pw.qw, pw.scale)) {
                     ll.propsLoaded++;
+                    int instId = ll.nextInstanceId++;
                     for (size_t mi = meshCountBefore; mi < state.currentModel.meshes.size(); mi++) {
-                        if (state.currentModel.meshes[mi].name.empty()) {
+                        auto& m = state.currentModel.meshes[mi];
+                        if (m.name.empty()) {
                             std::string displayName = pw.modelName;
                             auto dot = displayName.rfind('.');
                             if (dot != std::string::npos) displayName = displayName.substr(0, dot);
-                            state.currentModel.meshes[mi].name = displayName;
+                            m.name = displayName;
                         }
+                        m.instanceRanges = { { 0u, (uint32_t)m.indices.size(), instId } };
                     }
                 } else {
                 }
@@ -999,6 +1005,7 @@ void drawBrowserWindow(AppState& state) {
                     const std::string& baseName = ll.sptBaseName[sw.treeId];
                     int branchMatIdx = ll.sptBranchMatIdx[sw.treeId];
                     int ddsMatIdx = ll.sptDdsMatIdx[sw.treeId];
+                    int instId = ll.nextInstanceId++;
 
                     for (int si = 0; si < (int)cit->second.submeshes.size(); si++) {
                         const auto& sm = cit->second.submeshes[si];
@@ -1006,6 +1013,7 @@ void drawBrowserWindow(AppState& state) {
 
                         Mesh mesh;
                         mesh.name = baseName + "_" + typeNames[(int)sm.type];
+                        mesh.objectId = baseName;
                         if (sm.type == SptSubmeshType::Branch) {
                             mesh.materialIndex = branchMatIdx;
                             mesh.materialName = state.currentModel.materials[branchMatIdx].name;
@@ -1044,6 +1052,7 @@ void drawBrowserWindow(AppState& state) {
                             v.v = sm.texcoords[vi*2+1];
                         }
                         mesh.indices = sm.indices;
+                        mesh.instanceRanges = { { 0u, (uint32_t)sm.indices.size(), instId } };
                         mesh.calculateBounds();
                         state.currentModel.meshes.push_back(std::move(mesh));
                     }
@@ -2910,7 +2919,7 @@ void drawBrowserWindow(AppState& state) {
                         state.currentModel = Model();
                         state.currentModel.name = fs::path(state.currentRIMPath).stem().string() + " (level)";
                         state.hasModel = true;
-                        state.selectedLevelChunk = -1;
+                        state.selectedLevelChunk = -1; state.selectedLevelInstance = -1;
                         state.currentModelAnimations.clear();
 
                         state.levelLoad = {};

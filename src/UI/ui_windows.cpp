@@ -7,7 +7,7 @@ void drawRenderSettingsWindow(AppState& state) {
     ImGui::SetNextWindowSizeConstraints(ImVec2(300, 100), ImVec2(500, 800));
 
     if (ImGui::IsKeyPressed(ImGuiKey_Escape) && state.boneEditMode == 0) {
-        state.selectedLevelChunk = -1;
+        state.selectedLevelChunk = -1; state.selectedLevelInstance = -1;
         state.selectedBoneIndex = -1;
     }
 
@@ -17,7 +17,7 @@ void drawRenderSettingsWindow(AppState& state) {
             state.currentModel.meshes.erase(state.currentModel.meshes.begin() + idx);
             if (state.renderSettings.meshVisible.size() > (size_t)idx)
                 state.renderSettings.meshVisible.erase(state.renderSettings.meshVisible.begin() + idx);
-            state.selectedLevelChunk = -1;
+            state.selectedLevelChunk = -1; state.selectedLevelInstance = -1;
             if (isLevelBaked()) {
                 bakeLevelBuffers(state.currentModel);
             }
@@ -229,7 +229,7 @@ void drawRenderSettingsWindow(AppState& state) {
             if (ImGui::TreeNode("Skeleton", "Skeleton (%zu bones)", state.currentModel.skeleton.bones.size())) {
                 if (ImGui::IsKeyPressed(state.keybinds.deselectBone) && state.boneEditMode == 0) {
                     state.selectedBoneIndex = -1;
-                    state.selectedLevelChunk = -1;
+                    state.selectedLevelChunk = -1; state.selectedLevelInstance = -1;
                 }
                 if (state.selectedBoneIndex >= 0) {
                     ImGui::TextColored(ImVec4(1.0f, 1.0f, 0.0f, 1.0f), "Selected: %s",

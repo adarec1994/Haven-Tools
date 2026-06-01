@@ -785,6 +785,7 @@ void handleInput(AppState& state, GLFWwindow* window, ImGuiIO& io) {
             float origY = inv[13];
             float origZ = inv[14];
             int closestChunk = -1;
+            int closestTi = -1;
             float closestT = 1e30f;
             for (size_t mi = 0; mi < state.currentModel.meshes.size(); mi++) {
                 if (mi < state.renderSettings.meshVisible.size() && state.renderSettings.meshVisible[mi] == 0) continue;
@@ -817,10 +818,24 @@ void handleInput(AppState& state, GLFWwindow* window, ImGuiIO& io) {
                     if (tt > 0.0f && tt < closestT) {
                         closestT = tt;
                         closestChunk = (int)mi;
+                        closestTi = (int)ti;
                     }
                 }
             }
             state.selectedLevelChunk = closestChunk;
+            // Map the hit triangle to the placed instance it belongs to, so only
+            // that one instance highlights (not the whole merged object).
+            state.selectedLevelInstance = -1;
+            if (closestChunk >= 0 && closestTi >= 0) {
+                const auto& hm = state.currentModel.meshes[closestChunk];
+                for (const auto& r : hm.instanceRanges) {
+                    if ((uint32_t)closestTi >= r.firstIndex &&
+                        (uint32_t)closestTi < r.firstIndex + r.indexCount) {
+                        state.selectedLevelInstance = r.instanceId;
+                        break;
+                    }
+                }
+            }
         }
         wasLeftPressed = leftPressed;
     }

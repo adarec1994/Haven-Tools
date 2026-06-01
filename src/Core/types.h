@@ -322,6 +322,7 @@ struct AppState {
     char animFilter[64] = "";
     int selectedBoneIndex = -1;
     int selectedLevelChunk = -1;
+    int selectedLevelInstance = -1;   // picked instance id (for per-instance highlight)
     bool showTexturePreview = false;
     int previewTextureId = 0;
     std::string previewTextureName;
@@ -403,6 +404,7 @@ struct AppState {
         std::map<int32_t, int> sptDdsMatIdx;
         std::map<int32_t, std::string> sptBaseName;
         bool sptSetupDone = false;
+        int nextInstanceId = 0;   // running unique id per placed object instance
     };
     LevelLoadState levelLoad;
 

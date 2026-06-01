@@ -660,7 +660,7 @@ bool loadModelFromEntry(AppState& state, const ERFEntry& entry) {
     state.currentModel = model;
     state.currentModel.name = entry.name;
     state.hasModel = true;
-    state.selectedLevelChunk = -1;
+    state.selectedLevelChunk = -1; state.selectedLevelInstance = -1;
     state.renderSettings.initMeshVisibility(model.meshes.size());
     std::string baseName = entry.name;
     size_t dotPos = baseName.rfind('.');
@@ -841,7 +841,7 @@ bool loadModelFromOverride(AppState& state, const std::string& mshPath) {
     state.currentModel = model;
     state.currentModel.name = fs::path(mshPath).filename().string();
     state.hasModel = true;
-    state.selectedLevelChunk = -1;
+    state.selectedLevelChunk = -1; state.selectedLevelInstance = -1;
     state.renderSettings.initMeshVisibility(model.meshes.size());
 
     std::string baseName = fs::path(mshPath).stem().string();
@@ -1473,9 +1473,10 @@ bool mergeModelByName(AppState& state, const std::string& modelName,
 
     for (auto& mesh : instance.meshes) {
         // Tag with the model name so every instance of this prop shares an identity
-        // (for instance-merging) and different props never collide on a generic
-        // submesh name.
+        // (for instance-merging and whole-object selection) and different props
+        // never collide on a generic submesh name.
         mesh.name = modelName + "::" + mesh.name;
+        mesh.objectId = modelName;
         state.currentModel.meshes.push_back(std::move(mesh));
     }
 
