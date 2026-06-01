@@ -341,7 +341,11 @@ float4 main(PSInput input) : SV_TARGET {
         float specInt = uWaterVisual.y;
         waterCol += pow(NdotH, specPow) * specInt * sunCol;
 
-        float alpha = saturate(uWaterColor.w + fresnel);
+        // Water has no per-pixel opacity source (PSHWaterParams.w is 0 in the .mao
+        // and the vertex COLOR.a channel is wave/flow data, not alpha). So give it a
+        // solid base opacity from above and let reflections dominate at grazing angles.
+        float baseAlpha = max(uWaterColor.w, 0.8);
+        float alpha = saturate(baseAlpha + (1.0 - baseAlpha) * fresnel);
         diffuseColor = float4(waterCol, alpha);
     } else if (uUseDiffuse != 0) {
         diffuseColor = texDiffuse.Sample(sampLinear, input.texcoord);

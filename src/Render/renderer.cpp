@@ -617,8 +617,11 @@ static void renderLevelStatic(const Model& model, const float* mvp, const float*
                 if (rs > 0)
                     d3d.context->DrawIndexed(rs, draw.startIndex, draw.baseVertex);
                 CBPerMaterial hl = perMat;
-                hl.tintColor[0] = 0.4f; hl.tintColor[1] = 1.0f;
-                hl.tintColor[2] = 0.4f; hl.tintColor[3] = 1.0f;
+                // Emissive-style highlight: blend the lit result strongly toward a
+                // bright green AFTER lighting (uHighlightColor path), so it stays
+                // vibrant even on dark/unlit textures instead of a dim multiply.
+                hl.highlightColor[0] = 0.10f; hl.highlightColor[1] = 1.0f;
+                hl.highlightColor[2] = 0.25f; hl.highlightColor[3] = 0.80f;
                 updatePerMaterialCB(hl);
                 d3d.context->DrawIndexed(rc, draw.startIndex + rs, draw.baseVertex);
                 updatePerMaterialCB(perMat);   // restore normal tint for following draws

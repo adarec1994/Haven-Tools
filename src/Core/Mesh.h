@@ -149,6 +149,8 @@ struct Mesh {
     bool skinningCacheBuilt = false;
     bool skipInvBind = false;
     bool alphaTest = false;
+    bool hasVertexColor = false;
+    float avgVertexColor[4] = {1.0f, 1.0f, 1.0f, 1.0f};  // mean of the COLOR vertex channel (water tint, etc.)
     std::string parentBoneName;
     float localPosX = 0, localPosY = 0, localPosZ = 0;
     float localRotX = 0, localRotY = 0, localRotZ = 0, localRotW = 1;

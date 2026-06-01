@@ -228,8 +228,9 @@ bool loadMSH(const std::vector<uint8_t>& data, Model& outModel) {
         VertexStreamDesc texcoordStream = {0, 0, 0, 0, 0};
         VertexStreamDesc blendWeightStream = {0, 0, 0, 0, 0};
         VertexStreamDesc blendIndexStream = {0, 0, 0, 0, 0};
+        VertexStreamDesc colorStream = {0, 0, 0, 0, 0};
         bool hasPos = false, hasNormal = false, hasTexcoord = false;
-        bool hasBlendWeight = false, hasBlendIndex = false;
+        bool hasBlendWeight = false, hasBlendIndex = false, hasColor = false;
 
         for (const auto& declRef : declList) {
             uint32_t usage = gff.readUInt32ByLabel(declRef.structIndex, GFFFieldID::DECL_USAGE, declRef.offset);
@@ -256,6 +257,9 @@ bool loadMSH(const std::vector<uint8_t>& data, Model& outModel) {
             } else if (usage == VertexUsage::BLENDINDICES && !hasBlendIndex) {
                 blendIndexStream = desc;
                 hasBlendIndex = true;
+            } else if (usage == VertexUsage::COLOR && !hasColor) {
+                colorStream = desc;
+                hasColor = true;
             }
         }
 
@@ -278,6 +282,8 @@ bool loadMSH(const std::vector<uint8_t>& data, Model& outModel) {
         }
 
         mesh.vertices.resize(vertexCount);
+
+        double colSum[4] = {0, 0, 0, 0};
 
         for (uint32_t i = 0; i < vertexCount; i++) {
             uint32_t baseOff = vertexDataBase + i * vertexSize;
@@ -325,6 +331,20 @@ bool loadMSH(const std::vector<uint8_t>& data, Model& outModel) {
                 mesh.vertices[i].boneIndices[2] = indices[2];
                 mesh.vertices[i].boneIndices[3] = indices[3];
             }
+
+            if (hasColor) {
+                readDeclType(gff.rawData(), baseOff + colorStream.offset, colorStream.dataType, vals, bigEndian);
+                colSum[0] += vals[0]; colSum[1] += vals[1];
+                colSum[2] += vals[2]; colSum[3] += vals[3];
+            }
+        }
+
+        if (hasColor && vertexCount > 0) {
+            mesh.hasVertexColor = true;
+            mesh.avgVertexColor[0] = (float)(colSum[0] / vertexCount);
+            mesh.avgVertexColor[1] = (float)(colSum[1] / vertexCount);
+            mesh.avgVertexColor[2] = (float)(colSum[2] / vertexCount);
+            mesh.avgVertexColor[3] = (float)(colSum[3] / vertexCount);
         }
 
         mesh.indices.resize(indexCount);

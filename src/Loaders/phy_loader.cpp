@@ -12,6 +12,8 @@
 #include <functional>
 #include <cmath>
 #include <iostream>
+#include <fstream>
+#include <cstdlib>
 
 static void applyMeshLocalTransforms(Model& model) {
     auto quatRot = [](float qx, float qy, float qz, float qw,
@@ -488,7 +490,7 @@ static uint32_t loadCubemapByName(AppState& state, const std::string& texName) {
     return 0;
 }
 
-static uint32_t findAnyCubemapInErfs(AppState& state) {
+[[maybe_unused]] static uint32_t findAnyCubemapInErfs(AppState& state) {
     auto scanErf = [&](ERFFile& erf) -> uint32_t {
         for (const auto& e : erf.entries()) {
             std::string eName = e.name;
@@ -1531,38 +1533,59 @@ void finalizeLevelMaterials(AppState& state) {
                 mat.diffuseMap = mat.waterDecalMap;
             if (mat.specularMap.empty() && !mat.waterMaskMap.empty())
                 mat.specularMap = mat.waterMaskMap;
-            if (g_terrainLoader.isLoaded()) {
-                const auto& tw = g_terrainLoader.getTerrain().water;
-                float rSum = 0, gSum = 0, bSum = 0, aSum = 0;
-                int count = 0;
-                for (const auto& wm : tw) {
-                    for (const auto& v : wm.vertices) {
-                        rSum += v.r; gSum += v.g; bSum += v.b; aSum += v.a;
-                        count++;
-                    }
+            // Water body (deep) color = average per-vertex color of the level
+            // water meshes that use this material. DA water .msh carry the tint in
+            // their COLOR vertex channel (model_loader fills avgVertexColor).
+            // (The old path read g_terrainLoader, which is cleared on level load,
+            //  so the body color always fell back to the brown default.)
+            // Only RGB is a real color; the COLOR.a channel holds wave/flow data
+            // (wild values like -13.5, 52.3), so we ignore it and keep water opaque.
+            int matIdx = (int)(&mat - &state.currentModel.materials[0]);
+            float rSum = 0, gSum = 0, bSum = 0;
+            int count = 0;
+            for (const auto& mesh : state.currentModel.meshes) {
+                if (mesh.materialIndex == matIdx && mesh.hasVertexColor &&
+                    std::isfinite(mesh.avgVertexColor[0]) &&
+                    std::isfinite(mesh.avgVertexColor[1]) &&
+                    std::isfinite(mesh.avgVertexColor[2])) {
+                    rSum += mesh.avgVertexColor[0];
+                    gSum += mesh.avgVertexColor[1];
+                    bSum += mesh.avgVertexColor[2];
+                    count++;
                 }
-                if (count > 0) {
-                    mat.waterBodyColor[0] = rSum / count;
-                    mat.waterBodyColor[1] = gSum / count;
-                    mat.waterBodyColor[2] = bSum / count;
-                    mat.waterBodyColor[3] = aSum / count;
-                    std::cout << "[WATER]   bodyColor from terrain: ("
-                              << mat.waterBodyColor[0] << ", " << mat.waterBodyColor[1] << ", "
-                              << mat.waterBodyColor[2] << ", " << mat.waterBodyColor[3] << ") from "
-                              << count << " vertices" << std::endl;
-                }
+            }
+            if (count > 0) {
+                auto cl = [](float v) { return v < 0.0f ? 0.0f : (v > 1.0f ? 1.0f : v); };
+                mat.waterBodyColor[0] = cl(rSum / count);
+                mat.waterBodyColor[1] = cl(gSum / count);
+                mat.waterBodyColor[2] = cl(bSum / count);
+                mat.waterBodyColor[3] = 1.0f;  // COLOR.a is not opacity
+            }
+            {
+                const char* wtmp = getenv("TEMP");
+                std::ofstream wdbg(std::string(wtmp ? wtmp : ".") + "\\haven_water_diag.txt", std::ios::app);
+                wdbg << "[WATER] mat='" << mat.name << "'  waterMeshesWithColor=" << count << "\n";
+                wdbg << "    bodyColor (RGBA, from vertex color) = "
+                     << mat.waterBodyColor[0] << ", " << mat.waterBodyColor[1] << ", "
+                     << mat.waterBodyColor[2] << ", " << mat.waterBodyColor[3] << "\n";
+                wdbg << "    waterColor PSH0 (xyz=normalBlendW, w=baseAlpha) = "
+                     << mat.waterColor[0] << ", " << mat.waterColor[1] << ", "
+                     << mat.waterColor[2] << ", " << mat.waterColor[3] << "\n";
+                wdbg << "    waterVisual PSH1 (fresnelPow, specInt, specPow, bump) = "
+                     << mat.waterVisual[0] << ", " << mat.waterVisual[1] << ", "
+                     << mat.waterVisual[2] << ", " << mat.waterVisual[3] << "\n";
+                wdbg << "    normalMap='" << mat.normalMap << "'  diffuseMap='" << mat.diffuseMap << "'\n";
             }
             std::cout << "[WATER]   AFTER: normalMap='" << mat.normalMap << "' diffuseMap='" << mat.diffuseMap << "'" << std::endl;
-            if (mat.envCubemapTexId == 0) {
-                mat.envCubemapTexId = loadCubemapByName(state, "Default_BlackCubemap");
-            }
-            if (mat.envCubemapTexId == 0) {
-                mat.envCubemapTexId = findAnyCubemapInErfs(state);
-            }
+            // Do NOT fall back to Default_BlackCubemap: a black reflection cube makes
+            // the water render black at grazing angles (where fresnel->1 and the
+            // reflection dominates). "Find any cubemap" is also unreliable. Leaving the
+            // id at 0 makes the shader use its procedural sky reflection
+            // (uHasCubemap==0), which reacts to view + sun direction and looks correct.
             if (mat.envCubemapTexId != 0)
-                std::cout << "[WATER]   cubemap texId=" << mat.envCubemapTexId << std::endl;
+                std::cout << "[WATER]   using material cubemap texId=" << mat.envCubemapTexId << std::endl;
             else
-                std::cout << "[WATER]   no cubemap found, using procedural sky reflection" << std::endl;
+                std::cout << "[WATER]   procedural sky reflection (no cubemap)" << std::endl;
         }
         if (!mat.diffuseMap.empty() && mat.diffuseTexId == 0)
             mat.diffuseTexId = loadTextureByName(state, mat.diffuseMap, nullptr, nullptr, nullptr);

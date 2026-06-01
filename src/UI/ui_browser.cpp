@@ -403,6 +403,21 @@ void drawBrowserWindow(AppState& state) {
             ll.terrainQueue.clear();
             ll.propQueue.clear();
 
+            // Map every .msh entry to its (uncompressed) size so we can tell a
+            // genuine LOD variant from a chunk tile. A real LOD (X_1/2/3.msh) is
+            // smaller than its base X_0.msh; chunk tiles named *_1/_2/_3 either
+            // have no _0 sibling or are the same size as it, and must be loaded.
+            std::unordered_map<std::string, uint32_t> mshSize;
+            if (state.currentErf) {
+                for (size_t i = 0; i < state.rimEntries.size(); i++) {
+                    std::string nl = state.rimEntries[i].name;
+                    std::transform(nl.begin(), nl.end(), nl.begin(), ::tolower);
+                    if (nl.size() < 4 || nl.substr(nl.size() - 4) != ".msh") continue;
+                    size_t ei = state.rimEntries[i].entryIdx;
+                    if (ei < state.currentErf->entries().size())
+                        mshSize[nl] = state.currentErf->entries()[ei].length;
+                }
+            }
             for (size_t i = 0; i < state.rimEntries.size(); i++) {
                 std::string nameLower = state.rimEntries[i].name;
                 std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), ::tolower);
@@ -411,7 +426,13 @@ void drawBrowserWindow(AppState& state) {
                 size_t lastUnderscore = nameLower.rfind('_');
                 if (lastUnderscore != std::string::npos && lastUnderscore + 1 < nameLower.size() - 4) {
                     std::string lodStr = nameLower.substr(lastUnderscore + 1, nameLower.size() - 4 - lastUnderscore - 1);
-                    if (lodStr == "1" || lodStr == "2" || lodStr == "3") continue;
+                    if (lodStr == "1" || lodStr == "2" || lodStr == "3") {
+                        std::string lod0 = nameLower.substr(0, lastUnderscore + 1) + "0.msh";
+                        auto it0 = mshSize.find(lod0);
+                        auto itN = mshSize.find(nameLower);
+                        if (it0 != mshSize.end() && itN != mshSize.end() && itN->second < it0->second)
+                            continue;   // genuine LOD variant (smaller than its LOD0) -> skip
+                    }
                 }
                 ll.terrainQueue.push_back(i);
             }
