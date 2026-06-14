@@ -17,6 +17,16 @@
 class ERFFile;
 class GDAFile;
 
+constexpr float UI_FONT_SIZE_DEFAULT = 15.0f;
+constexpr float UI_FONT_SIZE_MIN = 11.0f;
+constexpr float UI_FONT_SIZE_MAX = 24.0f;
+
+inline float clampUIFontSize(float size) {
+    if (!(size >= UI_FONT_SIZE_MIN)) return UI_FONT_SIZE_MIN;
+    if (!(size <= UI_FONT_SIZE_MAX)) return UI_FONT_SIZE_MAX;
+    return size;
+}
+
 struct ErfEntryIndex {
     std::unordered_map<std::string, std::pair<size_t, size_t>> exact;
     std::unordered_map<std::string, std::pair<size_t, size_t>> basename;
@@ -62,17 +72,31 @@ struct Camera {
     float pitch = 0.0f;
     float moveSpeed = 5.0f;
     float lookSensitivity = 0.003f;
+    // Turntable/orbit state for model & character viewing (azimuth, elevation, distance, target).
+    float orbitAz = 3.14159265f, orbitEl = 0.62f, orbitDist = 5.0f;
+    float targetX = 0.0f, targetY = 0.0f, targetZ = 0.0f;
+    void applyOrbit() {
+        float ce = std::cos(orbitEl), se = std::sin(orbitEl);
+        // The view applies a -90deg X rotation, so world (x,y,z) maps to view-frame (x, z, -y).
+        x = targetX + orbitDist * ce * std::sin(orbitAz);
+        y = targetZ + orbitDist * se;
+        z = -targetY + orbitDist * ce * std::cos(orbitAz);
+        yaw = orbitAz;
+        pitch = -orbitEl;
+    }
     void setPosition(float px, float py, float pz) {
         x = px;
         y = py;
         z = pz;
     }
     void lookAt(float tx, float ty, float tz, float dist) {
-        x = tx;
-        y = tz + dist * 0.5f;
-        z = dist * 0.7f - ty;
-        yaw = 0.0f;
-        pitch = -std::atan2(dist * 0.5f, dist * 0.7f);
+        // Set up the turntable to look at the target from the FRONT (azimuth = PI; the old
+        // azimuth 0 looked at the model's back). Elevation/distance match the old framing.
+        targetX = tx; targetY = ty; targetZ = tz;
+        orbitDist = dist * 0.86f;
+        orbitEl = 0.62f;
+        orbitAz = 3.14159265f;
+        applyOrbit();
         moveSpeed = dist * 0.5f;
         if (moveSpeed < 1.0f) moveSpeed = 1.0f;
     }
@@ -230,6 +254,17 @@ struct EnvironmentSettings {
     float atmoFogZenith = 100.0f;
     float atmoDistanceMultiplier = 1.0f;
     float atmoAlpha = 1.0f;
+    // Hoffman-Preetham scattering inputs (ATMO struct) for the game-style sky.
+    float atmoTurbidity = 1.0f;            // 22521 ATMO_TURBIDITY
+    float atmoRayleighMultiplier = 1.0f;   // 22524 ATMO_RAYLEIGH_MULTIPLIER
+    float atmoMieMultiplier = 1.0f;        // 22523 ATMO_MIE_MULTIPLIER
+    float atmoPhaseEccentricity = 0.85f;   // 22527 ATMO_PHASE_ECCENTRICITY (Mie g)
+    // SH light-probe irradiance matrices (Ramamoorthi form) from the area's *_probe_*.mtx.
+    // Ambient irradiance for a normal n is  [n 1] * M * [n 1]^T  per channel.
+    float probeMatR[16] = {};
+    float probeMatG[16] = {};
+    float probeMatB[16] = {};
+    bool probeLoaded = false;
     float cloudDensity = 0.5f;
     float cloudSharpness = 0.5f;
     float cloudDepth = 0.0f;
@@ -254,7 +289,9 @@ struct AppState {
     bool showUvViewer = false;
     bool showAnimWindow = false;
     bool showMeshBrowser = false;
+    bool showSettings = false;
     bool showKeybinds = false;
+    float uiFontSize = UI_FONT_SIZE_DEFAULT;
     Keybinds keybinds;
     std::string lastRunVersion;
     std::string maoContent;
@@ -262,6 +299,9 @@ struct AppState {
     int selectedMeshForUv = -1;
     std::string selectedFolder;
     std::string isoPath;        // non-empty when running from an Xbox 360 ISO
+    std::string loadedErfPath;  // transient .erf to select after the next reload
+    std::string lastErfPath;
+    std::vector<std::string> extraErfPaths;
     std::vector<std::string> erfFiles;
     std::vector<std::string> rimFiles;
     std::vector<std::string> arlFiles;
@@ -302,6 +342,7 @@ struct AppState {
     Camera camera;
     RenderSettings renderSettings;
     bool isPanning = false;
+    bool isOrbiting = false;
     double lastMouseX = 0;
     double lastMouseY = 0;
     std::vector<std::pair<std::string, std::string>> availableAnimFiles;

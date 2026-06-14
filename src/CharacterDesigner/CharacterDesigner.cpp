@@ -1572,7 +1572,12 @@ void loadCharacterModel(AppState& state) {
             }
         }
         float height = maxZ - minZ;
-        state.camera.lookAt(0, 0, (minZ + maxZ) * 0.5f, height * 1.5f);
+        // Focus the head (top of a standing character) so zooming converges on the face,
+        // not the torso. Lower the orbit elevation toward eye level for face work.
+        float headZ = minZ + height * 0.92f;
+        state.camera.lookAt(0, 0, headZ, height * 1.2f);
+        state.camera.orbitEl = 0.2f;
+        state.camera.applyOrbit();
         firstLoad = false;
     }
     state.statusMessage = "Character: " + std::to_string(state.currentModel.meshes.size()) + " meshes";

@@ -619,6 +619,10 @@ void drawBrowserWindow(AppState& state) {
                                     env.atmoSunIntensity = arlGff.readFloatByLabel(atmoSI, 22520, atmoBase);
                                     env.atmoDistanceMultiplier = arlGff.readFloatByLabel(atmoSI, 22526, atmoBase);
                                     env.atmoAlpha = arlGff.readFloatByLabel(atmoSI, 22528, atmoBase);
+                                    env.atmoTurbidity = arlGff.readFloatByLabel(atmoSI, 22521, atmoBase);
+                                    env.atmoRayleighMultiplier = arlGff.readFloatByLabel(atmoSI, 22524, atmoBase);
+                                    env.atmoMieMultiplier = arlGff.readFloatByLabel(atmoSI, 22523, atmoBase);
+                                    env.atmoPhaseEccentricity = arlGff.readFloatByLabel(atmoSI, 22527, atmoBase);
                                     readVec3(atmoSI, 22529, atmoBase, env.atmoFogColor);
                                     env.atmoFogIntensity = arlGff.readFloatByLabel(atmoSI, 22530, atmoBase);
                                     env.atmoFogCap = arlGff.readFloatByLabel(atmoSI, 22531, atmoBase);
@@ -649,6 +653,36 @@ void drawBrowserWindow(AppState& state) {
                                           << " depth=" << env.cloudDepth
                                           << " sharp=" << env.cloudSharpness
                                           << " sunI=" << env.atmoSunIntensity << std::endl;
+
+                                // Area SH light probe: the *.mtx holds 3 Ramamoorthi irradiance
+                                // matrices (R,G,B) as leading ASCII floats. Used for ambient.
+                                if (state.currentErf) {
+                                    for (const auto& e : state.currentErf->entries()) {
+                                        std::string el = e.name;
+                                        std::transform(el.begin(), el.end(), el.begin(), ::tolower);
+                                        if (el.size() < 4 || el.substr(el.size() - 4) != ".mtx") continue;
+                                        std::vector<uint8_t> mtxData = state.currentErf->readEntry(e);
+                                        if (mtxData.empty()) continue;
+                                        std::string txt(mtxData.begin(), mtxData.end());
+                                        const char* p = txt.c_str(); char* endp;
+                                        float vals[48]; int n = 0;
+                                        while (n < 48) {
+                                            float v = strtof(p, &endp);
+                                            if (endp == p) break;
+                                            vals[n++] = v; p = endp;
+                                        }
+                                        if (n >= 48) {
+                                            for (int i = 0; i < 16; i++) {
+                                                env.probeMatR[i] = vals[i];
+                                                env.probeMatG[i] = vals[16 + i];
+                                                env.probeMatB[i] = vals[32 + i];
+                                            }
+                                            env.probeLoaded = true;
+                                            std::cout << "[ARL] SH light probe loaded from '" << e.name << "'" << std::endl;
+                                        }
+                                        break;
+                                    }
+                                }
 
                                 if (!env.skydomeModel.empty()) {
                                     std::string skyMshName = env.skydomeModel + ".msh";
@@ -715,6 +749,21 @@ void drawBrowserWindow(AppState& state) {
                                                     std::cout << " [WARNING: texture not found in ERFs]";
                                                 std::cout << std::endl;
                                             }
+                                            {
+                                                const char* tmp = getenv("TEMP");
+                                                std::ofstream sd(std::string(tmp ? tmp : ".") + "\\haven_sky_diag.txt", std::ios::trunc);
+                                                sd << "skydomeModel='" << env.skydomeModel << "'  skyMsh='" << skyMshName << "'\n";
+                                                sd << "meshes=" << skyModel.meshes.size() << "  materials=" << skyModel.materials.size() << "\n";
+                                                for (size_t mi = 0; mi < skyModel.materials.size(); mi++) {
+                                                    auto& mat = skyModel.materials[mi];
+                                                    sd << "  mat[" << mi << "] '" << mat.name << "' diffuseMap='" << mat.diffuseMap
+                                                       << "' diffuseTexId=" << mat.diffuseTexId << " maoContentLen=" << mat.maoContent.size() << "\n";
+                                                }
+                                                for (size_t mi = 0; mi < skyModel.meshes.size(); mi++)
+                                                    sd << "  mesh[" << mi << "] '" << skyModel.meshes[mi].name << "' matName='"
+                                                       << skyModel.meshes[mi].materialName << "' matIdx=" << skyModel.meshes[mi].materialIndex
+                                                       << " verts=" << skyModel.meshes[mi].vertices.size() << "\n";
+                                            }
                                             float skyScale = 50000.0f;
                                             for (auto& mesh : skyModel.meshes) {
                                                 for (auto& v : mesh.vertices) {
@@ -729,9 +778,16 @@ void drawBrowserWindow(AppState& state) {
                                                       << skyModel.materials.size() << " materials)" << std::endl;
                                         } else {
                                             std::cout << "[ARL] Failed to parse skybox mesh '" << skyMshName << "'" << std::endl;
+                                            const char* tmp = getenv("TEMP");
+                                            std::ofstream sd(std::string(tmp ? tmp : ".") + "\\haven_sky_diag.txt", std::ios::trunc);
+                                            sd << "FAILED loadMSH for skyMsh='" << skyMshName << "' (skyData bytes=" << skyData.size() << ")\n";
                                         }
                                     } else {
                                         std::cout << "[ARL] Skybox mesh '" << skyMshName << "' not found in ERFs" << std::endl;
+                                        const char* tmp = getenv("TEMP");
+                                        std::ofstream sd(std::string(tmp ? tmp : ".") + "\\haven_sky_diag.txt", std::ios::trunc);
+                                        sd << "skyMsh='" << skyMshName << "' NOT FOUND in currentErf or modelErfs ("
+                                           << state.modelErfs.size() << " model erfs searched)\n";
                                     }
                                 }
                             }
@@ -796,13 +852,27 @@ void drawBrowserWindow(AppState& state) {
                     const auto& erfEntry = state.currentErf->entries()[state.rimEntries[rimIdx].entryIdx];
                     size_t meshCountBefore = state.currentModel.meshes.size();
                     if (mergeModelEntry(state, erfEntry)) {
-                        ll.terrainLoaded++;
+                        // Terrain chunks whose meshes all sit at the world origin (X~0, Y~0)
+                        // are local-space and have no placement in the rim's layout, so every
+                        // chunk piles onto the origin (the "terrain stack"). Drop them; world-
+                        // space terrain (placed away from the origin) loads normally.
+                        bool unplaced = state.currentModel.meshes.size() > meshCountBefore;
                         for (size_t mi = meshCountBefore; mi < state.currentModel.meshes.size(); mi++) {
-                            if (state.currentModel.meshes[mi].name.empty()) {
-                                std::string displayName = erfEntry.name;
-                                auto dot = displayName.rfind('.');
-                                if (dot != std::string::npos) displayName = displayName.substr(0, dot);
-                                state.currentModel.meshes[mi].name = displayName;
+                            state.currentModel.meshes[mi].calculateBounds();
+                            auto c = state.currentModel.meshes[mi].center();
+                            if (c[0] > 1.0f || c[0] < -1.0f || c[1] > 1.0f || c[1] < -1.0f) { unplaced = false; break; }
+                        }
+                        if (unplaced) {
+                            state.currentModel.meshes.resize(meshCountBefore);
+                        } else {
+                            ll.terrainLoaded++;
+                            for (size_t mi = meshCountBefore; mi < state.currentModel.meshes.size(); mi++) {
+                                if (state.currentModel.meshes[mi].name.empty()) {
+                                    std::string displayName = erfEntry.name;
+                                    auto dot = displayName.rfind('.');
+                                    if (dot != std::string::npos) displayName = displayName.substr(0, dot);
+                                    state.currentModel.meshes[mi].name = displayName;
+                                }
                             }
                         }
                     }
@@ -1183,6 +1253,17 @@ void drawBrowserWindow(AppState& state) {
                 (state.selectedFolder.empty() ? "." : state.selectedFolder) : state.lastDialogPath;
             ImGuiFileDialog::Instance()->OpenDialog("ChooseFolder", "Choose Folder", nullptr, config);
         }
+        if (ImGui::Button("Load ERF")) {
+            IGFD::FileDialogConfig config;
+            if (!state.lastErfPath.empty()) {
+                config.path = fs::path(state.lastErfPath).parent_path().string();
+                config.fileName = fs::path(state.lastErfPath).filename().string();
+            } else {
+                config.path = state.lastDialogPath.empty() ?
+                    (state.selectedFolder.empty() ? "." : state.selectedFolder) : state.lastDialogPath;
+            }
+            ImGuiFileDialog::Instance()->OpenDialog("LoadErf", "Load ERF", ".erf", config);
+        }
         if (ImGui::Button("Override")) {
             IGFD::FileDialogConfig config;
             config.path = state.overrideFolder.empty() ?
@@ -1224,62 +1305,64 @@ void drawBrowserWindow(AppState& state) {
 
     ImGui::Separator();
 
-        if (!state.audioFilesLoaded && !state.selectedFolder.empty()) {
-        scanAudioFiles(state);
-    }
-    bool audioSelected = (state.selectedErfName == "[Audio]");
-    if (ImGui::Selectable("Audio - Sound Effects", audioSelected)) {
-        if (!audioSelected) {
-            state.selectedErfName = "[Audio]";
-            state.selectedEntryIndex = -1;
-            state.mergedEntries.clear();
-                state.contentFlagsDirty = true;
-            state.filteredEntryIndices.clear();
-            state.lastContentFilter = "\x01_REBUILD";
-            state.showRIMBrowser = false;
-            state.rimEntries.clear();
-            for (size_t i = 0; i < state.audioFiles.size(); i++) {
-                CachedEntry ce;
-                if (state.audioFiles[i].find("__HEADER__") == 0) {
-                    ce.name = state.audioFiles[i];
-                } else {
-                    size_t lastSlash = state.audioFiles[i].find_last_of("/\\");
-                    ce.name = (lastSlash != std::string::npos) ? state.audioFiles[i].substr(lastSlash + 1) : state.audioFiles[i];
-                }
-                ce.erfIdx = i;
-                ce.entryIdx = 0;
-                state.mergedEntries.push_back(ce);
-            }
-            state.statusMessage = std::to_string(state.audioFiles.size()) + " audio files";
+    if (!state.selectedFolder.empty()) {
+        if (!state.audioFilesLoaded) {
+            scanAudioFiles(state);
         }
-    }
-    bool voSelected = (state.selectedErfName == "[VoiceOver]");
-    if (ImGui::Selectable("Audio - Voice Over", voSelected)) {
-        if (!voSelected) {
-            state.selectedErfName = "[VoiceOver]";
-            state.selectedEntryIndex = -1;
-            state.mergedEntries.clear();
-                state.contentFlagsDirty = true;
-            state.filteredEntryIndices.clear();
-            state.lastContentFilter = "\x01_REBUILD";
-            state.showRIMBrowser = false;
-            state.rimEntries.clear();
-            for (size_t i = 0; i < state.voiceOverFiles.size(); i++) {
-                CachedEntry ce;
-                if (state.voiceOverFiles[i].find("__HEADER__") == 0) {
-                    ce.name = state.voiceOverFiles[i];
-                } else {
-                    size_t lastSlash = state.voiceOverFiles[i].find_last_of("/\\");
-                    ce.name = (lastSlash != std::string::npos) ? state.voiceOverFiles[i].substr(lastSlash + 1) : state.voiceOverFiles[i];
+        bool audioSelected = (state.selectedErfName == "[Audio]");
+        if (ImGui::Selectable("Audio - Sound Effects", audioSelected)) {
+            if (!audioSelected) {
+                state.selectedErfName = "[Audio]";
+                state.selectedEntryIndex = -1;
+                state.mergedEntries.clear();
+                    state.contentFlagsDirty = true;
+                state.filteredEntryIndices.clear();
+                state.lastContentFilter = "\x01_REBUILD";
+                state.showRIMBrowser = false;
+                state.rimEntries.clear();
+                for (size_t i = 0; i < state.audioFiles.size(); i++) {
+                    CachedEntry ce;
+                    if (state.audioFiles[i].find("__HEADER__") == 0) {
+                        ce.name = state.audioFiles[i];
+                    } else {
+                        size_t lastSlash = state.audioFiles[i].find_last_of("/\\");
+                        ce.name = (lastSlash != std::string::npos) ? state.audioFiles[i].substr(lastSlash + 1) : state.audioFiles[i];
+                    }
+                    ce.erfIdx = i;
+                    ce.entryIdx = 0;
+                    state.mergedEntries.push_back(ce);
                 }
-                ce.erfIdx = i;
-                ce.entryIdx = 0;
-                state.mergedEntries.push_back(ce);
+                state.statusMessage = std::to_string(state.audioFiles.size()) + " audio files";
             }
-            state.statusMessage = std::to_string(state.voiceOverFiles.size()) + " voice over files";
         }
+        bool voSelected = (state.selectedErfName == "[VoiceOver]");
+        if (ImGui::Selectable("Audio - Voice Over", voSelected)) {
+            if (!voSelected) {
+                state.selectedErfName = "[VoiceOver]";
+                state.selectedEntryIndex = -1;
+                state.mergedEntries.clear();
+                    state.contentFlagsDirty = true;
+                state.filteredEntryIndices.clear();
+                state.lastContentFilter = "\x01_REBUILD";
+                state.showRIMBrowser = false;
+                state.rimEntries.clear();
+                for (size_t i = 0; i < state.voiceOverFiles.size(); i++) {
+                    CachedEntry ce;
+                    if (state.voiceOverFiles[i].find("__HEADER__") == 0) {
+                        ce.name = state.voiceOverFiles[i];
+                    } else {
+                        size_t lastSlash = state.voiceOverFiles[i].find_last_of("/\\");
+                        ce.name = (lastSlash != std::string::npos) ? state.voiceOverFiles[i].substr(lastSlash + 1) : state.voiceOverFiles[i];
+                    }
+                    ce.erfIdx = i;
+                    ce.entryIdx = 0;
+                    state.mergedEntries.push_back(ce);
+                }
+                state.statusMessage = std::to_string(state.voiceOverFiles.size()) + " voice over files";
+            }
+        }
+        ImGui::Separator();
     }
-    ImGui::Separator();
 
     auto isExtraFile = [](const std::string& name) {
         if (name.size() < 4) return false;
@@ -1311,6 +1394,9 @@ void drawBrowserWindow(AppState& state) {
                 std::set<std::string> seenNames;
                 for (size_t erfIdx : indices) {
                     std::string source = GetErfSource(state.erfFiles[erfIdx]);
+                    if (std::find(state.extraErfPaths.begin(), state.extraErfPaths.end(), state.erfFiles[erfIdx]) != state.extraErfPaths.end()) {
+                        source = "Extra";
+                    }
                     ERFFile erf;
                     if (erf.open(state.erfFiles[erfIdx])) {
                         for (size_t entryIdx = 0; entryIdx < erf.entries().size(); entryIdx++) {

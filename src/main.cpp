@@ -23,6 +23,74 @@ static D3DContext g_d3d;
 
 ImFont* g_audioFont = nullptr;
 
+static float fontSizeWithOffset(float baseSize, float offset, float minSize) {
+    float size = baseSize + offset;
+    return size < minSize ? minSize : size;
+}
+
+static void buildUIFontAtlas(ImGuiIO& io, float dpiScale, float uiFontSize) {
+    uiFontSize = clampUIFontSize(uiFontSize);
+    io.Fonts->Clear();
+    io.FontDefault = nullptr;
+
+    // DPI-aware font setup. On a scaled Windows display the framebuffer is
+    // larger than the logical window, so a font rasterized at 15px and drawn
+    // at 15 logical units gets bilinearly upsampled at the GPU = blurry text.
+    // Fix: rasterize the atlas at PHYSICAL pixel size, then counter-scale via
+    // io.FontGlobalScale so glyphs draw at the requested logical size.
+    if (roboto_ttf_len > 1) {
+        ImFontConfig roboto_cfg;
+        roboto_cfg.FontDataOwnedByAtlas = false;
+        roboto_cfg.OversampleH = 3;
+        roboto_cfg.OversampleV = 1;
+        roboto_cfg.PixelSnapH = true;
+        io.Fonts->AddFontFromMemoryTTF(
+            (void*)roboto_ttf, (int)roboto_ttf_len,
+            uiFontSize * dpiScale, &roboto_cfg);
+    } else {
+        ImFontConfig def_cfg;
+        def_cfg.SizePixels = fontSizeWithOffset(uiFontSize, -2.0f, 8.0f) * dpiScale;
+        io.Fonts->AddFontDefault(&def_cfg);
+    }
+
+    float supportFontSize = fontSizeWithOffset(uiFontSize, -1.0f, 8.0f);
+    auto tryMergeFont = [&](const char* path, const ImWchar* ranges) {
+        if (std::filesystem::exists(path)) {
+            ImFontConfig cfg;
+            cfg.MergeMode = true;
+            cfg.PixelSnapH = true;
+            cfg.OversampleH = 2;
+            cfg.OversampleV = 1;
+            io.Fonts->AddFontFromFileTTF(path, supportFontSize * dpiScale, &cfg, ranges);
+        }
+    };
+    tryMergeFont("C:\\Windows\\Fonts\\segoeui.ttf", io.Fonts->GetGlyphRangesCyrillic());
+    tryMergeFont("C:\\Windows\\Fonts\\malgun.ttf",  io.Fonts->GetGlyphRangesKorean());
+    tryMergeFont("C:\\Windows\\Fonts\\msyh.ttc",    io.Fonts->GetGlyphRangesChineseFull());
+    tryMergeFont("C:\\Windows\\Fonts\\YuGothM.ttc", io.Fonts->GetGlyphRangesJapanese());
+    tryMergeFont("C:\\Windows\\Fonts\\segoeui.ttf", io.Fonts->GetGlyphRangesGreek());
+
+    ImFontConfig fa_cfg;
+    fa_cfg.MergeMode = true;
+    fa_cfg.PixelSnapH = true;
+    fa_cfg.GlyphMinAdvanceX = fontSizeWithOffset(uiFontSize, -2.0f, 8.0f) * dpiScale;
+    fa_cfg.FontDataOwnedByAtlas = false;
+    static const ImWchar fa_range[] = { ICON_MIN_FA, ICON_MAX_FA, 0 };
+    if (fa_solid_otf_len > 1) {
+        io.Fonts->AddFontFromMemoryTTF(
+            (void*)fa_solid_otf, fa_solid_otf_len,
+            fontSizeWithOffset(uiFontSize, -2.0f, 8.0f) * dpiScale, &fa_cfg, fa_range
+        );
+    }
+
+    ImFontConfig audio_cfg;
+    audio_cfg.SizePixels = fontSizeWithOffset(uiFontSize, -2.0f, 8.0f) * dpiScale;
+    g_audioFont = io.Fonts->AddFontDefault(&audio_cfg);
+
+    io.Fonts->Build();
+    io.FontGlobalScale = 1.0f / dpiScale;
+}
+
 static void framebufferSizeCallback(GLFWwindow*, int width, int height) {
     if (width > 0 && height > 0) {
         resizeD3D(g_d3d, width, height);
@@ -57,12 +125,9 @@ int main(int argc, char** argv) {
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
     ImGui::StyleColorsDark();
 
-    // DPI-aware font setup. On a scaled Windows display the framebuffer is
-    // larger than the logical window, so a font rasterized at 15px and drawn
-    // at 15 logical units gets bilinearly upsampled at the GPU = blurry text.
-    // Fix: rasterize the atlas at PHYSICAL pixel size (15 * dpiScale), then
-    // counter-scale via io.FontGlobalScale so the glyph's *drawn* size stays
-    // 15 logical units. End result: 1:1 atlas-texel-to-pixel mapping = sharp.
+    AppState state;
+    loadSettings(state);
+
     float dpiScale = 1.0f;
     {
         float xscale = 1.0f, yscale = 1.0f;
@@ -70,77 +135,32 @@ int main(int argc, char** argv) {
         dpiScale = xscale > 1.0f ? xscale : 1.0f;
     }
 
-    // Roboto-Regular as the global default (first-added font wins).
-    // If the embed is empty for any reason, fall back to ImGui's built-in.
-    if (roboto_ttf_len > 1) {
-        ImFontConfig roboto_cfg;
-        roboto_cfg.FontDataOwnedByAtlas = false;
-        roboto_cfg.OversampleH = 3;            // sharper horizontal at small sizes
-        roboto_cfg.OversampleV = 1;
-        roboto_cfg.PixelSnapH = true;          // round glyph X to whole pixels
-        io.Fonts->AddFontFromMemoryTTF(
-            (void*)roboto_ttf, (int)roboto_ttf_len,
-            15.0f * dpiScale, &roboto_cfg);
-    } else {
-        ImFontConfig def_cfg;
-        def_cfg.SizePixels = 13.0f * dpiScale;
-        io.Fonts->AddFontDefault(&def_cfg);
-    }
-
-    // Merge CJK / Cyrillic / Greek glyphs into Roboto.
-    auto tryMergeFont = [&](const char* path, float size, const ImWchar* ranges) {
-        if (std::filesystem::exists(path)) {
-            ImFontConfig cfg;
-            cfg.MergeMode = true;
-            cfg.PixelSnapH = true;
-            cfg.OversampleH = 2;
-            cfg.OversampleV = 1;
-            io.Fonts->AddFontFromFileTTF(path, size * dpiScale, &cfg, ranges);
-        }
-    };
-    tryMergeFont("C:\\Windows\\Fonts\\segoeui.ttf", 14.0f, io.Fonts->GetGlyphRangesCyrillic());
-    tryMergeFont("C:\\Windows\\Fonts\\malgun.ttf",  14.0f, io.Fonts->GetGlyphRangesKorean());
-    tryMergeFont("C:\\Windows\\Fonts\\msyh.ttc",    14.0f, io.Fonts->GetGlyphRangesChineseFull());
-    tryMergeFont("C:\\Windows\\Fonts\\YuGothM.ttc", 14.0f, io.Fonts->GetGlyphRangesJapanese());
-    tryMergeFont("C:\\Windows\\Fonts\\segoeui.ttf", 14.0f, io.Fonts->GetGlyphRangesGreek());
-
-    // Merge FontAwesome icons into the default font.
-    ImFontConfig fa_cfg;
-    fa_cfg.MergeMode = true;
-    fa_cfg.PixelSnapH = true;
-    fa_cfg.GlyphMinAdvanceX = 13.0f * dpiScale;
-    fa_cfg.FontDataOwnedByAtlas = false;
-    static const ImWchar fa_range[] = { ICON_MIN_FA, ICON_MAX_FA, 0 };
-    if (fa_solid_otf_len > 1) {
-        io.Fonts->AddFontFromMemoryTTF(
-            (void*)fa_solid_otf, fa_solid_otf_len,
-            13.0f * dpiScale, &fa_cfg, fa_range
-        );
-    }
-
-    // Separate font kept for the audio player (the old ProggyClean default).
-    // Scale alongside everything else so it ends up at the same visual size.
-    ImFontConfig audio_cfg;
-    audio_cfg.SizePixels = 13.0f * dpiScale;
-    g_audioFont = io.Fonts->AddFontDefault(&audio_cfg);
-
-    // Counter-scale: glyphs render at native atlas resolution but draw at the
-    // logical sizes the rest of the UI expects.
-    io.FontGlobalScale = 1.0f / dpiScale;
+    buildUIFontAtlas(io, dpiScale, state.uiFontSize);
 
     ImGui_ImplGlfw_InitForOther(window, true);
     ImGui_ImplDX11_Init(g_d3d.device, g_d3d.context);
 
-    AppState state;
     state.extractPath = (fs::path(getExeDir()) / "extracted").string();
     initSpeedTree();
 
     Update::StartAutoCheckAndUpdate();
 
+    float appliedUIFontSize = clampUIFontSize(state.uiFontSize);
+
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
         if (state.levelLoad.stage == 0)
             handleInput(state, window, io);
+
+        state.uiFontSize = clampUIFontSize(state.uiFontSize);
+        float fontSizeDiff = appliedUIFontSize - state.uiFontSize;
+        if (fontSizeDiff < 0.0f) fontSizeDiff = -fontSizeDiff;
+        if (fontSizeDiff > 0.01f) {
+            buildUIFontAtlas(io, dpiScale, state.uiFontSize);
+            ImGui_ImplDX11_InvalidateDeviceObjects();
+            ImGui_ImplDX11_CreateDeviceObjects();
+            appliedUIFontSize = state.uiFontSize;
+        }
 
         ImGui_ImplDX11_NewFrame();
         ImGui_ImplGlfw_NewFrame();

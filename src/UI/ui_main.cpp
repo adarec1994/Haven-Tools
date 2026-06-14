@@ -9,6 +9,7 @@
 #include "update/about_text.h"
 #include "update/changelog_text.h"
 #include "blender_addon_embedded.h"
+bool isLevelBaked();  // renderer.h: true while a baked level is being viewed (flycam mode)
 static bool exportBlenderAddon(const unsigned char* data, unsigned int size, const std::string& destDir) {
     namespace fs = std::filesystem;
     fs::path outPath = fs::path(destDir) / "havenarea_importer.zip";
@@ -137,12 +138,87 @@ static bool s_exportCollision = true;
 static bool s_exportArmature = true;
 static bool s_animListExpanded = false;
 static int s_fbxScaleIndex = 0;
+void runLoadingTask(AppState* statePtr);
+
+static std::string getErfDialogStartPath(const AppState& state) {
+    if (!state.lastErfPath.empty()) {
+        return fs::path(state.lastErfPath).parent_path().string();
+    }
+    if (!state.extraErfPaths.empty()) {
+        return fs::path(state.extraErfPaths.back()).parent_path().string();
+    }
+    if (!state.lastDialogPath.empty()) {
+        return state.lastDialogPath;
+    }
+    if (!state.selectedFolder.empty()) {
+        return state.selectedFolder;
+    }
+    return ".";
+}
+
+static void openLoadErfDialog(const AppState& state) {
+    IGFD::FileDialogConfig config;
+    config.path = getErfDialogStartPath(state);
+    if (!state.lastErfPath.empty()) {
+        config.fileName = fs::path(state.lastErfPath).filename().string();
+    }
+    ImGuiFileDialog::Instance()->OpenDialog("LoadErf", "Load ERF", ".erf", config);
+}
+
+static bool hasErfPath(const std::vector<std::string>& paths, const std::string& erfPath) {
+    return std::find(paths.begin(), paths.end(), erfPath) != paths.end();
+}
+
+static void startAddErfLoad(AppState& state, const std::string& erfPath) {
+    std::string ext = fs::path(erfPath).extension().string();
+    std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
+    if (ext != ".erf") {
+        state.statusMessage = "Please select a .erf file";
+        return;
+    }
+
+    ERFFile testErf;
+    if (!testErf.open(erfPath)) {
+        state.statusMessage = "Failed to open: " + erfPath;
+        return;
+    }
+
+    state.loadedErfPath = erfPath;
+    state.lastErfPath = erfPath;
+    state.lastDialogPath = fs::path(erfPath).parent_path().string();
+    if (!hasErfPath(state.extraErfPaths, erfPath)) {
+        state.extraErfPaths.push_back(erfPath);
+    }
+    state.selectedEntryIndex = -1;
+    state.mergedEntries.clear();
+    state.filteredEntryIndices.clear();
+    state.lastContentFilter = "\x01_REBUILD";
+    state.showRIMBrowser = false;
+    state.rimEntries.clear();
+    state.showFSBBrowser = false;
+    state.currentFSBSamples.clear();
+    state.isPreloading = true;
+    showSplash = true;
+    saveSettings(state);
+    std::thread(runLoadingTask, &state).detach();
+}
+
+static void handleLoadErfDialog(AppState& state) {
+    if (ImGuiFileDialog::Instance()->Display("LoadErf", ImGuiWindowFlags_NoCollapse, ImVec2(600, 400))) {
+        if (ImGuiFileDialog::Instance()->IsOk()) {
+            startAddErfLoad(state, ImGuiFileDialog::Instance()->GetFilePathName());
+        }
+        ImGuiFileDialog::Instance()->Close();
+    }
+}
+
 void runLoadingTask(AppState* statePtr) {
     AppState& state = *statePtr;
     try {
     state.preloadStatus = "Scanning game folders...";
     state.preloadProgress = 0.0f;
 
+    const bool extraOnlyMode = state.selectedFolder.empty() && state.isoPath.empty();
     // Xbox 360 ISO mode: mount the disc image and treat its contents as the
     // game install. We reuse state.selectedFolder == ISO path as the
     // "selected" marker so existing UI state (recent path etc.) still works.
@@ -183,8 +259,8 @@ void runLoadingTask(AppState* statePtr) {
                 state.opfFiles.push_back(vp);
             }
         }
-    } else {
-        if (state.selectedFolder.empty() || !fs::exists(state.selectedFolder)) {
+    } else if (!state.selectedFolder.empty()) {
+        if (!fs::exists(state.selectedFolder)) {
             state.statusMessage = "Error: Game folder not found";
             state.isPreloading = false;
             showSplash = true;
@@ -213,7 +289,48 @@ void runLoadingTask(AppState* statePtr) {
                 }
             }
         } catch (...) {}
+    } else if (!state.extraErfPaths.empty()) {
+        state.preloadStatus = "Loading ERFs...";
+        state.erfFiles.clear();
+        state.rimFiles.clear();
+        state.arlFiles.clear();
+        state.opfFiles.clear();
+        state.rimMshCounts.clear();
+    } else {
+        state.statusMessage = "Error: No game folder or ERF selected";
+        state.isPreloading = false;
+        showSplash = true;
+        return;
     }
+
+    if (!state.extraErfPaths.empty()) {
+        state.preloadStatus = "Adding ERFs...";
+        std::vector<std::string> validExtraErfs;
+        for (const auto& extraErfPath : state.extraErfPaths) {
+            std::string ext = fs::path(extraErfPath).extension().string();
+            std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
+            if (ext != ".erf" || !fs::exists(extraErfPath)) continue;
+
+            ERFFile testErf;
+            if (!testErf.open(extraErfPath)) continue;
+
+            if (!hasErfPath(validExtraErfs, extraErfPath)) {
+                validExtraErfs.push_back(extraErfPath);
+            }
+            if (!hasErfPath(state.erfFiles, extraErfPath)) {
+                state.erfFiles.push_back(extraErfPath);
+            }
+        }
+        state.extraErfPaths = validExtraErfs;
+    }
+
+    if (state.erfFiles.empty()) {
+        state.statusMessage = "Error: No ERFs loaded";
+        state.isPreloading = false;
+        showSplash = true;
+        return;
+    }
+
     std::sort(state.rimFiles.begin(), state.rimFiles.end());
     std::sort(state.arlFiles.begin(), state.arlFiles.end());
     std::sort(state.opfFiles.begin(), state.opfFiles.end());
@@ -362,8 +479,48 @@ void runLoadingTask(AppState* statePtr) {
     state.preloadStatus = "Scanning audio files...";
     state.preloadProgress = 0.95f;
     scanAudioFiles(state);
+    std::string selectErfPath = state.loadedErfPath;
+    if (selectErfPath.empty() && extraOnlyMode && !state.extraErfPaths.empty()) {
+        selectErfPath = state.extraErfPaths.back();
+    }
+    state.loadedErfPath.clear();
+    if (!selectErfPath.empty()) {
+        state.selectedErfName = fs::path(selectErfPath).filename().string();
+        state.selectedEntryIndex = -1;
+        state.mergedEntries.clear();
+        state.filteredEntryIndices.clear();
+        state.lastContentFilter = "\x01_REBUILD";
+        state.showRIMBrowser = false;
+        state.rimEntries.clear();
+        state.showFSBBrowser = false;
+        state.currentFSBSamples.clear();
+
+        std::set<std::string> seenNames;
+        auto indicesIt = state.erfsByName.find(state.selectedErfName);
+        if (indicesIt != state.erfsByName.end()) {
+            for (size_t erfIdx : indicesIt->second) {
+                if (erfIdx >= state.erfFiles.size()) continue;
+                ERFFile erf;
+                if (!erf.open(state.erfFiles[erfIdx])) continue;
+                for (size_t entryIdx = 0; entryIdx < erf.entries().size(); entryIdx++) {
+                    const std::string& name = erf.entries()[entryIdx].name;
+                    if (seenNames.find(name) != seenNames.end()) continue;
+                    seenNames.insert(name);
+                    CachedEntry ce;
+                    ce.name = name;
+                    ce.erfIdx = erfIdx;
+                    ce.entryIdx = entryIdx;
+                    ce.source = hasErfPath(state.extraErfPaths, state.erfFiles[erfIdx]) ? "Extra" : "Archive";
+                    state.mergedEntries.push_back(ce);
+                }
+            }
+        }
+
+        state.contentFlagsDirty = true;
+        state.statusMessage = std::to_string(state.mergedEntries.size()) + " entries from " + state.selectedErfName;
+    }
     state.preloadProgress = 1.0f;
-    state.statusMessage = "Ready";
+    if (selectErfPath.empty()) state.statusMessage = "Ready";
     saveSettings(state);
     state.isPreloading = false;
     showSplash = false;
@@ -560,6 +717,11 @@ static void scrollCallbackWrapper(GLFWwindow* window, double x, double y) {
     s_scrollAccum += (float)y;
     if (s_prevScrollCb) s_prevScrollCb(window, x, y);
 }
+static float consumeCameraScroll(const ImGuiIO& io) {
+    float scroll = io.WantCaptureMouse ? 0.0f : s_scrollAccum;
+    s_scrollAccum = 0.0f;
+    return scroll;
+}
 void handleInput(AppState& state, GLFWwindow* window, ImGuiIO& io) {
     if (!s_scrollHooked) {
         s_prevScrollCb = glfwSetScrollCallback(window, scrollCallbackWrapper);
@@ -582,6 +744,7 @@ void handleInput(AppState& state, GLFWwindow* window, ImGuiIO& io) {
         settingsLoaded = true;
         if (!state.selectedFolder.empty() && !state.isPreloading) {
             try {
+                state.loadedErfPath.clear();
                 // ISO mode: state.isoPath is set, selectedFolder is the same path.
                 if (!state.isoPath.empty() && fs::exists(state.isoPath)) {
                     state.isPreloading = true;
@@ -602,6 +765,24 @@ void handleInput(AppState& state, GLFWwindow* window, ImGuiIO& io) {
             } catch (const std::exception& e) {
                 state.selectedFolder.clear();
                 state.isoPath.clear();
+            }
+        }
+        if (state.selectedFolder.empty() && !state.extraErfPaths.empty() && !state.isPreloading) {
+            try {
+                std::vector<std::string> existingErfs;
+                for (const auto& erfPath : state.extraErfPaths) {
+                    if (fs::exists(erfPath)) existingErfs.push_back(erfPath);
+                }
+                state.extraErfPaths = existingErfs;
+                if (!state.extraErfPaths.empty()) {
+                    state.isPreloading = true;
+                    std::thread(runLoadingTask, &state).detach();
+                } else {
+                    saveSettings(state);
+                }
+            } catch (...) {
+                state.extraErfPaths.clear();
+                saveSettings(state);
             }
         }
     }
@@ -839,6 +1020,8 @@ void handleInput(AppState& state, GLFWwindow* window, ImGuiIO& io) {
         }
         wasLeftPressed = leftPressed;
     }
+    // Orbit (turntable) for model/character/tree viewing; flycam only for levels & terrain.
+    bool modelView = state.hasModel && !isLevelBaked() && !state.showTerrain;
     {
         double mx, my;
         glfwGetCursorPos(window, &mx, &my);
@@ -850,6 +1033,27 @@ void handleInput(AppState& state, GLFWwindow* window, ImGuiIO& io) {
                 boneEditCancel(state);
             }
         }
+        else if (modelView) {
+            // Left-drag orbits the model (turntable); scroll wheel zooms. No flycam.
+            bool leftHeld = (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) && !io.WantCaptureMouse;
+            if (leftHeld && state.isOrbiting) {
+                float dx = static_cast<float>(mx - state.lastMouseX);
+                float dy = static_cast<float>(my - state.lastMouseY);
+                state.camera.orbitAz -= dx * 0.01f;
+                state.camera.orbitEl += dy * 0.01f;
+                if (state.camera.orbitEl > 1.5f) state.camera.orbitEl = 1.5f;
+                if (state.camera.orbitEl < -1.5f) state.camera.orbitEl = -1.5f;
+                state.camera.applyOrbit();
+            }
+            state.isOrbiting = leftHeld;
+            state.isPanning = false;
+            float scroll = consumeCameraScroll(io);
+            if (scroll != 0.0f) {
+                state.camera.orbitDist *= (scroll > 0) ? (1.0f / 1.15f) : 1.15f;
+                if (state.camera.orbitDist < 0.05f) state.camera.orbitDist = 0.05f;
+                state.camera.applyOrbit();
+            }
+        }
         else if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS) {
             ImGui::SetWindowFocus(nullptr);
             if (state.isPanning) {
@@ -859,8 +1063,7 @@ void handleInput(AppState& state, GLFWwindow* window, ImGuiIO& io) {
             }
             state.isPanning = true;
             glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-            float scroll = s_scrollAccum;
-            s_scrollAccum = 0.0f;
+            float scroll = consumeCameraScroll(io);
             if (scroll != 0.0f) {
                 state.camera.moveSpeed *= (scroll > 0) ? 1.5f : (1.0f / 1.5f);
                 if (state.camera.moveSpeed < 0.1f) state.camera.moveSpeed = 0.1f;
@@ -895,12 +1098,14 @@ void handleInput(AppState& state, GLFWwindow* window, ImGuiIO& io) {
             }
             float deltaTime = io.DeltaTime;
             float speed = state.camera.moveSpeed * deltaTime;
-            if (ImGui::IsKeyDown(state.keybinds.moveForward)) state.camera.moveForward(speed);
-            if (ImGui::IsKeyDown(state.keybinds.moveBackward)) state.camera.moveForward(-speed);
-            if (ImGui::IsKeyDown(state.keybinds.moveLeft)) state.camera.moveRight(-speed);
-            if (ImGui::IsKeyDown(state.keybinds.moveRight)) state.camera.moveRight(speed);
-            if (ImGui::IsKeyDown(state.keybinds.panUp)) state.camera.moveUp(speed);
-            if (ImGui::IsKeyDown(state.keybinds.panDown)) state.camera.moveUp(-speed);
+            if (!modelView) {   // flycam movement only for levels/terrain
+                if (ImGui::IsKeyDown(state.keybinds.moveForward)) state.camera.moveForward(speed);
+                if (ImGui::IsKeyDown(state.keybinds.moveBackward)) state.camera.moveForward(-speed);
+                if (ImGui::IsKeyDown(state.keybinds.moveLeft)) state.camera.moveRight(-speed);
+                if (ImGui::IsKeyDown(state.keybinds.moveRight)) state.camera.moveRight(speed);
+                if (ImGui::IsKeyDown(state.keybinds.panUp)) state.camera.moveUp(speed);
+                if (ImGui::IsKeyDown(state.keybinds.panDown)) state.camera.moveUp(-speed);
+            }
         }
     }
     if (state.boneEditMode != 0 && state.selectedBoneIndex >= 0
@@ -932,11 +1137,15 @@ void drawSplashScreen(AppState& state, int displayW, int displayH) {
     float centerY = displayH * 0.5f;
     if (!state.isPreloading) {
         ImVec2 buttonSize(250, 40);
-        ImGui::SetCursorPos(ImVec2(centerX - buttonSize.x * 0.5f, centerY));
+        ImGui::SetCursorPos(ImVec2(centerX - buttonSize.x * 0.5f, centerY - 24.0f));
         if (ImGui::Button("Browse to Game Executable", buttonSize)) {
             IGFD::FileDialogConfig config;
             config.path = state.lastDialogPath.empty() ? "." : state.lastDialogPath;
             ImGuiFileDialog::Instance()->OpenDialog("ChooseLauncher", "Select DAOriginsLauncher.exe / DAOrigins.exe / Xbox 360 .iso", ".exe,.iso", config);
+        }
+        ImGui::SetCursorPos(ImVec2(centerX - buttonSize.x * 0.5f, centerY + 24.0f));
+        if (ImGui::Button("Load ERF", buttonSize)) {
+            openLoadErfDialog(state);
         }
     } else {
         ImGui::SetCursorPos(ImVec2(centerX - 150, centerY));
@@ -973,6 +1182,34 @@ static void drawKeybindRow(const char* label, ImGuiKey& key, int id) {
         }
     }
     ImGui::PopID();
+}
+void drawSettingsWindow(AppState& state) {
+    ImGui::SetNextWindowSize(ImVec2(340, 0), ImGuiCond_FirstUseEver);
+    ImGui::Begin("Settings", &state.showSettings, ImGuiWindowFlags_AlwaysAutoResize);
+
+    float fontSize = state.uiFontSize;
+    bool changed = false;
+    ImGui::SetNextItemWidth(220);
+    changed |= ImGui::SliderFloat("Font Size", &fontSize, UI_FONT_SIZE_MIN, UI_FONT_SIZE_MAX, "%.1f px");
+    ImGui::SameLine();
+    ImGui::SetNextItemWidth(70);
+    changed |= ImGui::InputFloat("##FontSizeInput", &fontSize, 0.5f, 1.0f, "%.1f");
+
+    if (changed) {
+        state.uiFontSize = clampUIFontSize(fontSize);
+        saveSettings(state);
+    }
+
+    ImGui::Spacing();
+    if (ImGui::Button("Reset to Defaults")) {
+        state.uiFontSize = UI_FONT_SIZE_DEFAULT;
+        saveSettings(state);
+    }
+    ImGui::SameLine();
+    if (ImGui::Button("Save")) {
+        saveSettings(state);
+    }
+    ImGui::End();
 }
 void drawKeybindsWindow(AppState& state) {
     ImGui::SetNextWindowSize(ImVec2(340, 0), ImGuiCond_FirstUseEver);
@@ -1049,6 +1286,7 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
             ImGui::EndPopup();
         }
         if (!state.isPreloading) {
+            handleLoadErfDialog(state);
             if (ImGuiFileDialog::Instance()->Display("ChooseLauncher", ImGuiWindowFlags_NoCollapse, ImVec2(700, 450))) {
                 if (ImGuiFileDialog::Instance()->IsOk()) {
                     std::string filePath = ImGuiFileDialog::Instance()->GetFilePathName();
@@ -1059,11 +1297,13 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
                         // folder" for state-tracking purposes; runLoadingTask
                         // detects the .iso suffix and mounts via X360::Iso.
                         state.isoPath = filePath;
+                        state.loadedErfPath.clear();
                         state.selectedFolder = filePath;
                         state.lastDialogPath = fs::path(filePath).parent_path().string();
                         state.gffViewer.gamePath = filePath;
                     } else {
                         state.isoPath.clear();
+                        state.loadedErfPath.clear();
                         state.selectedFolder = fs::path(filePath).parent_path().string();
                         state.lastDialogPath = state.selectedFolder;
                         state.gffViewer.gamePath = state.selectedFolder;
@@ -1076,6 +1316,7 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
         }
         return;
     }
+    handleLoadErfDialog(state);
     if (t_active) {
         float dt = io.DeltaTime;
         if (t_phase == 1) {
@@ -1111,6 +1352,8 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
     if (ImGuiFileDialog::Instance()->Display("ChooseFolder", ImGuiWindowFlags_NoCollapse, ImVec2(600, 400))) {
         if (ImGuiFileDialog::Instance()->IsOk()) {
             state.selectedFolder = ImGuiFileDialog::Instance()->GetCurrentPath();
+            state.loadedErfPath.clear();
+            state.isoPath.clear();
             state.lastDialogPath = state.selectedFolder;
             state.gffViewer.gamePath = state.selectedFolder;
             state.isPreloading = true;
@@ -1653,6 +1896,10 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
     }
     if (ImGui::BeginMainMenuBar()) {
         if (ImGui::BeginMenu("File")) {
+            if (ImGui::MenuItem("Load ERF...")) {
+                openLoadErfDialog(state);
+            }
+            ImGui::Separator();
             if (ImGui::BeginMenu("Import")) {
                 if (ImGui::MenuItem("GLB...")) {
                     IGFD::FileDialogConfig cfg;
@@ -1744,6 +1991,9 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
             ImGui::EndMenu();
         }
         if (ImGui::BeginMenu("Settings")) {
+            if (ImGui::MenuItem("Preferences")) {
+                state.showSettings = true;
+            }
             if (ImGui::MenuItem("Keybinds")) {
                 state.showKeybinds = true;
             }
@@ -1853,6 +2103,7 @@ void drawUI(AppState& state, GLFWwindow* window, ImGuiIO& io) {
         drawCharacterDesigner(state, io);
     }
     if (state.showRenderSettings) drawRenderSettingsWindow(state);
+    if (state.showSettings) drawSettingsWindow(state);
     if (state.showKeybinds) drawKeybindsWindow(state);
     if (state.showMaoViewer) drawMaoViewer(state);
     if (state.showTexturePreview && state.previewTextureId != 0) drawTexturePreview(state);

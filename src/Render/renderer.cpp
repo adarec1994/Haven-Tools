@@ -259,6 +259,8 @@ static void renderSkyDome(const float* view, const float* proj, const Environmen
     skyCB.atmoParams[3]=env.atmoAlpha;
     skyCB.timeAndPad[0]=s_skyTime; skyCB.timeAndPad[1]=env.moonScale;
     skyCB.timeAndPad[2]=env.moonAlpha; skyCB.timeAndPad[3]=env.moonRotation;
+    skyCB.scatterParams[0]=env.atmoRayleighMultiplier; skyCB.scatterParams[1]=env.atmoMieMultiplier;
+    skyCB.scatterParams[2]=env.atmoTurbidity; skyCB.scatterParams[3]=env.atmoPhaseEccentricity;
     updateSkyDomeCB(skyCB);
     d3d.context->OMSetDepthStencilState(d3d.dssLessEqual, 0);
     d3d.context->RSSetState(d3d.rsNoCull);
@@ -953,6 +955,25 @@ void renderModel(Model& model, const Camera& camera, const RenderSettings& setti
         mat4RotateX(skyView, -90.0f * 3.14159f / 180.0f);
         mat4RotateY(skyView, -camera.yaw);
         mat4RotateX(skyView, -camera.pitch);
+        // Bind the celestial-body (sun) texture so the sky shader can project it at the
+        // sun direction (sb_day's CelestialBody = DefaultSun.dds), matching Sky.psh.
+        {
+            uint32_t sunTexId = 0;
+            if (skyboxModel) {
+                for (auto& mat : skyboxModel->materials) {
+                    std::string dl = mat.diffuseMap;
+                    std::transform(dl.begin(), dl.end(), dl.begin(), ::tolower);
+                    if (mat.diffuseTexId && (dl.find("sun") != std::string::npos ||
+                                             dl.find("moon") != std::string::npos ||
+                                             dl.find("celestial") != std::string::npos)) {
+                        sunTexId = mat.diffuseTexId; break;
+                    }
+                }
+            }
+            ID3D11ShaderResourceView* sunSRV = sunTexId ? getTextureSRV(sunTexId) : nullptr;
+            d3d.context->PSSetShaderResources(0, 1, &sunSRV);
+            d3d.context->PSSetSamplers(0, 1, &d3d.samplerLinear);
+        }
         renderSkyDome(skyView, proj, *envSettings);
         if (skyboxModel && !skyboxModel->meshes.empty()) {
             renderSkyboxModel(*skyboxModel, skyView, proj, viewPos);
@@ -991,6 +1012,12 @@ void renderModel(Model& model, const Camera& camera, const RenderSettings& setti
             perFrame.fogParams[0] = envSettings->atmoFogCap;
             perFrame.fogParams[1] = envSettings->atmoFogZenith;
             perFrame.ambientStrength = 0.30f;
+            if (envSettings->probeLoaded) {
+                memcpy(perFrame.probeMatR, envSettings->probeMatR, 64);
+                memcpy(perFrame.probeMatG, envSettings->probeMatG, 64);
+                memcpy(perFrame.probeMatB, envSettings->probeMatB, 64);
+                perFrame.probeParams[0] = 1.0f;
+            }
         } else {
             perFrame.lightDir[0] = 0.3f; perFrame.lightDir[1] = 0.5f;
             perFrame.lightDir[2] = 1.0f; perFrame.lightDir[3] = 0;

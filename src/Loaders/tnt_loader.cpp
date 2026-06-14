@@ -7,26 +7,35 @@ static float readFloat(const uint8_t* data, size_t offset) {
     return val;
 }
 TintColor TintData::getPrimaryColor() const {
-    if (numColors >= 3) {
-        const TintColor& c2 = colors[2];
-        bool isWhite = (c2.r > 0.99f && c2.g > 0.99f && c2.b > 0.99f);
-        if (!isWhite) {
-            return c2;
-        }
-    }
+    // The effective diffuse tint colour is the per-zone DIFFUSE colours blended by the
+    // per-zone DIFFUSE_OPACITY -- NOT a guess at "which slot looks like a colour".
+    //   diffuse zone colours: colors[0]=R, [1]=G, [2]=B, [6]=A
+    //   per-zone opacity:     colors[8] = (opR, opG, opB, opA)
+    // e.g. a skin tint has white R/G/B with opacity 0 and the skin tone in the A zone
+    // with opacity 1 -> this returns exactly the skin tone. (Specular/opacity slots are
+    // never treated as colours.)
     if (numColors >= 9) {
-        const TintColor& c8 = colors[8];
-        bool isBlack = (c8.r < 0.01f && c8.g < 0.01f && c8.b < 0.01f);
-        bool isWhite = (c8.r > 0.99f && c8.g > 0.99f && c8.b > 0.99f);
-        if (!isBlack && !isWhite) {
-            return c8;
+        const TintColor& op = colors[8];
+        const TintColor* zc[4] = { &colors[0], &colors[1], &colors[2], &colors[6] };
+        float w[4] = { op.r, op.g, op.b, op.a };
+        float sum = w[0] + w[1] + w[2] + w[3];
+        if (sum > 1e-4f) {
+            TintColor out; out.r = out.g = out.b = 0.0f;
+            for (int i = 0; i < 4; i++) {
+                out.r += zc[i]->r * w[i];
+                out.g += zc[i]->g * w[i];
+                out.b += zc[i]->b * w[i];
+            }
+            out.r /= sum; out.g /= sum; out.b /= sum;
+            return out;
         }
     }
-    for (int i = 0; i < numColors; i++) {
-        const TintColor& c = colors[i];
-        bool isWhite = (c.r > 0.99f && c.g > 0.99f && c.b > 0.99f);
-        if (!isWhite) {
-            return c;
+    // Fallback (no opacity data): first non-white diffuse zone.
+    const int diffSlots[4] = { 0, 1, 2, 6 };
+    for (int s : diffSlots) {
+        if (s < numColors) {
+            const TintColor& c = colors[s];
+            if (!(c.r > 0.99f && c.g > 0.99f && c.b > 0.99f)) return c;
         }
     }
     return TintColor();

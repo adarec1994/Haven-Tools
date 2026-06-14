@@ -170,16 +170,12 @@ void drawArmorTab(AppState& state) {
     ImGui::ColorEdit3("Color 3##armor",  cd.armorTintZone3, ImGuiColorEditFlags_NoInputs);
     ImGui::ColorEdit3("Color 4##armor",  cd.armorTintZone4, ImGuiColorEditFlags_NoInputs);
 
-    ImGui::TextDisabled("Specular:");
-    ImGui::ColorEdit3("Spec 1##armor",   cd.armorTintSpecZone1, ImGuiColorEditFlags_NoInputs);
-    ImGui::ColorEdit3("Spec 2##armor",   cd.armorTintSpecZone2, ImGuiColorEditFlags_NoInputs);
-    ImGui::ColorEdit3("Spec 3##armor",   cd.armorTintSpecZone3, ImGuiColorEditFlags_NoInputs);
-    ImGui::ColorEdit3("Spec 4##armor",   cd.armorTintSpecZone4, ImGuiColorEditFlags_NoInputs);
-
+    // Specular tint controls removed: tints affect diffuse only. (The .tnt files do carry
+    // per-zone specular colors + a specular opacity (GFF fields 14003-14005/14007/14009),
+    // but we deliberately don't expose or apply them.)
     if (ImGui::TreeNode("Opacity")) {
-        ImGui::TextDisabled("How strongly each zone's tint is applied (0 = off).");
+        ImGui::TextDisabled("How strongly each zone's diffuse tint is applied (0 = off).");
         ImGui::SliderFloat4("Diffuse##op",  cd.armorTintDiffOpacity, 0.0f, 1.0f);
-        ImGui::SliderFloat4("Specular##op", cd.armorTintSpecOpacity, 0.0f, 1.0f);
         ImGui::TreePop();
     }
 

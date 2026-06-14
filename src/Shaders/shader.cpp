@@ -40,6 +40,10 @@ cbuffer CBPerFrame : register(b0) {
     float4   uLightColor;
     float4   uFogColor;
     float4   uFogParams;
+    row_major float4x4 uProbeMatR;
+    row_major float4x4 uProbeMatG;
+    row_major float4x4 uProbeMatB;
+    float4   uProbeParams;
 };
 
 struct VSInput {
@@ -82,6 +86,10 @@ cbuffer CBPerFrame : register(b0) {
     float4   uLightColor;
     float4   uFogColor;
     float4   uFogParams;
+    row_major float4x4 uProbeMatR;
+    row_major float4x4 uProbeMatG;
+    row_major float4x4 uProbeMatB;
+    float4   uProbeParams;
 };
 
 cbuffer CBPerMaterial : register(b1) {
@@ -283,69 +291,93 @@ float4 main(PSInput input) : SV_TARGET {
         float2 uv1 = uv * scale1 + uWave1.xy * t;
         float2 uv2 = uv * scale2 + uWave2.xy * t;
 
-        float3 n0 = texNormal.Sample(sampLinear, uv0).rgb * 2.0 - 1.0;
-        float3 n1 = texNormal.Sample(sampLinear, uv1).rgb * 2.0 - 1.0;
-        float3 n2 = texNormal.Sample(sampLinear, uv2).rgb * 2.0 - 1.0;
+        // water_bump_n.dds is a DXT5nm normal map: the tangent X/Y live in the ALPHA and
+        // GREEN channels (Water0.psh reads tex.w and tex.y). Red/blue are filler (~0.5) and
+        // ALPHA carries the strongest component, so the old .rgb/.xy read missed the real
+        // ripple signal -- decode .ag instead.
+        float4 t0 = texNormal.Sample(sampLinear, uv0);
+        float4 t1 = texNormal.Sample(sampLinear, uv1);
+        float4 t2 = texNormal.Sample(sampLinear, uv2);
+        float2 m0 = t0.ag * 2.0 - 1.0;
+        float2 m1 = t1.ag * 2.0 - 1.0;
+        float2 m2 = t2.ag * 2.0 - 1.0;
 
-        float3 nTest = n0 + n1 + n2;
-        if (dot(nTest + 3.0, nTest + 3.0) < 0.01) {
+        // Procedural fallback if the normal map is missing (sample returns 0).
+        if (abs(t0.a) + abs(t0.g) + abs(t1.a) + abs(t1.g) < 0.02) {
             float2 p0 = uv * 8.0  + float2(t * 0.03,  t * 0.02);
             float2 p1 = uv * 12.0 + float2(-t * 0.02, t * 0.025);
             float2 p2 = uv * 20.0 + float2(t * 0.015, -t * 0.018);
-            n0 = normalize(float3(sin(p0.x * 6.28) * cos(p0.y * 6.28), sin(p0.y * 6.28) * cos(p0.x * 6.28), 2.0));
-            n1 = normalize(float3(sin(p1.x * 6.28) * cos(p1.y * 4.0),  sin(p1.y * 6.28) * cos(p1.x * 3.0),  2.0));
-            n2 = normalize(float3(sin(p2.x * 5.0)  * cos(p2.y * 6.28), sin(p2.y * 5.0)  * cos(p2.x * 6.28), 2.0));
+            m0 = float2(sin(p0.x * 6.28) * cos(p0.y * 6.28), sin(p0.y * 6.28) * cos(p0.x * 6.28));
+            m1 = float2(sin(p1.x * 6.28) * cos(p1.y * 4.0),  sin(p1.y * 6.28) * cos(p1.x * 3.0));
+            m2 = float2(sin(p2.x * 5.0)  * cos(p2.y * 6.28), sin(p2.y * 5.0)  * cos(p2.x * 6.28));
         }
+        float2 slope = m0 + m1 + m2;   // combined wave slope (tangent X/Y)
 
-        float3 nw = uWaterColor.xyz;
-        float nwSum = nw.x + nw.y + nw.z;
-        if (nwSum < 0.001) { nw = float3(1, 1, 1); nwSum = 3.0; }
-        float3 blendedN = normalize((n0 * nw.x + n1 * nw.y + n2 * nw.z) / nwSum);
-
-        float bumpScale = max(uWaterVisual.w, 1.0);
-        float3 viewDir = normalize(uViewPos.xyz - input.worldPos);
+        // --- Surface normal: GENTLE perturbation, matching Water0.psh ---
+        // The game nudges a near-flat normal by each wave normal weighted by
+        // mat_vPSHWaterParams[0].xyz (~0.05 each) -- it is NOT a strong bump map.
+        // This keeps the surface nearly flat, so fresnel stays low at normal viewing
+        // angles and the water body color shows (instead of harsh reflection stripes).
+        float3 wnw = uWaterColor.xyz;                       // per-wave weights (~0.05)
         float3 geomN = normalize(input.worldNormal);
-        float3 surfaceN = normalize(geomN + float3(blendedN.xy, 0) * bumpScale);
+        float3 surfaceN = normalize(geomN + float3(m0 * wnw.x + m1 * wnw.y + m2 * wnw.z, 0.0));
+        // A stronger normal used ONLY for ripple shading (diffuse + specular), so ripples
+        // are visible head-on as light/dark on the water color -- without raising fresnel
+        // (which would let the reflection wash out the per-level body color).
+        float3 rippleN = normalize(geomN + float3(slope * 0.22, 0.0));
 
+        float3 viewDir = normalize(uViewPos.xyz - input.worldPos);
+        float3 sunDir  = normalize(uLightDir.xyz);
+        float3 sunCol  = uLightColor.rgb * uLightColor.a;
+
+        // Fresnel exactly like the .psh: (1 - NdotV)^p * 0.98 + 0.02  (p = PSH1.x).
         float NdotV = saturate(dot(surfaceN, viewDir));
         float fresnelPow = max(uWaterVisual.x, 0.1);
-        float fresnel = pow(1.0 - NdotV, fresnelPow);
+        float fresnel = pow(1.0 - NdotV, fresnelPow) * 0.98 + 0.02;
 
+        // Reflection from the light-probe cube if present; otherwise a muted sky
+        // stand-in (the game default cube is black, but a black grazing band looks
+        // wrong without a real probe, so we substitute a soft sky).
         float3 reflDir = reflect(-viewDir, surfaceN);
-        float3 sunDir = normalize(uLightDir.xyz);
-        float3 sunCol = uLightColor.rgb * uLightColor.a;
-
         float3 reflColor;
         if (uHasCubemap != 0) {
             reflColor = texEnvCube.Sample(sampLinear, reflDir).rgb;
         } else {
             float reflElev = saturate(reflDir.z);
-            float3 zenith = float3(0.15, 0.3, 0.65);
-            zenith = lerp(zenith, sunCol * 0.3 + float3(0.1, 0.15, 0.35), 0.3);
+            float3 zenith = float3(0.26, 0.36, 0.48);
+            zenith = lerp(zenith, sunCol * 0.3 + float3(0.12, 0.16, 0.22), 0.3);
             float3 horiz = uFogColor.rgb;
             float sunH = saturate(dot(float3(reflDir.x, reflDir.y, 0), float3(sunDir.x, sunDir.y, 0)));
             horiz = lerp(horiz, sunCol * 0.6, sunH * 0.4);
             reflColor = lerp(horiz, zenith, pow(reflElev, 0.5));
             float sd = dot(reflDir, sunDir);
             reflColor += pow(saturate(sd), 128.0) * 0.6 * sunCol;
-            reflColor += pow(saturate(sd), 8.0) * 0.15 * sunCol;
         }
 
-        float3 bodyColor = uBodyColor.rgb;
-
-        float3 waterCol = lerp(bodyColor, reflColor, fresnel);
-
+        // Tight specular highlight (power PSH1.z ~50, intensity PSH1.y).
         float3 H = normalize(sunDir + viewDir);
-        float NdotH = saturate(dot(surfaceN, H));
-        float specPow = max(uWaterVisual.z, 1.0);
-        float specInt = uWaterVisual.y;
-        waterCol += pow(NdotH, specPow) * specInt * sunCol;
+        float spec = pow(saturate(dot(rippleN, H)), max(uWaterVisual.z, 1.0)) * max(uWaterVisual.y, 0.0);
 
-        // Water has no per-pixel opacity source (PSHWaterParams.w is 0 in the .mao
-        // and the vertex COLOR.a channel is wave/flow data, not alpha). So give it a
-        // solid base opacity from above and let reflections dominate at grazing angles.
-        float baseAlpha = max(uWaterColor.w, 0.8);
-        float alpha = saturate(baseAlpha + (1.0 - baseAlpha) * fresnel);
+        // Ripple shading: light the wave SLOPE from the sun's horizontal direction. A plain
+        // N.L term washes flat when the sun is near-overhead (the normal's z dominates), which
+        // is why the ripples were barely visible. Lighting the slope by the sun azimuth keeps
+        // ripples clearly visible as light/dark bands from any view angle and sun elevation.
+        // Body color stays the per-level vertex tint (brown for lak100d, green for den510d).
+        float2 sunAz = sunDir.xy;
+        float azLen = length(sunAz);
+        sunAz = (azLen > 0.05) ? (sunAz / azLen) : float2(0.707, 0.707);
+        float rippleLight = clamp(dot(slope, sunAz), -1.0, 1.0);
+        float3 bodyColor = uBodyColor.rgb * (0.85 + 0.4 * rippleLight);
+
+        // Reflection is a SUBTLE overlay (capped well below the game's full fresnel, since we
+        // have no real light probe) so the per-level body color clearly dominates instead of
+        // being washed grey-blue. Specular glints are added on top.
+        float reflAmount = saturate(fresnel * 0.4);
+        float3 waterCol = saturate(lerp(bodyColor, reflColor, reflAmount) + spec * sunCol);
+
+        // Alpha: the .psh uses pow(vertexColor.a, 2), which is >=1 (opaque) for body
+        // water; uBodyColor.a is forced to 1 in the loader, so this stays ~opaque.
+        float alpha = saturate(uBodyColor.a * (1.0 - fresnel) + fresnel);
         diffuseColor = float4(waterCol, alpha);
     } else if (uUseDiffuse != 0) {
         diffuseColor = texDiffuse.Sample(sampLinear, input.texcoord);
@@ -451,7 +483,16 @@ float4 main(PSInput input) : SV_TARGET {
     float3 V = normalize(-input.eyePos);
     float NdotL = max(dot(N, L), 0.0);
     float3 sunCol = uLightColor.rgb * uLightColor.a;
-    float3 ambient  = uAmbientStrength * diffuseColor.rgb;
+    // Ambient: directional irradiance from the area SH light probe (its .mtx Ramamoorthi
+    // matrices) when available; falls back to the flat ambient otherwise.
+    float3 ambColor = uAmbientStrength.xxx;
+    if (uProbeParams.x > 0.5) {
+        float4 n4 = float4(N, 1.0);
+        ambColor = max(float3(dot(n4, mul(uProbeMatR, n4)),
+                              dot(n4, mul(uProbeMatG, n4)),
+                              dot(n4, mul(uProbeMatB, n4))), 0.0);
+    }
+    float3 ambient  = ambColor * diffuseColor.rgb;
     float3 diffuse  = NdotL * diffuseColor.rgb * sunCol;
     float3 specular = float3(0.0, 0.0, 0.0);
     if (uIsTerrain == 0 && uUseSpecular != 0 && NdotL > 0.0) {
@@ -459,7 +500,9 @@ float4 main(PSInput input) : SV_TARGET {
         float NdotH = max(dot(N, H), 0.0);
         float spec = pow(NdotH, uSpecularPower);
         float4 specMap = texSpecular.Sample(sampLinear, input.texcoord);
-        specular = spec * specMap.rgb * specTint * 0.5 * sunCol;
+        // Tints affect diffuse only: the specular highlight is left untinted (uses the
+        // spec map + light color, not the per-zone tint). specTint intentionally unused.
+        specular = spec * specMap.rgb * 0.5 * sunCol;
     }
     float3 finalColor = ambient + diffuse + specular;
     float fogIntensity = uFogColor.a;
@@ -570,6 +613,7 @@ cbuffer CBSkyDome : register(b0) {
     float4 uCloudParams;
     float4 uAtmoParams;
     float4 uTimeAndPad;
+    float4 uScatterParams;
 };
 struct VSInput { float3 position : POSITION; float3 normal : NORMAL; float2 texcoord : TEXCOORD0; };
 struct VSOutput { float4 position : SV_POSITION; float3 worldDir : TEXCOORD0; float2 texcoord : TEXCOORD1; };
@@ -593,7 +637,10 @@ cbuffer CBSkyDome : register(b0) {
     float4 uCloudParams;
     float4 uAtmoParams;
     float4 uTimeAndPad;
+    float4 uScatterParams;
 };
+Texture2D texCelestial : register(t0);
+SamplerState sampCel : register(s0);
 float hash2(float2 p) {
     float3 p3 = frac(float3(p.xyx) * 0.1031);
     p3 += dot(p3, p3.yzx + 33.33);
@@ -615,14 +662,49 @@ float4 main(VSOutput input) : SV_TARGET {
     float3 dir = normalize(input.worldDir);
     float3 sunDir = normalize(uSunDir.xyz);
     float elev = dir.z;
-    float3 zenith = float3(0.15,0.3,0.65);
-    zenith = lerp(zenith, uSunColor.rgb*0.3+float3(0.1,0.15,0.35), 0.3);
-    float3 horiz = uFogColor.rgb;
-    float sunH = saturate(dot(float3(dir.x,dir.y,0), float3(sunDir.x,sunDir.y,0)));
-    horiz = lerp(horiz, uSunColor.rgb*0.6, sunH*0.4);
-    float3 sky = lerp(horiz, zenith, pow(saturate(elev), 0.5));
-    float sd = dot(dir, sunDir);
-    sky += (smoothstep(0.9994,0.9998,sd) + pow(saturate(sd),128.0)*0.6 + pow(saturate(sd),8.0)*0.15) * uSunColor.rgb * uAtmoParams.x * 0.1;
+    float cosT = dot(dir, sunDir);
+
+    // --- Hoffman-Preetham analytic atmospheric scattering ---
+    // Same model as the game's Sky.psh; inputs come from the ARL ATMO struct
+    // (uScatterParams = rayleighMult, mieMult, turbidity, mie eccentricity;
+    //  uSunColor.rgb*uSunColor.w = ATMO sun color * intensity).
+    float rayleighMult = max(uScatterParams.x, 0.0);
+    float mieMult      = max(uScatterParams.y, 0.0);
+    float turbidity    = max(uScatterParams.z, 1.0);
+    float g            = clamp(uScatterParams.w, -0.99, 0.99);
+
+    float3 betaR = float3(0.0058, 0.0135, 0.0331) * rayleighMult;   // Rayleigh ~ 1/lambda^4
+    float  bM    = 0.0040 * mieMult * turbidity;                    // Mie (grey)
+    float3 betaM = float3(bM, bM, bM);
+    float3 betaT = max(betaR + betaM, 1e-5);
+
+    float pathLen = 8.0 / (max(elev, 0.0) + 0.15);                  // longer toward the horizon
+    float3 extinction = exp(-betaT * pathLen);
+
+    float phaseR = 0.75 * (1.0 + cosT * cosT);
+    float g2 = g * g;
+    float phaseM = (1.0 - g2) / (4.0 * 3.14159265 * pow(max(1.0 + g2 - 2.0 * g * cosT, 1e-4), 1.5));
+
+    float3 Esun = uSunColor.rgb * uSunColor.w;
+    float3 inscatter = (betaR * phaseR + betaM * phaseM) / betaT * Esun * (1.0 - extinction);
+
+    // HDR -> display (the ATMO sun intensity is an HDR value; the game tonemaps).
+    float3 sky = float3(1,1,1) - exp(-inscatter * 0.35);
+
+    // Sun sprite: project the CelestialBody texture (sb_day's DefaultSun.dds) at the sun
+    // direction, like Sky.psh does. Drawn as a small disk centered on uSunDir.
+    if (dot(dir, sunDir) > 0.9) {
+        float3 sUp = abs(sunDir.z) > 0.99 ? float3(1,0,0) : float3(0,0,1);
+        float3 sRight = normalize(cross(sUp, sunDir));
+        float3 sUpV = cross(sunDir, sRight);
+        float sunR = 0.13;   // angular half-size of the sprite
+        float2 sUV = float2(dot(dir, sRight), dot(dir, sUpV)) / sunR;
+        if (abs(sUV.x) < 1.0 && abs(sUV.y) < 1.0) {
+            float4 cb = texCelestial.Sample(sampCel, sUV * float2(0.5, -0.5) + 0.5);
+            sky += cb.rgb * cb.a;
+        }
+    }
+
     float cd = uCloudParams.x;
     if(cd>0.01 && elev>-0.05){
         float t=800.0/max(elev,0.01);
@@ -633,7 +715,7 @@ float4 main(VSOutput input) : SV_TARGET {
         float3 cc=lerp(uCloudColor.rgb*0.5,uCloudColor.rgb+uSunColor.rgb*0.3,cl);
         sky=lerp(sky,cc,cs*0.85);
     }
-    if(elev<0) sky=lerp(sky,horiz*0.3,saturate(-elev*3.0));
+    if(elev<0) sky=lerp(sky,uFogColor.rgb*0.3,saturate(-elev*3.0));
     return float4(sky,1.0);
 }
 )";

@@ -85,6 +85,7 @@ void drawImportMenu(AppState& state);
 void drawBrowserWindow(AppState& state);
 void markModelAsImported(const std::string& modelName);
 void drawRenderSettingsWindow(AppState& state);
+void drawSettingsWindow(AppState& state);
 void drawKeybindsWindow(AppState& state);
 void drawMaoViewer(AppState& state);
 void drawAudioPlayer(AppState& state);

@@ -19,6 +19,10 @@ struct alignas(16) CBPerFrame {
     float lightColor[4];
     float fogColor[4];
     float fogParams[4];
+    float probeMatR[16];      // SH light-probe irradiance matrices (R,G,B); ambient = [n 1] M [n 1]^T
+    float probeMatG[16];
+    float probeMatB[16];
+    float probeParams[4];     // x = 1 if a probe is loaded, else 0
 };
 
 struct alignas(16) CBSkyDome {
@@ -30,6 +34,7 @@ struct alignas(16) CBSkyDome {
     float cloudParams[4];
     float atmoParams[4];
     float timeAndPad[4];
+    float scatterParams[4];   // (rayleighMult, mieMult, turbidity, mieEccentricity) from ATMO
 };
 
 struct alignas(16) CBPerMaterial {
