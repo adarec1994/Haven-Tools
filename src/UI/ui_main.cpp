@@ -18,7 +18,7 @@ static bool exportBlenderAddon(const unsigned char* data, unsigned int size, con
     out.write(reinterpret_cast<const char*>(data), size);
     return out.good();
 }
-static const char* CURRENT_APP_VERSION = "2.2";
+static const char* CURRENT_APP_VERSION = "2.3   ";
 static void boneEditQuatMul(float q1x, float q1y, float q1z, float q1w,
                             float q2x, float q2y, float q2z, float q2w,
                             float& rx, float& ry, float& rz, float& rw) {
@@ -1137,15 +1137,11 @@ void drawSplashScreen(AppState& state, int displayW, int displayH) {
     float centerY = displayH * 0.5f;
     if (!state.isPreloading) {
         ImVec2 buttonSize(250, 40);
-        ImGui::SetCursorPos(ImVec2(centerX - buttonSize.x * 0.5f, centerY - 24.0f));
+        ImGui::SetCursorPos(ImVec2(centerX - buttonSize.x * 0.5f, centerY - buttonSize.y * 0.5f));
         if (ImGui::Button("Browse to Game Executable", buttonSize)) {
             IGFD::FileDialogConfig config;
             config.path = state.lastDialogPath.empty() ? "." : state.lastDialogPath;
             ImGuiFileDialog::Instance()->OpenDialog("ChooseLauncher", "Select DAOriginsLauncher.exe / DAOrigins.exe / Xbox 360 .iso", ".exe,.iso", config);
-        }
-        ImGui::SetCursorPos(ImVec2(centerX - buttonSize.x * 0.5f, centerY + 24.0f));
-        if (ImGui::Button("Load ERF", buttonSize)) {
-            openLoadErfDialog(state);
         }
     } else {
         ImGui::SetCursorPos(ImVec2(centerX - 150, centerY));
